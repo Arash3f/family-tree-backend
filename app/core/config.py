@@ -31,6 +31,11 @@ class Settings(PydanticBaseSettings):
     ADMIN_PASSWORD: str = Field(...)
     ADMIN_ROLE_NAME: str = Field(...)
 
+    BACKUP_DIR: str = "/backups"
+
+    CELERY_BROKER_URL: str = "redis://localhost:6379/0"
+    CELERY_RESULT_BACKEND: str = "redis://localhost:6379/1"
+
     @property
     def database_url_asy(self):
         return (
