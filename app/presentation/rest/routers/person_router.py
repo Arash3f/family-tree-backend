@@ -7,8 +7,8 @@ from app.application.use_cases.person.get_person_list_by_filter_use_case import 
 )
 from app.application.use_cases.person.get_persson_use_case import GetPersonUseCase
 from app.application.use_cases.person.update_person_use_case import UpdatePersonUseCase
-from app.presentation.rest.dependencies import get_uow
-from app.presentation.rest.errors.handlers import ErrorResponse
+from app.domain.constants.permissions import Permissions
+from app.presentation.rest.utils.dependencies import get_uow
 from app.presentation.rest.schemas.dto.common import PaginatedResponse, ResultResponse
 from app.presentation.rest.schemas.dto.person_schema import (
     FilterPersonRequest,
@@ -21,20 +21,15 @@ from app.presentation.rest.schemas.dto.person_schema import (
 )
 from app.presentation.rest.schemas.mappers.comman_mappers import CommonApiMapper
 from app.presentation.rest.schemas.mappers.person_mappers import PersonApiMapper
+from app.presentation.rest.dependencies.permission_guard import RequirePermission
 
 router = APIRouter(prefix="/persons", tags=["Persons"])
 
 
 @router.post(
     "/",
-    summary="Create a new person",
-    description="Creates a new person in the system and returns the created record.",
     response_model=PersonCreateResponse,
-    status_code=201,
-    responses={
-        400: {"model": ErrorResponse, "description": "Bad request"},
-        422: {"model": ErrorResponse, "description": "Bad request"},
-    },
+    dependencies=[Depends(RequirePermission(Permissions.PERSON_CREATE))],
 )
 async def create_person(
     data: PersonCreateRequest,
@@ -47,7 +42,11 @@ async def create_person(
     return PersonApiMapper.from_create_person_dto(res)
 
 
-@router.delete("/{person_id}", response_model=ResultResponse)
+@router.delete(
+    "/{person_id}",
+    response_model=ResultResponse,
+    dependencies=[Depends(RequirePermission(Permissions.PERSON_DELETE))],
+)
 async def delete_person(
     person_id: int,
     uow=Depends(get_uow),
@@ -59,7 +58,11 @@ async def delete_person(
     return CommonApiMapper.from_result_dto(res)
 
 
-@router.put("/", response_model=PersonUpdateResponse)
+@router.put(
+    "/",
+    response_model=PersonUpdateResponse,
+    dependencies=[Depends(RequirePermission(Permissions.PERSON_UPDATE))],
+)
 async def update_person(
     data: PersonUpdateRequest,
     uow=Depends(get_uow),
@@ -71,7 +74,11 @@ async def update_person(
     return PersonApiMapper.from_update_person_dto(res)
 
 
-@router.get("/{person_id}", response_model=PersonGetResponse)
+@router.get(
+    "/{person_id}",
+    response_model=PersonGetResponse,
+    dependencies=[Depends(RequirePermission(Permissions.PERSON_READ))],
+)
 async def get_person(
     person_id: int,
     uow=Depends(get_uow),
@@ -83,7 +90,11 @@ async def get_person(
     return PersonApiMapper.from_get_person_dto(res)
 
 
-@router.post("/list/", response_model=PaginatedResponse[PersonModel])
+@router.post(
+    "/list",
+    response_model=PaginatedResponse[PersonModel],
+    dependencies=[Depends(RequirePermission(Permissions.PERSON_READ))],
+)
 async def get_person_list_by_filter(
     data: FilterPersonRequest,
     uow=Depends(get_uow),

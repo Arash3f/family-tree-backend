@@ -14,7 +14,9 @@ from app.application.use_cases.marriage.get_marriage_use_case import GetMarriage
 from app.application.use_cases.marriage.update_marriage_use_case import (
     UpdateMarriageUseCase,
 )
-from app.presentation.rest.dependencies import get_marriage_rule_service, get_uow
+from app.domain.constants.permissions import Permissions
+from app.presentation.rest.dependencies.permission_guard import RequirePermission
+from app.presentation.rest.utils.dependencies import get_marriage_rule_service, get_uow
 from app.presentation.rest.schemas.dto.common import (
     IdRequest,
     PaginatedResponse,
@@ -36,7 +38,11 @@ from app.presentation.rest.schemas.mappers.marriage_mappers import MarriageApiMa
 router = APIRouter(prefix="/marriages", tags=["Marriages"])
 
 
-@router.post("/", response_model=MarriageGetResponse)
+@router.post(
+    "/",
+    response_model=MarriageGetResponse,
+    dependencies=[Depends(RequirePermission(Permissions.MARRIAGE_CREATE))],
+)
 async def create_marriage(
     data: MarriageCreateRequest,
     uow=Depends(get_uow),
@@ -48,7 +54,11 @@ async def create_marriage(
     return MarriageApiMapper.from_create_marriage_dto(res)
 
 
-@router.delete("/", response_model=ResultResponse)
+@router.delete(
+    "/",
+    response_model=ResultResponse,
+    dependencies=[Depends(RequirePermission(Permissions.MARRIAGE_DELETE))],
+)
 async def delete_marriage(
     data: IdRequest,
     uow=Depends(get_uow),
@@ -60,7 +70,11 @@ async def delete_marriage(
     return CommonApiMapper.from_result_dto(res)
 
 
-@router.put("/", response_model=MarriageUpdateResponse)
+@router.put(
+    "/",
+    response_model=MarriageUpdateResponse,
+    dependencies=[Depends(RequirePermission(Permissions.MARRIAGE_UPDATE))],
+)
 async def update_marriage(
     data: MarriageUpdateRequest,
     uow=Depends(get_uow),
@@ -73,19 +87,27 @@ async def update_marriage(
     return MarriageApiMapper.from_update_marriage_dto(res)
 
 
-@router.get("/", response_model=MarriageGetResponse)
+@router.get(
+    "/{marriage_id}",
+    response_model=MarriageGetResponse,
+    dependencies=[Depends(RequirePermission(Permissions.MARRIAGE_READ))],
+)
 async def get_marriage(
-    data: IdRequest,
+    marriage_id: int,
     uow=Depends(get_uow),
 ) -> MarriageGetResponse:
     usecase = GetMarriageUseCase(uow)
 
-    res = await usecase.execute(CommonApiMapper.to_id_dto(id=data.id))
+    res = await usecase.execute(CommonApiMapper.to_id_dto(id=marriage_id))
 
     return MarriageApiMapper.from_get_marriage_dto(res)
 
 
-@router.get("list/", response_model=PaginatedResponse[MarriageModel])
+@router.get(
+    "/list",
+    response_model=PaginatedResponse[MarriageModel],
+    dependencies=[Depends(RequirePermission(Permissions.MARRIAGE_READ))],
+)
 async def get_marriage_list_by_filter(
     data: FilterMarriageRequest,
     uow=Depends(get_uow),
@@ -97,7 +119,11 @@ async def get_marriage_list_by_filter(
     return MarriageApiMapper.from_get_list_marriage_dto(res)
 
 
-@router.get("divorce/", response_model=ResultResponse)
+@router.get(
+    "/divorce",
+    response_model=ResultResponse,
+    dependencies=[Depends(RequirePermission(Permissions.MARRIAGE_DIVORCE))],
+)
 async def divorce(
     data: DivorceRequest,
     uow=Depends(get_uow),

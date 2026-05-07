@@ -31,6 +31,7 @@ async def paginate_and_sort(
     stmt: Select[tuple[Any]],
     session: AsyncSession,
     page: int,
+    offset: int,
     page_size: int,
     sort_order: SortOrderField,
 ) -> _PaginatedResult:
@@ -61,6 +62,9 @@ async def paginate_and_sort(
 
         session (AsyncSession):
             Async SQLAlchemy database session used to execute the query.
+
+        offset (int):
+            Requested offset number.
 
         page (int):
             Requested page number (1-based index).
@@ -110,11 +114,11 @@ async def paginate_and_sort(
     total = await session.scalar(select(func.count()).select_from(count_stmt))
 
     # pagination
-    stmt = stmt.offset((page - 1) * page_size).limit(page_size)
+    stmt = stmt.offset(offset + (page - 1) * page_size).limit(page_size)
 
     result = await session.execute(stmt)
 
-    items = result.scalars().all()
+    items = result.unique().scalars().all()
 
     return _PaginatedResult(
         items=items,

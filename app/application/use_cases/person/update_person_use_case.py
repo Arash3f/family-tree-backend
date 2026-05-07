@@ -4,7 +4,7 @@ from app.application.dto.person.person_update_dto import (
     PersonUpdateMapper,
     PersonUpdateResponseDTO,
 )
-from app.application.unit_of_work import UnitOfWork
+from app.application.services.unit_of_work import UnitOfWork
 
 
 class UpdatePersonUseCase:
@@ -25,11 +25,11 @@ class UpdatePersonUseCase:
             mother_id = update_data_enum.pop(PersonUpdateField.MOTHER_ID, None)
 
             if father_id is not None:
-                father = await self.uow.persons.get_or_raise(father_id)
+                father = await self.uow.persons.get_or_raise(person_id=father_id)
                 person.set_father(father.safe_id)
 
             if mother_id is not None:
-                mother = await self.uow.persons.get_or_raise(mother_id)
+                mother = await self.uow.persons.get_or_raise(person_id=mother_id)
                 person.set_mother(mother.safe_id)
 
             for field, value in update_data_enum.items():

@@ -8,5 +8,4 @@ def set_trace_id(trace_id: str):
 
 
 def get_trace_id() -> str:
-    print(trace_id_var.get())
     return trace_id_var.get()

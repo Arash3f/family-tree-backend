@@ -1,23 +1,23 @@
 from datetime import date
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     CheckConstraint,
     Date,
     ForeignKey,
     Index,
-    Integer,
     UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
-from app.infrastructure.database.models.person_model import PersonModel
+
+if TYPE_CHECKING:
+    from .person_model import PersonModel
 
 
 class MarriageModel(Base):
     __tablename__ = "marriages"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
     husband_id: Mapped[int] = mapped_column(
         ForeignKey("persons.id"), nullable=False, index=True
@@ -31,11 +31,15 @@ class MarriageModel(Base):
 
     divorced_at: Mapped[date | None] = mapped_column(Date, nullable=True)
 
-    husband: Mapped[PersonModel] = relationship(
+    # -------------------------
+    # relationships
+    # -------------------------
+
+    husband: Mapped["PersonModel"] = relationship(
         "PersonModel", foreign_keys=[husband_id], lazy="joined"
     )
 
-    wife: Mapped[PersonModel] = relationship(
+    wife: Mapped["PersonModel"] = relationship(
         "PersonModel", foreign_keys=[wife_id], lazy="joined"
     )
 

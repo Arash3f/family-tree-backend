@@ -17,15 +17,15 @@ class PersonSortField(str, Enum):
 
 
 class PersonFilterDTO(BaseModel):
-    id: int | None
-    name: str | None
-    gender: Gender | None
-    birth_date: RangeDTO[date]
-    father_id: int | None
-    mother_id: int | None
+    id: int | None = None
+    name: str | None = None
+    gender: Gender | None = None
+    birth_date: RangeDTO[date] | None = None
+    father_id: int | None = None
+    mother_id: int | None = None
 
 
 class FilterPersonQuery(BaseModel):
     pagination: PaginationParams
-    filters: PersonFilterDTO
+    filters: PersonFilterDTO | None
     sort: SortParams[PersonSortField]

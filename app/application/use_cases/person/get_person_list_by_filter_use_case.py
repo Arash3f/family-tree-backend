@@ -1,4 +1,4 @@
-from app.application.unit_of_work import UnitOfWork
+from app.application.services.unit_of_work import UnitOfWork
 from app.domain.entities.person import Person
 from app.domain.shared.dto.pagination_dto import PaginatedResult
 from app.domain.shared.dto.person_filter_dto import FilterPersonQuery

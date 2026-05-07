@@ -22,6 +22,11 @@ class PersonRepository(ABC):
     async def get(self, person_id: int) -> Person | None: ...
 
     @abstractmethod
+    async def get_by_name(
+        self, name: str, father_id: int | None, mother_id: int | None
+    ) -> Person | None: ...
+
+    @abstractmethod
     async def get_list_by_filter(
         self, query: FilterPersonQuery
     ) -> PaginatedResult[Person]: ...

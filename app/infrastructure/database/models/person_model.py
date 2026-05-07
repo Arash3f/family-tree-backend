@@ -1,6 +1,6 @@
 from datetime import date
 
-from sqlalchemy import Date, ForeignKey, Integer, String
+from sqlalchemy import Date, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
@@ -8,8 +8,6 @@ from app.infrastructure.database.base import Base
 
 class PersonModel(Base):
     __tablename__ = "persons"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
     name: Mapped[str] = mapped_column(String, nullable=False)
     gender: Mapped[str] = mapped_column(String, nullable=False)
@@ -20,6 +18,12 @@ class PersonModel(Base):
     )
     mother_id: Mapped[int | None] = mapped_column(
         ForeignKey("persons.id", ondelete="SET NULL"), nullable=True
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "name", "father_id", "mother_id", name="uq_person_name_parents"
+        ),
     )
 
     # -------------------------

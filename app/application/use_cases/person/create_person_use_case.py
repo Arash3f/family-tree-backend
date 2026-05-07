@@ -3,7 +3,7 @@ from app.application.dto.person.person_create_dto import (
     PersonCreateMapper,
     PersonCreateResponseDTO,
 )
-from app.application.unit_of_work import UnitOfWork
+from app.application.services.unit_of_work import UnitOfWork
 from app.domain.entities.person import Gender, Person
 from app.domain.exceptions.person_exceptions import InvalidPersonGenderException
 

@@ -4,7 +4,7 @@ from app.application.dto.marriage.marriage_update_dto import (
     MarriageUpdateField,
     MarriageUpdateResponseDTO,
 )
-from app.application.unit_of_work import UnitOfWork
+from app.application.services.unit_of_work import UnitOfWork
 from app.domain.services.marriage_rules import MarriageRulesService
 
 
@@ -31,14 +31,14 @@ class UpdateMarriageUseCase:
             needs_validation = False
 
             if husband_id is not None:
-                husband = await self.uow.persons.get_or_raise(husband_id)
+                husband = await self.uow.persons.get_or_raise(person_id=husband_id)
                 marriage.husband_id = husband.safe_id
                 needs_validation = True
             else:
                 husband = None
 
             if wife_id is not None:
-                wife = await self.uow.persons.get_or_raise(wife_id)
+                wife = await self.uow.persons.get_or_raise(person_id=wife_id)
                 marriage.wife_id = wife.safe_id
                 needs_validation = True
             else:
@@ -55,10 +55,14 @@ class UpdateMarriageUseCase:
 
             if needs_validation:
                 if husband is None:
-                    husband = await self.uow.persons.get_or_raise(marriage.husband_id)
+                    husband = await self.uow.persons.get_or_raise(
+                        person_id=marriage.husband_id
+                    )
 
                 if wife is None:
-                    wife = await self.uow.persons.get_or_raise(marriage.wife_id)
+                    wife = await self.uow.persons.get_or_raise(
+                        person_id=marriage.wife_id
+                    )
 
                 self.marriage_rules_service.validate_marriage(
                     husband=husband, wife=wife, marriage_date=marriage.married_at

@@ -1,8 +1,13 @@
-from app.application.unit_of_work import UnitOfWork
+from app.application.services.unit_of_work import UnitOfWork
 from app.infrastructure.repositories.marriage_repository_sql import (
     SQLMarriageRepository,
 )
+from app.infrastructure.repositories.permission_repository_sql import (
+    SQLPermissionRepository,
+)
 from app.infrastructure.repositories.person_repository_sql import SQLPersonRepository
+from app.infrastructure.repositories.role_repository_sql import SQLRoleRepository
+from app.infrastructure.repositories.user_repository_sql import SQLUserRepository
 
 
 class SQLAlchemyUnitOfWork(UnitOfWork):
@@ -14,7 +19,10 @@ class SQLAlchemyUnitOfWork(UnitOfWork):
 
         # ! Add Repositories
         self.persons = SQLPersonRepository(self.session)
-        self.marriage = SQLMarriageRepository(self.session)
+        self.marriages = SQLMarriageRepository(self.session)
+        self.users = SQLUserRepository(self.session)
+        self.permissions = SQLPermissionRepository(self.session)
+        self.roles = SQLRoleRepository(self.session)
 
         return self
 

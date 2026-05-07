@@ -6,6 +6,10 @@ class ErrorCode(int, Enum):
     INVALID_PAGE_SIZE = 2
     INVALID_PAGE = 3
     # -----------------------
+    # |     Domain Auth     |
+    # -----------------------
+    InvalidCredentials = 900
+    # -----------------------
     # |    Domain Person    |
     # -----------------------
     SELF_PARENT = 1100
@@ -24,6 +28,20 @@ class ErrorCode(int, Enum):
     UNDERAGE_MARRIAGE = 1203
     INVALID_MARRIAGE_GENDER = 1204
     MARRIAGE_NOT_FOUND = 1205
+    # -----------------------
+    # |  Permission Person  |
+    # -----------------------
+    PERMISSION_NOT_FOUND = 1300
+    PERMISSION_DENIED = 1301
+    # -----------------------
+    # |     User Person     |
+    # -----------------------
+    USER_NOT_FOUND = 1400
+    USER_PASSWORD_INCORECT = 1401
+    # -----------------------
+    # |     Role Person     |
+    # -----------------------
+    ROLE_NOT_FOUND = 1500
 
 
 ERROR_MESSAGES = {
@@ -31,6 +49,8 @@ ERROR_MESSAGES = {
         ErrorCode.UN_EXPECTED_ID: "Unexpected ID provided",
         ErrorCode.INVALID_PAGE_SIZE: "Invalid page size",
         ErrorCode.INVALID_PAGE: "Invalid page",
+        # Domain Auth
+        ErrorCode.InvalidCredentials: "Invalid credentials",
         # Domain Person
         ErrorCode.SELF_PARENT: "A person cannot be their own parent",
         ErrorCode.INVALID_BIRTH_DAY: "Invalid birth date",
@@ -46,11 +66,21 @@ ERROR_MESSAGES = {
         ErrorCode.UNDERAGE_MARRIAGE: "Marriage is not allowed for underage persons",
         ErrorCode.INVALID_MARRIAGE_GENDER: "Marriage is only allowed between a male and a female",
         ErrorCode.MARRIAGE_NOT_FOUND: "Marriage not found",
+        # Domain Permission
+        ErrorCode.PERMISSION_NOT_FOUND: "Permission not found",
+        ErrorCode.PERMISSION_DENIED: "Permission denied",
+        # Domain User
+        ErrorCode.USER_NOT_FOUND: "User not found",
+        ErrorCode.USER_PASSWORD_INCORECT: "User password incorect",
+        # Domain Role
+        ErrorCode.ROLE_NOT_FOUND: "Role not found",
     },
     "fa": {
         ErrorCode.UN_EXPECTED_ID: "شناسه غیرمنتظره",
         ErrorCode.INVALID_PAGE_SIZE: "اندازه صفحه نامعتبر است",
         ErrorCode.INVALID_PAGE: "شماره صفحه اشتباه است",
+        # Domain Auth
+        ErrorCode.InvalidCredentials: "Invalid credentials",
         # Domain Person
         ErrorCode.SELF_PARENT: "یک شخص نمی‌تواند والد خودش باشد",
         ErrorCode.INVALID_BIRTH_DAY: "تاریخ تولد نامعتبر است",
@@ -66,5 +96,13 @@ ERROR_MESSAGES = {
         ErrorCode.UNDERAGE_MARRIAGE: "ازدواج برای افراد زیر سن قانونی مجاز نیست",
         ErrorCode.INVALID_MARRIAGE_GENDER: "ازدواج فقط بین یک مرد و یک زن مجاز است",
         ErrorCode.MARRIAGE_NOT_FOUND: "ازدواج مورد نظر یافت نشد",
+        # Domain Permission
+        ErrorCode.PERMISSION_NOT_FOUND: "دسترسی پیدا نشد",
+        ErrorCode.PERMISSION_DENIED: "عدم وجود دسترسی",
+        # Domain User
+        ErrorCode.USER_NOT_FOUND: "کاربر پیدا نشد",
+        ErrorCode.USER_PASSWORD_INCORECT: "رمز کاربر اشتباه است",
+        # Domain Role
+        ErrorCode.ROLE_NOT_FOUND: "نقش پیدا نشد",
     },
 }

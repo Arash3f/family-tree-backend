@@ -23,6 +23,9 @@ class MarriageRepository(ABC):
     async def get(self, marriage_id: int) -> Marriage: ...
 
     @abstractmethod
+    async def get_by_ids(self, husband_id: int, wife_id: int) -> Marriage: ...
+
+    @abstractmethod
     async def delete(self, marriage_id: int) -> None: ...
 
     @abstractmethod

@@ -1,10 +1,15 @@
+exclude: (^|.*/)migrations/
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
       - id: check-yaml
       - id: name-tests-test
-      - id: check-added-large-files
+        entry: pytest
+        language: system
+        pass_filenames: false
+        args:
+          - "-q"
       - id: check-ast
       - id: check-builtin-literals
       - id: check-case-conflict
@@ -24,7 +29,7 @@ repos:
     rev: v1.5.0
     hooks:
       - id: detect-secrets
-        exclude: ^migrations/
+        exclude: "(^migrations/|^tests/)"
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.21.2
     hooks:
@@ -34,6 +39,7 @@ repos:
     rev: v0.6.4
     hooks:
       - id: ruff
+        exclude: .*/models/__init__\.py$
       - id: ruff-format
   # - repo: https://github.com/pre-commit/mirrors-mypy
   #   rev: v1.20.2

@@ -7,6 +7,7 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.marriage import Marriage
+from app.domain.exceptions.marriage_exceptions import MarriageNotFoundException
 from app.domain.repositories.marriage_repository import MarriageRepository
 from app.domain.shared.dto.marriage_filter_dto import (
     FilterMarriageDTO,
@@ -78,6 +79,7 @@ class SQLMarriageRepository(MarriageRepository):
             session=self.session,
             sort_by=query.sort.sort_by,
             sort_order=query.sort.sort_order,
+            offset=query.pagination.offset,
             sortable_columns=SORTABLE_COLUMNS,
             stmt=stmt,
         )
@@ -91,11 +93,24 @@ class SQLMarriageRepository(MarriageRepository):
             page_size=result.page_size,
         )
 
-    async def get(self, marriage_id: int) -> Marriage:
+    async def get(self, marriage_id: int) -> Marriage | None:
         model = await self.session.get(MarriageModel, marriage_id)
 
         if not model:
-            raise ValueError("Marriage not found")
+            return None
+
+        return self._to_entity(model)
+
+    async def get_by_ids(self, wife_id: int, husband_id: int) -> Marriage | None:
+        stmt = select(MarriageModel).where(
+            MarriageModel.wife_id == wife_id,
+            MarriageModel.husband_id == husband_id,
+        )
+        result = await self.session.execute(stmt)
+        model = result.unique().scalar_one_or_none()
+
+        if not model:
+            return None
 
         return self._to_entity(model)
 
@@ -107,8 +122,9 @@ class SQLMarriageRepository(MarriageRepository):
     async def update(self, marriage: Marriage) -> Marriage:
         model = await self.session.get(MarriageModel, marriage.id)
 
+        # Persistence Guard :)
         if not model:
-            raise ValueError("Marriage not found")
+            raise MarriageNotFoundException(detail=[f"marriage id is {marriage.id}"])
 
         model.husband_id = marriage.husband_id
         model.wife_id = marriage.wife_id

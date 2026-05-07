@@ -15,14 +15,14 @@ class MarriageSortField(str, Enum):
 
 
 class MarriageFilterDataDTO(BaseModel):
-    id: int | None
-    husband_id: int | None
-    wife_id: int | None
-    married_at: RangeDTO[date]
-    divorced_at: RangeDTO[date]
+    id: int | None = None
+    husband_id: int | None = None
+    wife_id: int | None = None
+    married_at: RangeDTO[date] | None = None
+    divorced_at: RangeDTO[date] | None = None
 
 
 class FilterMarriageDTO(BaseModel):
     pagination: PaginationParams
-    filters: MarriageFilterDataDTO
+    filters: MarriageFilterDataDTO | None = None
     sort: SortParams[MarriageSortField]
