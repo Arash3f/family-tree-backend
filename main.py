@@ -6,7 +6,6 @@ from fastapi.staticfiles import StaticFiles
 from swagger_ui_bundle import swagger_ui_path
 
 from app.infrastructure.database.seed import seed_initial_permissions, seed_initial_user
-from app.infrastructure.database.seed_iteams import seed_initial_items
 from app.infrastructure.logging import configure_logging
 from app.infrastructure.security.password_hasher_impl import Argon2PasswordHasher
 from app.presentation.rest.utils.dependencies import get_uow
@@ -31,8 +30,6 @@ async def lifespan(app: FastAPI):
     )
 
     await seed_initial_user(uow=uow, password_hasher=password_hasher)
-
-    await seed_initial_items(uow=uow)
 
     yield
 
