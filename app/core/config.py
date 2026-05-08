@@ -1,35 +1,34 @@
 from pydantic_settings import BaseSettings as PydanticBaseSettings, SettingsConfigDict
-from pydantic import Field
 
 
 class Settings(PydanticBaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     # JWT:
-    JWT_SECRET: str = Field(...)
-    JWT_ALGORITHM: str = Field(...)
+    JWT_SECRET: str = "wzexsdcfvghjkml"
+    JWT_ALGORITHM: str = "HS256"
 
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(...)
-    REFRESH_TOKEN_EXPIRE_DAYS: int = Field(...)
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 60
 
     # Database:
-    POSTGRES_HOST: str = Field(...)
-    POSTGRES_USER: str = Field(...)
-    POSTGRES_PASSWORD: str = Field(...)
-    POSTGRES_DB: str = Field(...)
-    POSTGRES_PORT: int = Field(...)
+    POSTGRES_HOST: str = "127.0.0.1"
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "postgres"
+    POSTGRES_DB: str = "family_tree"
+    POSTGRES_PORT: int = 5432
 
     # Database Test:
-    POSTGRES_HOST_TEST: str = Field(...)
-    POSTGRES_USER_TEST: str = Field(...)
-    POSTGRES_PASSWORD_TEST: str = Field(...)
-    POSTGRES_DB_TEST: str = Field(...)
-    POSTGRES_PORT_TEST: int = Field(...)
+    POSTGRES_HOST_TEST: str = "127.0.0.1"
+    POSTGRES_USER_TEST: str = "postgres"
+    POSTGRES_PASSWORD_TEST: str = "postgres"
+    POSTGRES_DB_TEST: str = "family_tree_test"
+    POSTGRES_PORT_TEST: int = 5432
 
     # Admin User:
-    ADMIN_USERNAME: str = Field(...)
-    ADMIN_PASSWORD: str = Field(...)
-    ADMIN_ROLE_NAME: str = Field(...)
+    ADMIN_USERNAME: str = "admin"
+    ADMIN_PASSWORD: str = "admin"
+    ADMIN_ROLE_NAME: str = "admin"
 
     BACKUP_DIR: str = "/backups"
 
