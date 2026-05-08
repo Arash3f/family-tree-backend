@@ -74,6 +74,7 @@ dmypy.json
 
 # dotenv
 .env
+.env2
 .env.*
 !.env.example
 

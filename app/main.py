@@ -18,6 +18,7 @@ from app.presentation.rest.routers.marriage_router import router as marriage_rou
 from app.presentation.rest.routers.person_router import router as person_router
 from app.presentation.rest.utils.trace_id import TraceIDMiddleware
 from app.presentation.utils.app_exception import AppException
+from app.infrastructure.database.neo4j.neo4j import neo4j_client
 
 
 @asynccontextmanager
@@ -78,6 +79,12 @@ async def custom_swagger_ui():
         swagger_js_url="/swagger/swagger-ui-bundle.js",
         swagger_css_url="/swagger/swagger-ui.css",
     )
+
+
+@app.get("/health/neo4j")
+def neo4j_health():
+    result = neo4j_client.execute_read("RETURN 1 AS ok", params={})
+    return {"neo4j": result[0]["ok"]}
 
 
 app.include_router(person_router)

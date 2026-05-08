@@ -4,6 +4,11 @@ from pydantic_settings import BaseSettings as PydanticBaseSettings, SettingsConf
 class Settings(PydanticBaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
+    # Neo4J
+    NEO4J_URI: str = "bolt://neo4j:7687"
+    NEO4J_USER: str = "neo4j"
+    NEO4J_PASSWORD: str = "neo4j_password"
+
     # JWT:
     JWT_SECRET: str = "wzexsdcfvghjkml"
     JWT_ALGORITHM: str = "HS256"
