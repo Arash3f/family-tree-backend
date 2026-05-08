@@ -1,26 +1,9 @@
-from celery import Celery
-from celery.schedules import crontab
-from app.core.config import setting
 import os
 import datetime
 import subprocess
 
-celery = Celery(
-    "backup",
-    broker=setting.CELERY_BROKER_URL,
-    backend=setting.CELERY_RESULT_BACKEND,
-)
-celery.conf.beat_schedule = {
-    "daily-postgres-backup": {
-        "task": "app.task.backup",
-        "schedule": crontab(hour=0, minute=0),
-    }
-}
-
-celery.conf.update(
-    timezone="Asia/Tehran",
-    enable_utc=False,
-)
+from celery import shared_task
+from app.core.config import setting
 
 
 def backup_postgres():
@@ -53,7 +36,7 @@ def backup_postgres():
     return dump_file
 
 
-@celery.task(name="app.task.backup")
+@shared_task(name="backup.database", bind=True, max_retries=5, retry_backoff=True)
 def create_postgres_backup():
     backup_file = backup_postgres()
     return {"status": "success", "file": backup_file}
