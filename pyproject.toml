@@ -17,7 +17,6 @@ dependencies = [
     "alembic (>=1.18.4,<2.0.0)",
     "pydantic (>=2.13.3,<3.0.0)",
     "swagger-ui-bundle (>=1.1.0,<2.0.0)",
-    "psycopg2 (>=2.9.12,<3.0.0)",
     "pydantic-settings (>=2.14.0,<3.0.0)",
     "passlib[argon2] (>=1.7.4,<2.0.0)",
     "python-jose (>=3.5.0,<4.0.0)",

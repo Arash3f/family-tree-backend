@@ -1,0 +1,47 @@
+version: "3.9"
+
+services:
+
+  api:
+    build: .
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+
+  celery_worker:
+    build: .
+    command: celery -A app.core.celery worker --loglevel=info
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+
+  celery_beat:
+    build: .
+    command: celery -A app.core.celery beat --loglevel=info
+    env_file:
+      - .env
+    volumes:
+      - celerybeat_data:/app/celerybeat
+    depends_on:
+      - db
+      - redis
+
+  redis:
+    image: redis:8
+
+  db:
+    image: postgres:15
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+  celerybeat_data:

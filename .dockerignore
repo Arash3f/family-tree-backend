@@ -1,0 +1,30 @@
+# فایل‌های مربوط به پایتون و محیط توسعه
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+
+# فایل‌های حجیم یا runtime
+celerybeat-schedule
+*.log
+*.sqlite3
+*.backup
+
+# پوشه‌های محلی و venv
+venv/
+.env
+.idea/
+.vscode/
+
+# cache پکیج‌ها
+*.egg-info/
+dist/
+build/
+
+# پوشه‌های node یا front (در صورت وجود)
+node_modules/
+
+# فایل‌های داکر داخلی
+Dockerfile
+docker-compose.yml
