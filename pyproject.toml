@@ -41,6 +41,7 @@ exclude = [
     "migrations",
     "build",
     "dist",
+    "**/models/__init__.py",
 ]
 [dependency-groups]
 dev = [
