@@ -41,6 +41,7 @@ repos:
       - id: ruff
         exclude: .*/models/__init__\.py$
       - id: ruff-format
+  # TODO install and fix mirrors-mypy
   # - repo: https://github.com/pre-commit/mirrors-mypy
   #   rev: v1.20.2
   #   hooks:

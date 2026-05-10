@@ -15,34 +15,37 @@ class UpdateMarriageUseCase:
 
     async def execute(self, dto: MarriageUpdateDTO) -> MarriageUpdateResponseDTO:
         async with self.uow:
+            # ? Remove None fields
             update_data = dto.data.model_dump(exclude_unset=True)
 
+            # ? find marriage
             marriage = await self.uow.marriages.get_or_raise(
                 marriage_id=dto.where.marriage_id
             )
 
+            # ? Convert update_data to new object and use enum for keys
             update_data_enum = {
                 MarriageUpdateField(key): value for key, value in update_data.items()
             }
 
+            # ? Read and pop husband_id and wife_id
             husband_id = update_data_enum.pop(MarriageUpdateField.HUSBAND_ID, None)
             wife_id = update_data_enum.pop(MarriageUpdateField.WIFE_ID, None)
 
+            # ! If these field (husband or wife or married_at) change, marriage_rules_service should use
             needs_validation = False
+            husband = None
+            wife = None
 
             if husband_id is not None:
                 husband = await self.uow.persons.get_or_raise(person_id=husband_id)
                 marriage.husband_id = husband.safe_id
                 needs_validation = True
-            else:
-                husband = None
 
             if wife_id is not None:
                 wife = await self.uow.persons.get_or_raise(person_id=wife_id)
                 marriage.wife_id = wife.safe_id
                 needs_validation = True
-            else:
-                wife = None
 
             if MarriageUpdateField.MARRIAGE_AT in update_data_enum:
                 marriage.set_married_at = update_data_enum[
@@ -68,6 +71,7 @@ class UpdateMarriageUseCase:
                     husband=husband, wife=wife, marriage_date=marriage.married_at
                 )
 
+            # ? Update other fields automatically.
             for field, value in update_data_enum.items():
                 setattr(marriage, field.value, value)
 

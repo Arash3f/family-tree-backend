@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+
 from app.application.dto.role.role_create_dto import (
     RoleCreateDTO,
     RoleCreateResponseDTO,
