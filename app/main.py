@@ -45,6 +45,9 @@ async def lifespan(app: FastAPI):
 
     await seed_initial_user(uow=uow, password_hasher=password_hasher)
 
+    # ? Initial person & marriage data
+    # await seed_initial_items(uow=uow)
+
     yield
 
 
