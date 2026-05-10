@@ -1,6 +1,6 @@
 import pytest
 
-from app.application.services.unit_of_work import UnitOfWork
+from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.entities.permission import Permission
 from app.domain.exceptions.permission_exceptions import PermissionNotFoundException
 from app.domain.shared.dto.pagination_dto import PaginatedResult, PaginationParams

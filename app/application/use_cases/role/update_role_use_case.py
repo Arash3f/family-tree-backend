@@ -4,7 +4,7 @@ from app.application.dto.role.role_update_dto import (
     RoleUpdateMapper,
     RoleUpdateResponseDTO,
 )
-from app.application.services.unit_of_work import UnitOfWork
+from app.application.interfaces.unit_of_work import UnitOfWork
 
 
 class UpdateRoleUseCase:

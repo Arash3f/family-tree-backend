@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING, List
+
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
-
 
 if TYPE_CHECKING:
     from .permission_model import PermissionModel

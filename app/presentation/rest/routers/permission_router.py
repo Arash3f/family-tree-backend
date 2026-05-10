@@ -3,16 +3,15 @@ from fastapi import APIRouter, Depends
 from app.application.use_cases.permission.get_permission_list_by_filter_use_case import (
     GetPermissionListByFilterUseCase,
 )
-from app.domain.constants.permissions import Permissions
-from app.presentation.rest.utils.dependencies import get_uow
+from app.infrastructure.utils.constants.permissions import Permissions
+from app.presentation.rest.dependencies.permission_guard import RequirePermission
 from app.presentation.rest.schemas.dto.common import PaginatedResponse
 from app.presentation.rest.schemas.dto.permission_schema import (
     FilterPermissionRequest,
     PermissionModel,
 )
 from app.presentation.rest.schemas.mappers.permission_mappers import PermissionApiMapper
-from app.presentation.rest.dependencies.permission_guard import RequirePermission
-
+from app.presentation.rest.utils.dependencies import get_uow
 
 router = APIRouter(prefix="/permissions", tags=["Permissions"])
 

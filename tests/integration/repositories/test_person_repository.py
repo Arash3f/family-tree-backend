@@ -1,6 +1,6 @@
 import pytest
 
-from app.domain.entities.person import Person, Gender
+from app.domain.entities.person import Gender, Person
 from app.domain.exceptions.person_exceptions import PersonNotFoundException
 from app.domain.shared.dto.pagination_dto import PaginationParams
 from app.domain.shared.dto.person_filter_dto import (
@@ -9,7 +9,7 @@ from app.domain.shared.dto.person_filter_dto import (
     PersonSortField,
 )
 from app.domain.shared.dto.sorter_dto import SortOrderField, SortParams
-from app.infrastructure.unit_of_work.sqlalchemy_uow import UnitOfWork
+from app.infrastructure.services.unit_of_work.sqlalchemy_uow import UnitOfWork
 
 
 @pytest.mark.asyncio

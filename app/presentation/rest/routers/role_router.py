@@ -7,10 +7,9 @@ from app.application.use_cases.role.get_role_list_by_filter_use_case import (
 )
 from app.application.use_cases.role.get_role_use_case import GetRoleUseCase
 from app.application.use_cases.role.update_role_use_case import UpdateRoleUseCase
-from app.domain.constants.permissions import Permissions
-from app.presentation.rest.utils.dependencies import get_uow
+from app.infrastructure.utils.constants.permissions import Permissions
+from app.presentation.rest.dependencies.permission_guard import RequirePermission
 from app.presentation.rest.schemas.dto.common import PaginatedResponse, ResultResponse
-
 from app.presentation.rest.schemas.dto.role_schema import (
     FilterRoleRequest,
     RoleCreateRequest,
@@ -22,7 +21,7 @@ from app.presentation.rest.schemas.dto.role_schema import (
 )
 from app.presentation.rest.schemas.mappers.comman_mappers import CommonApiMapper
 from app.presentation.rest.schemas.mappers.role_mappers import RoleApiMapper
-from app.presentation.rest.dependencies.permission_guard import RequirePermission
+from app.presentation.rest.utils.dependencies import get_uow
 
 router = APIRouter(prefix="/roles", tags=["Roles"])
 

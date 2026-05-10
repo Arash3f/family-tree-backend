@@ -1,11 +1,12 @@
 from typing import Sequence
+
 from neo4j import Record
 
 from app.domain.shared.dto.family_tree_dto import (
     PersonCompleteBaseDTO,
     SpouseRelationshipResponseDTO,
 )
-from app.utils.neo4j_normalizer import normalize_neo4j_value
+from app.infrastructure.utils.neo4j_normalizer import normalize_neo4j_value
 
 
 def map_neo4j_spouse(record: Record) -> SpouseRelationshipResponseDTO:

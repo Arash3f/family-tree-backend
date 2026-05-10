@@ -1,4 +1,4 @@
-from app.application.services.unit_of_work import UnitOfWork
+from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.entities.marriage import Marriage
 from app.domain.shared.dto.marriage_filter_dto import FilterMarriageDTO
 from app.domain.shared.dto.pagination_dto import PaginatedResult

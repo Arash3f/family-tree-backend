@@ -11,10 +11,10 @@ from app.domain.exceptions.user_exceptions import UserNotFoundException
 from app.domain.repositories.user_repository import UserRepository
 from app.domain.shared.dto.pagination_dto import PaginatedResult
 from app.domain.shared.dto.user_filter_dto import FilterUserQuery, UserSortField
+from app.domain.shared.dto.user_with_detail_dto import UserGetWithDetailResponseDTO
 from app.infrastructure.database.models.role_model import RoleModel
 from app.infrastructure.database.models.user_model import UserModel
 from app.infrastructure.database.utils.pagination_and_sort import paginate_and_sort
-from app.domain.shared.dto.user_with_detail_dto import UserGetWithDetailResponseDTO
 
 
 class SQLUserRepository(UserRepository):

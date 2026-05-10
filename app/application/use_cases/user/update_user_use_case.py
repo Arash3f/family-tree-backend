@@ -4,7 +4,7 @@ from app.application.dto.user.user_update_dto import (
     UserUpdateMapper,
     UserUpdateResponseDTO,
 )
-from app.application.services.unit_of_work import UnitOfWork
+from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.services.password_hasher import PasswordHasher
 
 

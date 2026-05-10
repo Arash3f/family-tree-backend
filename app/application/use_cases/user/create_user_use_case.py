@@ -3,7 +3,7 @@ from app.application.dto.user.user_create_dto import (
     UserCreateMapper,
     UserCreateResponseDTO,
 )
-from app.application.services.unit_of_work import UnitOfWork
+from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.entities.user import User
 from app.domain.services.password_hasher import PasswordHasher
 

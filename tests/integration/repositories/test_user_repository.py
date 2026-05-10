@@ -1,6 +1,6 @@
 import pytest
 
-from app.application.services.unit_of_work import UnitOfWork
+from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.entities.role import Role
 from app.domain.entities.user import User
 from app.domain.exceptions.user_exceptions import UserNotFoundException

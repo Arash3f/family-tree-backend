@@ -1,7 +1,8 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from app.application.services.unit_of_work import UnitOfWork
+import pytest
+
+from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.repositories.marriage_repository import MarriageRepository
 from app.domain.repositories.permission_repository import PermissionRepository
 from app.domain.repositories.person_repository import PersonRepository

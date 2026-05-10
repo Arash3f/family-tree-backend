@@ -1,5 +1,6 @@
 import logging
-from app.infrastructure.context import get_trace_id
+
+from app.infrastructure.utils.context import get_trace_id
 
 
 class ContextTraceFilter(logging.Filter):

@@ -1,21 +1,20 @@
+from app.domain.repositories.family_tree_repository import FamilyTreeRepository
 from app.domain.shared.dto.family_tree_dto import (
     DeleteRelationshipDTO,
     DeleteSpouseRelationshipDTO,
-    PersonUpsertDTO,
     ParentRelationshipDTO,
-    SpouseRelationshipDTO,
+    ParentRelationshipResponseDTO,
     PersonIdDTO,
     PersonResponseDTO,
-    ParentRelationshipResponseDTO,
+    PersonUpsertDTO,
+    SpouseRelationshipDTO,
     SpouseRelationshipResponseDTO,
 )
-from app.domain.shared.mapper.parent_mapper import map_neo4j_parent
-from app.domain.shared.mapper.person_mapper import map_neo4j_person
-from app.domain.shared.mapper.spouse_mapper import map_neo4j_spouse
 from app.infrastructure.database.neo4j import neo4j_queries as q
 from app.infrastructure.database.neo4j.neo4j import neo4j_client
-
-from app.domain.repositories.family_tree_repository import FamilyTreeRepository
+from app.infrastructure.utils.mapper.parent_mapper import map_neo4j_parent
+from app.infrastructure.utils.mapper.person_mapper import map_neo4j_person
+from app.infrastructure.utils.mapper.spouse_mapper import map_neo4j_spouse
 
 
 class Neo4jFamilyTreeRepository(FamilyTreeRepository):
