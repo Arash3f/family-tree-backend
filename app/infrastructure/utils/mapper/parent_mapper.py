@@ -6,20 +6,26 @@ from app.domain.shared.dto.family_tree_dto import (
     ParentRelationshipResponseDTO,
     PersonCompleteBaseDTO,
 )
-from app.infrastructure.utils.neo4j_normalizer import normalize_neo4j_value
+from app.infrastructure.utils.mapper.utils import node_to_dto
 
 
 def map_neo4j_parent(record: Record) -> ParentRelationshipResponseDTO:
-    parent_node = record["parent"]
-    child_node = record["child"]
+    """
+    Map a Neo4j record into a ParentRelationshipResponseDTO.
+    """
 
-    parent_props = {k: normalize_neo4j_value(v) for k, v in dict(parent_node).items()}
-    parent = PersonCompleteBaseDTO(**parent_props)
-    child_props = {k: normalize_neo4j_value(v) for k, v in dict(child_node).items()}
-    child = PersonCompleteBaseDTO(**child_props)
+    parent = node_to_dto(record["parent"], PersonCompleteBaseDTO)
+    child = node_to_dto(record["child"], PersonCompleteBaseDTO)
 
-    return ParentRelationshipResponseDTO(parent=parent, child=child)
+    return ParentRelationshipResponseDTO(
+        parent=parent,
+        child=child,
+    )
 
 
 def map_neo4j_parents(records: Sequence[Record]) -> list[ParentRelationshipResponseDTO]:
-    return [map_neo4j_parent(r) for r in records]
+    """
+    Map multiple records into person DTOs.
+    """
+
+    return [map_neo4j_parent(record) for record in records]
