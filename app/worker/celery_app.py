@@ -1,11 +1,12 @@
 from celery import Celery
 from celery.schedules import crontab
-from app.core.config import setting
+
+from app.core.config import settings
 
 celery_app = Celery(
     "family_tree_worker",
-    broker=setting.CELERY_BROKER_URL,
-    backend=setting.CELERY_RESULT_BACKEND,
+    broker=settings.CELERY_BROKER_URL,
+    backend=settings.CELERY_RESULT_BACKEND,
 )
 
 celery_app.conf.update(

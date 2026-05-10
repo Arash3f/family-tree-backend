@@ -1,8 +1,9 @@
-from typing import Any, LiteralString
 import logging
+from typing import Any, LiteralString
 
 from neo4j import GraphDatabase
-from app.core.config import setting
+
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -10,8 +11,8 @@ logger = logging.getLogger(__name__)
 class Neo4jClient:
     def __init__(self):
         self._driver = GraphDatabase.driver(
-            setting.NEO4J_URI,
-            auth=(setting.NEO4J_USER, setting.NEO4J_PASSWORD),
+            settings.NEO4J_URI,
+            auth=(settings.NEO4J_USER, settings.NEO4J_PASSWORD),
             max_connection_lifetime=1000,
             connection_timeout=5,
         )

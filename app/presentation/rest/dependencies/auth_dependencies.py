@@ -1,9 +1,9 @@
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
-from jose import jwt, JWTError
+from jose import JWTError, jwt
 
 from app.application.services.unit_of_work import UnitOfWork
-from app.core.config import setting
+from app.core.config import settings
 from app.domain.exceptions.auth_exceptions import InvalidCredentialsException
 from app.domain.exceptions.user_exceptions import UserNotFoundException
 from app.presentation.rest.utils.dependencies import get_uow
@@ -18,8 +18,8 @@ async def get_current_user(
     try:
         payload = jwt.decode(
             token,
-            setting.JWT_SECRET,
-            algorithms=[setting.JWT_ALGORITHM],
+            settings.JWT_SECRET,
+            algorithms=[settings.JWT_ALGORITHM],
         )
 
         user_id: int | None = payload.get("sub")

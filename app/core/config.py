@@ -1,7 +1,8 @@
-from pydantic_settings import BaseSettings as PydanticBaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings as PydanticBaseSettings
+from pydantic_settings import SettingsConfigDict
 
 
-class Settings(PydanticBaseSettings):
+class AppSettings(PydanticBaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     # Neo4J
@@ -65,4 +66,4 @@ class Settings(PydanticBaseSettings):
         )
 
 
-setting = Settings()  # type: ignore
+settings = AppSettings()  # type: ignore
