@@ -1,6 +1,6 @@
 from app.application.dto.auth_dto import LoginDTO, LoginResponseDTO
 from app.application.interfaces.token_service import TokenService
-from app.application.services.unit_of_work import UnitOfWork
+from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.exceptions.auth_exceptions import InvalidCredentialsException
 from app.domain.services.password_hasher import PasswordHasher
 

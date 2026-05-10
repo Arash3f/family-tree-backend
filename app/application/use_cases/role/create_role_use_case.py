@@ -3,7 +3,7 @@ from app.application.dto.role.role_create_dto import (
     RoleCreateMapper,
     RoleCreateResponseDTO,
 )
-from app.application.services.unit_of_work import UnitOfWork
+from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.entities.role import Role
 
 

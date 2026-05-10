@@ -2,7 +2,7 @@ from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 
-from app.application.services.unit_of_work import UnitOfWork
+from app.application.interfaces.unit_of_work import UnitOfWork
 from app.core.config import settings
 from app.domain.exceptions.auth_exceptions import InvalidCredentialsException
 from app.domain.exceptions.user_exceptions import UserNotFoundException

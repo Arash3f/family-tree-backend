@@ -2,7 +2,7 @@ from app.application.dto.user.user_get_dto import (
     UserGetMapper,
     UserGetResponseDTO,
 )
-from app.application.services.unit_of_work import UnitOfWork
+from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.shared.dto.common_dto import IdDTO
 
 

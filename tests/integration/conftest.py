@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import (
 
 from app.core.config import settings
 from app.infrastructure.database.base import Base
-from app.infrastructure.unit_of_work.sqlalchemy_uow import SQLAlchemyUnitOfWork
+from app.infrastructure.services.unit_of_work.sqlalchemy_uow import SQLAlchemyUnitOfWork
 
 # ------------------------------------------------
 # Engine (sync fixture to avoid event loop issues)

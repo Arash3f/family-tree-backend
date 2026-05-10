@@ -14,9 +14,8 @@ from app.application.use_cases.marriage.get_marriage_use_case import GetMarriage
 from app.application.use_cases.marriage.update_marriage_use_case import (
     UpdateMarriageUseCase,
 )
-from app.domain.constants.permissions import Permissions
+from app.infrastructure.utils.constants.permissions import Permissions
 from app.presentation.rest.dependencies.permission_guard import RequirePermission
-from app.presentation.rest.utils.dependencies import get_marriage_rule_service, get_uow
 from app.presentation.rest.schemas.dto.common import (
     IdRequest,
     PaginatedResponse,
@@ -34,6 +33,7 @@ from app.presentation.rest.schemas.dto.marriage_schema import (
 )
 from app.presentation.rest.schemas.mappers.comman_mappers import CommonApiMapper
 from app.presentation.rest.schemas.mappers.marriage_mappers import MarriageApiMapper
+from app.presentation.rest.utils.dependencies import get_marriage_rule_service, get_uow
 
 router = APIRouter(prefix="/marriages", tags=["Marriages"])
 

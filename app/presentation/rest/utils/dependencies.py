@@ -1,17 +1,26 @@
 from fastapi import Depends
 
+from app.application.interfaces.unit_of_work import UnitOfWork
 from app.application.services.authorization_service import AuthorizationService
-from app.application.services.unit_of_work import UnitOfWork
 from app.domain.services.marriage_rules import MarriageRulesService
 from app.domain.services.password_hasher import PasswordHasher
 from app.infrastructure.database.session import async_session
-from app.infrastructure.security.jwt_service import JWTService
-from app.infrastructure.security.password_hasher_impl import Argon2PasswordHasher
-from app.infrastructure.unit_of_work.sqlalchemy_uow import SQLAlchemyUnitOfWork
+from app.infrastructure.repositories.neo4j_family_tree_repository import (
+    Neo4jFamilyTreeRepository,
+)
+from app.infrastructure.services.security.password_hasher_impl import (
+    Argon2PasswordHasher,
+)
+from app.infrastructure.services.security.token_service_imp import JWTService
+from app.infrastructure.services.unit_of_work.sqlalchemy_uow import SQLAlchemyUnitOfWork
 
 
 def get_uow():
     return SQLAlchemyUnitOfWork(async_session)
+
+
+def get_neo() -> Neo4jFamilyTreeRepository:
+    return Neo4jFamilyTreeRepository()
 
 
 def get_marriage_rules_service() -> MarriageRulesService:

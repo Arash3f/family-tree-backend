@@ -1,6 +1,8 @@
 import pytest
 
-from app.infrastructure.security.password_hasher_impl import Argon2PasswordHasher
+from app.infrastructure.services.security.password_hasher_impl import (
+    Argon2PasswordHasher,
+)
 
 
 @pytest.fixture

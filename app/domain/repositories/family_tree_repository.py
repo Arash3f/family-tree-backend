@@ -3,13 +3,13 @@ from abc import ABC, abstractmethod
 from app.domain.shared.dto.family_tree_dto import (
     DeleteRelationshipDTO,
     DeleteSpouseRelationshipDTO,
-    SpouseRelationshipResponseDTO,
-    PersonUpsertDTO,
     ParentRelationshipDTO,
-    SpouseRelationshipDTO,
+    ParentRelationshipResponseDTO,
     PersonIdDTO,
     PersonResponseDTO,
-    ParentRelationshipResponseDTO,
+    PersonUpsertDTO,
+    SpouseRelationshipDTO,
+    SpouseRelationshipResponseDTO,
 )
 
 

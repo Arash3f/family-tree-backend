@@ -7,7 +7,7 @@ from starlette.responses import Response
 
 from app.presentation.rest.errors.error_resolver import resolve_message
 from app.presentation.rest.utils.language import detect_language
-from app.presentation.utils.app_exception import AppException
+from app.utils.app_exception import AppException
 
 
 class ErrorResponse(BaseModel):

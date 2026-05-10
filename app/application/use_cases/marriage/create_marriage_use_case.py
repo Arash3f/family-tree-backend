@@ -3,7 +3,7 @@ from app.application.dto.marriage.marriage_create_dto import (
     MarriageCreateMapper,
     MarriageCreateResponseDTO,
 )
-from app.application.services.unit_of_work import UnitOfWork
+from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.entities.marriage import Marriage
 
 

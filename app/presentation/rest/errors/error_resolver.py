@@ -1,6 +1,6 @@
 import logging
 
-from app.presentation.utils.error_codes import ERROR_MESSAGES
+from app.utils.error_codes import ERROR_MESSAGES
 
 
 def resolve_message(code, lang: str) -> str:

@@ -8,6 +8,14 @@ from app.domain.shared.dto.pagination_dto import PaginatedResult
 
 
 class MarriageRepository(ABC):
+    """
+    Repository contract for User Marriage.
+
+    This interface defines the operations required for working with
+    User entities. The actual implementation is provided in the
+    infrastructure layer.
+    """
+
     @abstractmethod
     async def create(self, marriage: Marriage) -> Marriage: ...
 

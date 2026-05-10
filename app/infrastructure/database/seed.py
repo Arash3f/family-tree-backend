@@ -1,36 +1,12 @@
-from app.application.services.unit_of_work import UnitOfWork
+from app.application.interfaces.unit_of_work import UnitOfWork
 from app.core.config import settings
-from app.domain.constants.permissions import Permissions
 from app.domain.entities.permission import Permission
 from app.domain.entities.role import Role
 from app.domain.entities.user import User
-from app.infrastructure.security.password_hasher_impl import Argon2PasswordHasher
-
-permissions = [
-    # User:
-    Permission(name="create_user"),
-    Permission(name="delete_user"),
-    Permission(name="get_user"),
-    Permission(name="update_user"),
-    # Role:
-    Permission(name="create_role"),
-    Permission(name="delete_role"),
-    Permission(name="get_role"),
-    Permission(name="update_role"),
-    # Permission:
-    Permission(name="get_permission"),
-    # Marriage:
-    Permission(name="create_marriage"),
-    Permission(name="delete_marriage"),
-    Permission(name="divorce_marriage"),
-    Permission(name="get_marriage"),
-    Permission(name="update_marriage"),
-    # Person:
-    Permission(name="create_person"),
-    Permission(name="delete_person"),
-    Permission(name="get_person"),
-    Permission(name="update_person"),
-]
+from app.infrastructure.services.security.password_hasher_impl import (
+    Argon2PasswordHasher,
+)
+from app.infrastructure.utils.constants.permissions import Permissions
 
 
 async def seed_initial_user(uow: UnitOfWork, password_hasher: Argon2PasswordHasher):

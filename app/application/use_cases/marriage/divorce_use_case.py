@@ -1,5 +1,5 @@
 from app.application.dto.marriage.divorce_dto import DivorceDTO
-from app.application.services.unit_of_work import UnitOfWork
+from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.shared.dto.common_dto import ResultDTO
 
 

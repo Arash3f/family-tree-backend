@@ -3,8 +3,10 @@ from httpx import AsyncClient
 
 from app.core.config import settings
 from app.domain.entities.user import User
-from app.infrastructure.security.password_hasher_impl import Argon2PasswordHasher
-from app.infrastructure.unit_of_work.sqlalchemy_uow import SQLAlchemyUnitOfWork
+from app.infrastructure.services.security.password_hasher_impl import (
+    Argon2PasswordHasher,
+)
+from app.infrastructure.services.unit_of_work.sqlalchemy_uow import SQLAlchemyUnitOfWork
 
 
 @pytest.fixture

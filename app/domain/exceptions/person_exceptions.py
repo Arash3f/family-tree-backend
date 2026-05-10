@@ -1,5 +1,5 @@
-from app.presentation.utils.app_exception import AppException
-from app.presentation.utils.error_codes import ErrorCode
+from app.utils.app_exception import AppException
+from app.utils.error_codes import ErrorCode
 
 
 class SelfParentException(AppException):

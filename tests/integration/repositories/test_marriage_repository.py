@@ -1,6 +1,8 @@
-import pytest
 from datetime import date
-from app.application.services.unit_of_work import UnitOfWork
+
+import pytest
+
+from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.entities.marriage import Marriage
 from app.domain.entities.person import Gender, Person
 from app.domain.exceptions.marriage_exceptions import MarriageNotFoundException

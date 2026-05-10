@@ -4,6 +4,7 @@ from typing import Any, LiteralString
 from neo4j import GraphDatabase
 
 from app.core.config import settings
+from app.infrastructure.database.neo4j.neo4j_queries import CONSTRAINT_PERSON_ID
 
 logger = logging.getLogger(__name__)
 
@@ -20,13 +21,8 @@ class Neo4jClient:
         self.setup_database()
 
     def setup_database(self) -> None:
-        query = """
-        CREATE CONSTRAINT person_id_unique IF NOT EXISTS
-        FOR (p:Person)
-        REQUIRE p.id IS UNIQUE
-        """
         try:
-            self.execute_write(query, params={})
+            self.execute_write(CONSTRAINT_PERSON_ID, params={})
             logger.info("Neo4j constraints initialized successfully.")
         except Exception as e:
             logger.error(f"Failed to initialize Neo4j constraints: {e}")

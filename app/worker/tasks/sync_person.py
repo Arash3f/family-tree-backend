@@ -1,10 +1,11 @@
 from datetime import datetime, timezone
+
 from celery import shared_task
 
+from app.domain.shared.dto.family_tree_dto import PersonIdDTO, PersonUpsertDTO
 from app.infrastructure.repositories.neo4j_family_tree_repository import (
     Neo4jFamilyTreeRepository,
 )
-from app.domain.shared.dto.family_tree_dto import PersonIdDTO, PersonUpsertDTO
 
 repo = Neo4jFamilyTreeRepository()
 

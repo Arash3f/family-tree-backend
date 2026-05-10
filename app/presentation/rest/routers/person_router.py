@@ -7,8 +7,8 @@ from app.application.use_cases.person.get_person_list_by_filter_use_case import 
 )
 from app.application.use_cases.person.get_persson_use_case import GetPersonUseCase
 from app.application.use_cases.person.update_person_use_case import UpdatePersonUseCase
-from app.domain.constants.permissions import Permissions
-from app.presentation.rest.utils.dependencies import get_uow
+from app.infrastructure.utils.constants.permissions import Permissions
+from app.presentation.rest.dependencies.permission_guard import RequirePermission
 from app.presentation.rest.schemas.dto.common import PaginatedResponse, ResultResponse
 from app.presentation.rest.schemas.dto.person_schema import (
     FilterPersonRequest,
@@ -21,7 +21,7 @@ from app.presentation.rest.schemas.dto.person_schema import (
 )
 from app.presentation.rest.schemas.mappers.comman_mappers import CommonApiMapper
 from app.presentation.rest.schemas.mappers.person_mappers import PersonApiMapper
-from app.presentation.rest.dependencies.permission_guard import RequirePermission
+from app.presentation.rest.utils.dependencies import get_uow
 
 router = APIRouter(prefix="/persons", tags=["Persons"])
 
