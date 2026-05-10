@@ -158,7 +158,7 @@ The following features are planned or not yet fully implemented:
 
 - ✅ Update ReadMy
 - ☐ Add github actions
-- ☐ Initial item implementation
+- ✅ Initial item implementation
 - ☐ Monitoring and logging improvements
 - ☐ Graph caching with redis
 - ☐ Celery Flow for Task Monitor
