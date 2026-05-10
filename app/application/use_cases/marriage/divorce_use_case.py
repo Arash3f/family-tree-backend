@@ -13,6 +13,7 @@ class DivorceUseCase:
                 marriage_id=dto.marriage_id
             )
 
+            # ? Update marriage divorced_at with verification
             marriage.divorce(divorced_at=dto.divorced_at)
 
             await self.uow.marriages.end(

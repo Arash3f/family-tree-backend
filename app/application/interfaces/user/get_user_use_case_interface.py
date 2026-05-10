@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+
 from app.application.dto.user.user_get_dto import (
     UserGetResponseDTO,
 )
