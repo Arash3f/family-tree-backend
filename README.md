@@ -109,10 +109,27 @@ Create a .env file in the project root based on .env.example.
 alembic upgrade head
 ```
 
-### 4. Start the API with Uvicorn:
+### 4. Run Celery Worker & Beat:
+```
+poetry run celery -A app.celery.celery_app worker -l info --pool=solo
+poetry run celery -A app.celery.celery_app beat --loglevel=info
+```
+
+### 5. Start the API with Uvicorn:
 ```
 uvicorn app.main:app --host 0.0.0.0 --port 8001
 ```
+
+## ! Seeding Initial Data
+
+A sample file is provided to simplify adding initial family tree data.
+
+1. Open `seed_items.sample` and complete the data lists.
+2. In `main.py`, uncomment the following line:
+```python
+# await seed_initial_items(uow=uow)
+```
+3. Run the application to populate the database with the initial data.
 ---
 
 ## ⏳ Background Tasks & Maintenance

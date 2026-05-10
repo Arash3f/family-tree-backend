@@ -2,6 +2,8 @@
 # Python / FastAPI Project
 ############################
 
+seed_iteams.py
+
 celerybeat-schedule*
 
 # Byte-compiled / cache
