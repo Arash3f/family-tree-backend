@@ -25,7 +25,7 @@ class ContextTraceFilter(logging.Filter):
 
     def filter(self, record):
         # Retrieve trace_id from request context (via contextvars or any custom mechanism)
-        record.trace_id = get_trace_id()
+        record.trace_id = get_trace_id() or "-"
 
         # Allow the record to be processed
         return True
@@ -49,6 +49,10 @@ def configure_logging() -> None:
     Usage:
         This function must be called once during application startup
         (typically in main.py or the application's bootstrap layer).
+
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("Here")
     """
 
     # Standard log format with trace_id included
@@ -60,10 +64,12 @@ def configure_logging() -> None:
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
 
+    handler.addFilter(ContextTraceFilter())
+
     # Root logger for the entire application
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
 
     # Attach handler and trace filter
-    logger.addHandler(handler)
-    logger.addFilter(ContextTraceFilter())
+    if not root_logger.handlers:
+        root_logger.addHandler(handler)

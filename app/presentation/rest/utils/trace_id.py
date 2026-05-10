@@ -4,7 +4,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
-from app.infrastructure.utils.context import set_trace_id
+from app.infrastructure.utils.context import trace_id_context
 
 
 class TraceIDMiddleware(BaseHTTPMiddleware):
@@ -24,13 +24,14 @@ class TraceIDMiddleware(BaseHTTPMiddleware):
         # Attach trace id to request state
         request.state.trace_id = trace_id
 
-        # set for global logging
-        set_trace_id(trace_id)
+        token = trace_id_context.set(trace_id)
 
-        # Continue request processing
-        response: Response = await call_next(request)
+        try:
+            response: Response = await call_next(request)
 
-        # Add trace id to response headers
-        response.headers[self.TRACE_HEADER] = trace_id
+            response.headers[self.TRACE_HEADER] = trace_id
 
-        return response
+            return response
+
+        finally:
+            trace_id_context.reset(token)
