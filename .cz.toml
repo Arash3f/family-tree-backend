@@ -30,14 +30,24 @@ name = "scope"
 message = "Select the scope of this change (optional): "
 choices = [
   { value = "", name = "No scope" },
-  { value = "core", name="core"},
-  { value = "api", name="api"},
-  { value = "cli", name="cli"},
-  { value = "config", name="config"},
-  { value = "docs", name="docs"},
-  { value = "tests", name="tests"},
-  { value = "ci", name="ci"},
-  { value = "deps", name="deps"}
+
+  { value = "domain", name = "domain" },
+  { value = "application", name = "application" },
+  { value = "infrastructure", name = "infrastructure" },
+  { value = "presentation", name = "presentation" },
+
+  { value = "postgres", name = "postgres" },
+  { value = "neo4j", name = "neo4j" },
+  { value = "repository", name = "repository" },
+  { value = "mapper", name = "mapper" },
+
+  { value = "cli", name = "cli" },
+
+  { value = "config", name = "config" },
+  { value = "docs", name = "docs" },
+  { value = "tests", name = "tests" },
+  { value = "ci", name = "ci" },
+  { value = "deps", name = "deps" },
 ]
 
 [[tool.commitizen.customize.questions]]
