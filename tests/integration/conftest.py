@@ -1,6 +1,5 @@
 import pytest
 import pytest_asyncio
-
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
@@ -8,10 +7,9 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from app.core.config import setting
+from app.core.config import settings
 from app.infrastructure.database.base import Base
 from app.infrastructure.unit_of_work.sqlalchemy_uow import SQLAlchemyUnitOfWork
-
 
 # ------------------------------------------------
 # Engine (sync fixture to avoid event loop issues)
@@ -21,7 +19,7 @@ from app.infrastructure.unit_of_work.sqlalchemy_uow import SQLAlchemyUnitOfWork
 @pytest.fixture(scope="session")
 def db_engine():
     return create_async_engine(
-        setting.database_test_asy,
+        settings.database_test_asy,
         echo=False,
         poolclass=NullPool,
     )

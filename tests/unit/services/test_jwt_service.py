@@ -1,8 +1,8 @@
-from jose.exceptions import JWTError
 import pytest
 from jose import jwt
+from jose.exceptions import JWTError
 
-from app.core.config import setting
+from app.core.config import settings
 from app.infrastructure.security.jwt_service import JWTService
 
 
@@ -14,7 +14,9 @@ def jwt_service():
 def test_create_access_token(jwt_service):
     token = jwt_service.create_access_token(user_id=1)
 
-    payload = jwt.decode(token, setting.JWT_SECRET, algorithms=[setting.JWT_ALGORITHM])
+    payload = jwt.decode(
+        token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM]
+    )
 
     assert payload["sub"] == "1"
     assert payload["type"] == "access"
@@ -24,7 +26,9 @@ def test_create_access_token(jwt_service):
 def test_create_refresh_token(jwt_service):
     token = jwt_service.create_refresh_token(user_id=1)
 
-    payload = jwt.decode(token, setting.JWT_SECRET, algorithms=[setting.JWT_ALGORITHM])
+    payload = jwt.decode(
+        token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM]
+    )
 
     assert payload["sub"] == "1"
     assert payload["type"] == "refresh"

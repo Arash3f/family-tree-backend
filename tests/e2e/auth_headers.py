@@ -1,7 +1,7 @@
 import pytest
 from httpx import AsyncClient
 
-from app.core.config import setting
+from app.core.config import settings
 from app.domain.entities.user import User
 from app.infrastructure.security.password_hasher_impl import Argon2PasswordHasher
 from app.infrastructure.unit_of_work.sqlalchemy_uow import SQLAlchemyUnitOfWork
@@ -10,8 +10,8 @@ from app.infrastructure.unit_of_work.sqlalchemy_uow import SQLAlchemyUnitOfWork
 @pytest.fixture
 async def admin_headers(client: AsyncClient) -> dict[str, str]:
     login_payload = {
-        "username": setting.ADMIN_USERNAME,
-        "password": setting.ADMIN_PASSWORD,
+        "username": settings.ADMIN_USERNAME,
+        "password": settings.ADMIN_PASSWORD,
     }
 
     response = await client.post("/auth/login", data=login_payload)

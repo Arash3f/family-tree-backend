@@ -1,32 +1,33 @@
-import os
 import datetime
+import os
 import subprocess
 
 from celery import shared_task
-from app.core.config import setting
+
+from app.core.config import settings
 
 
 def backup_postgres():
     env = os.environ.copy()
-    env["PGPASSWORD"] = setting.POSTGRES_PASSWORD
+    env["PGPASSWORD"] = settings.POSTGRES_PASSWORD
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
 
-    os.makedirs(setting.BACKUP_DIR, exist_ok=True)
+    os.makedirs(settings.BACKUP_DIR, exist_ok=True)
 
-    dump_file = os.path.join(setting.BACKUP_DIR, f"backup_{timestamp}.sql")
+    dump_file = os.path.join(settings.BACKUP_DIR, f"backup_{timestamp}.sql")
     cmd = [
         "pg_dump",
         "-U",
-        setting.POSTGRES_USER,
+        settings.POSTGRES_USER,
         "-h",
-        setting.POSTGRES_HOST,
+        settings.POSTGRES_HOST,
         "-p",
-        str(setting.POSTGRES_PORT),
+        str(settings.POSTGRES_PORT),
         "-F",
         "c",
         "-f",
         dump_file,
-        setting.POSTGRES_DB,
+        settings.POSTGRES_DB,
     ]
 
     try:
