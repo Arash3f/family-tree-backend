@@ -1,31 +1,157 @@
-name: Docker CI
+name: Docker Build & Integration Test
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [main]
+
+env:
+  COMPOSE_PROJECT_NAME: ci_${{ github.run_id }}
+
 jobs:
-  docker:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Create test environment
+        run: cp .env.sample .env
 
-      - name: Build images
-        run: docker compose build
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-buildx-
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-pip-
+
+      - name: Build all services
+        run: docker compose build --parallel
 
       - name: Start services
         run: docker compose up -d
 
-      - name: Wait for services
-        run: sleep 20
+      - name: Wait for database
+        run: |
+          echo "Waiting for PostgreSQL to be ready..."
+          for attempt in {1..30}; do
+            if docker compose exec -T db pg_isready -U $(grep POSTGRES_USER .env | cut -d '=' -f2) > /dev/null 2>&1; then
+              echo "✅ Database is ready!"
+              break
+            fi
+            echo "⏳ Waiting for database... (attempt $attempt/30)"
+            sleep 2
+          done
 
-      - name: Run tests
-        run: docker compose exec -T api pytest
+      - name: Wait for Redis
+        run: |
+          echo "Waiting for Redis to be ready..."
+          for attempt in {1..20}; do
+            if docker compose exec -T redis redis-cli ping | grep -q PONG; then
+              echo "✅ Redis is ready!"
+              break
+            fi
+            echo "⏳ Waiting for Redis... (attempt $attempt/20)"
+            sleep 2
+          done
 
-      - name: Stop services
+      - name: Wait for API health
+        run: |
+          echo "Waiting for API to be healthy..."
+          for attempt in {1..40}; do
+            if docker compose exec -T api curl -s -f http://localhost:8001/health > /dev/null 2>&1; then
+              echo "✅ API is healthy!"
+              break
+            fi
+            echo "⏳ Waiting for API... (attempt $attempt/40)"
+            sleep 3
+          done
+
+      - name: Run database migrations
+        run: docker compose exec -T api alembic upgrade head
+
+      - name: Run integration tests
+        run: |
+          docker compose exec -T api pytest -v --tb=short \
+            --junitxml=pytest.xml \
+            --cov=app \
+            --cov-report=html \
+            --cov-report=xml \
+            --cov-report=term \
+            --cov-fail-under=50
+
+      - name: Archive test results
+        uses: actions/upload-artifact@v3
         if: always()
-        run: docker compose down -v
+        with:
+          name: test-reports-${{ github.run_id }}
+          path: |
+            pytest.xml
+            htmlcov/
+            coverage.xml
+            .coverage
+          retention-days: 30
+
+      - name: Failure diagnostics
+        if: failure()
+        run: |
+          echo "==========================================="
+          echo "🔍 DIAGNOSTICS: Tests Failed!"
+          echo "==========================================="
+
+          echo ""
+          echo "=== 📦 API Container Status ==="
+          docker compose ps api
+
+          echo ""
+          echo "=== 📦 API Logs (last 100 lines) ==="
+          docker compose logs --tail=100 api
+
+          echo ""
+          echo "=== 🗄️ Database Logs (last 50 lines) ==="
+          docker compose logs --tail=50 db
+
+          echo ""
+          echo "=== 📡 Redis Logs (last 30 lines) ==="
+          docker compose logs --tail=30 redis
+
+          echo ""
+          echo "=== 🔌 Network Connectivity Test ==="
+          docker compose exec -T api ping -c 2 db || echo "❌ Cannot ping database"
+          docker compose exec -T api ping -c 2 redis || echo "❌ Cannot ping redis"
+
+          echo ""
+          echo "=== 🗄️ Database Connection Test ==="
+          docker compose exec -T db pg_isready -U $(grep POSTGRES_USER .env | cut -d '=' -f2)
+
+      - name: Save diagnostic logs
+        if: failure()
+        run: |
+          mkdir -p diagnostic-logs
+          docker compose logs api > diagnostic-logs/api.log
+          docker compose logs db > diagnostic-logs/db.log
+          docker compose logs redis > diagnostic-logs/redis.log
+          docker compose ps > diagnostic-logs/container-status.txt
+          docker compose exec -T api env > diagnostic-logs/env.txt
+
+      - name: Upload diagnostic logs
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: diagnostic-logs-${{ github.run_id }}
+          path: diagnostic-logs/
+          retention-days: 7
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v --remove-orphans
