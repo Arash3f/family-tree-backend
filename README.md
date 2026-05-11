@@ -157,7 +157,7 @@ pytest .
 The following features are planned or not yet fully implemented:
 
 - ✅ Update ReadMy
-- ☐ Add github actions
+- ✅ Add github actions
 - ✅ Initial item implementation
 - ☐ Monitoring and logging improvements
 - ☐ Graph caching with redis
