@@ -92,6 +92,7 @@ Once the Docker Compose stack is running, the following services will be availab
 - Neo4j Browser: http://localhost:7474
 - PostgreSQL: Accessible on port 5432 from within the Docker network.
 - Redis: Accessible on port 6379 from within the Docker network.
+- Celery: Celery flower: http://localhost:5555
 
 ##  2. Local Development (Manual)
 
@@ -117,7 +118,13 @@ poetry run celery -A app.celery.celery_app beat --loglevel=info
 
 ### 5. Start the API with Uvicorn:
 ```
-uvicorn app.main:app --host 0.0.0.0 --port 8001
+celery -A app.celery.celery_app flower --port=5555
+```
+
+### 6. Run Celery Flower:
+```
+poetry run celery -A app.celery.celery_app worker -l info --pool=solo
+poetry run celery -A app.celery.celery_app beat --loglevel=info
 ```
 
 ## ! Seeding Initial Data
@@ -161,11 +168,12 @@ The following features are planned or not yet fully implemented:
 - ✅ Initial item implementation
 - ☐ Monitoring and logging improvements
 - ☐ Graph caching with redis
-- ☐ Celery Flow for Task Monitor
-- ☐ Daily backup neo4j
+- ✅ Celery Flow for Task Monitor
+- ✅ Daily backup neo4j
 - ☐ Add death date field to Person
 - ✅ Fix mypy error in pre commit
 - ☐ Neo4j Integration test
+- ☐ Fix docker action errors!
 - ☐ E2E test:
   - ☐ permission
   - ☐ auth
