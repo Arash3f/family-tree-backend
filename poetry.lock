@@ -1605,6 +1605,22 @@ pandas = ["numpy (>=1.21.2,<3.0.0)", "pandas[timezone] (>=1.1.0,<4.0.0)"]
 pyarrow = ["pyarrow (>=6.0.0,<25.0.0)"]
 
 [[package]]
+name = "neo4j-backup"
+version = "1.0.0"
+description = "A simple way to backup and restore Neo4j databases without using dump files."
+optional = false
+python-versions = ">=3.6"
+groups = ["main"]
+files = [
+    {file = "neo4j_backup-1.0.0-py3-none-any.whl", hash = "sha256:7ed4bbb1a5f874bf4ae92fe1a29af5e1711e262f1837c2b021d306155399d752"},
+    {file = "neo4j_backup-1.0.0.tar.gz", hash = "sha256:68d2e5b103fc512702463a67629bd240e36bce4d1d94bf2db9dfbc1e767e0ee0"},
+]
+
+[package.dependencies]
+neo4j = ">=4.3.2"
+tqdm = ">=4.10.0"
+
+[[package]]
 name = "nodeenv"
 version = "1.10.0"
 description = "Node.js virtual environment builder"
@@ -2588,6 +2604,28 @@ files = [
 ]
 
 [[package]]
+name = "tqdm"
+version = "4.67.3"
+description = "Fast, Extensible Progress Meter"
+optional = false
+python-versions = ">=3.7"
+groups = ["main"]
+files = [
+    {file = "tqdm-4.67.3-py3-none-any.whl", hash = "sha256:ee1e4c0e59148062281c49d80b25b67771a127c85fc9676d3be5f243206826bf"},
+    {file = "tqdm-4.67.3.tar.gz", hash = "sha256:7d825f03f89244ef73f1d4ce193cb1774a8179fd96f31d7e1dcde62092b960bb"},
+]
+
+[package.dependencies]
+colorama = {version = "*", markers = "platform_system == \"Windows\""}
+
+[package.extras]
+dev = ["nbval", "pytest (>=6)", "pytest-asyncio (>=0.24)", "pytest-cov", "pytest-timeout"]
+discord = ["requests"]
+notebook = ["ipywidgets (>=6)"]
+slack = ["slack-sdk"]
+telegram = ["requests"]
+
+[[package]]
 name = "typing-extensions"
 version = "4.15.0"
 description = "Backported and Experimental Type Hints for Python 3.9+"
@@ -2811,4 +2849,4 @@ dev = ["pytest", "setuptools"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<4.0"
-content-hash = "214b1339e3d266c63cbe9b0535b5cdd71caba7a816de12bdc30f1137f25a39cb"
+content-hash = "4a5dad5cd487d6b74cb6a3f54b80eeb7180911668b5b815c975019b38715a6a5"

@@ -5,10 +5,13 @@ import subprocess  # nosec B404
 from pathlib import Path
 
 from celery import shared_task
+from neo4j_backup import Extractor
 
 from app.core.config import settings
+from app.infrastructure.database.neo4j.neo4j import neo4j_client
 
 logger = logging.getLogger(__name__)
+backup_dir = Path(settings.BACKUP_DIR)
 
 
 def backup_postgres():
@@ -18,7 +21,6 @@ def backup_postgres():
 
     os.makedirs(settings.BACKUP_DIR, exist_ok=True)
 
-    backup_dir = Path(settings.BACKUP_DIR)
     dump_file = backup_dir / f"backup_{timestamp}.sql"
 
     cmd = [
@@ -57,7 +59,38 @@ def backup_postgres():
         raise
 
 
+def backup_neo4j():
+    # Create timestamped backup directory
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    neo_backup_dir = str(backup_dir) + f"/neo_{timestamp}"
+
+    try:
+        # Extract all data
+        extractor = Extractor(
+            project_dir=neo_backup_dir,
+            driver=neo4j_client,
+            database="neo4j",
+            input_yes=True,
+            compress=True,
+            pull_uniqueness_constraints=True,
+        )
+
+        print(f"Starting backup neo4j to {backup_dir}...")
+        extractor.extract_data()
+        print(f"Backup neo4j completed successfully! Saved to: {backup_dir}")
+
+        return backup_dir
+
+    except Exception as e:
+        logger.error(f"Unexpected error during backup Neo4j: {e}")
+        raise
+
+
 @shared_task(name="backup.database", bind=True, max_retries=5, retry_backoff=True)
-def create_postgres_backup():
+def create_postgres_backup(self):
     backup_file = backup_postgres()
-    return {"status": "success", "file": backup_file}
+    backup_neo4j_file = backup_neo4j()
+    return {
+        "postgres": f"success to {backup_file}",
+        "neo4j": f"success to {backup_neo4j_file}",
+    }
