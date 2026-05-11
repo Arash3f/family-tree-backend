@@ -28,7 +28,7 @@ class AppSettings(PydanticBaseSettings):
     POSTGRES_HOST_TEST: str = "127.0.0.1"
     POSTGRES_USER_TEST: str = "postgres"
     POSTGRES_PASSWORD_TEST: str = "postgres"
-    POSTGRES_DB_TEST: str = "family_tree_test"
+    POSTGRES_DB_TEST: str = "family_tree"
     POSTGRES_PORT_TEST: int = 5432
 
     # Admin User:
