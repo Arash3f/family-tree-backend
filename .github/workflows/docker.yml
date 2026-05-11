@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Create test environment
-        run: cp .env.sample .env
+        run: cp .env.example .env
 
       - uses: docker/setup-buildx-action@v3
 

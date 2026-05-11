@@ -29,7 +29,7 @@ repos:
     rev: v1.5.0
     hooks:
       - id: detect-secrets
-        exclude: "(^migrations/|^tests/|^.github/)"
+        exclude: "(^migrations/|^tests/|^.github/|.env.example)"
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.21.2
     hooks:
