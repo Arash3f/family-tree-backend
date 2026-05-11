@@ -164,7 +164,7 @@ The following features are planned or not yet fully implemented:
 - ☐ Celery Flow for Task Monitor
 - ☐ Daily backup neo4j
 - ☐ Add death date field to Person
-- ☐ Fix mypy error in pre commit
+- ✅ Fix mypy error in pre commit
 - ☐ Neo4j Integration test
 - ☐ E2E test:
   - ☐ permission
