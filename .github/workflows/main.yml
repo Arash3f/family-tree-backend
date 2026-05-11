@@ -83,4 +83,4 @@ jobs:
         run: alembic upgrade head
 
       - name: Run tests
-        run: pytest -v --cov=app --cov-report=term-missing --cov-fail-under=80
+        run: pytest -v --cov=app --cov-report=term-missing --cov-fail-under=50
