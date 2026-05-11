@@ -158,11 +158,21 @@ The following features are planned or not yet fully implemented:
 
 - ✅ Update ReadMy
 - ☐ Add github actions
-- ☐ Initial item implementation
+- ✅ Initial item implementation
 - ☐ Monitoring and logging improvements
 - ☐ Graph caching with redis
 - ☐ Celery Flow for Task Monitor
 - ☐ Daily backup neo4j
+- ☐ Add death date field to Person
+- ☐ Fix mypy error in pre commit
+- ☐ Neo4j Integration test
+- ☐ E2E test:
+  - ☐ permission
+  - ☐ auth
+  - ☐ role
+  - ☐ user
+  - ☐ person (+Neo4j)
+  - ☐ marriage (+Neo4j)
 - ...
 
 ---
