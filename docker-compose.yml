@@ -4,6 +4,7 @@ services:
 
   api:
     build: .
+    entrypoint: ["/entrypoint.sh"]
     ports:
       - "8001:8001"
     env_file:
@@ -15,7 +16,7 @@ services:
 
   celery_worker:
     build: .
-    command: celery -A app.worker.celery_app worker --loglevel=info
+    command: celery -A app.celery.celery_app worker --loglevel=info
     env_file:
       - .env
     depends_on:
@@ -25,13 +26,24 @@ services:
 
   celery_beat:
     build: .
-    command: celery -A app.worker.celery_app beat --loglevel=info
+    command: celery -A app.celery.celery_app beat --loglevel=info
     env_file:
       - .env
     volumes:
       - celerybeat_data:/app/celerybeat
     depends_on:
       - db
+      - redis
+      - neo4j
+
+  flower:
+    build: .
+    command: celery -A app.celery.celery_app flower --port=5555
+    ports:
+      - "5555:5555"
+    env_file:
+      - .env
+    depends_on:
       - redis
       - neo4j
 
