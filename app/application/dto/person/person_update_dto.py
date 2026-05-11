@@ -43,10 +43,8 @@ class PersonUpdateResponseDTO(BaseModel):
 class PersonUpdateMapper(BaseModel):
     @staticmethod
     def to_response(person: Person) -> PersonUpdateResponseDTO:
-        assert person.id is not None
-
         return PersonUpdateResponseDTO(
-            id=person.id,
+            id=person.safe_id,
             name=person.name,
             gender=person.gender,
             birth_date=person.birth_date,

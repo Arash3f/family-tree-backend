@@ -1,7 +1,8 @@
-import pytest
 from datetime import date
 
-from app.domain.entities.person import Person, Gender
+import pytest
+
+from app.domain.entities.person import Gender, Person
 from app.domain.exceptions.marriage_exceptions import (
     InvalidMarriageGenderException,
     SelfMarriageException,
@@ -10,17 +11,15 @@ from app.domain.exceptions.marriage_exceptions import (
 from app.domain.services.marriage_rules import MarriageRulesService
 
 
-def create_person(**kwargs):
-    data = {
-        "id": 1,
-        "name": "Ali",
-        "gender": Gender.MALE,
-        "birth_date": date(2000, 1, 1),
-        "father_id": None,
-        "mother_id": None,
-    }
-    data.update(kwargs)
-    return Person(**data)
+def create_person(**overrides):
+    return Person(
+        id=overrides.get("id", 1),
+        name=overrides.get("name", "Ali"),
+        gender=overrides.get("gender", Gender.MALE),
+        birth_date=overrides.get("birth_date", date(2000, 1, 1)),
+        father_id=overrides.get("father_id"),
+        mother_id=overrides.get("mother_id"),
+    )
 
 
 def test_validate_marriage_success():

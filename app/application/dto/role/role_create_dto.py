@@ -19,8 +19,6 @@ class RoleCreateResponseDTO(BaseModel):
 class RoleCreateMapper(BaseModel):
     @staticmethod
     def to_response(role: Role) -> RoleCreateResponseDTO:
-        assert role.id is not None
-
         return RoleCreateResponseDTO(
-            id=role.id, name=role.name, permission_ids=role.permission_ids
+            id=role.safe_id, name=role.name, permission_ids=role.permission_ids
         )

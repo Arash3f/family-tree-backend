@@ -1,8 +1,9 @@
-import pytest
 from datetime import date, timedelta
 
-from app.domain.entities.person import Person, Gender
-from app.domain.exceptions.common import UnExpectedIdException
+import pytest
+
+from app.domain.entities.person import Gender, Person
+from app.domain.exceptions.common_exceptions import UnExpectedIdException
 from app.domain.exceptions.person_exceptions import (
     InvalidBirthDateException,
     SameParentException,
@@ -10,17 +11,15 @@ from app.domain.exceptions.person_exceptions import (
 )
 
 
-def create_person(**kwargs) -> Person:
-    data = {
-        "id": 1,
-        "name": "Ali",
-        "gender": Gender.MALE,
-        "birth_date": date(2000, 1, 1),
-        "father_id": None,
-        "mother_id": None,
-    }
-    data.update(kwargs)
-    return Person(**data)
+def create_person(**overrides):
+    return Person(
+        id=overrides.get("id", 1),
+        name=overrides.get("name", "Ali"),
+        gender=overrides.get("gender", Gender.MALE),
+        birth_date=overrides.get("birth_date", date(2000, 1, 1)),
+        father_id=overrides.get("father_id", None),
+        mother_id=overrides.get("mother_id", None),
+    )
 
 
 def test_birth_date_cannot_be_in_future():

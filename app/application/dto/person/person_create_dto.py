@@ -25,10 +25,8 @@ class PersonCreateResponseDTO(BaseModel):
 class PersonCreateMapper(BaseModel):
     @staticmethod
     def to_response(person: Person) -> PersonCreateResponseDTO:
-        assert person.id is not None
-
         return PersonCreateResponseDTO(
-            id=person.id,
+            id=person.safe_id,
             name=person.name,
             gender=person.gender,
             birth_date=person.birth_date,

@@ -1,5 +1,6 @@
-import pytest
 from datetime import date
+
+import pytest
 
 from app.domain.entities.marriage import Marriage
 from app.domain.exceptions.marriage_exceptions import (
@@ -9,17 +10,14 @@ from app.domain.exceptions.marriage_exceptions import (
 )
 
 
-def create_marriage(**kwargs) -> Marriage:
-    """Helper factory for creating Marriage entities in tests."""
-    data = {
-        "id": 1,
-        "husband_id": 1,
-        "wife_id": 2,
-        "married_at": date(2020, 1, 1),
-        "divorced_at": None,
-    }
-    data.update(kwargs)
-    return Marriage(**data)
+def create_marriage(**overrides):
+    return Marriage(
+        id=overrides.get("id", 1),
+        divorced_at=overrides.get("divorced_at", None),
+        married_at=overrides.get("married_at", date(2020, 1, 1)),
+        husband_id=overrides.get("husband_id", 1),
+        wife_id=overrides.get("wife_id", 2),
+    )
 
 
 def test_cannot_marry_self():
@@ -39,7 +37,7 @@ def test_divorce_before_marriage_not_allowed():
     marriage = create_marriage()
 
     with pytest.raises(DivorceBeforeMarriageException):
-        marriage.divorce(date(2019, 1, 1))
+        marriage.divorce(divorced_at=date(2019, 1, 1))
 
 
 def test_divorce_sets_divorce_date():

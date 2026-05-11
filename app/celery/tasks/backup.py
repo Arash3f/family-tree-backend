@@ -1,10 +1,14 @@
 import datetime
+import logging
 import os
-import subprocess
+import subprocess  # nosec B404
+from pathlib import Path
 
 from celery import shared_task
 
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 def backup_postgres():
@@ -14,27 +18,43 @@ def backup_postgres():
 
     os.makedirs(settings.BACKUP_DIR, exist_ok=True)
 
-    dump_file = os.path.join(settings.BACKUP_DIR, f"backup_{timestamp}.sql")
+    backup_dir = Path(settings.BACKUP_DIR)
+    dump_file = backup_dir / f"backup_{timestamp}.sql"
+
     cmd = [
         "pg_dump",
         "-U",
-        settings.POSTGRES_USER,
+        str(settings.POSTGRES_USER),
         "-h",
-        settings.POSTGRES_HOST,
+        str(settings.POSTGRES_HOST),
         "-p",
         str(settings.POSTGRES_PORT),
         "-F",
         "c",
         "-f",
-        dump_file,
-        settings.POSTGRES_DB,
+        str(dump_file),
+        str(settings.POSTGRES_DB),
     ]
 
+    logger.info(f"Starting backup to {dump_file}")
+
     try:
-        subprocess.run(cmd, check=True, env=env, timeout=600)
+        subprocess.run(
+            cmd, check=True, env=env, timeout=600, capture_output=True, text=True
+        )  # nosec B603
+        logger.info(f"Backup completed successfully: {dump_file}")
+
+        return str(dump_file)
+
+    except subprocess.TimeoutExpired:
+        logger.error("Backup timeout after 600 seconds")
+        raise RuntimeError("Backup timeout")
     except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"Backup failed: {e}")
-    return dump_file
+        logger.error(f"Backup failed with exit code {e.returncode}: {e.stderr}")
+        raise RuntimeError(f"Backup failed: {e.stderr}")
+    except Exception as e:
+        logger.error(f"Unexpected error during backup: {e}")
+        raise
 
 
 @shared_task(name="backup.database", bind=True, max_retries=5, retry_backoff=True)

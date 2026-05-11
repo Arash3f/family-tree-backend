@@ -1,3 +1,5 @@
+from typing import List
+
 from app.application.dto.role.role_create_dto import (
     RoleCreateDTO,
     RoleCreateMapper,
@@ -13,13 +15,13 @@ class CreateRoleUseCase:
 
     async def execute(self, dto: RoleCreateDTO) -> RoleCreateResponseDTO:
         async with self.uow:
-            permission_ids = []
+            permission_ids: List[int] = []
             if dto.permission_ids:
                 for perm_id in dto.permission_ids:
                     perm = await self.uow.permissions.get_or_raise(
                         permission_id=perm_id
                     )
-                    permission_ids.append(perm.id)
+                    permission_ids.append(perm.safe_id)
 
             role = Role(
                 name=dto.name,

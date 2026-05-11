@@ -15,9 +15,7 @@ class PermissionCreateResponseDTO(BaseModel):
 class PermissionCreateMapper(BaseModel):
     @staticmethod
     def to_response(permission: Permission) -> PermissionCreateResponseDTO:
-        assert permission.id is not None
-
         return PermissionCreateResponseDTO(
-            id=permission.id,
+            id=permission.safe_id,
             name=permission.name,
         )
