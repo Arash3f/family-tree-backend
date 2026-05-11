@@ -118,6 +118,11 @@ def neo4j_health():
     return {"neo4j": result[0]["ok"]}
 
 
+@app.get("/health")
+def health():
+    return {"neo4j": "OK"}
+
+
 # Middleware for request tracing
 app.add_middleware(TraceIDMiddleware)
 
