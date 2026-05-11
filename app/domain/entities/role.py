@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 
-from app.domain.exceptions.common import UnExpectedIdException
+from app.domain.exceptions.common_exceptions import UnExpectedIdException
 
 
 @dataclass

@@ -7,8 +7,8 @@ from app.domain.entities.user import User
 
 class UserUpdateField(str, Enum):
     USERNAME = "username"
-    PASSWORD = "password"  # pragma: allowlist secret
-    RE_PASSWORD = "re_password"  # pragma: allowlist secret
+    PASSWORD = "password"  # pragma: allowlist secret # nosec B105
+    RE_PASSWORD = "re_password"  # pragma: allowlist secret # nosec B105
     ROLE_ID = "role_id"
 
 
@@ -37,10 +37,8 @@ class UserUpdateResponseDTO(BaseModel):
 class UserUpdateMapper(BaseModel):
     @staticmethod
     def to_response(user: User) -> UserUpdateResponseDTO:
-        assert user.id is not None
-
         return UserUpdateResponseDTO(
-            id=user.id,
+            id=user.safe_id,
             username=user.username,
             role_id=user.role_id,
         )

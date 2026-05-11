@@ -1,17 +1,15 @@
 import pytest
 
 from app.domain.entities.role import Role
-from app.domain.exceptions.common import UnExpectedIdException
+from app.domain.exceptions.common_exceptions import UnExpectedIdException
 
 
-def create_role(**kwargs) -> Role:
-    data = {
-        "id": 1,
-        "name": "admin",
-        "permission_ids": [1, 2, 3],
-    }
-    data.update(kwargs)
-    return Role(**data)
+def create_role(**overrides):
+    return Role(
+        id=overrides.get("id", 1),
+        name=overrides.get("name", "admin"),
+        permission_ids=overrides.get("permission_ids", [1, 2, 3]),
+    )
 
 
 def test_duplicate_permissions_are_removed_on_init():

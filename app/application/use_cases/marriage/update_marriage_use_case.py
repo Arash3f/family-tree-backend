@@ -48,9 +48,9 @@ class UpdateMarriageUseCase:
                 needs_validation = True
 
             if MarriageUpdateField.MARRIAGE_AT in update_data_enum:
-                marriage.set_married_at = update_data_enum[
-                    MarriageUpdateField.MARRIAGE_AT
-                ]
+                marriage.set_married_at(
+                    update_data_enum[MarriageUpdateField.MARRIAGE_AT]
+                )
                 needs_validation = True
 
             if MarriageUpdateField.DIVORCE_AT in update_data_enum:

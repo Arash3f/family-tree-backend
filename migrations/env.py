@@ -16,11 +16,11 @@ config = context.config
 # ! -------------------------------------------
 # add your model's MetaData object here
 # for 'autogenerate' support
-from app.core.config import setting
+from app.core.config import settings
 from app.infrastructure.database.base import Base
 
 target_metadata = Base.metadata
-config.set_main_option("sqlalchemy.url", setting.database_url)
+config.set_main_option("sqlalchemy.url", settings.database_url)
 
 
 # Interpret the config file for Python logging.

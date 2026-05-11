@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from app.domain.exceptions.common import UnExpectedIdException
+from app.domain.exceptions.common_exceptions import UnExpectedIdException
 from app.domain.services.password_hasher import PasswordHasher
 
 

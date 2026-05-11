@@ -1,5 +1,4 @@
-from unittest.mock import AsyncMock, patch
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -17,9 +16,11 @@ async def test_create_role(mock_uow):
 
     perm_1 = MagicMock()
     perm_1.id = 1
+    perm_1.safe_id = 1
 
     perm_2 = MagicMock()
     perm_2.id = 2
+    perm_2.safe_id = 2
 
     mock_uow.permissions.get_or_raise = AsyncMock(side_effect=[perm_1, perm_2])
 
@@ -31,12 +32,14 @@ async def test_create_role(mock_uow):
     mock_uow.roles.create = AsyncMock(return_value=created_role)
 
     expected_result = MagicMock()
+    use_case = CreateRoleUseCase(mock_uow)
 
     with patch.object(
         RoleCreateMapper, "to_response", return_value=expected_result
     ) as mapper_mock:
-        use_case = CreateRoleUseCase(mock_uow)
         result = await use_case.execute(dto)
+
+    assert result == expected_result
 
     assert mock_uow.permissions.get_or_raise.await_count == 2
     mock_uow.permissions.get_or_raise.assert_any_await(permission_id=1)
@@ -50,8 +53,6 @@ async def test_create_role(mock_uow):
     assert created_role_arg.permission_ids == [1, 2]
 
     mapper_mock.assert_called_once_with(created_role)
-
-    assert result is expected_result
 
 
 @pytest.mark.asyncio

@@ -101,7 +101,7 @@ class SQLMarriageRepository(MarriageRepository):
 
         return self._to_entity(model)
 
-    async def get_by_ids(self, wife_id: int, husband_id: int) -> Marriage | None:
+    async def get_by_ids(self, husband_id: int, wife_id: int) -> Marriage | None:
         stmt = select(MarriageModel).where(
             MarriageModel.wife_id == wife_id,
             MarriageModel.husband_id == husband_id,

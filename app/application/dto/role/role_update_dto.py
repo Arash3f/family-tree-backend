@@ -33,9 +33,7 @@ class RoleUpdateResponseDTO(BaseModel):
 class RoleUpdateMapper(BaseModel):
     @staticmethod
     def to_response(role: Role) -> RoleUpdateResponseDTO:
-        assert role.id is not None
-
         return RoleUpdateResponseDTO(
-            id=role.id,
+            id=role.safe_id,
             name=role.name,
         )

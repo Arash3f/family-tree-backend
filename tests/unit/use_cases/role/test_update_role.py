@@ -1,13 +1,13 @@
+from unittest.mock import AsyncMock, MagicMock, call, patch
+
 import pytest
 
 from app.application.dto.role.role_update_dto import (
-    _RoleUpdateDataDTO,
-    _RoleUpdateWhereDTO,
     RoleUpdateDTO,
     RoleUpdateMapper,
+    _RoleUpdateDataDTO,
+    _RoleUpdateWhereDTO,
 )
-from unittest.mock import AsyncMock, MagicMock, patch, call
-
 from app.application.use_cases.role.update_role_use_case import UpdateRoleUseCase
 
 
@@ -28,9 +28,11 @@ async def test_update_role_success(mock_uow):
 
     perm_10 = MagicMock()
     perm_10.id = 10
+    perm_10.safe_id = 10
 
     perm_20 = MagicMock()
     perm_20.id = 20
+    perm_20.safe_id = 20
 
     updated_role = MagicMock()
     updated_role.id = 1
@@ -141,9 +143,11 @@ async def test_update_role_only_permission_ids(mock_uow):
 
     perm_10 = MagicMock(id=10)
     perm_10.id = 10
+    perm_10.safe_id = 10
 
     perm_20 = MagicMock(id=20)
     perm_20.id = 20
+    perm_20.safe_id = 20
 
     updated_role = MagicMock()
     updated_role.id = 1

@@ -1,20 +1,19 @@
-import pytest
 from unittest.mock import Mock
 
+import pytest
+
 from app.domain.entities.user import User
-from app.domain.exceptions.common import UnExpectedIdException
+from app.domain.exceptions.common_exceptions import UnExpectedIdException
 from app.domain.services.password_hasher import PasswordHasher
 
 
-def create_user(**kwargs):
-    data = {
-        "username": "arash",
-        "password_hash": "hashed_password",
-        "id": 1,
-        "role_id": 2,
-    }
-    data.update(kwargs)
-    return User(**data)
+def create_user(**overrides):
+    return User(
+        id=overrides.get("id", 1),
+        role_id=overrides.get("role_id", 2),
+        username=overrides.get("username", "arash"),
+        password_hash=overrides.get("password_hash", "hashed_password"),
+    )
 
 
 def test_verify_password_success():

@@ -46,7 +46,7 @@ async def test_create_and_get_marriage(uow: UnitOfWork):
         )
         marriage = await uow.marriages.create(new_marriage)
 
-        fetched = await uow.marriages.get(marriage.safe_id)
+        fetched = await uow.marriages.get_or_raise(marriage.safe_id)
 
         assert fetched.id == marriage.id
         assert fetched.divorced_at == new_marriage.divorced_at
@@ -626,7 +626,7 @@ async def test_end_marriage(uow: UnitOfWork):
         divorce_date = date(2023, 1, 1)
 
         await uow.marriages.end(marriage.safe_id, divorced_at=divorce_date)
-        updated = await uow.marriages.get(marriage_id=marriage.safe_id)
+        updated = await uow.marriages.get_or_raise(marriage_id=marriage.safe_id)
 
         assert updated.divorced_at == divorce_date
 

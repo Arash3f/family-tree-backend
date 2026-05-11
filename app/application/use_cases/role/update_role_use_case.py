@@ -1,3 +1,5 @@
+from typing import List
+
 from app.application.dto.role.role_update_dto import (
     RoleUpdateDTO,
     RoleUpdateField,
@@ -24,12 +26,12 @@ class UpdateRoleUseCase:
             permission_ids = update_data_enum.pop(RoleUpdateField.PERMISSION_IDS, None)
 
             if permission_ids is not None:
-                permissions = []
+                permissions: List[int] = []
                 for perm_id in permission_ids:
                     perm = await self.uow.permissions.get_or_raise(
                         permission_id=perm_id
                     )
-                    permissions.append(perm.id)
+                    permissions.append(perm.safe_id)
                 role.permission_ids = permissions
 
             for field, value in update_data_enum.items():

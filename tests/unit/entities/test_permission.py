@@ -1,7 +1,7 @@
 import pytest
 
 from app.domain.entities.permission import Permission
-from app.domain.exceptions.common import UnExpectedIdException
+from app.domain.exceptions.common_exceptions import UnExpectedIdException
 
 
 def test_safe_id_returns_id_when_present():

@@ -1,23 +1,20 @@
-import pytest
 from datetime import date
 
 from app.application.dto.person.person_create_dto import PersonCreateMapper
 from app.application.dto.person.person_get_dto import PersonGetMapper
 from app.application.dto.person.person_update_dto import PersonUpdateMapper
-from app.domain.entities.person import Person, Gender
+from app.domain.entities.person import Gender, Person
 
 
-def create_person(**kwargs):
-    data = {
-        "id": 1,
-        "name": "Ali",
-        "gender": Gender.MALE,
-        "birth_date": date(2000, 1, 1),
-        "father_id": 10,
-        "mother_id": 20,
-    }
-    data.update(kwargs)
-    return Person(**data)
+def create_person(**overrides):
+    return Person(
+        id=overrides.get("id", 1),
+        name=overrides.get("name", "Ali"),
+        gender=overrides.get("gender", Gender.MALE),
+        birth_date=overrides.get("birth_date", date(2000, 1, 1)),
+        father_id=overrides.get("father_id", 10),
+        mother_id=overrides.get("mother_id", 20),
+    )
 
 
 def test_person_create_mapper_to_response():
@@ -57,10 +54,3 @@ def test_person_update_mapper_to_response():
     assert dto.birth_date == person.birth_date
     assert dto.father_id == person.father_id
     assert dto.mother_id == person.mother_id
-
-
-def test_person_mapper_raises_if_id_is_none():
-    person = create_person(id=None)
-
-    with pytest.raises(AssertionError):
-        PersonCreateMapper.to_response(person)

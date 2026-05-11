@@ -22,10 +22,8 @@ class MarriageCreateResponseDTO(BaseModel):
 class MarriageCreateMapper(BaseModel):
     @staticmethod
     def to_response(marriage: Marriage) -> MarriageCreateResponseDTO:
-        assert marriage.id is not None
-
         return MarriageCreateResponseDTO(
-            id=marriage.id,
+            id=marriage.safe_id,
             husband_id=marriage.husband_id,
             wife_id=marriage.wife_id,
             married_at=marriage.married_at,
