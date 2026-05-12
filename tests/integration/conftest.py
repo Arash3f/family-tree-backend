@@ -82,4 +82,6 @@ async def session_factory(db_connection):
 
 @pytest_asyncio.fixture
 async def uow(session_factory):
-    yield SQLAlchemyUnitOfWork(session_factory=session_factory)
+    uow = SQLAlchemyUnitOfWork(session_factory=session_factory)
+    async with uow:
+        yield uow
