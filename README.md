@@ -175,9 +175,9 @@ The following features are planned or not yet fully implemented:
 - ☐ Neo4j Integration test
 - ☐ Fix docker action errors!
 - ☐ E2E test:
-  - ☐ permission
+  - ✅ permission
   - ☐ auth
-  - ☐ role
+  - ✅ role
   - ☐ user
   - ☐ person (+Neo4j)
   - ☐ marriage (+Neo4j)
