@@ -1,15 +1,10 @@
-import pytest
+import pytest_asyncio
 from httpx import AsyncClient
 
 from app.core.config import settings
-from app.domain.entities.user import User
-from app.infrastructure.services.security.password_hasher_impl import (
-    Argon2PasswordHasher,
-)
-from app.infrastructure.services.unit_of_work.sqlalchemy_uow import SQLAlchemyUnitOfWork
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def admin_headers(client: AsyncClient) -> dict[str, str]:
     login_payload = {
         "username": settings.ADMIN_USERNAME,
@@ -29,18 +24,8 @@ async def admin_headers(client: AsyncClient) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
-@pytest.fixture
-async def member_headers(client: AsyncClient, session_factory):
-    hasher = Argon2PasswordHasher()
-    hashed_password = hasher.hash("member_user")
-
-    async with SQLAlchemyUnitOfWork(session_factory=session_factory) as uow:
-        user = User(username="member_user", password_hash=hashed_password)
-
-        await uow.users.create(user)
-
-        await uow.session.flush()
-
+@pytest_asyncio.fixture
+async def member_headers(client: AsyncClient):
     login_payload = {
         "username": "member_user",
         "password": "member_user",
@@ -49,7 +34,11 @@ async def member_headers(client: AsyncClient, session_factory):
     response = await client.post("/auth/login", data=login_payload)
 
     assert response.status_code == 200, response.text
-    data = response.json()
-    assert "access_token" in data
 
-    return {"Authorization": f"Bearer {data['access_token']}"}
+    data = response.json()
+
+    assert "access_token" in data, "Login response missing access_token"
+
+    token = data["access_token"]
+
+    return {"Authorization": f"Bearer {token}"}

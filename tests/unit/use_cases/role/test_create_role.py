@@ -12,7 +12,7 @@ from app.domain.entities.role import Role
 
 @pytest.mark.asyncio
 async def test_create_role(mock_uow):
-    dto = RoleCreateDTO(name="admin", permission_ids=[1, 2])
+    dto = RoleCreateDTO(name="adasdasda", permission_ids=[1, 2])
 
     perm_1 = MagicMock()
     perm_1.id = 1
@@ -25,11 +25,11 @@ async def test_create_role(mock_uow):
     mock_uow.permissions.get_or_raise = AsyncMock(side_effect=[perm_1, perm_2])
 
     created_role = Role(
-        id=10,
-        name="admin",
-        permission_ids=[1, 2],
+        name=dto.name,
+        permission_ids=dto.permission_ids,
     )
     mock_uow.roles.create = AsyncMock(return_value=created_role)
+    mock_uow.roles.is_role_name_duplicated = AsyncMock(return_value=False)
 
     expected_result = MagicMock()
     use_case = CreateRoleUseCase(mock_uow)
@@ -49,8 +49,8 @@ async def test_create_role(mock_uow):
 
     assert mock_uow.roles.create.await_args is not None
     created_role_arg = mock_uow.roles.create.await_args.args[0]
-    assert created_role_arg.name == "admin"
-    assert created_role_arg.permission_ids == [1, 2]
+    assert created_role_arg.name == dto.name
+    assert created_role_arg.permission_ids == dto.permission_ids
 
     mapper_mock.assert_called_once_with(created_role)
 
@@ -61,6 +61,7 @@ async def test_create_role_without_permissions(mock_uow):
     created_role = Role(id=10, name="admin", permission_ids=[])
 
     mock_uow.roles.create = AsyncMock(return_value=created_role)
+    mock_uow.roles.is_role_name_duplicated = AsyncMock(return_value=False)
 
     expected_result = MagicMock()
 

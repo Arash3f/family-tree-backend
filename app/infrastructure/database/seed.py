@@ -46,34 +46,10 @@ async def seed_initial_user(uow: UnitOfWork, password_hasher: Argon2PasswordHash
 
 async def seed_initial_permissions(uow: UnitOfWork):
     async with uow:
-        permissions = [
-            # User:
-            Permission(name=Permissions.USER_CREATE),
-            Permission(name=Permissions.USER_DELETE),
-            Permission(name=Permissions.USER_READ),
-            Permission(name=Permissions.USER_UPDATE),
-            # Role:
-            Permission(name=Permissions.ROLE_CREATE),
-            Permission(name=Permissions.ROLE_DELETE),
-            Permission(name=Permissions.ROLE_READ),
-            Permission(name=Permissions.ROLE_UPDATE),
-            # Permission:
-            Permission(name=Permissions.PERMISSION_READ),
-            # Marriage:
-            Permission(name=Permissions.MARRIAGE_CREATE),
-            Permission(name=Permissions.MARRIAGE_READ),
-            Permission(name=Permissions.MARRIAGE_UPDATE),
-            Permission(name=Permissions.MARRIAGE_DELETE),
-            Permission(name=Permissions.MARRIAGE_DIVORCE),
-            # Person:
-            Permission(name=Permissions.PERSON_CREATE),
-            Permission(name=Permissions.PERSON_READ),
-            Permission(name=Permissions.PERSON_UPDATE),
-            Permission(name=Permissions.PERSON_DELETE),
-        ]
-        for perm in permissions:
-            permission = await uow.permissions.get_by_name(perm.name)
+        for perm_name in Permissions.get_all_permissions():
+            permission = await uow.permissions.get_by_name(perm_name)
             if not permission:
+                perm = Permission(name=perm_name)
                 await uow.permissions.create(perm)
 
         await uow.commit()

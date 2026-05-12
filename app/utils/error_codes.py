@@ -42,6 +42,7 @@ class ErrorCode(int, Enum):
     # |     Role Person     |
     # -----------------------
     ROLE_NOT_FOUND = 1500
+    ROLE_NAME_DUPLICATED = 1501
 
 
 ERROR_MESSAGES = {
@@ -74,6 +75,7 @@ ERROR_MESSAGES = {
         ErrorCode.USER_PASSWORD_INCORECT: "User password incorect",
         # Domain Role
         ErrorCode.ROLE_NOT_FOUND: "Role not found",
+        ErrorCode.ROLE_NAME_DUPLICATED: "Role name duplicated",
     },
     "fa": {
         ErrorCode.UN_EXPECTED_ID: "شناسه غیرمنتظره",
@@ -104,5 +106,6 @@ ERROR_MESSAGES = {
         ErrorCode.USER_PASSWORD_INCORECT: "رمز کاربر اشتباه است",
         # Domain Role
         ErrorCode.ROLE_NOT_FOUND: "نقش پیدا نشد",
+        ErrorCode.ROLE_NAME_DUPLICATED: "اسم نقش تکراری است",
     },
 }

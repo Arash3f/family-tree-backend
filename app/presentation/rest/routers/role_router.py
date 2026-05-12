@@ -30,6 +30,7 @@ router = APIRouter(prefix="/roles", tags=["Roles"])
     "/",
     response_model=RoleCreateResponse,
     dependencies=[Depends(RequirePermission(Permissions.ROLE_CREATE))],
+    status_code=201,
 )
 async def create_role(
     data: RoleCreateRequest,

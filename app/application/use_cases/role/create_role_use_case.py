@@ -7,6 +7,7 @@ from app.application.dto.role.role_create_dto import (
 )
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.entities.role import Role
+from app.domain.exceptions.role_exceptions import RoleNameDuplicatedException
 
 
 class CreateRoleUseCase:
@@ -15,6 +16,13 @@ class CreateRoleUseCase:
 
     async def execute(self, dto: RoleCreateDTO) -> RoleCreateResponseDTO:
         async with self.uow:
+            is_duplicated = await self.uow.roles.is_role_name_duplicated(
+                role_name=dto.name
+            )
+
+            if is_duplicated:
+                raise RoleNameDuplicatedException()
+
             permission_ids: List[int] = []
             if dto.permission_ids:
                 for perm_id in dto.permission_ids:

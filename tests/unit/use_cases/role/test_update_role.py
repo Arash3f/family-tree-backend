@@ -42,6 +42,7 @@ async def test_update_role_success(mock_uow):
     mock_uow.roles.get_or_raise = AsyncMock(return_value=existing_role)
     mock_uow.permissions.get_or_raise = AsyncMock(side_effect=[perm_10, perm_20])
     mock_uow.roles.update = AsyncMock(return_value=updated_role)
+    mock_uow.roles.is_role_name_duplicated = AsyncMock(return_value=False)
     mock_uow.commit = AsyncMock()
 
     expected_result = MagicMock()
@@ -98,6 +99,7 @@ async def test_update_role_without_permission_ids(mock_uow):
     mock_uow.roles.get_or_raise = AsyncMock(return_value=existing_role)
     mock_uow.permissions.get_or_raise = AsyncMock()
     mock_uow.roles.update = AsyncMock(return_value=updated_role)
+    mock_uow.roles.is_role_name_duplicated = AsyncMock(return_value=False)
     mock_uow.commit = AsyncMock()
 
     expected_result = MagicMock()

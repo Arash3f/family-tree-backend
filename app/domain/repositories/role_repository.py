@@ -53,3 +53,8 @@ class RoleRepository(ABC):
             raise RoleNotFoundException(detail=[f"role id is {role_id}"])
         else:
             return role
+
+    @abstractmethod
+    async def is_role_name_duplicated(
+        self, role_name: str, exception_role_id: int | None = None
+    ) -> bool: ...

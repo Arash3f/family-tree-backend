@@ -39,3 +39,4 @@ def test_role_update_mapper_to_response():
 
     assert dto.id == role.id
     assert dto.name == role.name
+    assert dto.permission_ids == role.permission_ids
