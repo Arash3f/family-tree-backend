@@ -152,3 +152,50 @@ async def test_delete_role(uow: UnitOfWork):
 
         fetched = await uow.roles.get(role.safe_id)
         assert fetched is None
+
+
+@pytest.mark.asyncio
+async def test_role_name_duplicated_with_exception(uow: UnitOfWork):
+    async with uow:
+        role_1 = await uow.roles.create(Role(id=None, name="role_1", permission_ids=[]))
+        role_2 = await uow.roles.create(Role(id=None, name="role_2", permission_ids=[]))
+
+        result = await uow.roles.is_role_name_duplicated(
+            role_name=role_1.name, exception_role_id=role_2.id
+        )
+
+        assert result is True
+
+
+@pytest.mark.asyncio
+async def test_role_name_duplicated(uow: UnitOfWork):
+    async with uow:
+        role_1 = await uow.roles.create(Role(id=None, name="role_1", permission_ids=[]))
+        await uow.roles.create(Role(id=None, name="role_2", permission_ids=[]))
+
+        result = await uow.roles.is_role_name_duplicated(role_name=role_1.name)
+
+        assert result is True
+
+
+@pytest.mark.asyncio
+async def test_role_name_not_duplicated_with_exception(uow: UnitOfWork):
+    async with uow:
+        await uow.roles.create(Role(id=None, name="role_1", permission_ids=[]))
+        role_2 = await uow.roles.create(Role(id=None, name="role_2", permission_ids=[]))
+
+        result = await uow.roles.is_role_name_duplicated(
+            role_name=role_2.name, exception_role_id=role_2.id
+        )
+
+        assert result is False
+
+
+@pytest.mark.asyncio
+async def test_role_name_not_duplicated(uow: UnitOfWork):
+    async with uow:
+        await uow.roles.create(Role(id=None, name="role_1", permission_ids=[]))
+
+        result = await uow.roles.is_role_name_duplicated(role_name="test")
+
+        assert result is False

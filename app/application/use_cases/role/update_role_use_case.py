@@ -7,6 +7,7 @@ from app.application.dto.role.role_update_dto import (
     RoleUpdateResponseDTO,
 )
 from app.application.interfaces.unit_of_work import UnitOfWork
+from app.domain.exceptions.role_exceptions import RoleNameDuplicatedException
 
 
 class UpdateRoleUseCase:
@@ -15,6 +16,13 @@ class UpdateRoleUseCase:
 
     async def execute(self, dto: RoleUpdateDTO) -> RoleUpdateResponseDTO:
         async with self.uow:
+            if dto.data.name:
+                is_role_name_duplicated = await self.uow.roles.is_role_name_duplicated(
+                    exception_role_id=dto.where.role_id, role_name=dto.data.name
+                )
+                if is_role_name_duplicated:
+                    raise RoleNameDuplicatedException()
+
             role = await self.uow.roles.get_or_raise(role_id=dto.where.role_id)
 
             update_data = dto.data.model_dump(exclude_unset=True, exclude_none=True)

@@ -1,3 +1,6 @@
+from typing import List
+
+
 class Permissions:
     USER_CREATE = "user_create"
     USER_DELETE = "user_delete"
@@ -21,3 +24,15 @@ class Permissions:
     PERSON_READ = "person_read"
     PERSON_UPDATE = "person_update"
     PERSON_DELETE = "person_delete"
+
+    @classmethod
+    def get_all_permissions(cls) -> List[str]:
+        return [
+            value
+            for name, value in vars(cls).items()
+            if not name.startswith("_") and isinstance(value, str)
+        ]
+
+    @classmethod
+    def get_count(cls) -> int:
+        return len(cls.get_all_permissions())

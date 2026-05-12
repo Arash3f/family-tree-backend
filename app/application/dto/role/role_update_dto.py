@@ -28,6 +28,7 @@ class RoleUpdateDTO(BaseModel):
 class RoleUpdateResponseDTO(BaseModel):
     id: int
     name: str
+    permission_ids: List[int]
 
 
 class RoleUpdateMapper(BaseModel):
@@ -36,4 +37,5 @@ class RoleUpdateMapper(BaseModel):
         return RoleUpdateResponseDTO(
             id=role.safe_id,
             name=role.name,
+            permission_ids=role.permission_ids,
         )

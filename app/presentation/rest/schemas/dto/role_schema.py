@@ -12,7 +12,7 @@ from app.presentation.rest.schemas.dto.common import (
 class RoleModel(BaseModel):
     id: int
     name: str
-    permission_ids: List[int] | None = []
+    permission_ids: List[int] = []
 
 
 class _RoleUpdateDateRequest(BaseModel):

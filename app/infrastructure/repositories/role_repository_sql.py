@@ -127,6 +127,20 @@ class SQLRoleRepository(RoleRepository):
 
         await self.session.execute(stmt)
 
+    async def is_role_name_duplicated(
+        self, role_name: str, exception_role_id: int | None = None
+    ) -> bool:
+        stmt = select(RoleModel.id).where(RoleModel.name == role_name)
+
+        if exception_role_id:
+            stmt = stmt.where(RoleModel.id != exception_role_id)
+
+        stmt = stmt.limit(1)
+
+        result = await self.session.execute(stmt)
+
+        return result.first() is not None
+
     def _to_entity(self, model: RoleModel) -> Role:
         permission_ids = [p.id for p in model.permissions]
         return Role(
