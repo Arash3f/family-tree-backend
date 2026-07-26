@@ -2,7 +2,7 @@
 
 Production-oriented backend for managing family trees: people, marriages, and graph relationships.
 
-Built with **FastAPI** and **Clean Architecture**. **PostgreSQL** is the source of truth for transactional data; **Neo4j** stores parent/spouse edges for traversals such as shortest-path (closest relationship) queries. Background work runs on **Celery** + **Redis**.
+Built with **FastAPI** and **Clean Architecture**. Exposes both **REST** and **GraphQL** APIs over the same use cases. **PostgreSQL** is the source of truth for transactional data; **Neo4j** stores parent/spouse edges for traversals such as shortest-path (closest relationship) queries. Background work runs on **Celery** + **Redis**.
 
 | | |
 |---|---|
@@ -21,6 +21,7 @@ Built with **FastAPI** and **Clean Architecture**. **PostgreSQL** is the source 
 - [Local development](#local-development)
 - [Configuration](#configuration)
 - [API overview](#api-overview)
+- [GraphQL API](#graphql-api)
 - [Authentication & authorization](#authentication--authorization)
 - [Background jobs](#background-jobs)
 - [Testing & quality](#testing--quality)
@@ -35,14 +36,15 @@ Built with **FastAPI** and **Clean Architecture**. **PostgreSQL** is the source 
 ## Features
 
 - Hybrid persistence: PostgreSQL (CRUD, auth, history) + Neo4j (graph edges & path queries)
-- Closest relationship between two people: `GET /persons/{from_id}/relation/{to_id}`
-- JWT auth with access + refresh tokens
+- Dual API surface: REST routers + GraphQL (Strawberry) sharing the same application layer
+- Closest relationship between two people: REST `GET /persons/{from_id}/relation/{to_id}` or GraphQL `closestRelationship`
+- JWT auth with access + refresh tokens (same tokens for REST and GraphQL)
 - Role-based access control (permissions on roles)
 - Async SQLAlchemy + Alembic migrations
 - Celery sync of person/marriage changes into Neo4j after commit
 - Scheduled database backups via Celery Beat
 - Docker stack under `docker/` (full or app-only Compose; multi-stage image)
-- Bruno collection for manual API testing
+- Bruno collection for manual REST API testing
 - CI: Ruff, mypy, Bandit, Pytest (GitHub Actions)
 
 ---
@@ -50,28 +52,30 @@ Built with **FastAPI** and **Clean Architecture**. **PostgreSQL** is the source 
 ## Architecture
 
 ```
-┌─────────────┐     ┌──────────────────┐     ┌─────────────┐
-│  FastAPI    │────▶│  Use cases /     │────▶│ PostgreSQL  │
-│  (HTTP)     │     │  domain services │     │ (source of  │
-└─────────────┘     └────────┬─────────┘     │  truth)     │
-                             │               └─────────────┘
-                             │ commit OK
-                             ▼
-                    ┌──────────────────┐     ┌─────────────┐
-                    │ Celery (Redis)   │────▶│   Neo4j     │
-                    │ sync + backup    │     │ (graph)     │
-                    └──────────────────┘     └─────────────┘
+┌──────────────────────┐     ┌──────────────────┐     ┌─────────────┐
+│ FastAPI              │────▶│  Use cases /     │────▶│ PostgreSQL  │
+│  REST + GraphQL      │     │  domain services │     │ (source of  │
+└──────────────────────┘     └────────┬─────────┘     │  truth)     │
+                                      │               └─────────────┘
+                                      │ commit OK
+                                      ▼
+                             ┌──────────────────┐     ┌─────────────┐
+                             │ Celery (Redis)   │────▶│   Neo4j     │
+                             │ sync + backup    │     │ (graph)     │
+                             └──────────────────┘     └─────────────┘
 ```
 
 ### Layers
 
 | Layer | Responsibility |
 |--------|----------------|
-| **Presentation** | Routers, Pydantic schemas, auth/permission guards, mappers |
+| **Presentation** | REST routers + GraphQL schema/resolvers, Pydantic/Strawberry schemas, auth/permission guards, mappers |
 | **Application** | Use cases, DTOs, authorization & graph-sync services |
 | **Domain** | Entities, invariants, repository ports, marriage rules |
 | **Infrastructure** | SQLAlchemy, Neo4j client, JWT/Argon2, Unit of Work, Celery |
 | **Celery** | Person/relationship sync tasks, scheduled backups |
+
+REST and GraphQL both call the same use cases and permission checks; they stay behaviorally in sync.
 
 ### Data ownership
 
@@ -88,7 +92,7 @@ After a successful Postgres commit, the application enqueues Celery tasks to mir
 
 | Area | Choice |
 |------|--------|
-| API | FastAPI, Uvicorn |
+| API | FastAPI, Uvicorn, Strawberry GraphQL |
 | ORM / DB | SQLAlchemy 2 (async), asyncpg, Alembic, PostgreSQL 15 |
 | Graph | Neo4j 5 |
 | Queue | Celery, Redis 8, Flower |
@@ -156,6 +160,7 @@ The API entrypoint waits for Postgres, runs `alembic upgrade head`, then starts 
 | Swagger UI | http://localhost:8001/api_docs |
 | ReDoc | http://localhost:8001/redoc |
 | OpenAPI JSON | http://localhost:8001/openapi.json |
+| GraphQL (GraphiQL) | http://localhost:8001/graphql |
 | Health | http://localhost:8001/health |
 | Neo4j Browser | http://localhost:7474 |
 | Flower | http://localhost:5555 |
@@ -260,11 +265,13 @@ Managed via environment variables / `.env` (`app/core/config.py`).
 
 ## API overview
 
+### REST
+
 Interactive docs: [/api_docs](http://localhost:8001/api_docs).
 
 | Prefix | Resources |
 |--------|-----------|
-| `/auth` | `POST /login`, `POST /refresh`, `GET /me` |
+| `/auth` | `POST /login`, `POST /refresh`, `POST /logout`, `POST /logout-all`, `GET /me` |
 | `/users` | User CRUD (permission-guarded) |
 | `/roles` | Role CRUD |
 | `/permissions` | Permission listing |
@@ -282,14 +289,53 @@ Authorization: Bearer <access_token>
 
 Returns path distance, node IDs, and relationship types when a path exists in Neo4j (requires prior sync).
 
+### GraphQL API
+
+Endpoint: [`POST /graphql`](http://localhost:8001/graphql) (GraphiQL UI in browser).
+
+GraphQL mirrors REST: same use cases, JWT auth (`Authorization: Bearer <access_token>`), and permission codes.
+
+| GraphQL | REST equivalent |
+|---------|-----------------|
+| `login` / `refreshToken` / `logout` / `logoutAll` / `me` | `/auth/*` |
+| `person` / `persons` / `createPerson` / `updatePerson` / `deletePerson` / `closestRelationship` | `/persons/*` |
+| `user` / `users` / `createUser` / `updateUser` / `deleteUser` | `/users/*` |
+| `role` / `roles` / `createRole` / `updateRole` / `deleteRole` | `/roles/*` |
+| `permissions` | `/permissions/list` |
+| `marriage` / `marriages` / `createMarriage` / `updateMarriage` / `deleteMarriage` / `divorce` | `/marriages/*` |
+
+Example login + create person:
+
+```graphql
+mutation {
+  login(username: "admin", password: "admin") {
+    accessToken
+    refreshToken
+  }
+}
+
+mutation {
+  createPerson(data: { name: "Ali", gender: MALE, birthDate: "1375/05/10" }) {
+    id
+    name
+    gender
+    birthDate
+  }
+}
+```
+
+Send the access token as `Authorization: Bearer …` on subsequent GraphQL requests (same as REST).
+
+Domain errors surface as GraphQL `errors[]` with `extensions.error_code`, `extensions.status`, and localized `message` (aligned with REST error payloads).
+
 ---
 
 ## Authentication & authorization
 
-1. `POST /auth/login` with OAuth2 form fields `username` and `password`
-2. Use `access_token` as `Authorization: Bearer …` on protected routes
-3. `POST /auth/refresh` with JSON `{ "refresh_token": "…" }` to rotate tokens
-4. `POST /auth/logout` revokes the current session; `POST /auth/logout-all` revokes every session for the user
+1. `POST /auth/login` with OAuth2 form fields `username` and `password` (or GraphQL `login`)
+2. Use `access_token` as `Authorization: Bearer …` on protected REST routes and GraphQL operations
+3. `POST /auth/refresh` with JSON `{ "refresh_token": "…" }` (or GraphQL `refreshToken`) to rotate tokens
+4. `POST /auth/logout` / GraphQL `logout` revokes the current session; `logout-all` / `logoutAll` revokes every session for the user
 5. Refresh tokens are **not** accepted as API access tokens
 
 ### Session security
@@ -302,7 +348,7 @@ Refresh tokens are tracked in `user_sessions`:
 - Access tokens carry `sid` (session id); revoked sessions cannot call protected APIs
 - Optional metadata: `user_agent`, `ip_address`
 
-Permissions are attached to roles (e.g. `person_create`, `marriage_divorce`). Endpoint guards use `RequirePermission(...)`.
+Permissions are attached to roles (e.g. `person_create`, `marriage_divorce`). REST uses `RequirePermission(...)`; GraphQL uses the same permission strings via resolver guards.
 
 On startup the app seeds permissions and ensures the configured admin user/role exist.
 
@@ -340,6 +386,8 @@ Test layout:
 - `tests/unit` — entities, use cases, mappers, services
 - `tests/integration` — SQL repositories; Neo4j repository (skips if Neo4j is unreachable)
 - `tests/e2e` — HTTP API via ASGI (graph sync stubbed so Redis is not required)
+  - `tests/e2e/routers` — REST
+  - `tests/e2e/graphql` — GraphQL (`POST /graphql`)
 
 Pre-commit hooks and Commitizen are configured for local quality gates (`pre-commit install`).
 
@@ -352,13 +400,15 @@ app/
   application/     # Use cases, DTOs, application services
   domain/          # Entities, exceptions, repository interfaces
   infrastructure/  # DB models, SQL/Neo4j repos, security, UoW
-  presentation/    # FastAPI routers, schemas, dependencies
+  presentation/
+    rest/          # FastAPI routers, schemas, dependencies
+    graphql/       # Strawberry schema, types, resolvers (synced with REST)
   celery/          # Celery app and tasks
   core/            # Settings
 docker/            # Dockerfile, entrypoint, Compose stacks
 bruno/             # Bruno API collection
 migrations/        # Alembic revisions
-tests/             # unit / integration / e2e
+tests/             # unit / integration / e2e (REST + GraphQL)
 ```
 
 ---
@@ -401,6 +451,7 @@ Optional family sample data:
 - [ ] Observability (structured metrics / OpenTelemetry)
 - [ ] Non-destructive migration path for UUID upgrades with existing data
 - [ ] Broader e2e coverage with live Neo4j assertions
+- [x] GraphQL API synced with REST
 
 ---
 

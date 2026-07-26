@@ -75,7 +75,8 @@ docker compose -f docker/compose.full.yml --env-file .env exec api sh
 
 | Service | Port |
 |---------|------|
-| API | `8001` |
+| API (REST + GraphQL) | `8001` |
+| GraphQL / GraphiQL | `http://localhost:8001/graphql` |
 | Flower | `5555` |
 | Postgres | `5432` |
 | Redis | `6379` |

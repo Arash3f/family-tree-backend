@@ -6,8 +6,8 @@ from app.application.services.family_tree_sync_service import FamilyTreeSyncServ
 from app.domain.entities.person import Gender, Person
 
 
-def _person(**kwargs) -> Person:
-    defaults = {
+def _person(**kwargs: object) -> Person:
+    defaults: dict[str, object] = {
         "id": UUID(int=10),
         "name": "Ali",
         "gender": Gender.MALE,
@@ -17,7 +17,15 @@ def _person(**kwargs) -> Person:
         "mother_id": None,
     }
     defaults.update(kwargs)
-    return Person(**defaults)
+    return Person(
+        id=defaults["id"],  # type: ignore[arg-type]
+        name=defaults["name"],  # type: ignore[arg-type]
+        gender=defaults["gender"],  # type: ignore[arg-type]
+        birth_date=defaults["birth_date"],  # type: ignore[arg-type]
+        death_date=defaults["death_date"],  # type: ignore[arg-type]
+        father_id=defaults["father_id"],  # type: ignore[arg-type]
+        mother_id=defaults["mother_id"],  # type: ignore[arg-type]
+    )
 
 
 def test_upsert_person_with_parents_enqueues_chain():

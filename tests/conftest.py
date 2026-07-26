@@ -31,7 +31,7 @@ def _effective(key: str, default: str | None = None) -> str | None:
     return os.environ.get(key) or _dotenv_get(key) or default
 
 
-def pytest_configure():
+def _remap_docker_dns_for_host():
     pg_host = _effective("POSTGRES_HOST_TEST") or _effective("POSTGRES_HOST", "db")
     if pg_host and not _host_resolves(pg_host):
         os.environ["POSTGRES_HOST"] = "127.0.0.1"
@@ -51,3 +51,11 @@ def pytest_configure():
         if neo_host and not _host_resolves(neo_host):
             # docker/compose.ci-local.yml publishes Bolt on 17687
             os.environ["NEO4J_URI"] = "bolt://127.0.0.1:17687"
+
+
+# Must run at import time so env is fixed before Settings / engines load.
+_remap_docker_dns_for_host()
+
+
+def pytest_configure():
+    _remap_docker_dns_for_host()

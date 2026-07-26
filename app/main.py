@@ -15,6 +15,7 @@ from app.infrastructure.services.security.password_hasher_impl import (
     Argon2PasswordHasher,
 )
 from app.infrastructure.utils.logging import configure_logging
+from app.presentation.graphql.schema import graphql_router
 from app.presentation.rest.errors.handlers import app_exception_handler
 from app.presentation.rest.routers.auth_router import router as auth_router
 from app.presentation.rest.routers.marriage_router import router as marriage_router
@@ -182,6 +183,7 @@ app.include_router(user_router)
 app.include_router(permission_router)
 app.include_router(role_router)
 app.include_router(auth_router)
+app.include_router(graphql_router)
 
 # Configure application logging
 configure_logging()
