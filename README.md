@@ -41,7 +41,7 @@ Built with **FastAPI** and **Clean Architecture**. **PostgreSQL** is the source 
 - Async SQLAlchemy + Alembic migrations
 - Celery sync of person/marriage changes into Neo4j after commit
 - Scheduled database backups via Celery Beat
-- Docker Compose stack (API, worker, beat, Flower, Postgres, Redis, Neo4j)
+- Docker stack under `docker/` (full or app-only Compose; multi-stage image)
 - Bruno collection for manual API testing
 - CI: Ruff, mypy, Bandit, Pytest (GitHub Actions)
 
@@ -102,11 +102,50 @@ After a successful Postgres commit, the application enqueues Celery tasks to mir
 
 **Requirements:** Docker and Docker Compose.
 
+All Docker assets live under [`docker/`](docker/README.md).
+
 ```bash
 cp .env.example .env
 # Edit .env if needed. JWT_SECRET must be at least 32 characters.
+```
 
-docker compose up --build
+### Full stack (all services)
+
+Starts API, Celery worker/beat, Flower, Postgres, Redis, and Neo4j.
+
+```bash
+docker compose -f docker/compose.full.yml --env-file .env up --build
+```
+
+`.env.example` already uses Docker DNS names (`db`, `redis`, `neo4j`) for this mode.
+
+### App only
+
+Starts only the project containers (API, Celery worker/beat, Flower).
+
+**A) Infra on the host** (Postgres/Redis/Neo4j installed locally):
+
+```bash
+docker compose -f docker/compose.app.yml --env-file .env up --build
+```
+
+Defaults use `host.docker.internal`. Override with `APP_POSTGRES_HOST`, `APP_CELERY_BROKER_URL`, `APP_CELERY_RESULT_BACKEND`, `APP_NEO4J_URI` if needed.
+
+**B) Infra from full Compose** (only `db` / `redis` / `neo4j` already up):
+
+```bash
+docker compose -f docker/compose.full.yml --env-file .env up -d db redis neo4j
+docker compose -f docker/compose.app.yml -f docker/compose.app.with-infra.yml --env-file .env up --build
+```
+
+With Docker DNS overrides:
+
+```bash
+# PowerShell
+$env:APP_POSTGRES_HOST="db"
+$env:APP_CELERY_BROKER_URL="redis://redis:6379/0"
+$env:APP_CELERY_RESULT_BACKEND="redis://redis:6379/1"
+$env:APP_NEO4J_URI="bolt://neo4j:7687"
 ```
 
 The API entrypoint waits for Postgres, runs `alembic upgrade head`, then starts Uvicorn.
@@ -132,7 +171,7 @@ Change these before any shared or production-like environment.
 
 ## Local development
 
-Run Postgres, Neo4j, and Redis yourself (or start only those services via Compose), then run the API and workers on the host.
+Run Postgres, Neo4j, and Redis yourself (or start them via the full Compose stack and stop the app services), then run the API and workers on the host.
 
 ### 1. Dependencies
 
@@ -316,6 +355,7 @@ app/
   presentation/    # FastAPI routers, schemas, dependencies
   celery/          # Celery app and tasks
   core/            # Settings
+docker/            # Dockerfile, entrypoint, Compose stacks
 bruno/             # Bruno API collection
 migrations/        # Alembic revisions
 tests/             # unit / integration / e2e

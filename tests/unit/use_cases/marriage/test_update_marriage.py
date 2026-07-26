@@ -254,6 +254,57 @@ async def test_update_marriage_married_at_triggers_validation(mock_uow):
 
 
 @pytest.mark.asyncio
+async def test_update_divorced_marriage_spouses_does_not_sync_spouse_edge(mock_uow):
+    dto = MagicMock()
+
+    dto.where.marriage_id = UUID(int=1)
+    dto.data.model_dump.return_value = {"husband_id": UUID(int=10)}
+
+    marriage = MagicMock()
+    marriage.husband_id = UUID(int=1)
+    marriage.wife_id = UUID(int=2)
+    marriage.married_at = date(2020, 1, 1)
+    marriage.divorced_at = date(2023, 1, 1)
+    marriage.safe_id = UUID(int=1)
+
+    husband = MagicMock()
+    husband.safe_id = UUID(int=10)
+    wife = MagicMock()
+    wife.safe_id = UUID(int=2)
+
+    mock_uow.marriages.get_or_raise = AsyncMock(return_value=marriage)
+    mock_uow.persons.get_or_raise = AsyncMock(side_effect=[husband, wife])
+
+    marriage.husband_id = UUID(int=10)
+    mock_uow.marriages.update = AsyncMock(return_value=marriage)
+
+    rules_service = MagicMock()
+    sync_service = MagicMock()
+
+    expected_result = MarriageUpdateResponseDTO(
+        id=UUID(int=1),
+        wife_id=UUID(int=2),
+        husband_id=UUID(int=10),
+        married_at=date(2020, 1, 1),
+        divorced_at=date(2023, 1, 1),
+    )
+
+    with patch.object(
+        MarriageUpdateDTOMapper, "to_response", return_value=expected_result
+    ):
+        use_case = UpdateMarriageUseCase(
+            mock_uow, rules_service, sync_service=sync_service
+        )
+        result = await use_case.execute(dto)
+
+    assert result is expected_result
+    sync_service.replace_spouse.assert_not_called()
+    sync_service.upsert_spouse.assert_not_called()
+    sync_service.remove_spouse.assert_not_called()
+    mock_uow.marriages.has_active_for_person.assert_not_awaited()
+
+
+@pytest.mark.asyncio
 async def test_update_marriage_propagates_exception_from_get_or_raise(mock_uow):
     dto = MagicMock()
     dto.where.marriage_id = UUID(int=1)

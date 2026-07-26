@@ -113,10 +113,13 @@ class UpdateMarriageUseCase:
             became_active = (
                 old_divorced_at is not None and marriage.divorced_at is None
             )
+            is_active = marriage.divorced_at is None
 
+            # Only active marriages keep a SPOUSE_OF edge in Neo4j.
+            # Changing spouses on an already-divorced record must not recreate one.
             if became_divorced:
                 self.sync_service.remove_spouse(old_husband_id, old_wife_id)
-            elif spouses_changed:
+            elif is_active and spouses_changed:
                 self.sync_service.replace_spouse(
                     old_person_id_1=old_husband_id,
                     old_person_id_2=old_wife_id,

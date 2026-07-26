@@ -1,30 +1,61 @@
-# python
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
 *.pyo
 *.pyd
 *.db
 
-# runtime
-celerybeat-schedule
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Env & IDE
+.env
+.env.*
+!.env.example
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Runtime / logs
+celerybeat-schedule*
 *.log
 *.sqlite3
 *.backup
+/mnt/backups/
 
-# venv
-venv/
-.env
-.idea/
-.vscode/
+# Tests & coverage
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+pytest.xml
+.mypy_cache/
+.ruff_cache/
+.tox/
 
-# cache
+# Build artifacts
 *.egg-info/
 dist/
 build/
+.eggs/
 
-# node
+# Git / CI / docs noise
+.git/
+.github/
+.gitignore
+*.md
+!requirements.txt
+
+# Local tooling
+bruno/
 node_modules/
+.pre-commit-config.yaml
+.cz.toml
 
-# docker
-Dockerfile
-docker-compose.yml
+# Docker (avoid recursive context noise)
+docker/compose*.yml
+docker/README.md
