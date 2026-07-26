@@ -1,3 +1,4 @@
+from uuid import UUID
 from datetime import date
 
 import pytest
@@ -13,7 +14,7 @@ from app.domain.services.marriage_rules import MarriageRulesService
 
 def create_person(**overrides):
     return Person(
-        id=overrides.get("id", 1),
+        id=overrides.get("id", UUID(int=1)),
         name=overrides.get("name", "Ali"),
         gender=overrides.get("gender", Gender.MALE),
         birth_date=overrides.get("birth_date", date(2000, 1, 1)),
@@ -23,9 +24,9 @@ def create_person(**overrides):
 
 
 def test_validate_marriage_success():
-    husband = create_person(id=1, gender=Gender.MALE, birth_date=date(1995, 1, 1))
+    husband = create_person(id=UUID(int=1), gender=Gender.MALE, birth_date=date(1995, 1, 1))
     wife = create_person(
-        id=2, name="Sara", gender=Gender.FEMALE, birth_date=date(1997, 1, 1)
+        id=UUID(int=2), name="Sara", gender=Gender.FEMALE, birth_date=date(1997, 1, 1)
     )
 
     marriage_date = date(2023, 1, 1)
@@ -34,8 +35,8 @@ def test_validate_marriage_success():
 
 
 def test_validate_marriage_invalid_gender():
-    husband = create_person(id=1, gender=Gender.FEMALE)
-    wife = create_person(id=2, gender=Gender.FEMALE)
+    husband = create_person(id=UUID(int=1), gender=Gender.FEMALE)
+    wife = create_person(id=UUID(int=2), gender=Gender.FEMALE)
 
     marriage_date = date(2023, 1, 1)
 
@@ -44,8 +45,8 @@ def test_validate_marriage_invalid_gender():
 
 
 def test_validate_marriage_self_marriage():
-    person = create_person(id=1)
-    person2 = create_person(id=1)
+    person = create_person(id=UUID(int=1))
+    person2 = create_person(id=UUID(int=1))
     person2.gender = Gender.FEMALE
 
     marriage_date = date(2023, 1, 1)
@@ -55,9 +56,9 @@ def test_validate_marriage_self_marriage():
 
 
 def test_validate_marriage_underage():
-    husband = create_person(id=1, birth_date=date(2010, 1, 1))
+    husband = create_person(id=UUID(int=1), birth_date=date(2010, 1, 1))
     wife = create_person(
-        id=2, name="Sara", gender=Gender.FEMALE, birth_date=date(1997, 1, 1)
+        id=UUID(int=2), name="Sara", gender=Gender.FEMALE, birth_date=date(1997, 1, 1)
     )
 
     marriage_date = date(2023, 1, 1)

@@ -1,4 +1,5 @@
 from enum import Enum
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -12,7 +13,7 @@ class PermissionSortField(str, Enum):
 
 
 class PermissionFilterDTO(BaseModel):
-    id: int | None
+    id: UUID | None
     name: str | None
 
 

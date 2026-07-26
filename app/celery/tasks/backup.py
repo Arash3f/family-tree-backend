@@ -68,7 +68,7 @@ def backup_neo4j():
         # Extract all data
         extractor = Extractor(
             project_dir=neo_backup_dir,
-            driver=neo4j_client,
+            driver=neo4j_client._driver,
             database="neo4j",
             input_yes=True,
             compress=True,

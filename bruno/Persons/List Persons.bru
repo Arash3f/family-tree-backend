@@ -1,0 +1,79 @@
+meta {
+  name: List Persons
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/persons/list
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "pagination": {
+      "page": 1,
+      "page_size": 30,
+      "offset": 0
+    },
+    "filters": {
+      "id": null,
+      "name": null,
+      "gender": null,
+      "birth_date": null,
+      "father_id": null,
+      "mother_id": null
+    },
+    "sort": {
+      "sort_order": "desc",
+      "sort_by": "id"
+    }
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.items: isArray
+  res.body.total: isNumber
+  res.body.page: isNumber
+  res.body.page_size: isNumber
+}
+
+docs {
+  # List Persons
+
+  ## Input (`application/json`)
+  | Field | Type | Required | Notes |
+  |-------|------|----------|-------|
+  | pagination | object | no | default: `page=1`, `page_size=30`, `offset=0` |
+  | filters | object | no | omit for no filtering |
+  | filters.id | uuid\|null | no | |
+  | filters.name | string\|null | no | |
+  | filters.gender | male\|female\|null | no | |
+  | filters.birth_date | `{min,max}`\|null | no | date range |
+  | filters.father_id | uuid\|null | no | |
+  | filters.mother_id | uuid\|null | no | |
+  | sort | object | no | default: `sort_order=desc`, `sort_by=id` |
+  | sort.sort_order | string | no | `asc` \| `desc` |
+  | sort.sort_by | string | no | `id` \| `name` \| `birth_date` \| `gender` |
+
+  ## Output `200`
+  ```json
+  {
+    "items": [
+      {
+        "id": "00000000-0000-0000-0000-000000000001",
+        "name": "arash",
+        "gender": "male",
+        "birth_date": "1379/09/01",
+        "father_id": null,
+        "mother_id": null
+      }
+    ],
+    "total": 1,
+    "page": 1,
+    "page_size": 30
+  }
+  ```
+}

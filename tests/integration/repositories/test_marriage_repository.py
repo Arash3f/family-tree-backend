@@ -1,3 +1,4 @@
+from uuid import UUID
 from datetime import date
 
 import pytest
@@ -98,7 +99,7 @@ async def test_get_or_raise_success(uow: UnitOfWork):
 async def test_get_or_raise_not_found(uow: UnitOfWork):
     async with uow:
         with pytest.raises(MarriageNotFoundException):
-            await uow.marriages.get_or_raise(marriage_id=999)
+            await uow.marriages.get_or_raise(marriage_id=UUID(int=999))
 
 
 @pytest.mark.asyncio
@@ -167,11 +168,11 @@ async def test_update_marriage(uow: UnitOfWork):
 async def test_update_marriage_not_found(uow: UnitOfWork):
     async with uow:
         marriage = Marriage(
-            husband_id=1,
-            wife_id=2,
+            husband_id=UUID(int=1),
+            wife_id=UUID(int=2),
             married_at=date(2020, 1, 1),
             divorced_at=None,
-            id=111,
+            id=UUID(int=111),
         )
         with pytest.raises(MarriageNotFoundException):
             await uow.marriages.update(marriage=marriage)
@@ -418,7 +419,7 @@ async def test_get_list_without_filter(uow: UnitOfWork):
             )
         )
 
-        await uow.marriages.create(
+        marriage_1 = await uow.marriages.create(
             Marriage(
                 id=None,
                 husband_id=husband_1.safe_id,
@@ -428,7 +429,7 @@ async def test_get_list_without_filter(uow: UnitOfWork):
             )
         )
 
-        await uow.marriages.create(
+        marriage_2 = await uow.marriages.create(
             Marriage(
                 id=None,
                 husband_id=husband_2.safe_id,
@@ -438,27 +439,66 @@ async def test_get_list_without_filter(uow: UnitOfWork):
             )
         )
 
-        await uow.marriages.create(
+        husband_3 = await uow.persons.create(
+            Person(
+                id=None,
+                father_id=None,
+                gender=Gender.MALE,
+                name="husband_3",
+                mother_id=None,
+                birth_date=date(2000, 1, 1),
+            )
+        )
+        wife_3 = await uow.persons.create(
+            Person(
+                id=None,
+                father_id=None,
+                gender=Gender.FEMALE,
+                name="wife_3",
+                mother_id=None,
+                birth_date=date(2000, 1, 1),
+            )
+        )
+        husband_4 = await uow.persons.create(
+            Person(
+                id=None,
+                father_id=None,
+                gender=Gender.MALE,
+                name="husband_4",
+                mother_id=None,
+                birth_date=date(2000, 1, 1),
+            )
+        )
+        wife_4 = await uow.persons.create(
+            Person(
+                id=None,
+                father_id=None,
+                gender=Gender.FEMALE,
+                name="wife_4",
+                mother_id=None,
+                birth_date=date(2000, 1, 1),
+            )
+        )
+
+        marriage_3 = await uow.marriages.create(
             Marriage(
                 id=None,
-                husband_id=husband_1.safe_id,
-                wife_id=wife_2.safe_id,
+                husband_id=husband_3.safe_id,
+                wife_id=wife_3.safe_id,
                 married_at=date(2021, 1, 1),
                 divorced_at=None,
             )
         )
 
-        cr_4 = await uow.marriages.create(
+        marriage_4 = await uow.marriages.create(
             Marriage(
                 id=None,
-                husband_id=husband_2.safe_id,
-                wife_id=wife_1.safe_id,
+                husband_id=husband_4.safe_id,
+                wife_id=wife_4.safe_id,
                 married_at=date(2021, 1, 1),
                 divorced_at=None,
             )
         )
-
-        # Creata 4 object
 
         query = FilterMarriageDTO(
             pagination=PaginationParams(
@@ -476,9 +516,18 @@ async def test_get_list_without_filter(uow: UnitOfWork):
             query
         )
 
+        sorted_marriages = sorted(
+            [marriage_1, marriage_2, marriage_3, marriage_4],
+            key=lambda marriage: marriage.safe_id,
+        )
+        start = (
+            query.pagination.offset
+            + (query.pagination.page - 1) * query.pagination.page_size
+        )
+
         assert result.total == 4
         assert len(result.items) == 1
-        assert result.items[0].id == cr_4.safe_id
+        assert result.items[0].id == sorted_marriages[start].safe_id
 
 
 @pytest.mark.asyncio
@@ -541,10 +590,16 @@ async def test_get_list_by_filter_with_pagination(uow: UnitOfWork):
         assert result.total == 10
 
         returned_ids = [item.id for item in result.items]
-
+        sorted_marriages = sorted(
+            created_marriages, key=lambda marriage: marriage.safe_id
+        )
+        start = (
+            query.pagination.offset
+            + (query.pagination.page - 1) * query.pagination.page_size
+        )
         expected_ids = [
-            created_marriages[7].id,
-            created_marriages[8].id,
+            sorted_marriages[start].id,
+            sorted_marriages[start + 1].id,
         ]
 
         assert returned_ids == expected_ids
@@ -665,3 +720,49 @@ async def test_delete_marriage(uow: UnitOfWork):
         fetched = await uow.marriages.get(marriage_id=marriage.safe_id)
 
         assert fetched is None
+
+
+@pytest.mark.asyncio
+async def test_has_active_for_person(uow: UnitOfWork):
+    async with uow:
+        husband = await uow.persons.create(
+            Person(
+                id=None,
+                father_id=None,
+                gender=Gender.MALE,
+                name="active_husband",
+                mother_id=None,
+                birth_date=date(2000, 1, 1),
+            )
+        )
+        wife = await uow.persons.create(
+            Person(
+                id=None,
+                father_id=None,
+                gender=Gender.FEMALE,
+                name="active_wife",
+                mother_id=None,
+                birth_date=date(2000, 1, 1),
+            )
+        )
+        marriage = await uow.marriages.create(
+            Marriage(
+                husband_id=husband.safe_id,
+                wife_id=wife.safe_id,
+                married_at=date(2020, 1, 1),
+                divorced_at=None,
+                id=None,
+            )
+        )
+
+        assert await uow.marriages.has_active_for_person(husband.safe_id) is True
+        assert await uow.marriages.has_active_for_person(wife.safe_id) is True
+        assert (
+            await uow.marriages.has_active_for_person(
+                husband.safe_id, exclude_marriage_id=marriage.safe_id
+            )
+            is False
+        )
+
+        await uow.marriages.end(marriage.safe_id, date(2021, 1, 1))
+        assert await uow.marriages.has_active_for_person(husband.safe_id) is False

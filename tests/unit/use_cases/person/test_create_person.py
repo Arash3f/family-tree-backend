@@ -1,3 +1,4 @@
+from uuid import UUID
 from datetime import date
 
 import pytest
@@ -14,8 +15,9 @@ async def test_create_person_success_with_parents(mock_uow):
     dto.name = "Ali"
     dto.gender = Gender.MALE
     dto.birth_date = date(2000, 1, 1)
-    dto.father_id = 1
-    dto.mother_id = 2
+    dto.death_date = None
+    dto.father_id = UUID(int=1)
+    dto.mother_id = UUID(int=2)
 
     father = MagicMock()
     father.gender = Gender.MALE
@@ -29,11 +31,12 @@ async def test_create_person_success_with_parents(mock_uow):
     mock_uow.persons.create = AsyncMock(return_value=created_person)
 
     expected_response = MagicMock()
+    sync_service = MagicMock()
 
     with patch.object(
         PersonCreateMapper, "to_response", return_value=expected_response
     ) as mapper_mock:
-        use_case = CreatePersonUseCase(mock_uow)
+        use_case = CreatePersonUseCase(mock_uow, sync_service=sync_service)
         result = await use_case.execute(dto)
 
     assert result == expected_response
@@ -44,6 +47,7 @@ async def test_create_person_success_with_parents(mock_uow):
     mock_uow.persons.create.assert_awaited_once()
 
     mock_uow.commit.assert_awaited_once()
+    sync_service.upsert_person.assert_called_once_with(created_person)
 
     mapper_mock.assert_called_once_with(created_person)
 
@@ -51,8 +55,8 @@ async def test_create_person_success_with_parents(mock_uow):
     created_entity = mock_uow.persons.create.await_args.args[0]
     assert created_entity.name == "Ali"
     assert created_entity.gender == Gender.MALE
-    assert created_entity.father_id == 1
-    assert created_entity.mother_id == 2
+    assert created_entity.father_id == UUID(int=1)
+    assert created_entity.mother_id == UUID(int=2)
 
 
 @pytest.mark.asyncio
@@ -61,7 +65,8 @@ async def test_create_person_invalid_father_gender(mock_uow):
     dto.name = "Ali"
     dto.gender = Gender.MALE
     dto.birth_date = date(2000, 1, 1)
-    dto.father_id = 1
+    dto.death_date = None
+    dto.father_id = UUID(int=1)
     dto.mother_id = None
 
     father = MagicMock()
@@ -69,7 +74,7 @@ async def test_create_person_invalid_father_gender(mock_uow):
 
     mock_uow.persons.get_or_raise = AsyncMock(return_value=father)
 
-    use_case = CreatePersonUseCase(mock_uow)
+    use_case = CreatePersonUseCase(mock_uow, sync_service=MagicMock())
 
     with pytest.raises(InvalidPersonGenderException):
         await use_case.execute(dto)
@@ -84,15 +89,16 @@ async def test_create_person_invalid_mother_gender(mock_uow):
     dto.name = "Sara"
     dto.gender = Gender.FEMALE
     dto.birth_date = date(2000, 1, 1)
+    dto.death_date = None
     dto.father_id = None
-    dto.mother_id = 2
+    dto.mother_id = UUID(int=2)
 
     mother = MagicMock()
     mother.gender = Gender.MALE
 
     mock_uow.persons.get_or_raise = AsyncMock(return_value=mother)
 
-    use_case = CreatePersonUseCase(mock_uow)
+    use_case = CreatePersonUseCase(mock_uow, sync_service=MagicMock())
 
     with pytest.raises(InvalidPersonGenderException):
         await use_case.execute(dto)
@@ -107,6 +113,7 @@ async def test_create_person_without_parents(mock_uow):
     dto.name = "Ali"
     dto.gender = Gender.MALE
     dto.birth_date = date(2000, 1, 1)
+    dto.death_date = None
     dto.father_id = None
     dto.mother_id = None
 
@@ -116,15 +123,17 @@ async def test_create_person_without_parents(mock_uow):
     mock_uow.commit = AsyncMock()
 
     expected_response = MagicMock()
+    sync_service = MagicMock()
     with patch.object(
         PersonCreateMapper, "to_response", return_value=expected_response
     ) as mapper_mock:
-        use_case = CreatePersonUseCase(mock_uow)
+        use_case = CreatePersonUseCase(mock_uow, sync_service=sync_service)
         result = await use_case.execute(dto)
 
     assert result == expected_response
 
     mapper_mock.assert_called_once_with(created_person)
+    sync_service.upsert_person.assert_called_once_with(created_person)
 
     assert mock_uow.persons.create.await_args is not None
     created_entity = mock_uow.persons.create.await_args.args[0]

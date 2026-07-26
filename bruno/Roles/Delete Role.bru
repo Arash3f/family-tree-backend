@@ -1,0 +1,34 @@
+meta {
+  name: Delete Role
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{base_url}}/roles/{{role_id}}
+  body: none
+  auth: inherit
+}
+
+params:path {
+  role_id: {{role_id}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.result: isDefined
+}
+
+docs {
+  # Delete Role
+
+  ## Input (path)
+  | Param | Type | Required |
+  |-------|------|----------|
+  | role_id | uuid | yes |
+
+  ## Output `200`
+  ```json
+  { "result": "ok" }
+  ```
+}

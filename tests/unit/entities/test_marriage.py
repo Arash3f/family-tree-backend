@@ -1,3 +1,4 @@
+from uuid import UUID
 from datetime import date
 
 import pytest
@@ -12,17 +13,17 @@ from app.domain.exceptions.marriage_exceptions import (
 
 def create_marriage(**overrides):
     return Marriage(
-        id=overrides.get("id", 1),
+        id=overrides.get("id", UUID(int=1)),
         divorced_at=overrides.get("divorced_at", None),
         married_at=overrides.get("married_at", date(2020, 1, 1)),
-        husband_id=overrides.get("husband_id", 1),
-        wife_id=overrides.get("wife_id", 2),
+        husband_id=overrides.get("husband_id", UUID(int=1)),
+        wife_id=overrides.get("wife_id", UUID(int=2)),
     )
 
 
 def test_cannot_marry_self():
     with pytest.raises(SelfMarriageException):
-        create_marriage(husband_id=1, wife_id=1)
+        create_marriage(husband_id=UUID(int=1), wife_id=UUID(int=1))
 
 
 def test_divorce_before_marriage_not_allowed_on_creation():
@@ -78,9 +79,9 @@ def test_is_active_returns_false_when_divorced():
 
 
 def test_safe_id_returns_id():
-    marriage = create_marriage(id=10)
+    marriage = create_marriage(id=UUID(int=10))
 
-    assert marriage.safe_id == 10
+    assert marriage.safe_id == UUID(int=10)
 
 
 def test_safe_id_raises_if_none():

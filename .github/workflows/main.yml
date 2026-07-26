@@ -47,11 +47,26 @@ jobs:
           --health-retries=10
 
     env:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/family_tree
-      REDIS_URL: redis://localhost:6379/0
+      POSTGRES_HOST: localhost
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: family_tree
+      POSTGRES_PORT: "5432"
+      POSTGRES_HOST_TEST: localhost
+      POSTGRES_USER_TEST: postgres
+      POSTGRES_PASSWORD_TEST: postgres
+      POSTGRES_DB_TEST: family_tree_test
+      POSTGRES_PORT_TEST: "5432"
+      CELERY_BROKER_URL: redis://localhost:6379/0
+      CELERY_RESULT_BACKEND: redis://localhost:6379/1
       NEO4J_URI: bolt://localhost:7687
       NEO4J_USER: neo4j
       NEO4J_PASSWORD: postgres
+      JWT_SECRET: local-ci-only-change-me-32chars-min!!
+      JWT_ALGORITHM: HS256
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: admin
+      ADMIN_ROLE_NAME: Admin
       PYTHONUNBUFFERED: "1"
 
     steps:
@@ -78,6 +93,26 @@ jobs:
 
       - name: Run security scan
         run: bandit -r app -ll
+
+      - name: Create test database
+        run: |
+          python - <<'PY'
+          import psycopg2
+          from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+
+          conn = psycopg2.connect(
+              host="localhost",
+              user="postgres",
+              password="postgres",
+              dbname="family_tree",
+          )
+          conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+          with conn.cursor() as cur:
+              cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", ("family_tree_test",))
+              if cur.fetchone() is None:
+                  cur.execute("CREATE DATABASE family_tree_test")
+          conn.close()
+          PY
 
       - name: Run Alembic migrations
         run: alembic upgrade head

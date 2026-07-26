@@ -1,3 +1,4 @@
+from uuid import UUID
 from datetime import date
 import pytest
 from unittest.mock import AsyncMock, MagicMock
@@ -9,20 +10,22 @@ from app.domain.shared.dto.common_dto import ResultDTO
 
 @pytest.mark.asyncio
 async def test_divorce_use_case_success(mock_uow):
-    dto = DivorceDTO(marriage_id=1, divorced_at=date(2025, 1, 1))
+    dto = DivorceDTO(marriage_id=UUID(int=1), divorced_at=date(2025, 1, 1))
 
     marriage = MagicMock()
-    marriage.safe_id = 10
+    marriage.safe_id = UUID(int=10)
     marriage.safe_divorced_at = date(2025, 1, 1)
+    marriage.husband_id = UUID(int=1)
+    marriage.wife_id = UUID(int=2)
 
     mock_uow.marriages.get_or_raise = AsyncMock(return_value=marriage)
 
-    use_case = DivorceUseCase(mock_uow)
+    use_case = DivorceUseCase(mock_uow, sync_service=MagicMock())
 
     result = await use_case.execute(dto)
 
     assert isinstance(result, ResultDTO)
-    assert result.result == "Divorce successfuly added"
+    assert result.result == "Divorce recorded successfully"
 
     mock_uow.marriages.get_or_raise.assert_awaited_once_with(
         marriage_id=dto.marriage_id
@@ -36,11 +39,11 @@ async def test_divorce_use_case_success(mock_uow):
 
 @pytest.mark.asyncio
 async def test_divorce_use_case_propagates_exception_from_get_or_raise(mock_uow):
-    dto = DivorceDTO(marriage_id=1, divorced_at=date(2025, 1, 1))
+    dto = DivorceDTO(marriage_id=UUID(int=1), divorced_at=date(2025, 1, 1))
 
     mock_uow.marriages.get_or_raise = AsyncMock(side_effect=MarriageNotFoundException())
 
-    use_case = DivorceUseCase(mock_uow)
+    use_case = DivorceUseCase(mock_uow, sync_service=MagicMock())
 
     with pytest.raises(MarriageNotFoundException):
         await use_case.execute(dto)

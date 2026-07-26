@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -15,7 +16,7 @@ class UserModel(Base):
     username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
 
-    role_id: Mapped[int | None] = mapped_column(
+    role_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("roles.id", ondelete="SET NULL"), nullable=True
     )
 

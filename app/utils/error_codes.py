@@ -19,8 +19,9 @@ class ErrorCode(int, Enum):
     PERSON_NOT_FOUND = 1104
     SAME_PARENT = 1105
     INVALID_GENDER = 1106
+    PERSON_HAS_MARRIAGES = 1107
     # -----------------------
-    # |    Domain Person    |
+    # |    Domain Marriage    |
     # -----------------------
     SELF_MARRIAGE = 1200
     DIVORCED_BEFORE_MARRIAGE = 1201
@@ -28,6 +29,7 @@ class ErrorCode(int, Enum):
     UNDERAGE_MARRIAGE = 1203
     INVALID_MARRIAGE_GENDER = 1204
     MARRIAGE_NOT_FOUND = 1205
+    ACTIVE_MARRIAGE_EXISTS = 1206
     # -----------------------
     # |  Permission Person  |
     # -----------------------
@@ -60,6 +62,7 @@ ERROR_MESSAGES = {
         ErrorCode.PERSON_NOT_FOUND: "Person not found",
         ErrorCode.SAME_PARENT: "Person's father & mother can not be the same",
         ErrorCode.INVALID_GENDER: "Person's gender is invalid",
+        ErrorCode.PERSON_HAS_MARRIAGES: "Person cannot be deleted while linked to marriages",
         # Domain Marriage
         ErrorCode.SELF_MARRIAGE: "A person cannot marry themselves",
         ErrorCode.DIVORCED_BEFORE_MARRIAGE: "A divorced person cannot be married again without proper validation",
@@ -67,12 +70,13 @@ ERROR_MESSAGES = {
         ErrorCode.UNDERAGE_MARRIAGE: "Marriage is not allowed for underage persons",
         ErrorCode.INVALID_MARRIAGE_GENDER: "Marriage is only allowed between a male and a female",
         ErrorCode.MARRIAGE_NOT_FOUND: "Marriage not found",
+        ErrorCode.ACTIVE_MARRIAGE_EXISTS: "Person already has an active marriage",
         # Domain Permission
         ErrorCode.PERMISSION_NOT_FOUND: "Permission not found",
         ErrorCode.PERMISSION_DENIED: "Permission denied",
         # Domain User
         ErrorCode.USER_NOT_FOUND: "User not found",
-        ErrorCode.USER_PASSWORD_INCORECT: "User password incorect",
+        ErrorCode.USER_PASSWORD_INCORECT: "User password incorrect",
         # Domain Role
         ErrorCode.ROLE_NOT_FOUND: "Role not found",
         ErrorCode.ROLE_NAME_DUPLICATED: "Role name duplicated",
@@ -91,6 +95,7 @@ ERROR_MESSAGES = {
         ErrorCode.PERSON_NOT_FOUND: "شخص مورد نظر یافت نشد",
         ErrorCode.SAME_PARENT: "شخص نمیتواند پدر و مادر یکسان داشته باشد",
         ErrorCode.INVALID_GENDER: "جنسیت شخص نامعتبر است",
+        ErrorCode.PERSON_HAS_MARRIAGES: "شخص دارای ازدواج قابل حذف نیست",
         # Domain Marriage
         ErrorCode.SELF_MARRIAGE: "یک شخص نمی‌تواند با خودش ازدواج کند",
         ErrorCode.DIVORCED_BEFORE_MARRIAGE: "فردی که طلاق گرفته است بدون اعتبارسنجی مناسب نمی‌تواند دوباره ازدواج کند",
@@ -98,6 +103,7 @@ ERROR_MESSAGES = {
         ErrorCode.UNDERAGE_MARRIAGE: "ازدواج برای افراد زیر سن قانونی مجاز نیست",
         ErrorCode.INVALID_MARRIAGE_GENDER: "ازدواج فقط بین یک مرد و یک زن مجاز است",
         ErrorCode.MARRIAGE_NOT_FOUND: "ازدواج مورد نظر یافت نشد",
+        ErrorCode.ACTIVE_MARRIAGE_EXISTS: "شخص هم‌اکنون ازدواج فعال دارد",
         # Domain Permission
         ErrorCode.PERMISSION_NOT_FOUND: "دسترسی پیدا نشد",
         ErrorCode.PERMISSION_DENIED: "عدم وجود دسترسی",

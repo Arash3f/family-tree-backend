@@ -1,0 +1,59 @@
+meta {
+  name: Create Person
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/persons/
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "arash",
+    "gender": "male",
+    "birth_date": "1379/09/01",
+    "father_id": null,
+    "mother_id": null
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isString
+  res.body.name: isString
+  res.body.gender: isDefined
+}
+
+script:post-response {
+  if (res.status === 200 && res.body.id) {
+    bru.setEnvVar("person_id", String(res.body.id));
+  }
+}
+
+docs {
+  # Create Person
+
+  ## Input (`application/json`)
+  | Field | Type | Required | Notes |
+  |-------|------|----------|-------|
+  | name | string | yes | |
+  | gender | string | yes | `male` \| `female` |
+  | birth_date | string\|null | no | Jalali `YYYY/MM/DD` or Gregorian `YYYY-MM-DD` |
+  | father_id | uuid\|null | no | |
+  | mother_id | uuid\|null | no | |
+
+  ## Output `200`
+  ```json
+  {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "name": "arash",
+    "gender": "male",
+    "birth_date": "1379/09/01",
+    "father_id": null,
+    "mother_id": null
+  }
+  ```
+}

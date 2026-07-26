@@ -1,10 +1,12 @@
+from uuid import UUID
+
 from pydantic import BaseModel
 
 from app.domain.entities.permission import Permission
 
 
 class PermissionGetResponseDTO(BaseModel):
-    id: int
+    id: UUID
     name: str
 
 

@@ -19,6 +19,9 @@ from app.infrastructure.services.unit_of_work.sqlalchemy_uow import SQLAlchemyUn
 from app.main import app
 from app.presentation.rest.utils.dependencies import get_uow
 
+# Avoid cross-test auth rate-limit bleed (shared client IP in ASGI tests)
+settings.AUTH_RATE_LIMIT_PER_MINUTE = 0
+
 
 @pytest.fixture(scope="session")
 def db_engine():
@@ -83,6 +86,25 @@ async def override_uow(uow):
 
     app.dependency_overrides.clear()
     app.dependency_overrides.update(original_overrides)
+
+
+@pytest.fixture(autouse=True)
+def stub_family_tree_sync(monkeypatch):
+    """Avoid Redis/Celery side effects during API e2e tests."""
+    from app.application.services.family_tree_sync_service import FamilyTreeSyncService
+
+    def _noop(self, *args, **kwargs):
+        return None
+
+    for method_name in (
+        "upsert_person",
+        "update_person",
+        "delete_person",
+        "upsert_spouse",
+        "remove_spouse",
+        "replace_spouse",
+    ):
+        monkeypatch.setattr(FamilyTreeSyncService, method_name, _noop)
 
 
 @pytest_asyncio.fixture

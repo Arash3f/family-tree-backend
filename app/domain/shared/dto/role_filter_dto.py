@@ -1,4 +1,5 @@
 from enum import Enum
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -12,9 +13,9 @@ class RoleSortField(str, Enum):
 
 
 class RoleFilterDTO(BaseModel):
-    id: int | None = None
+    id: UUID | None = None
     name: str | None = None
-    permission_id: int | None = None
+    permission_id: UUID | None = None
 
 
 class FilterRoleQuery(BaseModel):

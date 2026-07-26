@@ -1,0 +1,34 @@
+meta {
+  name: Me
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/auth/me
+  body: none
+  auth: inherit
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isString
+  res.body.username: isString
+}
+
+docs {
+  # Me
+
+  Returns the currently authenticated user from the Bearer token.
+
+  ## Output `200`
+  ```json
+  {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "username": "admin",
+    "role_id": "00000000-0000-0000-0000-000000000001"
+  }
+  ```
+
+  Requires `Authorization: Bearer {{access_token}}` (run Login first).
+}

@@ -1,0 +1,28 @@
+meta {
+  name: Neo4j Health
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/health/neo4j
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.neo4j: isDefined
+}
+
+docs {
+  # Neo4j Health
+
+  ## Input
+  None
+
+  ## Output `200`
+  ```json
+  { "neo4j": 1 }
+  ```
+}

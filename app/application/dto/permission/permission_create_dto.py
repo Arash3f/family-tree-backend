@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from pydantic import BaseModel
 
 from app.domain.entities.permission import Permission
@@ -8,7 +10,7 @@ class PermissionCreateDTO(BaseModel):
 
 
 class PermissionCreateResponseDTO(BaseModel):
-    id: int
+    id: UUID
     name: str
 
 

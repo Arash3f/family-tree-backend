@@ -1,4 +1,5 @@
 from typing import List
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -6,20 +7,20 @@ from app.infrastructure.database.models.user_model import UserModel
 
 
 class _Permission(BaseModel):
-    id: int
+    id: UUID
     name: str
 
 
 class _RoleData(BaseModel):
-    id: int
+    id: UUID
     name: str
     permissions: List[_Permission]
 
 
 class UserGetWithDetailResponseDTO(BaseModel):
-    id: int
+    id: UUID
     username: str
-    role_id: int | None
+    role_id: UUID | None
     role: _RoleData | None
 
     @classmethod

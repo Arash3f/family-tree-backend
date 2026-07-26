@@ -1,5 +1,8 @@
-from pydantic import BaseModel
+from uuid import UUID
 
+from pydantic import BaseModel, Field
+
+from app.domain.shared.dto.sorter_dto import SortOrderField
 from app.domain.shared.dto.user_filter_dto import UserSortField
 from app.presentation.rest.schemas.dto.common import (
     PaginationRequestParams,
@@ -8,20 +11,20 @@ from app.presentation.rest.schemas.dto.common import (
 
 
 class UserModel(BaseModel):
-    id: int
+    id: UUID
     username: str
-    role_id: int | None = None
+    role_id: UUID | None = None
 
 
 class _UserUpdateDateRequest(BaseModel):
     username: str | None = None
     password: str | None = None
     re_password: str | None = None
-    role_id: int | None = None
+    role_id: UUID | None = None
 
 
 class _UserUpdateWhereRequest(BaseModel):
-    user_id: int
+    user_id: UUID
 
 
 class UserUpdateRequest(BaseModel):
@@ -30,37 +33,42 @@ class UserUpdateRequest(BaseModel):
 
 
 class UserUpdateResponse(BaseModel):
-    id: int
+    id: UUID
     username: str
-    role_id: int | None
+    role_id: UUID | None
 
 
 class UserGetResponse(BaseModel):
-    id: int
+    id: UUID
     username: str
-    role_id: int | None
+    role_id: UUID | None
 
 
 class UserCreateRequest(BaseModel):
     username: str
     password: str
     re_password: str
-    role_id: int | None = None
+    role_id: UUID | None = None
 
 
 class UserCreateResponse(BaseModel):
-    id: int
+    id: UUID
     username: str
-    role_id: int | None
+    role_id: UUID | None
 
 
 class UserFilterRequestData(BaseModel):
-    id: int | None = None
+    id: UUID | None = None
     username: str | None = None
-    role_id: int | None = None
+    role_id: UUID | None = None
 
 
 class FilterUserRequest(BaseModel):
-    pagination: PaginationRequestParams
-    filters: UserFilterRequestData
-    sort: SortRequestParams[UserSortField]
+    pagination: PaginationRequestParams = Field(default_factory=PaginationRequestParams)
+    filters: UserFilterRequestData | None = None
+    sort: SortRequestParams[UserSortField] = Field(
+        default_factory=lambda: SortRequestParams(
+            sort_order=SortOrderField.DESC,
+            sort_by=UserSortField.ID,
+        )
+    )

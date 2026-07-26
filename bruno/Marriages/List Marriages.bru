@@ -1,0 +1,76 @@
+meta {
+  name: List Marriages
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/marriages/list
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "pagination": {
+      "page": 1,
+      "page_size": 30,
+      "offset": 0
+    },
+    "filters": {
+      "id": null,
+      "husband_id": null,
+      "wife_id": null,
+      "married_at": null,
+      "divorced_at": null
+    },
+    "sort": {
+      "sort_order": "desc",
+      "sort_by": "id"
+    }
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.items: isArray
+  res.body.total: isNumber
+}
+
+docs {
+  # List Marriages
+
+  > Note: API uses GET with JSON body.
+
+  ## Input (`application/json`)
+  | Field | Type | Required | Notes |
+  |-------|------|----------|-------|
+  | pagination | object | no | default: `page=1`, `page_size=30`, `offset=0` |
+  | filters | object | no | omit for no filtering |
+  | filters.id | uuid\|null | no | |
+  | filters.husband_id | uuid\|null | no | |
+  | filters.wife_id | uuid\|null | no | |
+  | filters.married_at | `{min,max}`\|null | no | |
+  | filters.divorced_at | `{min,max}`\|null | no | |
+  | sort | object | no | default: `sort_order=desc`, `sort_by=id` |
+  | sort.sort_order | string | no | `asc` \| `desc` |
+  | sort.sort_by | string | no | `id` \| `married_at` \| `divorced_at` |
+
+  ## Output `200`
+  ```json
+  {
+    "items": [
+      {
+        "id": "00000000-0000-0000-0000-000000000001",
+        "husband_id": "00000000-0000-0000-0000-000000000001",
+        "wife_id": "00000000-0000-0000-0000-000000000002",
+        "married_at": "2020-01-15",
+        "divorced_at": null
+      }
+    ],
+    "total": 1,
+    "page": 1,
+    "page_size": 30
+  }
+  ```
+}

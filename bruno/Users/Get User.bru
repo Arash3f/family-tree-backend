@@ -1,0 +1,39 @@
+meta {
+  name: Get User
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/users/{{user_id}}
+  body: none
+  auth: inherit
+}
+
+params:path {
+  user_id: {{user_id}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isString
+  res.body.username: isString
+}
+
+docs {
+  # Get User
+
+  ## Input (path)
+  | Param | Type | Required |
+  |-------|------|----------|
+  | user_id | uuid | yes |
+
+  ## Output `200`
+  ```json
+  {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "username": "admin",
+    "role_id": "00000000-0000-0000-0000-000000000001"
+  }
+  ```
+}

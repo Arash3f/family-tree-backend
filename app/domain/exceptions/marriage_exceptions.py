@@ -40,3 +40,10 @@ class MarriageNotFoundException(AppException):
         super().__init__(
             code=ErrorCode.MARRIAGE_NOT_FOUND, status_code=404, detail=detail
         )
+
+
+class ActiveMarriageExistsException(AppException):
+    def __init__(self, detail: list[str] = []):
+        super().__init__(
+            code=ErrorCode.ACTIVE_MARRIAGE_EXISTS, status_code=422, detail=detail
+        )

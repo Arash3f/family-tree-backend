@@ -1,4 +1,5 @@
 from datetime import date
+from uuid import UUID
 
 from sqlalchemy import Date, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -12,11 +13,12 @@ class PersonModel(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     gender: Mapped[str] = mapped_column(String, nullable=False)
     birth_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    death_date: Mapped[date | None] = mapped_column(Date, nullable=True)
 
-    father_id: Mapped[int | None] = mapped_column(
+    father_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("persons.id", ondelete="SET NULL"), nullable=True
     )
-    mother_id: Mapped[int | None] = mapped_column(
+    mother_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("persons.id", ondelete="SET NULL"), nullable=True
     )
 
@@ -48,12 +50,10 @@ class PersonModel(Base):
         "PersonModel",
         foreign_keys=[father_id],
         back_populates="father",
-        cascade="all, delete-orphan",
     )
 
     children_from_mother: Mapped[list["PersonModel"]] = relationship(
         "PersonModel",
         foreign_keys=[mother_id],
         back_populates="mother",
-        cascade="all, delete-orphan",
     )

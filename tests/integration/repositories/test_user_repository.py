@@ -1,3 +1,4 @@
+from uuid import UUID
 import pytest
 
 from app.application.interfaces.unit_of_work import UnitOfWork
@@ -39,7 +40,7 @@ async def test_create_and_get_user(uow: UnitOfWork):
 @pytest.mark.asyncio
 async def test_get_returns_none_when_not_found(uow: UnitOfWork):
     async with uow:
-        result = await uow.users.get(user_id=999_999)
+        result = await uow.users.get(user_id=UUID(int=999999))
         assert result is None
 
 
@@ -67,7 +68,7 @@ async def test_get_or_raise_success(uow: UnitOfWork):
 async def test_get_or_raise_not_found(uow: UnitOfWork):
     async with uow:
         with pytest.raises(UserNotFoundException):
-            await uow.users.get_or_raise(user_id=123456)
+            await uow.users.get_or_raise(user_id=UUID(int=123456))
 
 
 @pytest.mark.asyncio
@@ -180,10 +181,17 @@ async def test_get_list_by_filter_with_pagination(uow: UnitOfWork):
         assert len(result.items) == query.pagination.page_size
         assert result.total >= 10
 
-        returned_usernames = [u.username for u in result.items]
-
-        assert "user_7" in returned_usernames
-        assert "user_8" in returned_usernames
+        sorted_users = sorted(created_users, key=lambda user: user.safe_id)
+        start = (
+            query.pagination.offset
+            + (query.pagination.page - 1) * query.pagination.page_size
+        )
+        expected_usernames = {
+            sorted_users[start].username,
+            sorted_users[start + 1].username,
+        }
+        returned_usernames = {u.username for u in result.items}
+        assert returned_usernames == expected_usernames
 
 
 @pytest.mark.asyncio
@@ -222,10 +230,10 @@ async def test_update_user(uow: UnitOfWork):
 async def test_update_user_not_found_raises_domain_exception(uow: UnitOfWork):
     async with uow:
         fake_user = User(
-            id=999999,
+            id=UUID(int=999999),
             username="non_existing",
             password_hash="x",
-            role_id=1,
+            role_id=UUID(int=1),
         )
 
         with pytest.raises(UserNotFoundException):

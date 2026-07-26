@@ -1,3 +1,4 @@
+from uuid import UUID
 from app.application.dto.role.role_create_dto import RoleCreateMapper
 from app.application.dto.role.role_get_dto import RoleGetMapper
 from app.application.dto.role.role_update_dto import RoleUpdateMapper
@@ -6,9 +7,9 @@ from app.domain.entities.role import Role
 
 def create_role(**overrides):
     return Role(
-        id=overrides.get("id", 1),
+        id=overrides.get("id", UUID(int=1)),
         name=overrides.get("name", "admin"),
-        permission_ids=overrides.get("permission_ids", [1, 2, 3]),
+        permission_ids=overrides.get("permission_ids", [UUID(int=1), UUID(int=2), UUID(int=3)]),
     )
 
 

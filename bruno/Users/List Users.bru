@@ -1,0 +1,64 @@
+meta {
+  name: List Users
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/users/list
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "pagination": {
+      "page": 1,
+      "page_size": 30,
+      "offset": 0
+    },
+    "filters": {
+      "id": null,
+      "username": null,
+      "role_id": null
+    },
+    "sort": {
+      "sort_order": "desc",
+      "sort_by": "id"
+    }
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.items: isArray
+  res.body.total: isNumber
+}
+
+docs {
+  # List Users
+
+  ## Input (`application/json`)
+  | Field | Type | Required | Notes |
+  |-------|------|----------|-------|
+  | pagination | object | no | default: `page=1`, `page_size=30`, `offset=0` |
+  | filters | object | no | omit for no filtering |
+  | filters.id | uuid\|null | no | |
+  | filters.username | string\|null | no | |
+  | filters.role_id | uuid\|null | no | |
+  | sort | object | no | default: `sort_order=desc`, `sort_by=id` |
+  | sort.sort_order | string | no | `asc` \| `desc` |
+  | sort.sort_by | string | no | `id` \| `username` \| `role_id` |
+
+  ## Output `200`
+  ```json
+  {
+    "items": [
+      { "id": "00000000-0000-0000-0000-000000000001", "username": "admin", "role_id": "00000000-0000-0000-0000-000000000001" }
+    ],
+    "total": 1,
+    "page": 1,
+    "page_size": 30
+  }
+  ```
+}

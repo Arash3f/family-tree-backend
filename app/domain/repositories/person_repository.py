@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from uuid import UUID
 
 from app.domain.entities.person import Person
 from app.domain.exceptions.person_exceptions import PersonNotFoundException
@@ -19,11 +20,11 @@ class PersonRepository(ABC):
     async def create(self, person: Person) -> Person: ...
 
     @abstractmethod
-    async def get(self, person_id: int) -> Person | None: ...
+    async def get(self, person_id: UUID) -> Person | None: ...
 
     @abstractmethod
     async def get_by_name(
-        self, name: str, father_id: int | None, mother_id: int | None
+        self, name: str, father_id: UUID | None, mother_id: UUID | None
     ) -> Person | None: ...
 
     @abstractmethod
@@ -32,15 +33,15 @@ class PersonRepository(ABC):
     ) -> PaginatedResult[Person]: ...
 
     @abstractmethod
-    async def get_children(self, parent_id: int) -> list[Person]: ...
+    async def get_children(self, parent_id: UUID) -> list[Person]: ...
 
     @abstractmethod
     async def update(self, person: Person) -> Person: ...
 
     @abstractmethod
-    async def delete(self, person_id: int) -> None: ...
+    async def delete(self, person_id: UUID) -> None: ...
 
-    async def get_or_raise(self, person_id: int) -> Person:
+    async def get_or_raise(self, person_id: UUID) -> Person:
         """
         Find a person by id or raise an exception if not found.
 

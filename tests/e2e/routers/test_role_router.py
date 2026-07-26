@@ -1,3 +1,5 @@
+from uuid import UUID
+
 import pytest
 from pydantic import TypeAdapter
 
@@ -44,7 +46,7 @@ async def test_create_role_permission_denied(client, member_headers):  # noqa: F
     )
     resp = await client.post(
         f"{BASE_URL}/",
-        json=req.model_dump(),
+        json=req.model_dump(mode="json"),
         headers=member_headers,
     )
 
@@ -65,7 +67,7 @@ async def test_create_role_unauthenticated(client):  # noqa: F811
 
     resp = await client.post(
         f"{BASE_URL}/",
-        json=req.model_dump(),
+        json=req.model_dump(mode="json"),
     )
 
     assert resp.status_code == 401
@@ -86,7 +88,7 @@ async def test_create_role_success(client, admin_headers, uow):  # noqa: F811
 
     resp = await client.post(
         f"{BASE_URL}/",
-        json=req.model_dump(),
+        json=req.model_dump(mode="json"),
         headers=admin_headers,
     )
 
@@ -94,7 +96,7 @@ async def test_create_role_success(client, admin_headers, uow):  # noqa: F811
 
     role_data = TypeAdapter(RoleCreateResponse).validate_python(resp.json())
 
-    assert role_data.id > 0
+    assert role_data.id is not None
     assert role_data.name == req.name
 
     async with uow:
@@ -128,7 +130,7 @@ async def test_create_role_with_duplicate_name(
 
     response = await client.post(
         f"{BASE_URL}/",
-        json=payload.model_dump(),
+        json=payload.model_dump(mode="json"),
         headers=admin_headers,
     )
 
@@ -196,7 +198,7 @@ async def test_get_role_success(client, admin_headers, uow: SQLAlchemyUnitOfWork
 
 @pytest.mark.asyncio
 async def test_get_role_with_invalid_id(client, admin_headers):  # noqa: F811
-    invalid_role_id = 999999
+    invalid_role_id = UUID(int=999999)
 
     resp = await client.get(
         f"{BASE_URL}/{invalid_role_id}",
@@ -219,13 +221,13 @@ async def test_get_role_with_invalid_id(client, admin_headers):  # noqa: F811
 @pytest.mark.asyncio
 async def test_update_role_permission_denied(client, member_headers):  # noqa: F811
     payload = RoleUpdateRequest(
-        where=_RoleUpdateWhereRequest(role_id=1),
+        where=_RoleUpdateWhereRequest(role_id=UUID(int=1)),
         data=_RoleUpdateDateRequest(name="123", permission_ids=[]),
     )
 
     resp = await client.put(
         f"{BASE_URL}/",
-        json=payload.model_dump(),
+        json=payload.model_dump(mode="json"),
         headers=member_headers,
     )
 
@@ -240,13 +242,13 @@ async def test_update_role_permission_denied(client, member_headers):  # noqa: F
 @pytest.mark.asyncio
 async def test_update_role_unauthenticated(client):  # noqa: F811
     payload = RoleUpdateRequest(
-        where=_RoleUpdateWhereRequest(role_id=1),
+        where=_RoleUpdateWhereRequest(role_id=UUID(int=1)),
         data=_RoleUpdateDateRequest(name="123", permission_ids=[]),
     )
 
     resp = await client.put(
         f"{BASE_URL}/",
-        json=payload.model_dump(),
+        json=payload.model_dump(mode="json"),
     )
 
     assert resp.status_code == 401
@@ -272,7 +274,7 @@ async def test_update_role_success(client, admin_headers, uow: SQLAlchemyUnitOfW
 
     resp = await client.put(
         f"{BASE_URL}/",
-        json=payload.model_dump(),
+        json=payload.model_dump(mode="json"),
         headers=admin_headers,
     )
 
@@ -291,13 +293,13 @@ async def test_update_role_success(client, admin_headers, uow: SQLAlchemyUnitOfW
 @pytest.mark.asyncio
 async def test_update_role_with_invalid_id(client, admin_headers):  # noqa: F811
     payload = RoleUpdateRequest(
-        where=_RoleUpdateWhereRequest(role_id=88888),
+        where=_RoleUpdateWhereRequest(role_id=UUID(int=88888)),
         data=_RoleUpdateDateRequest(name="new_role", permission_ids=[]),
     )
 
     resp = await client.put(
         f"{BASE_URL}/",
-        json=payload.model_dump(),
+        json=payload.model_dump(mode="json"),
         headers=admin_headers,
     )
 
@@ -330,7 +332,7 @@ async def test_update_role_with_duplicate_name(
 
     response = await client.put(
         f"{BASE_URL}/",
-        json=payload.model_dump(),
+        json=payload.model_dump(mode="json"),
         headers=admin_headers,
     )
 
@@ -387,15 +389,16 @@ async def test_delete_role_success(client, admin_headers, uow: SQLAlchemyUnitOfW
 
     TypeAdapter(ResultResponse).validate_python(resp.json())
 
+    deleted_role_id = role.safe_id
     async with uow:
-        role = await uow.roles.get(role_id=role.safe_id)
+        deleted_role = await uow.roles.get(role_id=deleted_role_id)
 
-    assert role is None
+    assert deleted_role is None
 
 
 @pytest.mark.asyncio
 async def test_delete_role_with_invalid_id(client, admin_headers):  # noqa: F811
-    invalid_role_id = 999999
+    invalid_role_id = UUID(int=999999)
 
     resp = await client.delete(
         f"{BASE_URL}/{invalid_role_id}",
@@ -432,7 +435,7 @@ async def test_get_role_list_by_filter_permission_denied(client, member_headers)
 
     resp = await client.post(
         f"{BASE_URL}/list",
-        json=req.model_dump(),
+        json=req.model_dump(mode="json"),
         headers=member_headers,
     )
 
@@ -459,7 +462,7 @@ async def test_get_role_list_by_filter_unauthenticated(client):  # noqa: F811
 
     resp = await client.post(
         f"{BASE_URL}/list",
-        json=req.model_dump(),
+        json=req.model_dump(mode="json"),
     )
 
     assert resp.status_code == 401
@@ -479,13 +482,13 @@ async def test_get_role_list_by_filter_success(
     perm5 = await uow.permissions.create(permission=Permission(name="perm5"))
     perm6 = await uow.permissions.create(permission=Permission(name="perm6"))
 
-    await uow.roles.create(
+    role1 = await uow.roles.create(
         role=Role(name="cus_role1", permission_ids=[perm1.safe_id, perm2.safe_id])
     )
-    await uow.roles.create(
+    role2 = await uow.roles.create(
         role=Role(name="cus_role2", permission_ids=[perm1.safe_id, perm3.safe_id])
     )
-    await uow.roles.create(
+    role3 = await uow.roles.create(
         role=Role(name="cus_role3", permission_ids=[perm1.safe_id, perm4.safe_id])
     )
     role4 = await uow.roles.create(
@@ -514,17 +517,23 @@ async def test_get_role_list_by_filter_success(
 
     resp = await client.post(
         f"{BASE_URL}/list",
-        json=req.model_dump(),
+        json=req.model_dump(mode="json"),
         headers=admin_headers,
     )
 
     assert resp.status_code == 200
 
     data = TypeAdapter(PaginatedResponse[RoleModel]).validate_python(resp.json())
+    sorted_roles = sorted(
+        [role1, role2, role3, role4, role5], key=lambda role: role.safe_id
+    )
+    start = req.pagination.offset + (req.pagination.page - 1) * req.pagination.page_size
+    expected = sorted_roles[start : start + req.pagination.page_size]
+
     assert len(data.items) == 2
-    assert data.items[0].id == role4.safe_id
-    assert data.items[0].name == role4.name
-    assert data.items[1].id == role5.safe_id
-    assert data.items[1].name == role5.name
-    assert sorted(data.items[0].permission_ids) == sorted(role4.permission_ids)
-    assert sorted(data.items[1].permission_ids) == sorted(role5.permission_ids)
+    assert data.items[0].id == expected[0].safe_id
+    assert data.items[0].name == expected[0].name
+    assert data.items[1].id == expected[1].safe_id
+    assert data.items[1].name == expected[1].name
+    assert sorted(data.items[0].permission_ids) == sorted(expected[0].permission_ids)
+    assert sorted(data.items[1].permission_ids) == sorted(expected[1].permission_ids)

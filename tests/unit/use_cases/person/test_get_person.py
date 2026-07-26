@@ -1,18 +1,19 @@
+from uuid import UUID
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from app.application.dto.person.person_get_dto import PersonGetMapper
-from app.application.use_cases.person.get_persson_use_case import GetPersonUseCase
+from app.application.use_cases.person.get_person_use_case import GetPersonUseCase
 from app.domain.exceptions.person_exceptions import PersonNotFoundException
 from app.domain.shared.dto.common_dto import IdDTO
 
 
 @pytest.mark.asyncio
 async def test_get_person_success(mock_uow):
-    dto = IdDTO(id=1)
+    dto = IdDTO(id=UUID(int=1))
 
     person = MagicMock()
-    person.id = 1
+    person.id = UUID(int=1)
 
     expected_response = MagicMock()
 
@@ -27,13 +28,13 @@ async def test_get_person_success(mock_uow):
 
     assert result is expected_response
 
-    mock_uow.persons.get_or_raise.assert_awaited_once_with(person_id=1)
+    mock_uow.persons.get_or_raise.assert_awaited_once_with(person_id=UUID(int=1))
     mapper_mock.assert_called_once_with(person=person)
 
 
 @pytest.mark.asyncio
 async def test_get_person_propagates_exception(mock_uow):
-    dto = IdDTO(id=1)
+    dto = IdDTO(id=UUID(int=1))
 
     mock_uow.persons.get_or_raise = AsyncMock(side_effect=PersonNotFoundException())
 
@@ -43,5 +44,5 @@ async def test_get_person_propagates_exception(mock_uow):
         with pytest.raises(PersonNotFoundException):
             await use_case.execute(dto)
 
-    mock_uow.persons.get_or_raise.assert_awaited_once_with(person_id=1)
+    mock_uow.persons.get_or_raise.assert_awaited_once_with(person_id=UUID(int=1))
     mapper_mock.assert_not_called()

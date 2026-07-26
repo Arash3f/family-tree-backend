@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from uuid import UUID
 
 from app.domain.entities.role import Role
 from app.domain.exceptions.role_exceptions import RoleNotFoundException
@@ -19,7 +20,7 @@ class RoleRepository(ABC):
     async def create(self, role: Role) -> Role: ...
 
     @abstractmethod
-    async def get(self, role_id: int) -> Role | None: ...
+    async def get(self, role_id: UUID) -> Role | None: ...
 
     @abstractmethod
     async def get_by_name(self, name: str) -> Role | None: ...
@@ -33,9 +34,9 @@ class RoleRepository(ABC):
     async def update(self, role: Role) -> Role: ...
 
     @abstractmethod
-    async def delete(self, role_id: int) -> None: ...
+    async def delete(self, role_id: UUID) -> None: ...
 
-    async def get_or_raise(self, role_id: int) -> Role:
+    async def get_or_raise(self, role_id: UUID) -> Role:
         """
         Find a role by id or raise an exception if not found.
 
@@ -56,5 +57,5 @@ class RoleRepository(ABC):
 
     @abstractmethod
     async def is_role_name_duplicated(
-        self, role_name: str, exception_role_id: int | None = None
+        self, role_name: str, exception_role_id: UUID | None = None
     ) -> bool: ...

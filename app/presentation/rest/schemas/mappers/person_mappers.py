@@ -56,7 +56,7 @@ class PersonApiMapper:
     def to_get_list_person_dto(request: FilterPersonRequest) -> FilterPersonQuery:
         data = request.model_dump()
 
-        if request.filters.birth_date is not None:
+        if request.filters and request.filters.birth_date is not None:
             data["filters"]["birth_date"] = {
                 "min": request.filters.birth_date.min,
                 "max": request.filters.birth_date.max,

@@ -1,0 +1,20 @@
+meta {
+  name: Closest Relationship
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{base_url}}/persons/:from_person_id/relation/:to_person_id
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+params:path {
+  from_person_id: 
+  to_person_id: 
+}

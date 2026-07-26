@@ -33,6 +33,16 @@ def mock_uow():
     marriages_repo.delete = AsyncMock()
     marriages_repo.end = AsyncMock()
     marriages_repo.get_or_raise = AsyncMock()
+    marriages_repo.has_active_for_person = AsyncMock(return_value=False)
+    marriages_repo.exists_for_person = AsyncMock(return_value=False)
+
+    sessions_repo = MagicMock()
+    sessions_repo.create = AsyncMock()
+    sessions_repo.get = AsyncMock()
+    sessions_repo.get_for_update = AsyncMock()
+    sessions_repo.update = AsyncMock()
+    sessions_repo.revoke = AsyncMock()
+    sessions_repo.revoke_all_for_user = AsyncMock()
 
     uow = MagicMock(spec=UnitOfWork)
     uow.permissions = permissions_repo
@@ -40,6 +50,7 @@ def mock_uow():
     uow.users = users_repo
     uow.persons = persons_repo
     uow.marriages = marriages_repo
+    uow.sessions = sessions_repo
 
     uow.__aenter__ = AsyncMock(return_value=uow)
     uow.__aexit__ = AsyncMock(return_value=None)

@@ -1,5 +1,6 @@
 from datetime import date
 from enum import Enum
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -12,18 +13,20 @@ class PersonUpdateField(str, Enum):
     NAME = "name"
     GENDER = "gender"
     BIRTH_DATE = "birth_date"
+    DEATH_DATE = "death_date"
 
 
 class _PersonUpdateDataDTO(BaseModel):
-    name: str | None
-    gender: Gender | None
-    birth_date: date | None
-    father_id: int | None
-    mother_id: int | None
+    name: str | None = None
+    gender: Gender | None = None
+    birth_date: date | None = None
+    death_date: date | None = None
+    father_id: UUID | None = None
+    mother_id: UUID | None = None
 
 
 class _PersonUpdateWhereDTO(BaseModel):
-    person_id: int
+    person_id: UUID
 
 
 class PersonUpdateDTO(BaseModel):
@@ -32,12 +35,13 @@ class PersonUpdateDTO(BaseModel):
 
 
 class PersonUpdateResponseDTO(BaseModel):
-    id: int
+    id: UUID
     name: str
     gender: Gender
     birth_date: date | None
-    father_id: int | None
-    mother_id: int | None
+    death_date: date | None = None
+    father_id: UUID | None
+    mother_id: UUID | None
 
 
 class PersonUpdateMapper(BaseModel):
@@ -48,6 +52,7 @@ class PersonUpdateMapper(BaseModel):
             name=person.name,
             gender=person.gender,
             birth_date=person.birth_date,
+            death_date=person.death_date,
             father_id=person.father_id,
             mother_id=person.mother_id,
         )

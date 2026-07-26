@@ -1,3 +1,4 @@
+from uuid import UUID
 import pytest
 
 from app.application.interfaces.unit_of_work import UnitOfWork
@@ -39,7 +40,7 @@ async def test_create_and_get_role(uow: UnitOfWork):
 async def test_get_or_raise_not_found(uow: UnitOfWork):
     async with uow:
         with pytest.raises(RoleNotFoundException):
-            await uow.roles.get_or_raise(role_id=999999)
+            await uow.roles.get_or_raise(role_id=UUID(int=999999))
 
 
 @pytest.mark.asyncio

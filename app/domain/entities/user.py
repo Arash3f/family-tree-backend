@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from uuid import UUID
 
 from app.domain.exceptions.common_exceptions import UnExpectedIdException
 from app.domain.services.password_hasher import PasswordHasher
@@ -14,8 +15,8 @@ class User:
 
     username: str
     password_hash: str
-    id: int | None = None
-    role_id: int | None = None
+    id: UUID | None = None
+    role_id: UUID | None = None
 
     def verify_password(self, plain_password: str, hasher: PasswordHasher) -> bool:
         """
@@ -31,7 +32,7 @@ class User:
         return hasher.verify(plain_password, self.password_hash)
 
     @property
-    def safe_id(self) -> int:
+    def safe_id(self) -> UUID:
         """
         Returns the user's ID.
 

@@ -14,4 +14,4 @@ class DeleteRoleUseCase:
 
             await self.uow.commit()
 
-            return ResultDTO(result="Role deleted successfuly")
+            return ResultDTO(result="Role deleted successfully")

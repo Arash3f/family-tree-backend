@@ -1,0 +1,59 @@
+meta {
+  name: List Permissions
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/permissions/list
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "pagination": {
+      "page": 1,
+      "page_size": 30,
+      "offset": 0
+    },
+    "filters": null,
+    "sort": {
+      "sort_order": "desc",
+      "sort_by": "id"
+    }
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.items: isArray
+  res.body.total: isNumber
+  res.body.page: isNumber
+  res.body.page_size: isNumber
+}
+
+docs {
+  # List Permissions
+
+  ## Input (`application/json`)
+  | Field | Type | Required | Notes |
+  |-------|------|----------|-------|
+  | pagination | object | no | default: `page=1`, `page_size=30`, `offset=0` |
+  | filters | object\|null | no | omit for no filtering |
+  | sort | object | no | default: `sort_order=desc`, `sort_by=id` |
+  | sort.sort_order | string | no | `asc` \| `desc` |
+  | sort.sort_by | string | no | `id` \| `name` |
+
+  ## Output `200`
+  ```json
+  {
+    "items": [
+      { "id": "00000000-0000-0000-0000-000000000001", "name": "person:create" }
+    ],
+    "total": 20,
+    "page": 1,
+    "page_size": 30
+  }
+  ```
+}

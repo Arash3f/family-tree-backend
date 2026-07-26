@@ -1,3 +1,4 @@
+from uuid import UUID
 from unittest.mock import AsyncMock, MagicMock, call, patch
 
 import pytest
@@ -14,30 +15,30 @@ from app.application.use_cases.role.update_role_use_case import UpdateRoleUseCas
 @pytest.mark.asyncio
 async def test_update_role_success(mock_uow):
     dto = RoleUpdateDTO(
-        where=_RoleUpdateWhereDTO(role_id=1),
+        where=_RoleUpdateWhereDTO(role_id=UUID(int=1)),
         data=_RoleUpdateDataDTO(
             name="super_admin",
-            permission_ids=[10, 20],
+            permission_ids = [UUID(int=10), UUID(int=20)],
         ),
     )
 
     existing_role = MagicMock()
-    existing_role.id = 1
+    existing_role.id = UUID(int=1)
     existing_role.name = "admin"
-    existing_role.permission_ids = [1, 2]
+    existing_role.permission_ids = [UUID(int=1), UUID(int=2)]
 
     perm_10 = MagicMock()
-    perm_10.id = 10
-    perm_10.safe_id = 10
+    perm_10.id = UUID(int=10)
+    perm_10.safe_id = UUID(int=10)
 
     perm_20 = MagicMock()
-    perm_20.id = 20
-    perm_20.safe_id = 20
+    perm_20.id = UUID(int=20)
+    perm_20.safe_id = UUID(int=20)
 
     updated_role = MagicMock()
-    updated_role.id = 1
+    updated_role.id = UUID(int=1)
     updated_role.name = "super_admin"
-    updated_role.permission_ids = [10, 20]
+    updated_role.permission_ids = [UUID(int=10), UUID(int=20)]
 
     mock_uow.roles.get_or_raise = AsyncMock(return_value=existing_role)
     mock_uow.permissions.get_or_raise = AsyncMock(side_effect=[perm_10, perm_20])
@@ -56,13 +57,13 @@ async def test_update_role_success(mock_uow):
 
     assert result is expected_result
 
-    mock_uow.roles.get_or_raise.assert_awaited_once_with(role_id=1)
+    mock_uow.roles.get_or_raise.assert_awaited_once_with(role_id=UUID(int=1))
 
     assert mock_uow.permissions.get_or_raise.await_count == 2
     mock_uow.permissions.get_or_raise.assert_has_awaits(
         [
-            call(permission_id=10),
-            call(permission_id=20),
+            call(permission_id=UUID(int=10)),
+            call(permission_id=UUID(int=20)),
         ]
     )
 
@@ -73,7 +74,7 @@ async def test_update_role_success(mock_uow):
     role_arg = update_args.kwargs["role"]
     assert role_arg is existing_role
     assert role_arg.name == "super_admin"
-    assert role_arg.permission_ids == [10, 20]
+    assert role_arg.permission_ids == [UUID(int=10), UUID(int=20)]
 
     mock_uow.commit.assert_awaited_once()
     mapper_mock.assert_called_once_with(role=updated_role)
@@ -82,19 +83,19 @@ async def test_update_role_success(mock_uow):
 @pytest.mark.asyncio
 async def test_update_role_without_permission_ids(mock_uow):
     dto = RoleUpdateDTO(
-        where=_RoleUpdateWhereDTO(role_id=1),
+        where=_RoleUpdateWhereDTO(role_id=UUID(int=1)),
         data=_RoleUpdateDataDTO(name="super_admin", permission_ids=None),
     )
 
     existing_role = MagicMock()
-    existing_role.id = 1
+    existing_role.id = UUID(int=1)
     existing_role.name = "admin"
-    existing_role.permission_ids = [1, 2]
+    existing_role.permission_ids = [UUID(int=1), UUID(int=2)]
 
     updated_role = MagicMock()
-    updated_role.id = 1
+    updated_role.id = UUID(int=1)
     updated_role.name = "super_admin"
-    updated_role.permission_ids = [1, 2]
+    updated_role.permission_ids = [UUID(int=1), UUID(int=2)]
 
     mock_uow.roles.get_or_raise = AsyncMock(return_value=existing_role)
     mock_uow.permissions.get_or_raise = AsyncMock()
@@ -115,7 +116,7 @@ async def test_update_role_without_permission_ids(mock_uow):
 
     assert result is expected_result
 
-    mock_uow.roles.get_or_raise.assert_awaited_once_with(role_id=1)
+    mock_uow.roles.get_or_raise.assert_awaited_once_with(role_id=UUID(int=1))
     mock_uow.permissions.get_or_raise.assert_not_awaited()
 
     mock_uow.roles.update.assert_awaited_once()
@@ -125,7 +126,7 @@ async def test_update_role_without_permission_ids(mock_uow):
     role_arg = update_args.kwargs["role"]
     assert role_arg is existing_role
     assert role_arg.name == "super_admin"
-    assert role_arg.permission_ids == [1, 2]
+    assert role_arg.permission_ids == [UUID(int=1), UUID(int=2)]
 
     mock_uow.commit.assert_awaited_once()
     mapper_mock.assert_called_once_with(role=updated_role)
@@ -134,27 +135,27 @@ async def test_update_role_without_permission_ids(mock_uow):
 @pytest.mark.asyncio
 async def test_update_role_only_permission_ids(mock_uow):
     dto = RoleUpdateDTO(
-        where=_RoleUpdateWhereDTO(role_id=1),
-        data=_RoleUpdateDataDTO(permission_ids=[10, 20], name=None),
+        where=_RoleUpdateWhereDTO(role_id=UUID(int=1)),
+        data=_RoleUpdateDataDTO(permission_ids = [UUID(int=10), UUID(int=20)], name=None),
     )
 
     existing_role = MagicMock()
-    existing_role.id = 1
+    existing_role.id = UUID(int=1)
     existing_role.name = "admin"
-    existing_role.permission_ids = [1, 2]
+    existing_role.permission_ids = [UUID(int=1), UUID(int=2)]
 
-    perm_10 = MagicMock(id=10)
-    perm_10.id = 10
-    perm_10.safe_id = 10
+    perm_10 = MagicMock(id=UUID(int=10))
+    perm_10.id = UUID(int=10)
+    perm_10.safe_id = UUID(int=10)
 
-    perm_20 = MagicMock(id=20)
-    perm_20.id = 20
-    perm_20.safe_id = 20
+    perm_20 = MagicMock(id=UUID(int=20))
+    perm_20.id = UUID(int=20)
+    perm_20.safe_id = UUID(int=20)
 
     updated_role = MagicMock()
-    updated_role.id = 1
+    updated_role.id = UUID(int=1)
     updated_role.name = "admin"
-    updated_role.permission_ids = [10, 20]
+    updated_role.permission_ids = [UUID(int=10), UUID(int=20)]
 
     mock_uow.roles.get_or_raise = AsyncMock(return_value=existing_role)
     mock_uow.permissions.get_or_raise = AsyncMock(side_effect=[perm_10, perm_20])
@@ -174,11 +175,11 @@ async def test_update_role_only_permission_ids(mock_uow):
 
     assert result is expected_result
 
-    mock_uow.roles.get_or_raise.assert_awaited_once_with(role_id=1)
+    mock_uow.roles.get_or_raise.assert_awaited_once_with(role_id=UUID(int=1))
     mock_uow.permissions.get_or_raise.assert_has_awaits(
         [
-            call(permission_id=10),
-            call(permission_id=20),
+            call(permission_id=UUID(int=10)),
+            call(permission_id=UUID(int=20)),
         ]
     )
 
@@ -187,7 +188,7 @@ async def test_update_role_only_permission_ids(mock_uow):
 
     role_arg = update_args.kwargs["role"]
     assert role_arg.name == "admin"
-    assert role_arg.permission_ids == [10, 20]
+    assert role_arg.permission_ids == [UUID(int=10), UUID(int=20)]
 
     mock_uow.commit.assert_awaited_once()
     mapper_mock.assert_called_once_with(role=updated_role)

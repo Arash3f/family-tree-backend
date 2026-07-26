@@ -37,7 +37,14 @@ class WifeNotFoundException(AppException):
 
 
 class PersonNotFoundException(AppException):
-    def __init__(self, detail: list[str] = []):
+    def __init__(self, detail: list[str] | None = None):
         super().__init__(
             code=ErrorCode.PERSON_NOT_FOUND, status_code=404, detail=detail
+        )
+
+
+class PersonHasMarriagesException(AppException):
+    def __init__(self, detail: list[str] | None = None):
+        super().__init__(
+            code=ErrorCode.PERSON_HAS_MARRIAGES, status_code=422, detail=detail
         )

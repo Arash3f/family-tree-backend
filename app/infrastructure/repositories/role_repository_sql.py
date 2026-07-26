@@ -1,6 +1,7 @@
 from collections.abc import Mapping
 from enum import Enum
 from typing import Any
+from uuid import UUID
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -36,7 +37,7 @@ class SQLRoleRepository(RoleRepository):
 
         return self._to_entity(model)
 
-    async def get(self, role_id: int) -> Role | None:
+    async def get(self, role_id: UUID) -> Role | None:
         stmt = select(RoleModel).where(RoleModel.id == role_id)
 
         result = await self.session.execute(stmt)
@@ -67,7 +68,7 @@ class SQLRoleRepository(RoleRepository):
                 stmt = stmt.where(RoleModel.name.ilike(f"%{filters.name}%"))
 
             if filters.id:
-                stmt = stmt.where(RoleModel.id.ilike(f"%{filters.id}%"))
+                stmt = stmt.where(RoleModel.id == filters.id)
 
             if filters.permission_id is not None:
                 stmt = stmt.join(RoleModel.permissions).where(
@@ -122,13 +123,13 @@ class SQLRoleRepository(RoleRepository):
 
         return self._to_entity(model)
 
-    async def delete(self, role_id: int) -> None:
+    async def delete(self, role_id: UUID) -> None:
         stmt = delete(RoleModel).where(RoleModel.id == role_id)
 
         await self.session.execute(stmt)
 
     async def is_role_name_duplicated(
-        self, role_name: str, exception_role_id: int | None = None
+        self, role_name: str, exception_role_id: UUID | None = None
     ) -> bool:
         stmt = select(RoleModel.id).where(RoleModel.name == role_name)
 

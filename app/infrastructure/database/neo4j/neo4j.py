@@ -154,8 +154,13 @@ class Neo4jClient:
                 List of query result records.
         """
 
-        # Convert Pydantic models to dictionary if necessary
-        query_params = params.model_dump() if params else {"params": {}}
+        # Convert Pydantic models to JSON-compatible dict (Neo4j rejects UUID objects)
+        if hasattr(params, "model_dump"):
+            query_params = params.model_dump(mode="json")
+        elif params:
+            query_params = params
+        else:
+            query_params = {}
 
         result = tx.run(query, **query_params)
 
@@ -163,5 +168,25 @@ class Neo4jClient:
         return [record.data() for record in result]
 
 
-# Singleton instance used across the application
-neo4j_client = Neo4jClient()
+class _LazyNeo4jClient:
+    """Defer driver creation until first use; support close on shutdown."""
+
+    def __init__(self) -> None:
+        self._client: Neo4jClient | None = None
+
+    def _get(self) -> Neo4jClient:
+        if self._client is None:
+            self._client = Neo4jClient()
+        return self._client
+
+    def __getattr__(self, name: str):
+        return getattr(self._get(), name)
+
+    def close(self) -> None:
+        if self._client is not None:
+            self._client.close()
+            self._client = None
+
+
+# Lazy singleton — connects on first query, closed in app lifespan
+neo4j_client = _LazyNeo4jClient()

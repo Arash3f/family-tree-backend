@@ -1,16 +1,22 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends
 
 from app.application.use_cases.person.create_person_use_case import CreatePersonUseCase
 from app.application.use_cases.person.delete_person_use_case import DeletePersonUseCase
+from app.application.use_cases.person.get_closest_relationship_use_case import (
+    GetClosestRelationshipUseCase,
+)
 from app.application.use_cases.person.get_person_list_by_filter_use_case import (
     GetPersonListByFilterUseCase,
 )
-from app.application.use_cases.person.get_persson_use_case import GetPersonUseCase
+from app.application.use_cases.person.get_person_use_case import GetPersonUseCase
 from app.application.use_cases.person.update_person_use_case import UpdatePersonUseCase
 from app.infrastructure.utils.constants.permissions import Permissions
 from app.presentation.rest.dependencies.permission_guard import RequirePermission
 from app.presentation.rest.schemas.dto.common import PaginatedResponse, ResultResponse
 from app.presentation.rest.schemas.dto.person_schema import (
+    ClosestRelationshipResponse,
     FilterPersonRequest,
     PersonCreateRequest,
     PersonCreateResponse,
@@ -19,9 +25,9 @@ from app.presentation.rest.schemas.dto.person_schema import (
     PersonUpdateRequest,
     PersonUpdateResponse,
 )
-from app.presentation.rest.schemas.mappers.comman_mappers import CommonApiMapper
+from app.presentation.rest.schemas.mappers.common_mappers import CommonApiMapper
 from app.presentation.rest.schemas.mappers.person_mappers import PersonApiMapper
-from app.presentation.rest.utils.dependencies import get_uow
+from app.presentation.rest.utils.dependencies import get_neo, get_uow
 
 router = APIRouter(prefix="/persons", tags=["Persons"])
 
@@ -48,7 +54,7 @@ async def create_person(
     dependencies=[Depends(RequirePermission(Permissions.PERSON_DELETE))],
 )
 async def delete_person(
-    person_id: int,
+    person_id: UUID,
     uow=Depends(get_uow),
 ) -> ResultResponse:
     usecase = DeletePersonUseCase(uow)
@@ -75,12 +81,27 @@ async def update_person(
 
 
 @router.get(
+    "/{from_person_id}/relation/{to_person_id}",
+    response_model=ClosestRelationshipResponse,
+    dependencies=[Depends(RequirePermission(Permissions.PERSON_READ))],
+)
+async def get_closest_relationship(
+    from_person_id: UUID,
+    to_person_id: UUID,
+    neo=Depends(get_neo),
+) -> ClosestRelationshipResponse:
+    usecase = GetClosestRelationshipUseCase(neo)
+    result = usecase.execute(from_person_id, to_person_id)
+    return ClosestRelationshipResponse.model_validate(result.model_dump())
+
+
+@router.get(
     "/{person_id}",
     response_model=PersonGetResponse,
     dependencies=[Depends(RequirePermission(Permissions.PERSON_READ))],
 )
 async def get_person(
-    person_id: int,
+    person_id: UUID,
     uow=Depends(get_uow),
 ) -> PersonGetResponse:
     usecase = GetPersonUseCase(uow)

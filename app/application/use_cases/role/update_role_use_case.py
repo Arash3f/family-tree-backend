@@ -1,4 +1,5 @@
 from typing import List
+from uuid import UUID
 
 from app.application.dto.role.role_update_dto import (
     RoleUpdateDTO,
@@ -34,7 +35,7 @@ class UpdateRoleUseCase:
             permission_ids = update_data_enum.pop(RoleUpdateField.PERMISSION_IDS, None)
 
             if permission_ids is not None:
-                permissions: List[int] = []
+                permissions: List[UUID] = []
                 for perm_id in permission_ids:
                     perm = await self.uow.permissions.get_or_raise(
                         permission_id=perm_id

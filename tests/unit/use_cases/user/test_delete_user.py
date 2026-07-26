@@ -1,3 +1,4 @@
+from uuid import UUID
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
@@ -8,10 +9,10 @@ from app.domain.shared.dto.common_dto import IdDTO
 
 @pytest.mark.asyncio
 async def test_delete_user_success(mock_uow):
-    dto = IdDTO(id=1)
+    dto = IdDTO(id=UUID(int=1))
 
     user = MagicMock()
-    user.safe_id = 1
+    user.safe_id = UUID(int=1)
 
     mock_uow.users.get_or_raise = AsyncMock(return_value=user)
     mock_uow.users.delete = AsyncMock()
@@ -21,16 +22,16 @@ async def test_delete_user_success(mock_uow):
 
     result = await use_case.execute(dto)
 
-    assert result.result == "User deleted successfuly"
+    assert result.result == "User deleted successfully"
 
-    mock_uow.users.get_or_raise.assert_awaited_once_with(user_id=1)
-    mock_uow.users.delete.assert_awaited_once_with(user_id=1)
+    mock_uow.users.get_or_raise.assert_awaited_once_with(user_id=UUID(int=1))
+    mock_uow.users.delete.assert_awaited_once_with(user_id=UUID(int=1))
     mock_uow.commit.assert_awaited_once()
 
 
 @pytest.mark.asyncio
 async def test_delete_user_propagates_exception(mock_uow):
-    dto = IdDTO(id=1)
+    dto = IdDTO(id=UUID(int=1))
 
     mock_uow.users.get_or_raise = AsyncMock(side_effect=UserNotFoundException())
     mock_uow.users.delete = AsyncMock()

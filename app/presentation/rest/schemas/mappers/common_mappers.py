@@ -1,10 +1,12 @@
+from uuid import UUID
+
 from app.domain.shared.dto.common_dto import IdDTO, ResultDTO
 from app.presentation.rest.schemas.dto.common import ResultResponse
 
 
 class CommonApiMapper:
     @staticmethod
-    def to_id_dto(id: int) -> IdDTO:
+    def to_id_dto(id: UUID) -> IdDTO:
         return IdDTO(
             id=id,
         )

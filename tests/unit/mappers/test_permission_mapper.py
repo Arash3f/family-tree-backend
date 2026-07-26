@@ -1,3 +1,4 @@
+from uuid import UUID
 from app.application.dto.permission.permission_create_dto import PermissionCreateMapper
 from app.application.dto.permission.permission_get_dto import PermissionGetMapper
 from app.domain.entities.permission import Permission
@@ -5,7 +6,7 @@ from app.domain.entities.permission import Permission
 
 def create_permission(**overrides):
     return Permission(
-        id=overrides.get("id", 1),
+        id=overrides.get("id", UUID(int=1)),
         name=overrides.get("name", "read_users"),
     )
 

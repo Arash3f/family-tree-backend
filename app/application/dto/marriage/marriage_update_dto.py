@@ -1,5 +1,6 @@
 from datetime import date
 from enum import Enum
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -14,14 +15,14 @@ class MarriageUpdateField(str, Enum):
 
 
 class _MarriageUpdateDataDTO(BaseModel):
-    husband_id: int | None
-    wife_id: int | None
-    married_at: date | None
-    divorced_at: date | None
+    husband_id: UUID | None = None
+    wife_id: UUID | None = None
+    married_at: date | None = None
+    divorced_at: date | None = None
 
 
 class _MarriageUpdateWhereDTO(BaseModel):
-    marriage_id: int
+    marriage_id: UUID
 
 
 class MarriageUpdateDTO(BaseModel):
@@ -30,9 +31,9 @@ class MarriageUpdateDTO(BaseModel):
 
 
 class MarriageUpdateResponseDTO(BaseModel):
-    id: int
-    husband_id: int
-    wife_id: int
+    id: UUID
+    husband_id: UUID
+    wife_id: UUID
     married_at: date
     divorced_at: date | None
 

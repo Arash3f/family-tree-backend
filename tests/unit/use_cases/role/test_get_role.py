@@ -1,3 +1,4 @@
+from uuid import UUID
 import pytest
 from unittest.mock import MagicMock, patch
 from app.application.dto.role.role_get_dto import RoleGetMapper
@@ -8,7 +9,7 @@ from app.domain.shared.dto.common_dto import IdDTO
 
 @pytest.mark.asyncio
 async def test_get_role_success(mock_uow):
-    dto = IdDTO(id=123)
+    dto = IdDTO(id=UUID(int=123))
 
     fake_role = MagicMock()
     mock_uow.roles.get_or_raise.return_value = fake_role
@@ -24,7 +25,7 @@ async def test_get_role_success(mock_uow):
     mock_uow.__aenter__.assert_awaited_once()
     mock_uow.__aexit__.assert_awaited_once()
 
-    mock_uow.roles.get_or_raise.assert_awaited_once_with(role_id=123)
+    mock_uow.roles.get_or_raise.assert_awaited_once_with(role_id=UUID(int=123))
 
     mapper_mock.assert_called_once_with(role=fake_role)
 
@@ -33,7 +34,7 @@ async def test_get_role_success(mock_uow):
 
 @pytest.mark.asyncio
 async def test_get_role_not_found(mock_uow):
-    dto = IdDTO(id=999)
+    dto = IdDTO(id=UUID(int=999))
 
     mock_uow.roles.get_or_raise.side_effect = RoleNotFoundException()
 
@@ -45,4 +46,4 @@ async def test_get_role_not_found(mock_uow):
     mock_uow.__aenter__.assert_awaited_once()
     mock_uow.__aexit__.assert_awaited_once()
 
-    mock_uow.roles.get_or_raise.assert_awaited_once_with(role_id=999)
+    mock_uow.roles.get_or_raise.assert_awaited_once_with(role_id=UUID(int=999))

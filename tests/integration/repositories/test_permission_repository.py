@@ -1,3 +1,4 @@
+from uuid import UUID
 import pytest
 
 from app.application.interfaces.unit_of_work import UnitOfWork
@@ -31,7 +32,7 @@ async def test_create_and_get_permission(uow: UnitOfWork):
 @pytest.mark.asyncio
 async def test_get_returns_none_when_not_found(uow: UnitOfWork):
     async with uow:
-        result = await uow.permissions.get(permission_id=999_999)
+        result = await uow.permissions.get(permission_id=UUID(int=999999))
         assert result is None
 
 
@@ -51,7 +52,7 @@ async def test_get_or_raise_success(uow: UnitOfWork):
 async def test_get_or_raise_not_found(uow: UnitOfWork):
     async with uow:
         with pytest.raises(PermissionNotFoundException):
-            await uow.permissions.get_or_raise(permission_id=123456)
+            await uow.permissions.get_or_raise(permission_id=UUID(int=123456))
 
 
 @pytest.mark.asyncio
@@ -128,12 +129,14 @@ async def test_get_list_by_filter_with_name_partial_match(uow: UnitOfWork):
 @pytest.mark.asyncio
 async def test_get_list_by_filter_with_pagination(uow: UnitOfWork):
     async with uow:
-        # create multiple permissions
+        created_permissions = []
         for i in range(10):
-            await uow.permissions.create(
-                Permission(
-                    id=None,
-                    name=f"perm_{i}",
+            created_permissions.append(
+                await uow.permissions.create(
+                    Permission(
+                        id=None,
+                        name=f"perm_{i}",
+                    )
                 )
             )
 
@@ -158,9 +161,20 @@ async def test_get_list_by_filter_with_pagination(uow: UnitOfWork):
         assert result.page_size == query.pagination.page_size
         assert len(result.items) == query.pagination.page_size
         assert result.total >= 10
-        names = [p.name for p in result.items]
-        assert "perm_7" in names
-        assert "perm_8" in names
+
+        sorted_permissions = sorted(
+            created_permissions, key=lambda permission: permission.safe_id
+        )
+        start = (
+            query.pagination.offset
+            + (query.pagination.page - 1) * query.pagination.page_size
+        )
+        expected_names = {
+            sorted_permissions[start].name,
+            sorted_permissions[start + 1].name,
+        }
+        names = {p.name for p in result.items}
+        assert names == expected_names
 
 
 @pytest.mark.asyncio
@@ -183,7 +197,7 @@ async def test_update_permission(uow: UnitOfWork):
 @pytest.mark.asyncio
 async def test_update_permission_not_found_raises(uow: UnitOfWork):
     async with uow:
-        fake_permission = Permission(id=999999, name="non_existing")
+        fake_permission = Permission(id=UUID(int=999999), name="non_existing")
 
         with pytest.raises(PermissionNotFoundException):
             await uow.permissions.update(fake_permission)

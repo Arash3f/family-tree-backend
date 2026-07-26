@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import List
+from uuid import UUID
 
 from app.domain.exceptions.common_exceptions import UnExpectedIdException
 
@@ -13,8 +14,8 @@ class Role:
     """
 
     name: str
-    permission_ids: List[int]
-    id: int | None = None
+    permission_ids: List[UUID]
+    id: UUID | None = None
 
     def __post_init__(self) -> None:
         """
@@ -29,7 +30,7 @@ class Role:
         self.permission_ids = list(dict.fromkeys(self.permission_ids))
 
     @property
-    def safe_id(self) -> int:
+    def safe_id(self) -> UUID:
         """
         Returns the role's ID.
 

@@ -1,8 +1,10 @@
 from datetime import date
+from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.domain.shared.dto.marriage_filter_dto import MarriageSortField
+from app.domain.shared.dto.sorter_dto import SortOrderField
 from app.presentation.rest.schemas.dto.common import (
     PaginationRequestParams,
     RangeRequest,
@@ -11,22 +13,22 @@ from app.presentation.rest.schemas.dto.common import (
 
 
 class MarriageModel(BaseModel):
-    id: int | None
-    husband_id: int
-    wife_id: int
+    id: UUID | None
+    husband_id: UUID
+    wife_id: UUID
     married_at: date
     divorced_at: date | None = None
 
 
 class _MarriageUpdateDateRequest(BaseModel):
-    husband_id: int | None
-    wife_id: int | None
-    married_at: date | None
-    divorced_at: date | None
+    husband_id: UUID | None = None
+    wife_id: UUID | None = None
+    married_at: date | None = None
+    divorced_at: date | None = None
 
 
 class _MarriageUpdateWhereRequest(BaseModel):
-    marriage_id: int
+    marriage_id: UUID
 
 
 class MarriageUpdateRequest(BaseModel):
@@ -35,49 +37,54 @@ class MarriageUpdateRequest(BaseModel):
 
 
 class MarriageUpdateResponse(BaseModel):
-    id: int
-    husband_id: int
-    wife_id: int
+    id: UUID
+    husband_id: UUID
+    wife_id: UUID
     married_at: date
     divorced_at: date | None
 
 
 class MarriageGetResponse(BaseModel):
-    id: int
-    husband_id: int
-    wife_id: int
+    id: UUID
+    husband_id: UUID
+    wife_id: UUID
     married_at: date
     divorced_at: date | None
 
 
 class MarriageCreateRequest(BaseModel):
-    husband_id: int
-    wife_id: int
+    husband_id: UUID
+    wife_id: UUID
     married_at: date
 
 
 class MarriageCreateResponse(BaseModel):
-    id: int
-    husband_id: int
-    wife_id: int
+    id: UUID
+    husband_id: UUID
+    wife_id: UUID
     married_at: date
     divorced_at: date | None
 
 
 class DivorceRequest(BaseModel):
-    marriage_id: int
+    marriage_id: UUID
     divorced_at: date
 
 
 class MarriageFilterRequestData(BaseModel):
-    id: int | None = None
-    husband_id: int | None = None
-    wife_id: int | None = None
+    id: UUID | None = None
+    husband_id: UUID | None = None
+    wife_id: UUID | None = None
     married_at: RangeRequest[date] | None = None
     divorced_at: RangeRequest[date] | None = None
 
 
 class FilterMarriageRequest(BaseModel):
-    pagination: PaginationRequestParams
-    filters: MarriageFilterRequestData
-    sort: SortRequestParams[MarriageSortField]
+    pagination: PaginationRequestParams = Field(default_factory=PaginationRequestParams)
+    filters: MarriageFilterRequestData | None = None
+    sort: SortRequestParams[MarriageSortField] = Field(
+        default_factory=lambda: SortRequestParams(
+            sort_order=SortOrderField.DESC,
+            sort_by=MarriageSortField.ID,
+        )
+    )

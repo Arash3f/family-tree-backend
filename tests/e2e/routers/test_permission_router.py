@@ -29,7 +29,7 @@ async def test_get_permission_list_by_filter_permission_denied(client, member_he
     )
     response: Response = await client.post(
         "/permissions/list",
-        json=data.model_dump(),
+        json=data.model_dump(mode="json"),
         headers=member_headers,
     )
     assert response.status_code == 403
@@ -50,7 +50,7 @@ async def test_get_permission_list_by_filter_not_authenticated(client):
     )
     response: Response = await client.post(
         "/permissions/list",
-        json=data.model_dump(),
+        json=data.model_dump(mode="json"),
     )
     assert response.status_code == 401
     assert response.json()["detail"] == "Not authenticated"
@@ -66,7 +66,7 @@ async def test_get_permission_list_by_filter_success(client, admin_headers):  # 
     )
     response = await client.post(
         "/permissions/list",
-        json=data.model_dump(),
+        json=data.model_dump(mode="json"),
         headers=admin_headers,
     )
     assert response.status_code == 200

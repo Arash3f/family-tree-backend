@@ -1,3 +1,4 @@
+from uuid import UUID
 from datetime import date
 
 from app.application.dto.marriage.marriage_create_dto import MarriageCreateMapper
@@ -8,9 +9,9 @@ from app.domain.entities.marriage import Marriage
 
 def create_marriage(**overrides):
     return Marriage(
-        id=overrides.get("id", 1),
-        husband_id=overrides.get("husband_id", 10),
-        wife_id=overrides.get("wife_id", 20),
+        id=overrides.get("id", UUID(int=1)),
+        husband_id=overrides.get("husband_id", UUID(int=10)),
+        wife_id=overrides.get("wife_id", UUID(int=20)),
         married_at=overrides.get("married_at", date(2020, 1, 1)),
         divorced_at=overrides.get("divorced_at", None),
     )

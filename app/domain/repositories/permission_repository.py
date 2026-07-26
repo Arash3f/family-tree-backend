@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List
+from uuid import UUID
 
 from app.domain.entities.permission import Permission
 from app.domain.exceptions.permission_exceptions import PermissionNotFoundException
@@ -23,7 +24,7 @@ class PermissionRepository(ABC):
     async def get_by_name(self, name: str) -> Permission | None: ...
 
     @abstractmethod
-    async def get(self, permission_id: int) -> Permission | None: ...
+    async def get(self, permission_id: UUID) -> Permission | None: ...
 
     @abstractmethod
     async def get_list_by_filter(
@@ -37,9 +38,9 @@ class PermissionRepository(ABC):
     async def update(self, permission: Permission) -> Permission: ...
 
     @abstractmethod
-    async def delete(self, permission_id: int) -> None: ...
+    async def delete(self, permission_id: UUID) -> None: ...
 
-    async def get_or_raise(self, permission_id: int) -> Permission:
+    async def get_or_raise(self, permission_id: UUID) -> Permission:
         """
         Find a permission by id or raise an exception if not found.
 

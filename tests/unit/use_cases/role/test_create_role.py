@@ -1,3 +1,4 @@
+from uuid import UUID
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -12,15 +13,15 @@ from app.domain.entities.role import Role
 
 @pytest.mark.asyncio
 async def test_create_role(mock_uow):
-    dto = RoleCreateDTO(name="adasdasda", permission_ids=[1, 2])
+    dto = RoleCreateDTO(name="adasdasda", permission_ids = [UUID(int=1), UUID(int=2)])
 
     perm_1 = MagicMock()
-    perm_1.id = 1
-    perm_1.safe_id = 1
+    perm_1.id = UUID(int=1)
+    perm_1.safe_id = UUID(int=1)
 
     perm_2 = MagicMock()
-    perm_2.id = 2
-    perm_2.safe_id = 2
+    perm_2.id = UUID(int=2)
+    perm_2.safe_id = UUID(int=2)
 
     mock_uow.permissions.get_or_raise = AsyncMock(side_effect=[perm_1, perm_2])
 
@@ -42,8 +43,8 @@ async def test_create_role(mock_uow):
     assert result == expected_result
 
     assert mock_uow.permissions.get_or_raise.await_count == 2
-    mock_uow.permissions.get_or_raise.assert_any_await(permission_id=1)
-    mock_uow.permissions.get_or_raise.assert_any_await(permission_id=2)
+    mock_uow.permissions.get_or_raise.assert_any_await(permission_id=UUID(int=1))
+    mock_uow.permissions.get_or_raise.assert_any_await(permission_id=UUID(int=2))
 
     mock_uow.roles.create.assert_awaited_once()
 
@@ -58,7 +59,7 @@ async def test_create_role(mock_uow):
 @pytest.mark.asyncio
 async def test_create_role_without_permissions(mock_uow):
     dto = RoleCreateDTO(name="admin", permission_ids=[])
-    created_role = Role(id=10, name="admin", permission_ids=[])
+    created_role = Role(id=UUID(int=10), name="admin", permission_ids=[])
 
     mock_uow.roles.create = AsyncMock(return_value=created_role)
     mock_uow.roles.is_role_name_duplicated = AsyncMock(return_value=False)

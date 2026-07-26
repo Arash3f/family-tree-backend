@@ -1,3 +1,5 @@
+from uuid import UUID
+
 import pytest
 
 from app.domain.entities.person import Gender, Person
@@ -38,7 +40,7 @@ async def test_create_and_get_person(uow: UnitOfWork):
 async def test_get_or_raise_not_found(uow: UnitOfWork):
     async with uow:
         with pytest.raises(PersonNotFoundException):
-            await uow.persons.get_or_raise(99999)
+            await uow.persons.get_or_raise(UUID(int=99999))
 
 
 @pytest.mark.asyncio

@@ -1,3 +1,4 @@
+from uuid import UUID
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
@@ -12,9 +13,10 @@ async def test_login_user_success(mock_uow):
 
     user = MagicMock()
     user.password_hash = "hashed"
-    user.safe_id = 1
+    user.safe_id = UUID(int=1)
 
     mock_uow.users.get_by_username = AsyncMock(return_value=user)
+    mock_uow.sessions.create = AsyncMock()
 
     password_hasher = MagicMock()
     password_hasher.verify.return_value = True
@@ -22,6 +24,7 @@ async def test_login_user_success(mock_uow):
     token_service = MagicMock()
     token_service.create_access_token.return_value = "access_token"
     token_service.create_refresh_token.return_value = "refresh_token"
+    token_service.hash_token.return_value = "hashed_refresh"
 
     use_case = LoginUserUseCase(mock_uow, password_hasher, token_service)
 
@@ -32,8 +35,10 @@ async def test_login_user_success(mock_uow):
 
     mock_uow.users.get_by_username.assert_awaited_once_with("arash")
     password_hasher.verify.assert_called_once_with("1234", "hashed")
-    token_service.create_access_token.assert_called_once_with(1)
-    token_service.create_refresh_token.assert_called_once_with(1)
+    assert token_service.create_access_token.call_count == 1
+    assert token_service.create_refresh_token.call_count == 1
+    mock_uow.sessions.create.assert_awaited_once()
+    mock_uow.commit.assert_awaited_once()
 
 
 @pytest.mark.asyncio

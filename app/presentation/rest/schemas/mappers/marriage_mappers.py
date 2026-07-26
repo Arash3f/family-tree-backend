@@ -39,7 +39,7 @@ class MarriageApiMapper:
 
     @staticmethod
     def to_update_marriage_dto(request: MarriageUpdateRequest) -> MarriageUpdateDTO:
-        request_data = request.model_dump()
+        request_data = request.model_dump(exclude_unset=True)
         return MarriageUpdateDTO.model_validate(request_data)
 
     @staticmethod
@@ -58,12 +58,12 @@ class MarriageApiMapper:
     def to_get_list_marriage_dto(request: FilterMarriageRequest) -> FilterMarriageDTO:
         data = request.model_dump()
 
-        if request.filters.married_at is not None:
+        if request.filters and request.filters.married_at is not None:
             data["filters"]["married_at"] = {
                 "min": request.filters.married_at.min,
                 "max": request.filters.married_at.max,
             }
-        if request.filters.divorced_at is not None:
+        if request.filters and request.filters.divorced_at is not None:
             data["filters"]["divorced_at"] = {
                 "min": request.filters.divorced_at.min,
                 "max": request.filters.divorced_at.max,
