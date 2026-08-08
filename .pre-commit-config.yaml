@@ -7,11 +7,6 @@ repos:
         # Docker Compose custom tags (!override, !reset, etc.)
         args: [--unsafe]
       - id: name-tests-test
-        entry: pytest
-        language: system
-        pass_filenames: false
-        args:
-          - "-q"
       - id: check-ast
       - id: check-builtin-literals
       - id: check-case-conflict
