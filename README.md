@@ -235,7 +235,7 @@ JWT_SECRET=local-dev-only-change-me-32chars-min
 poetry run alembic upgrade head
 ```
 
-> **Warning:** revision `a1b2c3d4e5f6` (integer IDs → UUID) is **destructive**. It drops and recreates application tables. Do not run it against a database that holds data you need to keep.
+Schema history is a single initial revision (`0001_initial`). If you previously applied older multi-step revisions, reset the database (drop volume / recreate schema) before upgrading.
 
 ### 5. API
 
@@ -460,7 +460,6 @@ Optional family sample data:
 ## Known limitations
 
 - Neo4j stays empty unless Celery workers are running and reachable.
-- Migration `a1b2c3d4e5f6` wipes existing relational data (UUID cutover).
 - Default admin password and JWT secret in examples are for local use only.
 
 ---
@@ -469,7 +468,6 @@ Optional family sample data:
 
 - [ ] Redis caching for hot graph paths
 - [ ] Observability (structured metrics / OpenTelemetry)
-- [ ] Non-destructive migration path for UUID upgrades with existing data
 - [ ] Broader e2e coverage with live Neo4j assertions
 - [x] GraphQL API synced with REST
 
