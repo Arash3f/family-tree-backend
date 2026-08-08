@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from pydantic import BaseModel
 
 from app.domain.entities.user import User
@@ -7,13 +9,13 @@ class UserCreateDTO(BaseModel):
     username: str
     password: str
     re_password: str
-    role_id: int | None
+    role_id: UUID | None
 
 
 class UserCreateResponseDTO(BaseModel):
-    id: int
+    id: UUID
     username: str
-    role_id: int | None
+    role_id: UUID | None
 
 
 class UserCreateMapper(BaseModel):

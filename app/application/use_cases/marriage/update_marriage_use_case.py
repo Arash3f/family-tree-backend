@@ -1,3 +1,7 @@
+﻿from uuid import UUID
+
+from sqlalchemy.exc import IntegrityError
+
 from app.application.dto.marriage.marriage_update_dto import (
     MarriageUpdateDTO,
     MarriageUpdateDTOMapper,
@@ -5,34 +9,41 @@ from app.application.dto.marriage.marriage_update_dto import (
     MarriageUpdateResponseDTO,
 )
 from app.application.interfaces.unit_of_work import UnitOfWork
+from app.application.services.family_tree_sync_service import FamilyTreeSyncService
+from app.domain.exceptions.marriage_exceptions import ActiveMarriageExistsException
 from app.domain.services.marriage_rules import MarriageRulesService
 
 
 class UpdateMarriageUseCase:
-    def __init__(self, uow: UnitOfWork, marriage_rules_service: MarriageRulesService):
+    def __init__(
+        self,
+        uow: UnitOfWork,
+        marriage_rules_service: MarriageRulesService,
+        sync_service: FamilyTreeSyncService | None = None,
+    ):
         self.uow = uow
         self.marriage_rules_service = marriage_rules_service
+        self.sync_service = sync_service or FamilyTreeSyncService()
 
     async def execute(self, dto: MarriageUpdateDTO) -> MarriageUpdateResponseDTO:
         async with self.uow:
-            # ? Remove None fields
             update_data = dto.data.model_dump(exclude_unset=True)
 
-            # ? find marriage
             marriage = await self.uow.marriages.get_or_raise(
                 marriage_id=dto.where.marriage_id
             )
 
-            # ? Convert update_data to new object and use enum for keys
+            old_husband_id = marriage.husband_id
+            old_wife_id = marriage.wife_id
+            old_divorced_at = marriage.divorced_at
+
             update_data_enum = {
                 MarriageUpdateField(key): value for key, value in update_data.items()
             }
 
-            # ? Read and pop husband_id and wife_id
             husband_id = update_data_enum.pop(MarriageUpdateField.HUSBAND_ID, None)
             wife_id = update_data_enum.pop(MarriageUpdateField.WIFE_ID, None)
 
-            # ! If these field (husband or wife or married_at) change, marriage_rules_service should use
             needs_validation = False
             husband = None
             wife = None
@@ -49,12 +60,16 @@ class UpdateMarriageUseCase:
 
             if MarriageUpdateField.MARRIAGE_AT in update_data_enum:
                 marriage.set_married_at(
-                    update_data_enum[MarriageUpdateField.MARRIAGE_AT]
+                    update_data_enum.pop(MarriageUpdateField.MARRIAGE_AT)
                 )
                 needs_validation = True
 
             if MarriageUpdateField.DIVORCE_AT in update_data_enum:
-                marriage.divorced_at = update_data_enum[MarriageUpdateField.DIVORCE_AT]
+                divorced_at = update_data_enum.pop(MarriageUpdateField.DIVORCE_AT)
+                if divorced_at is None:
+                    marriage.divorced_at = None
+                else:
+                    marriage.divorce(divorced_at)
 
             if needs_validation:
                 if husband is None:
@@ -71,12 +86,75 @@ class UpdateMarriageUseCase:
                     husband=husband, wife=wife, marriage_date=marriage.married_at
                 )
 
-            # ? Update other fields automatically.
             for field, value in update_data_enum.items():
                 setattr(marriage, field.value, value)
 
-            marriage = await self.uow.marriages.update(marriage=marriage)
+            if marriage.divorced_at is None:
+                await self._ensure_no_overlapping_active(
+                    husband_id=marriage.husband_id,
+                    wife_id=marriage.wife_id,
+                    exclude_marriage_id=marriage.safe_id,
+                )
 
-            await self.uow.commit()
+            try:
+                marriage = await self.uow.marriages.update(marriage=marriage)
+                await self.uow.commit()
+            except IntegrityError as exc:
+                await self._raise_if_active_marriage_conflict(exc)
+                raise
+
+            spouses_changed = (
+                old_husband_id != marriage.husband_id
+                or old_wife_id != marriage.wife_id
+            )
+            became_divorced = (
+                old_divorced_at is None and marriage.divorced_at is not None
+            )
+            became_active = (
+                old_divorced_at is not None and marriage.divorced_at is None
+            )
+            is_active = marriage.divorced_at is None
+
+            # Only active marriages keep a SPOUSE_OF edge in Neo4j.
+            # Changing spouses on an already-divorced record must not recreate one.
+            if became_divorced:
+                self.sync_service.remove_spouse(old_husband_id, old_wife_id)
+            elif is_active and spouses_changed:
+                self.sync_service.replace_spouse(
+                    old_person_id_1=old_husband_id,
+                    old_person_id_2=old_wife_id,
+                    new_person_id_1=marriage.husband_id,
+                    new_person_id_2=marriage.wife_id,
+                )
+            elif became_active:
+                self.sync_service.upsert_spouse(
+                    marriage.husband_id, marriage.wife_id
+                )
 
             return MarriageUpdateDTOMapper.to_response(marriage=marriage)
+
+    async def _ensure_no_overlapping_active(
+        self,
+        husband_id: UUID,
+        wife_id: UUID,
+        exclude_marriage_id: UUID,
+    ) -> None:
+        if await self.uow.marriages.has_active_for_person(
+            husband_id, exclude_marriage_id=exclude_marriage_id
+        ):
+            raise ActiveMarriageExistsException(
+                detail=[f"Husband {husband_id} already has an active marriage"]
+            )
+
+        if await self.uow.marriages.has_active_for_person(
+            wife_id, exclude_marriage_id=exclude_marriage_id
+        ):
+            raise ActiveMarriageExistsException(
+                detail=[f"Wife {wife_id} already has an active marriage"]
+            )
+
+    @staticmethod
+    async def _raise_if_active_marriage_conflict(exc: IntegrityError) -> None:
+        message = str(getattr(exc, "orig", exc)).lower()
+        if "uq_active_marriage" in message:
+            raise ActiveMarriageExistsException() from exc

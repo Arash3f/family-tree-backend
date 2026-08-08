@@ -2,6 +2,7 @@
 # Python / FastAPI Project
 ############################
 
+seed_items.py
 seed_iteams.py
 
 celerybeat-schedule*
@@ -125,6 +126,7 @@ build/
 
 # Docker
 docker-compose.override.yml
+docker/compose.override.yml
 .docker/
 .tmp/
 

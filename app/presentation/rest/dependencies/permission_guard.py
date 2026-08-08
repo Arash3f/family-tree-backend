@@ -16,7 +16,7 @@ class RequirePermission:
         auth_service: AuthorizationService = Depends(get_authorization_service),
     ):
         has_permission = await auth_service.user_has_permission(
-            current_user.id,
+            current_user.safe_id,
             self.permission,
         )
 

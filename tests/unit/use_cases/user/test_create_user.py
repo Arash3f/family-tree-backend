@@ -1,3 +1,4 @@
+from uuid import UUID
 from app.application.dto.user.user_create_dto import (
     UserCreateDTO,
     UserCreateMapper,
@@ -13,16 +14,16 @@ async def test_create_user_with_role(mock_uow):
         username="arash",
         password="secret",
         re_password="secret",
-        role_id=1,
+        role_id=UUID(int=1),
     )
 
     role = MagicMock()
-    role.id = 1
+    role.id = UUID(int=1)
 
     created_user = MagicMock()
-    created_user.id = 10
+    created_user.id = UUID(int=10)
     created_user.username = "arash"
-    created_user.role_id = 1
+    created_user.role_id = UUID(int=1)
 
     password_hasher = MagicMock()
     password_hasher.hash.return_value = "hashed_password"
@@ -42,7 +43,7 @@ async def test_create_user_with_role(mock_uow):
 
     assert result is expected_response
 
-    mock_uow.roles.get_or_raise.assert_awaited_once_with(role_id=1)
+    mock_uow.roles.get_or_raise.assert_awaited_once_with(role_id=UUID(int=1))
 
     password_hasher.hash.assert_called_once_with("secret")
 
@@ -53,7 +54,7 @@ async def test_create_user_with_role(mock_uow):
     user_arg = args.args[0]
 
     assert user_arg.username == "arash"
-    assert user_arg.role_id == 1
+    assert user_arg.role_id == UUID(int=1)
     assert user_arg.password_hash == "hashed_password"
 
     mock_uow.commit.assert_awaited_once()
@@ -71,7 +72,7 @@ async def test_create_user_without_role(mock_uow):
     )
 
     created_user = MagicMock()
-    created_user.id = 10
+    created_user.id = UUID(int=10)
     created_user.username = "arash"
     created_user.role_id = None
 

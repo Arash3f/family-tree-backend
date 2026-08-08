@@ -1,5 +1,6 @@
 from datetime import date
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from sqlalchemy import (
     CheckConstraint,
@@ -7,6 +8,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -19,11 +21,11 @@ if TYPE_CHECKING:
 class MarriageModel(Base):
     __tablename__ = "marriages"
 
-    husband_id: Mapped[int] = mapped_column(
+    husband_id: Mapped[UUID] = mapped_column(
         ForeignKey("persons.id"), nullable=False, index=True
     )
 
-    wife_id: Mapped[int] = mapped_column(
+    wife_id: Mapped[UUID] = mapped_column(
         ForeignKey("persons.id"), nullable=False, index=True
     )
 
@@ -49,4 +51,16 @@ class MarriageModel(Base):
         ),
         CheckConstraint("husband_id != wife_id", name="ck_marriage_no_self_marriage"),
         Index("ix_marriage_husband_wife", "husband_id", "wife_id"),
+        Index(
+            "uq_active_marriage_husband",
+            "husband_id",
+            unique=True,
+            postgresql_where=text("divorced_at IS NULL"),
+        ),
+        Index(
+            "uq_active_marriage_wife",
+            "wife_id",
+            unique=True,
+            postgresql_where=text("divorced_at IS NULL"),
+        ),
     )

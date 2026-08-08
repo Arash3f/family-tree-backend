@@ -1,11 +1,17 @@
 from app.application.dto.marriage.divorce_dto import DivorceDTO
 from app.application.interfaces.unit_of_work import UnitOfWork
+from app.application.services.family_tree_sync_service import FamilyTreeSyncService
 from app.domain.shared.dto.common_dto import ResultDTO
 
 
 class DivorceUseCase:
-    def __init__(self, uow: UnitOfWork):
+    def __init__(
+        self,
+        uow: UnitOfWork,
+        sync_service: FamilyTreeSyncService | None = None,
+    ):
         self.uow = uow
+        self.sync_service = sync_service or FamilyTreeSyncService()
 
     async def execute(self, dto: DivorceDTO) -> ResultDTO:
         async with self.uow:
@@ -13,7 +19,9 @@ class DivorceUseCase:
                 marriage_id=dto.marriage_id
             )
 
-            # ? Update marriage divorced_at with verification
+            husband_id = marriage.husband_id
+            wife_id = marriage.wife_id
+
             marriage.divorce(divorced_at=dto.divorced_at)
 
             await self.uow.marriages.end(
@@ -22,4 +30,6 @@ class DivorceUseCase:
 
             await self.uow.commit()
 
-            return ResultDTO(result="Divorce successfuly added")
+            self.sync_service.remove_spouse(husband_id, wife_id)
+
+            return ResultDTO(result="Divorce recorded successfully")

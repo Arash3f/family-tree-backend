@@ -1,0 +1,35 @@
+meta {
+  name: Family Tree API
+}
+
+auth {
+  mode: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+docs {
+  # Family Tree API
+
+  All protected endpoints require `Authorization: Bearer {{access_token}}`.
+
+  ## Flow
+  1. Run Auth / Login (admin/admin by default)
+  2. Optionally run Auth / Me to verify the token
+  3. Use other folders; tokens and created IDs are saved to Local env
+
+  ## Common error body
+  ```json
+  {
+    "error_code": 1301,
+    "status": 403,
+    "message": "Permission denied"
+  }
+  ```
+  - `401` → Not authenticated
+  - `403` → Permission denied
+  - `404` → Entity not found
+  - `422` → Validation error
+}

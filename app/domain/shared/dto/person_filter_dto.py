@@ -1,5 +1,6 @@
 from datetime import date
 from enum import Enum
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -17,15 +18,15 @@ class PersonSortField(str, Enum):
 
 
 class PersonFilterDTO(BaseModel):
-    id: int | None = None
+    id: UUID | None = None
     name: str | None = None
     gender: Gender | None = None
     birth_date: RangeDTO[date] | None = None
-    father_id: int | None = None
-    mother_id: int | None = None
+    father_id: UUID | None = None
+    mother_id: UUID | None = None
 
 
 class FilterPersonQuery(BaseModel):
     pagination: PaginationParams
-    filters: PersonFilterDTO | None
+    filters: PersonFilterDTO | None = None
     sort: SortParams[PersonSortField]

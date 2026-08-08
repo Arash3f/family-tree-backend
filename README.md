@@ -1,194 +1,464 @@
 # Family Tree API
 
-A robust, production-ready Family Tree management system built with FastAPI, following Clean Architecture principles. This project leverages the power of PostgreSQL for transactional data and Neo4j for complex graph-based relationship traversals.
+Production-oriented backend for managing family trees: people, marriages, and graph relationships.
+
+Built with **FastAPI** and **Clean Architecture**. Exposes both **REST** and **GraphQL** APIs over the same use cases. **PostgreSQL** is the source of truth for transactional data; **Neo4j** stores parent/spouse edges for traversals such as shortest-path (closest relationship) queries. Background work runs on **Celery** + **Redis**.
+
+| | |
+|---|---|
+| **Version** | `0.1.0` |
+| **Python** | `3.11+` |
+| **License** | Educational / development use |
 
 ---
 
-# 🚀 Features
+## Table of contents
 
-- **Hybrid Data Storage**: Seamless integration of Relational (PostgreSQL) and Graph (Neo4j) databases.
-- **Advanced Graph Queries**: Find the shortest path (closest relationship) between any two individuals using Neo4j's Cypher.
-- **Clean Architecture**: Strict separation of concerns (Presentation, Application, Domain, Infrastructure).
-- **Background Tasks**: Automated daily backups and heavy Neo4j operations via Celery and Redis.
-- **Containerized**: Fully Dockerized environment for easy deployment and scaling.
-- **Database Migrations**: Managed by Alembic for PostgreSQL schema versioning.
-
----
-
-# 🛠 Tech Stack
-
-- **Framework**: FastAPI
-- **Databases**: PostgreSQL (SQL), Neo4j (Graph)
-- **Task** Queue: Celery + Redis
-- **Migrations**: Alembic
-- **Server**: Uvicorn / Gunicorn
-- **DevOps**: Docker & Docker Compose
-- **Testing**: Pytest
+- [Features](#features)
+- [Architecture](#architecture)
+- [Tech stack](#tech-stack)
+- [Quick start (Docker)](#quick-start-docker)
+- [Local development](#local-development)
+- [Configuration](#configuration)
+- [API overview](#api-overview)
+- [GraphQL API](#graphql-api)
+- [Authentication & authorization](#authentication--authorization)
+- [Background jobs](#background-jobs)
+- [Testing & quality](#testing--quality)
+- [Project layout](#project-layout)
+- [API client (Bruno)](#api-client-bruno)
+- [Seeding sample data](#seeding-sample-data)
+- [Known limitations](#known-limitations)
+- [Roadmap](#roadmap)
 
 ---
 
-# 🏗 System Architecture Overview
+## Features
 
-The system follows a layered approach where the **Application Layer** orchestrates how data is fetched or persisted based on the specific use case.
-
-## Hybrid Persistence Strategy
-
-Unlike traditional systems, this API uses a multi-database strategy:
-
-1. **PostgreSQL Only Requests**: Used for standard CRUD operations, authentication, and metadata management where ACID compliance is critical.
-2. **Neo4j Only Requests**: Used for pure graph exploration, identifying relationship types, and structural tree analysis.
-3. **Hybrid Requests**: For person-related entities, the system interacts with both databases. It ensures transactional integrity in PostgreSQL while simultaneously reflecting the relationship structure in Neo4j to enable high-performance graph traversals.
-
-## Layers Structure
-
-- **Presentation**: API endpoints, Request/Response schemas (DTOs).
-- **Application**: Use cases, business logic orchestration, and service coordination.
-- **Domain**: Core entities, value objects, and repository interfaces.
-- **Infrastructure**: Database clients (Postgres/Neo4j), Repository implementations and external services.
-- **Celery**: Celery tasks
----
-
-# 📋 Data Storage Strategy
-
-The system uses **two databases with different responsibilities**.
-
-## PostgreSQL
-
-Used for:
-
-- Core entity storage
-- Structured relational data
-- Transactions
-- Migration management
-
-
-## Neo4j
-
-Used for:
-
-- Modeling family relationships
-- Graph traversal queries
-- Finding relationship paths
-- Calculating **closest relationship between two individuals**
-
-Person data is also stored in Neo4j to simplify traversal queries and avoid cross-database joins.
+- Hybrid persistence: PostgreSQL (CRUD, auth, history) + Neo4j (graph edges & path queries)
+- Dual API surface: REST routers + GraphQL (Strawberry) sharing the same application layer
+- Closest relationship between two people: REST `GET /persons/{from_id}/relation/{to_id}` or GraphQL `closestRelationship`
+- JWT auth with access + refresh tokens (same tokens for REST and GraphQL)
+- Role-based access control (permissions on roles)
+- Async SQLAlchemy + Alembic migrations
+- Celery sync of person/marriage changes into Neo4j after commit
+- Scheduled database backups via Celery Beat
+- Docker stack under `docker/` (full or app-only Compose; multi-stage image)
+- Bruno collection for manual REST API testing
+- CI: Ruff, mypy, Bandit, Pytest (GitHub Actions)
 
 ---
 
-# 🏃 Running the Project
-
-## 1. Using Docker (Recommended)
-
-The easiest way to spin up the entire stack including databases and workers:
+## Architecture
 
 ```
-docker-compose up --build
+┌──────────────────────┐     ┌──────────────────┐     ┌─────────────┐
+│ FastAPI              │────▶│  Use cases /     │────▶│ PostgreSQL  │
+│  REST + GraphQL      │     │  domain services │     │ (source of  │
+└──────────────────────┘     └────────┬─────────┘     │  truth)     │
+                                      │               └─────────────┘
+                                      │ commit OK
+                                      ▼
+                             ┌──────────────────┐     ┌─────────────┐
+                             │ Celery (Redis)   │────▶│   Neo4j     │
+                             │ sync + backup    │     │ (graph)     │
+                             └──────────────────┘     └─────────────┘
 ```
 
-Once the Docker Compose stack is running, the following services will be available:
-- FastAPI Application: http://localhost:8001
-- FastAPI Interactive Docs (Swagger UI): http://localhost:8001/api_docs
-- FastAPI Alternative Docs (ReDoc): http://localhost:8001/redoc
-- Neo4j Browser: http://localhost:7474
-- PostgreSQL: Accessible on port 5432 from within the Docker network.
-- Redis: Accessible on port 6379 from within the Docker network.
-- Celery: Celery flower: http://localhost:5555
+### Layers
 
-##  2. Local Development (Manual)
+| Layer | Responsibility |
+|--------|----------------|
+| **Presentation** | REST routers + GraphQL schema/resolvers, Pydantic/Strawberry schemas, auth/permission guards, mappers |
+| **Application** | Use cases, DTOs, authorization & graph-sync services |
+| **Domain** | Entities, invariants, repository ports, marriage rules |
+| **Infrastructure** | SQLAlchemy, Neo4j client, JWT/Argon2, Unit of Work, Celery |
+| **Celery** | Person/relationship sync tasks, scheduled backups |
 
-If you prefer running the API locally with uvicorn (ensure Postgres, Neo4j, and Redis are running):
+REST and GraphQL both call the same use cases and permission checks; they stay behaviorally in sync.
 
-### 1. Install dependencies:
+### Data ownership
+
+| Store | Owns |
+|--------|------|
+| PostgreSQL | Users, roles, permissions, persons, marriages (including divorce history) |
+| Neo4j | `Person` nodes, `PARENT_OF` / `SPOUSE_OF` relationships for traversal |
+
+After a successful Postgres commit, the application enqueues Celery tasks to mirror relevant changes in Neo4j.
+
+---
+
+## Tech stack
+
+| Area | Choice |
+|------|--------|
+| API | FastAPI, Uvicorn, Strawberry GraphQL |
+| ORM / DB | SQLAlchemy 2 (async), asyncpg, Alembic, PostgreSQL 15 |
+| Graph | Neo4j 5 |
+| Queue | Celery, Redis 8, Flower |
+| Auth | OAuth2 password flow, JWT (`python-jose`), Argon2 (`passlib`) |
+| Validation | Pydantic v2 |
+| Quality | Ruff, mypy, Bandit, pre-commit, Commitizen, Pytest |
+
+---
+
+## Quick start (Docker)
+
+**Requirements:** Docker and Docker Compose.
+
+All Docker assets live under [`docker/`](docker/README.md).
+
+```bash
+cp .env.example .env
+# Edit .env if needed. JWT_SECRET must be at least 32 characters.
 ```
+
+### Full stack (all services)
+
+Starts API, Celery worker/beat, Flower, Postgres, Redis, and Neo4j.
+
+```bash
+docker compose -f docker/compose.full.yml --env-file .env up --build
+```
+
+`.env.example` already uses Docker DNS names (`db`, `redis`, `neo4j`) for this mode.
+
+### App only
+
+Starts only the project containers (API, Celery worker/beat, Flower).
+
+**A) Infra on the host** (Postgres/Redis/Neo4j installed locally):
+
+```bash
+docker compose -f docker/compose.app.yml --env-file .env up --build
+```
+
+Defaults use `host.docker.internal`. Override with `APP_POSTGRES_HOST`, `APP_CELERY_BROKER_URL`, `APP_CELERY_RESULT_BACKEND`, `APP_NEO4J_URI` if needed.
+
+**B) Infra from full Compose** (only `db` / `redis` / `neo4j` already up):
+
+```bash
+docker compose -f docker/compose.full.yml --env-file .env up -d db redis neo4j
+docker compose -f docker/compose.app.yml -f docker/compose.app.with-infra.yml --env-file .env up --build
+```
+
+With Docker DNS overrides:
+
+```bash
+# PowerShell
+$env:APP_POSTGRES_HOST="db"
+$env:APP_CELERY_BROKER_URL="redis://redis:6379/0"
+$env:APP_CELERY_RESULT_BACKEND="redis://redis:6379/1"
+$env:APP_NEO4J_URI="bolt://neo4j:7687"
+```
+
+The API entrypoint waits for Postgres, runs `alembic upgrade head`, then starts Uvicorn.
+
+| Service | URL |
+|---------|-----|
+| API | http://localhost:8001 |
+| Swagger UI | http://localhost:8001/api_docs |
+| ReDoc | http://localhost:8001/redoc |
+| OpenAPI JSON | http://localhost:8001/openapi.json |
+| GraphQL (GraphiQL) | http://localhost:8001/graphql |
+| Health | http://localhost:8001/health |
+| Neo4j Browser | http://localhost:7474 |
+| Flower | http://localhost:5555 |
+
+Default admin (from `.env` / seed on startup):
+
+- Username: value of `ADMIN_USERNAME` (default `admin`)
+- Password: value of `ADMIN_PASSWORD` (default `admin`)
+
+Change these before any shared or production-like environment.
+
+---
+
+## Local development
+
+Run Postgres, Neo4j, and Redis yourself (or start them via the full Compose stack and stop the app services), then run the API and workers on the host.
+
+### 1. Dependencies
+
+```bash
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+# Unix:    source .venv/bin/activate
+
 pip install -r requirements.txt
+# or: poetry install
 ```
-### 2. Set Environment Variables:
-Create a .env file in the project root based on .env.example.
 
-### 3. Run Migrations:
+### 2. Environment
+
+```bash
+cp .env.example .env
 ```
+
+For a **host** process (not inside Compose), point services at localhost, for example:
+
+```env
+POSTGRES_HOST=127.0.0.1
+POSTGRES_HOST_TEST=127.0.0.1
+CELERY_BROKER_URL=redis://127.0.0.1:6379/0
+CELERY_RESULT_BACKEND=redis://127.0.0.1:6379/1
+NEO4J_URI=bolt://127.0.0.1:7687
+JWT_SECRET=local-dev-only-change-me-32chars-min
+```
+
+`.env.example` uses Docker DNS names (`db`, `redis`, `neo4j`) suitable for Compose.
+
+### 3. Migrations
+
+```bash
 alembic upgrade head
 ```
 
-### 4. Run Celery Worker & Beat:
-```
-poetry run celery -A app.celery.celery_app worker -l info --pool=solo
-poetry run celery -A app.celery.celery_app beat --loglevel=info
+> **Warning:** revision `a1b2c3d4e5f6` (integer IDs → UUID) is **destructive**. It drops and recreates application tables. Do not run it against a database that holds data you need to keep.
+
+### 4. API
+
+```bash
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8001
+# or: poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8001
 ```
 
-### 5. Start the API with Uvicorn:
+### 5. Celery worker and beat
+
+Workers must listen on the routed queues:
+
+```bash
+celery -A app.celery.celery_app worker -l info --pool=solo \
+  -Q celery,sync_person,sync_relationship,backup_database
+
+celery -A app.celery.celery_app beat --loglevel=info
 ```
+
+Optional Flower:
+
+```bash
 celery -A app.celery.celery_app flower --port=5555
 ```
 
-### 6. Run Celery Flower:
-```
-poetry run celery -A app.celery.celery_app worker -l info --pool=solo
-poetry run celery -A app.celery.celery_app beat --loglevel=info
-```
-
-## ! Seeding Initial Data
-
-A sample file is provided to simplify adding initial family tree data.
-
-1. Open `seed_items.sample` and complete the data lists.
-2. In `main.py`, uncomment the following line:
-```python
-# await seed_initial_items(uow=uow)
-```
-3. Run the application to populate the database with the initial data.
----
-
-## ⏳ Background Tasks & Maintenance
-The system uses Celery for handling asynchronous and scheduled tasks.
-
-### Key Background Tasks
-
-- **Graph Synchronization**: Whenever a person is created or updated in PostgreSQL, a Celery task is triggered to ensure the Neo4j node is synchronized.
-- **Daily Backups**: A scheduled Celery beat task triggers every midnight to dump PostgreSQL and Neo4j data to a designated backup storage.
+Without a running worker, Postgres writes still succeed, but Neo4j will not stay in sync.
 
 ---
 
-# 🧪 Running Tests
+## Configuration
 
-Execute tests using:
+Managed via environment variables / `.env` (`app/core/config.py`).
 
+| Variable | Purpose |
+|----------|---------|
+| `POSTGRES_*` | Application database |
+| `POSTGRES_*_TEST` | Test database |
+| `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD` | Graph database |
+| `JWT_SECRET` | **Required**, minimum **32** characters |
+| `JWT_ALGORITHM` | Default `HS256` |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Access token lifetime |
+| `REFRESH_TOKEN_EXPIRE_DAYS` | Refresh token lifetime |
+| `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_ROLE_NAME` | Bootstrapped admin |
+| `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND` | Celery / Redis |
+| `BACKUP_DIR` | Backup output directory |
+
+---
+
+## API overview
+
+### REST
+
+Interactive docs: [/api_docs](http://localhost:8001/api_docs).
+
+| Prefix | Resources |
+|--------|-----------|
+| `/auth` | `POST /login`, `POST /refresh`, `POST /logout`, `POST /logout-all`, `GET /me` |
+| `/users` | User CRUD (permission-guarded) |
+| `/roles` | Role CRUD |
+| `/permissions` | Permission listing |
+| `/persons` | Person CRUD, filtered list, closest relationship |
+| `/marriages` | Marriage CRUD, divorce, filtered list |
+| `/health` | Postgres + Neo4j status |
+| `/health/neo4j` | Neo4j probe |
+
+Closest relationship:
+
+```http
+GET /persons/{from_person_id}/relation/{to_person_id}
+Authorization: Bearer <access_token>
 ```
+
+Returns path distance, node IDs, and relationship types when a path exists in Neo4j (requires prior sync).
+
+### GraphQL API
+
+Endpoint: [`POST /graphql`](http://localhost:8001/graphql) (GraphiQL UI in browser).
+
+GraphQL mirrors REST: same use cases, JWT auth (`Authorization: Bearer <access_token>`), and permission codes.
+
+| GraphQL | REST equivalent |
+|---------|-----------------|
+| `login` / `refreshToken` / `logout` / `logoutAll` / `me` | `/auth/*` |
+| `person` / `persons` / `createPerson` / `updatePerson` / `deletePerson` / `closestRelationship` | `/persons/*` |
+| `user` / `users` / `createUser` / `updateUser` / `deleteUser` | `/users/*` |
+| `role` / `roles` / `createRole` / `updateRole` / `deleteRole` | `/roles/*` |
+| `permissions` | `/permissions/list` |
+| `marriage` / `marriages` / `createMarriage` / `updateMarriage` / `deleteMarriage` / `divorce` | `/marriages/*` |
+
+Example login + create person:
+
+```graphql
+mutation {
+  login(username: "admin", password: "admin") {
+    accessToken
+    refreshToken
+  }
+}
+
+mutation {
+  createPerson(data: { name: "Ali", gender: MALE, birthDate: "1375/05/10" }) {
+    id
+    name
+    gender
+    birthDate
+  }
+}
+```
+
+Send the access token as `Authorization: Bearer …` on subsequent GraphQL requests (same as REST).
+
+Domain errors surface as GraphQL `errors[]` with `extensions.error_code`, `extensions.status`, and localized `message` (aligned with REST error payloads).
+
+---
+
+## Authentication & authorization
+
+1. `POST /auth/login` with OAuth2 form fields `username` and `password` (or GraphQL `login`)
+2. Use `access_token` as `Authorization: Bearer …` on protected REST routes and GraphQL operations
+3. `POST /auth/refresh` with JSON `{ "refresh_token": "…" }` (or GraphQL `refreshToken`) to rotate tokens
+4. `POST /auth/logout` / GraphQL `logout` revokes the current session; `logout-all` / `logoutAll` revokes every session for the user
+5. Refresh tokens are **not** accepted as API access tokens
+
+### Session security
+
+Refresh tokens are tracked in `user_sessions`:
+
+- Only a **SHA-256 hash** of the refresh token is stored (never the raw token)
+- Each refresh **rotates** the session (old refresh becomes invalid)
+- Reuse of a rotated refresh token **revokes all sessions** for that user (theft detection)
+- Access tokens carry `sid` (session id); revoked sessions cannot call protected APIs
+- Optional metadata: `user_agent`, `ip_address`
+
+Permissions are attached to roles (e.g. `person_create`, `marriage_divorce`). REST uses `RequirePermission(...)`; GraphQL uses the same permission strings via resolver guards.
+
+On startup the app seeds permissions and ensures the configured admin user/role exist.
+
+---
+
+## Background jobs
+
+| Job | Trigger | Behavior |
+|-----|---------|----------|
+| `sync.person.*` | After person create/update/delete | Upsert/delete Neo4j person; parent edges |
+| `sync.relationship.*` | After marriage create/update/divorce/delete | Spouse edges |
+| `backup.database` | Celery Beat daily at 00:00 (`Asia/Tehran`) | Postgres dump (+ Neo4j backup helpers) |
+
+Task routing uses dedicated queues; the worker command above must include them.
+
+---
+
+## Testing & quality
+
+```bash
+# Full suite
 pytest .
+
+# With coverage (CI uses --cov-fail-under=50)
+pytest -v --cov=app --cov-report=term-missing
+
+# Lint / types / security (as in CI)
+ruff check .
+mypy .
+bandit -r app -ll
+```
+
+Test layout:
+
+- `tests/unit` — entities, use cases, mappers, services
+- `tests/integration` — SQL repositories; Neo4j repository (skips if Neo4j is unreachable)
+- `tests/e2e` — HTTP API via ASGI (graph sync stubbed so Redis is not required)
+  - `tests/e2e/routers` — REST
+  - `tests/e2e/graphql` — GraphQL (`POST /graphql`)
+
+Pre-commit hooks and Commitizen are configured for local quality gates (`pre-commit install`).
+
+---
+
+## Project layout
+
+```
+app/
+  application/     # Use cases, DTOs, application services
+  domain/          # Entities, exceptions, repository interfaces
+  infrastructure/  # DB models, SQL/Neo4j repos, security, UoW
+  presentation/
+    rest/          # FastAPI routers, schemas, dependencies
+    graphql/       # Strawberry schema, types, resolvers (synced with REST)
+  celery/          # Celery app and tasks
+  core/            # Settings
+docker/            # Dockerfile, entrypoint, Compose stacks
+bruno/             # Bruno API collection
+migrations/        # Alembic revisions
+tests/             # unit / integration / e2e (REST + GraphQL)
 ```
 
 ---
 
-# 🗺 Roadmap / Pending Work
+## API client (Bruno)
 
-The following features are planned or not yet fully implemented:
-
-- ✅ Update ReadMy
-- ✅ Add github actions
-- ✅ Initial item implementation
-- ☐ Monitoring and logging improvements
-- ☐ Graph caching with redis
-- ✅ Celery Flow for Task Monitor
-- ✅ Daily backup neo4j
-- ☐ Add death date field to Person
-- ✅ Fix mypy error in pre commit
-- ☐ Neo4j Integration test
-- ☐ Fix docker action errors!
-- ☐ E2E test:
-  - ✅ permission
-  - ☐ auth
-  - ✅ role
-  - ☐ user
-  - ☐ person (+Neo4j)
-  - ☐ marriage (+Neo4j)
-- ...
+Open the `bruno/` collection in [Bruno](https://www.usebruno.com/). Use the `Local` environment (`base_url`, credentials, tokens). Requests cover auth, users, roles, permissions, persons (including closest relationship), and marriages.
 
 ---
 
+## Seeding sample data
 
-# License
+Permissions and the admin user are seeded automatically on API startup.
 
-This project is intended for educational and development purposes.
+Optional family sample data:
+
+1. Copy `seed_items.sample.py` to `seed_items.py` (the latter is gitignored).
+2. Fill the person and marriage lists in `seed_items.py`.
+3. Import and uncomment in `app/main.py` lifespan:
+   ```python
+   from seed_items import seed_initial_items
+   # ...
+   await seed_initial_items(uow=uow)
+   ```
+4. Restart the API.
 
 ---
-Developed with ❤️ by Arash Alfooneh.
+
+## Known limitations
+
+- Neo4j stays empty unless Celery workers are running and reachable.
+- Migration `a1b2c3d4e5f6` wipes existing relational data (UUID cutover).
+- Default admin password and JWT secret in examples are for local use only.
+
+---
+
+## Roadmap
+
+- [ ] Redis caching for hot graph paths
+- [ ] Observability (structured metrics / OpenTelemetry)
+- [ ] Non-destructive migration path for UUID upgrades with existing data
+- [ ] Broader e2e coverage with live Neo4j assertions
+- [x] GraphQL API synced with REST
+
+---
+
+## License
+
+Intended for educational and development purposes.
+
+---
+
+Developed by **Arash Alfooneh**.

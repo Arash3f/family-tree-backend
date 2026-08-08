@@ -1,0 +1,36 @@
+meta {
+  name: Delete Marriage
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{base_url}}/marriages/
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "id": {{marriage_id}}
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.result: isDefined
+}
+
+docs {
+  # Delete Marriage
+
+  ## Input (`application/json`)
+  | Field | Type | Required |
+  |-------|------|----------|
+  | id | uuid | yes |
+
+  ## Output `200`
+  ```json
+  { "result": "ok" }
+  ```
+}

@@ -1,5 +1,6 @@
 from datetime import date
 from enum import Enum
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -10,14 +11,14 @@ from app.domain.shared.dto.sorter_dto import SortParams
 
 class MarriageSortField(str, Enum):
     ID = "id"
-    MARRIAD_AT = "married_at"
+    MARRIED_AT = "married_at"
     DIVORCED_AT = "divorced_at"
 
 
 class MarriageFilterDataDTO(BaseModel):
-    id: int | None = None
-    husband_id: int | None = None
-    wife_id: int | None = None
+    id: UUID | None = None
+    husband_id: UUID | None = None
+    wife_id: UUID | None = None
     married_at: RangeDTO[date] | None = None
     divorced_at: RangeDTO[date] | None = None
 

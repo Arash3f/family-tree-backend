@@ -1,3 +1,4 @@
+from uuid import UUID
 from datetime import date
 
 from app.application.dto.person.person_create_dto import PersonCreateMapper
@@ -8,12 +9,12 @@ from app.domain.entities.person import Gender, Person
 
 def create_person(**overrides):
     return Person(
-        id=overrides.get("id", 1),
+        id=overrides.get("id", UUID(int=1)),
         name=overrides.get("name", "Ali"),
         gender=overrides.get("gender", Gender.MALE),
         birth_date=overrides.get("birth_date", date(2000, 1, 1)),
-        father_id=overrides.get("father_id", 10),
-        mother_id=overrides.get("mother_id", 20),
+        father_id=overrides.get("father_id", UUID(int=10)),
+        mother_id=overrides.get("mother_id", UUID(int=20)),
     )
 
 

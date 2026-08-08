@@ -1,6 +1,7 @@
-from app.core.config import settings
 from celery import Celery
 from celery.schedules import crontab
+
+from app.core.config import settings
 
 celery_app = Celery(
     "family_tree_worker",
@@ -13,7 +14,7 @@ celery_app.conf.update(
     accept_content=["json"],
     result_serializer="json",
     timezone="Asia/Tehran",
-    enable_utc=False,
+    enable_utc=True,
     task_routes={
         "backup.database": {"queue": "backup_database"},
         "sync.person.*": {"queue": "sync_person"},
@@ -28,4 +29,4 @@ celery_app.conf.beat_schedule = {
     }
 }
 
-celery_app.autodiscover_tasks(["app.worker"])
+celery_app.autodiscover_tasks(["app.celery"])

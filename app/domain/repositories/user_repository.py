@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from uuid import UUID
 
 from app.domain.entities.user import User
 from app.domain.exceptions.user_exceptions import UserNotFoundException
@@ -20,11 +21,11 @@ class UserRepository(ABC):
     async def create(self, user: User) -> User: ...
 
     @abstractmethod
-    async def get(self, user_id: int) -> User | None: ...
+    async def get(self, user_id: UUID) -> User | None: ...
 
     @abstractmethod
     async def get_with_details(
-        self, user_id: int
+        self, user_id: UUID
     ) -> UserGetWithDetailResponseDTO | None: ...
 
     @abstractmethod
@@ -39,9 +40,9 @@ class UserRepository(ABC):
     async def update(self, user: User) -> User: ...
 
     @abstractmethod
-    async def delete(self, user_id: int) -> None: ...
+    async def delete(self, user_id: UUID) -> None: ...
 
-    async def get_or_raise(self, user_id: int) -> User:
+    async def get_or_raise(self, user_id: UUID) -> User:
         """
         Find a user by id or raise an exception if not found.
 

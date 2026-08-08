@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends
 
 from app.application.use_cases.user.create_user_use_case import CreateUserUseCase
@@ -20,7 +22,7 @@ from app.presentation.rest.schemas.dto.user_schema import (
     UserUpdateRequest,
     UserUpdateResponse,
 )
-from app.presentation.rest.schemas.mappers.comman_mappers import CommonApiMapper
+from app.presentation.rest.schemas.mappers.common_mappers import CommonApiMapper
 from app.presentation.rest.schemas.mappers.user_mappers import UserApiMapper
 from app.presentation.rest.utils.dependencies import get_password_hasher, get_uow
 
@@ -50,7 +52,7 @@ async def create_user(
     dependencies=[Depends(RequirePermission(Permissions.USER_DELETE))],
 )
 async def delete_user(
-    user_id: int,
+    user_id: UUID,
     uow=Depends(get_uow),
 ) -> ResultResponse:
     usecase = DeleteUserUseCase(uow)
@@ -83,7 +85,7 @@ async def update_user(
     dependencies=[Depends(RequirePermission(Permissions.USER_READ))],
 )
 async def get_user(
-    user_id: int,
+    user_id: UUID,
     uow=Depends(get_uow),
 ) -> UserGetResponse:
     usecase = GetUserUseCase(uow)

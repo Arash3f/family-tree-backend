@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import List
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -13,11 +14,11 @@ class RoleUpdateField(str, Enum):
 
 class _RoleUpdateDataDTO(BaseModel):
     name: str | None
-    permission_ids: List[int] | None
+    permission_ids: List[UUID] | None
 
 
 class _RoleUpdateWhereDTO(BaseModel):
-    role_id: int
+    role_id: UUID
 
 
 class RoleUpdateDTO(BaseModel):
@@ -26,9 +27,9 @@ class RoleUpdateDTO(BaseModel):
 
 
 class RoleUpdateResponseDTO(BaseModel):
-    id: int
+    id: UUID
     name: str
-    permission_ids: List[int]
+    permission_ids: List[UUID]
 
 
 class RoleUpdateMapper(BaseModel):

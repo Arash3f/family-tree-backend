@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from app.application.interfaces.unit_of_work import UnitOfWork
 
 
@@ -25,7 +27,7 @@ class AuthorizationService:
 
     async def user_has_permission(
         self,
-        user_id: int,
+        user_id: UUID,
         permission_name: str,
     ) -> bool:
         """
@@ -36,7 +38,7 @@ class AuthorizationService:
         will be False.
 
         Args:
-            user_id (int): Unique identifier of the user.
+            user_id (UUID): Unique identifier of the user.
             permission_name (str): Name of the permission to check.
 
         Returns:
@@ -55,7 +57,7 @@ class AuthorizationService:
 
     async def user_has_any_permission(
         self,
-        user_id: int,
+        user_id: UUID,
         permissions: list[str],
     ) -> bool:
         """
@@ -65,7 +67,7 @@ class AuthorizationService:
         alternative permissions.
 
         Args:
-            user_id (int): Unique identifier of the user.
+            user_id (UUID): Unique identifier of the user.
             permissions (list[str]): List of permission names to check.
 
         Returns:

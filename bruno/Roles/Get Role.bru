@@ -1,0 +1,40 @@
+meta {
+  name: Get Role
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/roles/{{role_id}}
+  body: none
+  auth: inherit
+}
+
+params:path {
+  role_id: {{role_id}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isString
+  res.body.name: isString
+  res.body.permission_ids: isArray
+}
+
+docs {
+  # Get Role
+
+  ## Input (path)
+  | Param | Type | Required |
+  |-------|------|----------|
+  | role_id | uuid | yes |
+
+  ## Output `200`
+  ```json
+  {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "name": "Admin",
+    "permission_ids": ["00000000-0000-0000-0000-000000000001", "00000000-0000-0000-0000-000000000002", "00000000-0000-0000-0000-000000000003"]
+  }
+  ```
+}

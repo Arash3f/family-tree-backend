@@ -1,3 +1,4 @@
+from pydantic import Field
 from pydantic_settings import BaseSettings as PydanticBaseSettings
 from pydantic_settings import SettingsConfigDict
 
@@ -8,14 +9,14 @@ class AppSettings(PydanticBaseSettings):
     # Neo4J
     NEO4J_URI: str = "bolt://neo4j:7687"
     NEO4J_USER: str = "neo4j"
-    NEO4J_PASSWORD: str = "neo4j_password"
+    NEO4J_PASSWORD: str = "postgres"
 
     # JWT:
-    JWT_SECRET: str = "wzexsdcfvghjkml"
+    JWT_SECRET: str = Field(min_length=32)
     JWT_ALGORITHM: str = "HS256"
 
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 60
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # Database:
     POSTGRES_HOST: str = "127.0.0.1"
@@ -34,12 +35,16 @@ class AppSettings(PydanticBaseSettings):
     # Admin User:
     ADMIN_USERNAME: str = "admin"
     ADMIN_PASSWORD: str = "admin"
-    ADMIN_ROLE_NAME: str = "admin"
+    ADMIN_ROLE_NAME: str = "Admin"
 
-    BACKUP_DIR: str = "/backups"
+    BACKUP_DIR: str = "/mnt/backups"
 
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/1"
+
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000,http://localhost:8001"
+    FLOWER_BASIC_AUTH: str = "admin:admin"
+    AUTH_RATE_LIMIT_PER_MINUTE: int = 30
 
     @property
     def database_url_asy(self):

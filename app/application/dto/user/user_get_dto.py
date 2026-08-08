@@ -1,12 +1,14 @@
+from uuid import UUID
+
 from pydantic import BaseModel
 
 from app.domain.entities.user import User
 
 
 class UserGetResponseDTO(BaseModel):
-    id: int
+    id: UUID
     username: str
-    role_id: int | None
+    role_id: UUID | None
 
 
 class UserGetMapper(BaseModel):

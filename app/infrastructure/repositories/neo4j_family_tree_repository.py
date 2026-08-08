@@ -1,3 +1,7 @@
+from uuid import UUID
+
+from pydantic import BaseModel
+
 from app.domain.repositories.family_tree_repository import FamilyTreeRepository
 from app.domain.shared.dto.family_tree_dto import (
     DeleteRelationshipDTO,
@@ -7,6 +11,7 @@ from app.domain.shared.dto.family_tree_dto import (
     PersonIdDTO,
     PersonResponseDTO,
     PersonUpsertDTO,
+    RelationshipPathDTO,
     SpouseRelationshipDTO,
     SpouseRelationshipResponseDTO,
 )
@@ -15,6 +20,11 @@ from app.infrastructure.database.neo4j.neo4j import neo4j_client
 from app.infrastructure.utils.mapper.parent_mapper import map_neo4j_parent
 from app.infrastructure.utils.mapper.person_mapper import map_neo4j_person
 from app.infrastructure.utils.mapper.spouse_mapper import map_neo4j_spouse
+
+
+class _PathParams(BaseModel):
+    from_id: UUID
+    to_id: UUID
 
 
 class Neo4jFamilyTreeRepository(FamilyTreeRepository):
@@ -85,3 +95,31 @@ class Neo4jFamilyTreeRepository(FamilyTreeRepository):
             return False
 
         return bool(records[0]["deleted"])
+
+    def find_shortest_relationship_path(
+        self, from_person_id: UUID, to_person_id: UUID
+    ) -> RelationshipPathDTO:
+        records = neo4j_client.execute_read(
+            query=q.SHORTEST_RELATIONSHIP_PATH,
+            params=_PathParams(from_id=from_person_id, to_id=to_person_id),
+        )
+
+        if not records:
+            return RelationshipPathDTO(
+                from_person_id=from_person_id,
+                to_person_id=to_person_id,
+                found=False,
+            )
+
+        row = records[0]
+        distance = row.get("distance")
+        person_ids = [UUID(str(pid)) for pid in (row.get("person_ids") or [])]
+
+        return RelationshipPathDTO(
+            from_person_id=from_person_id,
+            to_person_id=to_person_id,
+            found=distance is not None,
+            distance=distance,
+            path_person_ids=person_ids,
+            relationship_types=list(row.get("relationship_types") or []),
+        )

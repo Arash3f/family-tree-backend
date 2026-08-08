@@ -1,4 +1,5 @@
 from typing import List
+from uuid import UUID
 
 from app.application.dto.role.role_create_dto import (
     RoleCreateDTO,
@@ -23,7 +24,7 @@ class CreateRoleUseCase:
             if is_duplicated:
                 raise RoleNameDuplicatedException()
 
-            permission_ids: List[int] = []
+            permission_ids: List[UUID] = []
             if dto.permission_ids:
                 for perm_id in dto.permission_ids:
                     perm = await self.uow.permissions.get_or_raise(

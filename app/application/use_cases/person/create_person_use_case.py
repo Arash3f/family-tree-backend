@@ -4,13 +4,19 @@ from app.application.dto.person.person_create_dto import (
     PersonCreateResponseDTO,
 )
 from app.application.interfaces.unit_of_work import UnitOfWork
+from app.application.services.family_tree_sync_service import FamilyTreeSyncService
 from app.domain.entities.person import Gender, Person
 from app.domain.exceptions.person_exceptions import InvalidPersonGenderException
 
 
 class CreatePersonUseCase:
-    def __init__(self, uow: UnitOfWork):
+    def __init__(
+        self,
+        uow: UnitOfWork,
+        sync_service: FamilyTreeSyncService | None = None,
+    ):
         self.uow = uow
+        self.sync_service = sync_service or FamilyTreeSyncService()
 
     async def execute(self, dto: PersonCreateDTO) -> PersonCreateResponseDTO:
         async with self.uow:
@@ -18,7 +24,7 @@ class CreatePersonUseCase:
                 father = await self.uow.persons.get_or_raise(person_id=dto.father_id)
                 if father.gender is not Gender.MALE:
                     raise InvalidPersonGenderException(
-                        detail=["father's gender musst be male"]
+                        detail=["father's gender must be male"]
                     )
 
             if dto.mother_id is not None:
@@ -33,6 +39,7 @@ class CreatePersonUseCase:
                 name=dto.name,
                 gender=dto.gender,
                 birth_date=dto.birth_date,
+                death_date=dto.death_date,
                 mother_id=dto.mother_id,
                 father_id=dto.father_id,
             )
@@ -40,5 +47,7 @@ class CreatePersonUseCase:
             person = await self.uow.persons.create(person)
 
             await self.uow.commit()
+
+            self.sync_service.upsert_person(person)
 
             return PersonCreateMapper.to_response(person)

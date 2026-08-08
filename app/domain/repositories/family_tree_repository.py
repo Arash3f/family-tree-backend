@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+from uuid import UUID
+
 from app.domain.shared.dto.family_tree_dto import (
     DeleteRelationshipDTO,
     DeleteSpouseRelationshipDTO,
@@ -8,6 +10,7 @@ from app.domain.shared.dto.family_tree_dto import (
     PersonIdDTO,
     PersonResponseDTO,
     PersonUpsertDTO,
+    RelationshipPathDTO,
     SpouseRelationshipDTO,
     SpouseRelationshipResponseDTO,
 )
@@ -56,4 +59,10 @@ class FamilyTreeRepository(ABC):
 
     @abstractmethod
     def delete_spouse_relationship(self, data: DeleteSpouseRelationshipDTO) -> bool:
+        pass
+
+    @abstractmethod
+    def find_shortest_relationship_path(
+        self, from_person_id: UUID, to_person_id: UUID
+    ) -> RelationshipPathDTO:
         pass

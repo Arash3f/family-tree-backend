@@ -1,3 +1,4 @@
+from uuid import UUID
 from app.application.dto.user.user_create_dto import UserCreateMapper
 from app.application.dto.user.user_get_dto import UserGetMapper
 from app.application.dto.user.user_update_dto import UserUpdateMapper
@@ -6,7 +7,7 @@ from app.domain.entities.user import User
 
 def create_user(**overrides):
     return User(
-        id=overrides.get("id", 1),
+        id=overrides.get("id", UUID(int=1)),
         username=overrides.get("username", "arash"),
         password_hash=overrides.get("password_hash", "pass"),
         role_id=overrides.get("role_id"),

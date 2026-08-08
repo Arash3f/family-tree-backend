@@ -1,0 +1,42 @@
+meta {
+  name: Get Marriage
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/marriages/{{marriage_id}}
+  body: none
+  auth: inherit
+}
+
+params:path {
+  marriage_id: {{marriage_id}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isString
+  res.body.husband_id: isString
+  res.body.wife_id: isString
+}
+
+docs {
+  # Get Marriage
+
+  ## Input (path)
+  | Param | Type | Required |
+  |-------|------|----------|
+  | marriage_id | uuid | yes |
+
+  ## Output `200`
+  ```json
+  {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "husband_id": "00000000-0000-0000-0000-000000000001",
+    "wife_id": "00000000-0000-0000-0000-000000000002",
+    "married_at": "2020-01-15",
+    "divorced_at": null
+  }
+  ```
+}

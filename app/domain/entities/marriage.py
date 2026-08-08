@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import date
+from uuid import UUID
 
 from app.domain.exceptions.marriage_exceptions import (
     DivorceBeforeMarriageException,
@@ -17,9 +18,9 @@ class Marriage:
     including marriage creation, divorce handling, and date consistency.
     """
 
-    id: int | None
-    husband_id: int
-    wife_id: int
+    id: UUID | None
+    husband_id: UUID
+    wife_id: UUID
     married_at: date
     divorced_at: date | None = None
 
@@ -61,7 +62,7 @@ class Marriage:
         self.married_at = married_at
 
     @property
-    def safe_id(self) -> int:
+    def safe_id(self) -> UUID:
         """
         Return the entity ID ensuring it exists.
 

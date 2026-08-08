@@ -1,4 +1,5 @@
 from datetime import date
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -6,9 +7,9 @@ from app.domain.entities.marriage import Marriage
 
 
 class MarriageGetResponseDTO(BaseModel):
-    id: int
-    husband_id: int
-    wife_id: int
+    id: UUID
+    husband_id: UUID
+    wife_id: UUID
     married_at: date
     divorced_at: date | None
 

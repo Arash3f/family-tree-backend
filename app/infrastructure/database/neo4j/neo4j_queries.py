@@ -51,6 +51,7 @@ RETURN parent, child
 DELETE_PARENT_REL: LiteralString = """
 MATCH (p:Person {id: $parent_id})-[r:PARENT_OF]->(c:Person {id: $child_id})
 DELETE r
+RETURN COUNT(r) > 0 AS deleted
 """
 
 CREATE_SPOUSE_REL: LiteralString = """
@@ -63,4 +64,15 @@ RETURN a, b
 DELETE_SPOUSE_REL: LiteralString = """
 MATCH (a:Person {id: $person_id_1})-[r:SPOUSE_OF]-(b:Person {id: $person_id_2})
 DELETE r
+RETURN COUNT(r) > 0 AS deleted
+"""
+
+SHORTEST_RELATIONSHIP_PATH: LiteralString = """
+MATCH (a:Person {id: $from_id}), (b:Person {id: $to_id})
+OPTIONAL MATCH path = shortestPath((a)-[*..15]-(b))
+RETURN
+  CASE WHEN path IS NULL THEN [] ELSE [n IN nodes(path) | n.id] END AS person_ids,
+  CASE WHEN path IS NULL THEN [] ELSE [r IN relationships(path) | type(r)] END
+    AS relationship_types,
+  CASE WHEN path IS NULL THEN NULL ELSE length(path) END AS distance
 """

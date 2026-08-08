@@ -8,7 +8,7 @@ class UserNotFoundException(AppException):
 
 
 class UserPasswordIncorectException(AppException):
-    def __init__(self, detail: list[str] = []):
+    def __init__(self, detail: list[str] | None = None):
         super().__init__(
-            code=ErrorCode.USER_PASSWORD_INCORECT, status_code=404, detail=detail
+            code=ErrorCode.USER_PASSWORD_INCORECT, status_code=401, detail=detail
         )

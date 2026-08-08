@@ -1,0 +1,43 @@
+meta {
+  name: Get Person
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/persons/{{person_id}}
+  body: none
+  auth: inherit
+}
+
+params:path {
+  person_id: {{person_id}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isString
+  res.body.name: isString
+  res.body.gender: isDefined
+}
+
+docs {
+  # Get Person
+
+  ## Input (path)
+  | Param | Type | Required |
+  |-------|------|----------|
+  | person_id | uuid | yes |
+
+  ## Output `200`
+  ```json
+  {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "name": "arash",
+    "gender": "male",
+    "birth_date": "1379/09/01",
+    "father_id": null,
+    "mother_id": null
+  }
+  ```
+}

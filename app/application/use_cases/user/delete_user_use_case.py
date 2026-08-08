@@ -14,4 +14,4 @@ class DeleteUserUseCase:
 
             await self.uow.commit()
 
-            return ResultDTO(result="User deleted successfuly")
+            return ResultDTO(result="User deleted successfully")

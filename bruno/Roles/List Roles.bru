@@ -1,0 +1,68 @@
+meta {
+  name: List Roles
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/roles/list
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "pagination": {
+      "page": 1,
+      "page_size": 30,
+      "offset": 0
+    },
+    "filters": {
+      "id": null,
+      "name": null,
+      "permission_id": null
+    },
+    "sort": {
+      "sort_order": "desc",
+      "sort_by": "id"
+    }
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.items: isArray
+  res.body.total: isNumber
+}
+
+docs {
+  # List Roles
+
+  ## Input (`application/json`)
+  | Field | Type | Required | Notes |
+  |-------|------|----------|-------|
+  | pagination | object | no | default: `page=1`, `page_size=30`, `offset=0` |
+  | filters | object | no | omit for no filtering |
+  | filters.id | uuid\|null | no | |
+  | filters.name | string\|null | no | |
+  | filters.permission_id | uuid\|null | no | |
+  | sort | object | no | default: `sort_order=desc`, `sort_by=id` |
+  | sort.sort_order | string | no | `asc` \| `desc` |
+  | sort.sort_by | string | no | `id` \| `name` |
+
+  ## Output `200`
+  ```json
+  {
+    "items": [
+      {
+        "id": "00000000-0000-0000-0000-000000000001",
+        "name": "Admin",
+        "permission_ids": ["00000000-0000-0000-0000-000000000001", "00000000-0000-0000-0000-000000000002", "00000000-0000-0000-0000-000000000003"]
+      }
+    ],
+    "total": 1,
+    "page": 1,
+    "page_size": 30
+  }
+  ```
+}

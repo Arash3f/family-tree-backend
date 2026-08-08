@@ -1,4 +1,5 @@
 from enum import Enum
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -16,11 +17,11 @@ class _UserUpdateDataDTO(BaseModel):
     username: str | None
     password: str | None
     re_password: str | None
-    role_id: int | None
+    role_id: UUID | None
 
 
 class _UserUpdateWhereDTO(BaseModel):
-    user_id: int
+    user_id: UUID
 
 
 class UserUpdateDTO(BaseModel):
@@ -29,9 +30,9 @@ class UserUpdateDTO(BaseModel):
 
 
 class UserUpdateResponseDTO(BaseModel):
-    id: int
+    id: UUID
     username: str
-    role_id: int | None
+    role_id: UUID | None
 
 
 class UserUpdateMapper(BaseModel):

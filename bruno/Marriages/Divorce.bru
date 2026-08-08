@@ -1,0 +1,40 @@
+meta {
+  name: Divorce
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/marriages/divorce
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "marriage_id": {{marriage_id}},
+    "divorced_at": "2024-06-01"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.result: isDefined
+}
+
+docs {
+  # Divorce
+
+  > Note: API uses GET with JSON body.
+
+  ## Input (`application/json`)
+  | Field | Type | Required | Notes |
+  |-------|------|----------|-------|
+  | marriage_id | uuid | yes | |
+  | divorced_at | date | yes | `YYYY-MM-DD` |
+
+  ## Output `200`
+  ```json
+  { "result": "ok" }
+  ```
+}

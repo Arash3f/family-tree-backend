@@ -1,3 +1,4 @@
+from uuid import UUID
 from unittest.mock import Mock
 
 import pytest
@@ -9,8 +10,8 @@ from app.domain.services.password_hasher import PasswordHasher
 
 def create_user(**overrides):
     return User(
-        id=overrides.get("id", 1),
-        role_id=overrides.get("role_id", 2),
+        id=overrides.get("id", UUID(int=1)),
+        role_id=overrides.get("role_id", UUID(int=2)),
         username=overrides.get("username", "arash"),
         password_hash=overrides.get("password_hash", "hashed_password"),
     )
@@ -41,9 +42,9 @@ def test_verify_password_failure():
 
 
 def test_safe_id_returns_id():
-    user = create_user(id=10)
+    user = create_user(id=UUID(int=10))
 
-    assert user.safe_id == 10
+    assert user.safe_id == UUID(int=10)
 
 
 def test_safe_id_raises_exception_when_id_none():

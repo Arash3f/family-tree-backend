@@ -1,6 +1,7 @@
 from collections.abc import Mapping
 from enum import Enum
 from typing import Any
+from uuid import UUID
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,7 +28,7 @@ class SQLPersonRepository(PersonRepository):
 
         return self._to_entity(model)
 
-    async def get(self, person_id: int) -> Person | None:
+    async def get(self, person_id: UUID) -> Person | None:
         stmt = select(PersonModel).where(PersonModel.id == person_id)
 
         result = await self.session.execute(stmt)
@@ -39,7 +40,7 @@ class SQLPersonRepository(PersonRepository):
         return self._to_entity(model)
 
     async def get_by_name(
-        self, name: str, father_id: int | None, mother_id: int | None
+        self, name: str, father_id: UUID | None, mother_id: UUID | None
     ) -> Person | None:
         stmt = select(PersonModel).where(
             PersonModel.name == name,
@@ -63,6 +64,9 @@ class SQLPersonRepository(PersonRepository):
         if filters:
             if filters.name:
                 stmt = stmt.where(PersonModel.name.ilike(f"%{filters.name}%"))
+
+            if filters.id:
+                stmt = stmt.where(PersonModel.id == filters.id)
 
             if filters.gender:
                 stmt = stmt.where(PersonModel.gender == filters.gender)
@@ -103,7 +107,7 @@ class SQLPersonRepository(PersonRepository):
             page_size=result.page_size,
         )
 
-    async def get_children(self, parent_id: int) -> list[Person]:
+    async def get_children(self, parent_id: UUID) -> list[Person]:
         stmt = select(PersonModel).where(
             (PersonModel.father_id == parent_id) | (PersonModel.mother_id == parent_id)
         )
@@ -122,6 +126,7 @@ class SQLPersonRepository(PersonRepository):
         model.name = person.name
         model.gender = person.gender
         model.birth_date = person.birth_date
+        model.death_date = person.death_date
         model.father_id = person.father_id
         model.mother_id = person.mother_id
 
@@ -130,7 +135,7 @@ class SQLPersonRepository(PersonRepository):
 
         return self._to_entity(model)
 
-    async def delete(self, person_id: int) -> None:
+    async def delete(self, person_id: UUID) -> None:
         stmt = delete(PersonModel).where(PersonModel.id == person_id)
 
         await self.session.execute(stmt)
@@ -141,6 +146,7 @@ class SQLPersonRepository(PersonRepository):
             name=model.name,
             gender=Gender(model.gender),
             birth_date=model.birth_date,
+            death_date=model.death_date,
             father_id=model.father_id,
             mother_id=model.mother_id,
         )
@@ -151,6 +157,7 @@ class SQLPersonRepository(PersonRepository):
             name=entity.name,
             gender=entity.gender,
             birth_date=entity.birth_date,
+            death_date=entity.death_date,
             father_id=entity.father_id,
             mother_id=entity.mother_id,
         )

@@ -1,17 +1,21 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
 from swagger_ui_bundle import swagger_ui_path
 
+from app.core.config import settings
 from app.infrastructure.database.neo4j.neo4j import neo4j_client
 from app.infrastructure.database.seed import seed_initial_permissions, seed_initial_user
 from app.infrastructure.services.security.password_hasher_impl import (
     Argon2PasswordHasher,
 )
 from app.infrastructure.utils.logging import configure_logging
+from app.presentation.graphql.schema import graphql_router
 from app.presentation.rest.errors.handlers import app_exception_handler
 from app.presentation.rest.routers.auth_router import router as auth_router
 from app.presentation.rest.routers.marriage_router import router as marriage_router
@@ -50,11 +54,13 @@ async def lifespan(app: FastAPI):
 
     yield
 
+    neo4j_client.close()
+
 
 app = FastAPI(
     lifespan=lifespan,
     title="Family Tree API",
-    version="1.0.0",
+    version="0.1.0",
     redoc_url="/redoc",
     openapi_version="3.0.3",
     openapi_url="/openapi.json",
@@ -76,6 +82,15 @@ def custom_openapi():
     )
 
     openapi_schema["openapi"] = "3.0.3"
+    openapi_schema.setdefault("components", {})
+    openapi_schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+        }
+    }
+    openapi_schema["security"] = [{"BearerAuth": []}]
 
     app.openapi_schema = openapi_schema
     return app.openapi_schema
@@ -119,12 +134,44 @@ def neo4j_health():
 
 
 @app.get("/health")
-def health():
-    return {"neo4j": "OK"}
+async def health():
+    status: dict[str, str] = {}
+    healthy = True
+
+    try:
+        uow = get_uow()
+        async with uow:
+            await uow.session.execute(text("SELECT 1"))
+        status["postgres"] = "ok"
+    except Exception:
+        status["postgres"] = "error"
+        healthy = False
+
+    try:
+        result = neo4j_client.execute_read("RETURN 1 AS ok", params={})
+        status["neo4j"] = "ok" if result and result[0].get("ok") == 1 else "error"
+        if status["neo4j"] != "ok":
+            healthy = False
+    except Exception:
+        status["neo4j"] = "error"
+        healthy = False
+
+    status["status"] = "ok" if healthy else "degraded"
+    return status
 
 
 # Middleware for request tracing
 app.add_middleware(TraceIDMiddleware)
+
+cors_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
+if cors_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 # Global application exception handler
 app.add_exception_handler(AppException, app_exception_handler)
@@ -136,6 +183,7 @@ app.include_router(user_router)
 app.include_router(permission_router)
 app.include_router(role_router)
 app.include_router(auth_router)
+app.include_router(graphql_router)
 
 # Configure application logging
 configure_logging()

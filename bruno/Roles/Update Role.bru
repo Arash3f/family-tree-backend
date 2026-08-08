@@ -1,0 +1,55 @@
+meta {
+  name: Update Role
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{base_url}}/roles/
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "data": {
+      "name": "editor-updated",
+      "permission_ids": []
+    },
+    "where": {
+      "role_id": {{role_id}}
+    }
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isString
+  res.body.name: isString
+}
+
+docs {
+  # Update Role
+
+  ## Input (`application/json`)
+  ```json
+  {
+    "data": {
+      "name": "string|null",
+      "permission_ids": "int[]|null"
+    },
+    "where": {
+      "role_id": "uuid (required)"
+    }
+  }
+  ```
+
+  ## Output `200`
+  ```json
+  {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "name": "editor-updated",
+    "permission_ids": []
+  }
+  ```
+}

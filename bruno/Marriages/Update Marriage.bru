@@ -1,0 +1,60 @@
+meta {
+  name: Update Marriage
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{base_url}}/marriages/
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "data": {
+      "husband_id": "00000000-0000-0000-0000-000000000001",
+      "wife_id": "00000000-0000-0000-0000-000000000002",
+      "married_at": "2020-01-15",
+      "divorced_at": null
+    },
+    "where": {
+      "marriage_id": {{marriage_id}}
+    }
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isString
+}
+
+docs {
+  # Update Marriage
+
+  ## Input (`application/json`)
+  ```json
+  {
+    "data": {
+      "husband_id": "uuid|null",
+      "wife_id": "uuid|null",
+      "married_at": "YYYY-MM-DD|null",
+      "divorced_at": "YYYY-MM-DD|null"
+    },
+    "where": {
+      "marriage_id": "uuid (required)"
+    }
+  }
+  ```
+
+  ## Output `200`
+  ```json
+  {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "husband_id": "00000000-0000-0000-0000-000000000001",
+    "wife_id": "00000000-0000-0000-0000-000000000002",
+    "married_at": "2020-01-15",
+    "divorced_at": null
+  }
+  ```
+}

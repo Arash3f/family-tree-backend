@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import date
 from enum import Enum
+from uuid import UUID
 
 from app.domain.exceptions.common_exceptions import UnExpectedIdException
 from app.domain.exceptions.person_exceptions import (
@@ -25,12 +26,13 @@ class Person:
     relationships.
     """
 
-    id: int | None
+    id: UUID | None
     name: str
     gender: Gender
     birth_date: date | None = None
-    father_id: int | None = None
-    mother_id: int | None = None
+    death_date: date | None = None
+    father_id: UUID | None = None
+    mother_id: UUID | None = None
 
     def __post_init__(self) -> None:
         """
@@ -48,6 +50,15 @@ class Person:
         if self.birth_date and self.birth_date > date.today():
             raise InvalidBirthDateException()
 
+        if (
+            self.birth_date
+            and self.death_date
+            and self.death_date < self.birth_date
+        ):
+            raise InvalidBirthDateException(
+                detail=["death_date cannot be before birth_date"]
+            )
+
         # Validate self parent!
         if self.id is not None:
             if self.father_id == self.id or self.mother_id == self.id:
@@ -60,7 +71,7 @@ class Person:
         ):
             raise SameParentException()
 
-    def set_father(self, father_id: int) -> None:
+    def set_father(self, father_id: UUID) -> None:
         """
         Assigns a father to the person.
 
@@ -81,7 +92,7 @@ class Person:
 
         self.father_id = father_id
 
-    def set_mother(self, mother_id: int) -> None:
+    def set_mother(self, mother_id: UUID) -> None:
         """
         Assigns a mother to the person.
 
@@ -173,7 +184,7 @@ class Person:
         return same_father or same_mother
 
     @property
-    def safe_id(self) -> int:
+    def safe_id(self) -> UUID:
         """
         Returns the person's ID.
 

@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends
 
 from app.application.use_cases.marriage.create_marriage_use_case import (
@@ -31,7 +33,7 @@ from app.presentation.rest.schemas.dto.marriage_schema import (
     MarriageUpdateRequest,
     MarriageUpdateResponse,
 )
-from app.presentation.rest.schemas.mappers.comman_mappers import CommonApiMapper
+from app.presentation.rest.schemas.mappers.common_mappers import CommonApiMapper
 from app.presentation.rest.schemas.mappers.marriage_mappers import MarriageApiMapper
 from app.presentation.rest.utils.dependencies import get_marriage_rule_service, get_uow
 
@@ -40,14 +42,15 @@ router = APIRouter(prefix="/marriages", tags=["Marriages"])
 
 @router.post(
     "/",
-    response_model=MarriageGetResponse,
+    response_model=MarriageCreateResponse,
     dependencies=[Depends(RequirePermission(Permissions.MARRIAGE_CREATE))],
 )
 async def create_marriage(
     data: MarriageCreateRequest,
     uow=Depends(get_uow),
+    marriage_rule_service=Depends(get_marriage_rule_service),
 ) -> MarriageCreateResponse:
-    usecase = CreateMarriageUseCase(uow)
+    usecase = CreateMarriageUseCase(uow, marriage_rule_service)
 
     res = await usecase.execute(MarriageApiMapper.to_create_marriage_dto(data))
 
@@ -87,23 +90,7 @@ async def update_marriage(
     return MarriageApiMapper.from_update_marriage_dto(res)
 
 
-@router.get(
-    "/{marriage_id}",
-    response_model=MarriageGetResponse,
-    dependencies=[Depends(RequirePermission(Permissions.MARRIAGE_READ))],
-)
-async def get_marriage(
-    marriage_id: int,
-    uow=Depends(get_uow),
-) -> MarriageGetResponse:
-    usecase = GetMarriageUseCase(uow)
-
-    res = await usecase.execute(CommonApiMapper.to_id_dto(id=marriage_id))
-
-    return MarriageApiMapper.from_get_marriage_dto(res)
-
-
-@router.get(
+@router.post(
     "/list",
     response_model=PaginatedResponse[MarriageModel],
     dependencies=[Depends(RequirePermission(Permissions.MARRIAGE_READ))],
@@ -119,7 +106,7 @@ async def get_marriage_list_by_filter(
     return MarriageApiMapper.from_get_list_marriage_dto(res)
 
 
-@router.get(
+@router.post(
     "/divorce",
     response_model=ResultResponse,
     dependencies=[Depends(RequirePermission(Permissions.MARRIAGE_DIVORCE))],
@@ -133,3 +120,19 @@ async def divorce(
     res = await usecase.execute(MarriageApiMapper.to_add_divorce_dto(data))
 
     return CommonApiMapper.from_result_dto(res)
+
+
+@router.get(
+    "/{marriage_id}",
+    response_model=MarriageGetResponse,
+    dependencies=[Depends(RequirePermission(Permissions.MARRIAGE_READ))],
+)
+async def get_marriage(
+    marriage_id: UUID,
+    uow=Depends(get_uow),
+) -> MarriageGetResponse:
+    usecase = GetMarriageUseCase(uow)
+
+    res = await usecase.execute(CommonApiMapper.to_id_dto(id=marriage_id))
+
+    return MarriageApiMapper.from_get_marriage_dto(res)

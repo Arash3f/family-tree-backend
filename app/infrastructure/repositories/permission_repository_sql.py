@@ -1,6 +1,7 @@
 from collections.abc import Mapping
 from enum import Enum
 from typing import Any, List
+from uuid import UUID
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,7 +31,7 @@ class SQLPermissionRepository(PermissionRepository):
 
         return self._to_entity(model)
 
-    async def get(self, permission_id: int) -> Permission | None:
+    async def get(self, permission_id: UUID) -> Permission | None:
         stmt = select(PermissionModel).where(PermissionModel.id == permission_id)
 
         result = await self.session.execute(stmt)
@@ -115,7 +116,7 @@ class SQLPermissionRepository(PermissionRepository):
 
         return self._to_entity(model)
 
-    async def delete(self, permission_id: int) -> None:
+    async def delete(self, permission_id: UUID) -> None:
         stmt = delete(PermissionModel).where(PermissionModel.id == permission_id)
 
         await self.session.execute(stmt)

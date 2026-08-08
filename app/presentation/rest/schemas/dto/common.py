@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Generic, TypeVar
+from uuid import UUID
 
 from pydantic import BaseModel, field_validator
 
@@ -9,7 +10,7 @@ from app.presentation.utils.date_convert import jalali_to_gregorian
 
 @dataclass
 class IdRequest:
-    id: int
+    id: UUID
 
 
 @dataclass
@@ -28,9 +29,9 @@ class PaginatedResponse(BaseModel, Generic[T]):
 
 
 class PaginationRequestParams(BaseModel):
-    page: int
-    page_size: int
-    offset: int
+    page: int = 1
+    page_size: int = 30
+    offset: int = 0
 
 
 class SortRequestParams(BaseModel, Generic[T]):

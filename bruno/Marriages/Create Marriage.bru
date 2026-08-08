@@ -1,0 +1,55 @@
+meta {
+  name: Create Marriage
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/marriages/
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "husband_id": "00000000-0000-0000-0000-000000000001",
+    "wife_id": "00000000-0000-0000-0000-000000000002",
+    "married_at": "2020-01-15"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isString
+  res.body.husband_id: isString
+  res.body.wife_id: isString
+  res.body.married_at: isDefined
+}
+
+script:post-response {
+  if (res.status === 200 && res.body.id) {
+    bru.setEnvVar("marriage_id", String(res.body.id));
+  }
+}
+
+docs {
+  # Create Marriage
+
+  ## Input (`application/json`)
+  | Field | Type | Required | Notes |
+  |-------|------|----------|-------|
+  | husband_id | uuid | yes | Person uuid |
+  | wife_id | uuid | yes | Person uuid |
+  | married_at | date | yes | `YYYY-MM-DD` |
+
+  ## Output `200`
+  ```json
+  {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "husband_id": "00000000-0000-0000-0000-000000000001",
+    "wife_id": "00000000-0000-0000-0000-000000000002",
+    "married_at": "2020-01-15",
+    "divorced_at": null
+  }
+  ```
+}

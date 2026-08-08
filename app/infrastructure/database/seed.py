@@ -37,9 +37,11 @@ async def seed_initial_user(uow: UnitOfWork, password_hasher: Argon2PasswordHash
         elif admin.role_id:
             admin_role = await uow.roles.get_or_raise(role_id=admin.role_id)
             if admin_role.name != settings.ADMIN_ROLE_NAME:
-                admin.role_id = role.id
+                admin.role_id = role.safe_id
+                await uow.users.update(admin)
         else:
-            admin.role_id = role.id
+            admin.role_id = role.safe_id
+            await uow.users.update(admin)
 
         await uow.commit()
 

@@ -1,4 +1,5 @@
 from enum import Enum
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -13,9 +14,9 @@ class UserSortField(str, Enum):
 
 
 class UserFilterDTO(BaseModel):
-    id: int | None = None
+    id: UUID | None = None
     username: str | None = None
-    role_id: int | None = None
+    role_id: UUID | None = None
 
 
 class FilterUserQuery(BaseModel):

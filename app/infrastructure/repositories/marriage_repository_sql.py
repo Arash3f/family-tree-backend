@@ -2,8 +2,9 @@ from collections.abc import Mapping
 from datetime import date
 from enum import Enum
 from typing import Any
+from uuid import UUID
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.marriage import Marriage
@@ -33,7 +34,7 @@ class SQLMarriageRepository(MarriageRepository):
 
         return self._to_entity(model)
 
-    async def end(self, marriage_id: int, divorced_at: date) -> None:
+    async def end(self, marriage_id: UUID, divorced_at: date) -> None:
         stmt = (
             update(MarriageModel)
             .where(MarriageModel.id == marriage_id)
@@ -57,7 +58,7 @@ class SQLMarriageRepository(MarriageRepository):
                 stmt = stmt.where(MarriageModel.wife_id == filters.wife_id)
 
             if filters.id:
-                stmt = stmt.where(MarriageModel.id >= filters.id)
+                stmt = stmt.where(MarriageModel.id == filters.id)
 
             stmt = apply_range_filter(
                 stmt, MarriageModel.married_at, filters.married_at
@@ -69,7 +70,7 @@ class SQLMarriageRepository(MarriageRepository):
 
         SORTABLE_COLUMNS: Mapping[Enum, Any] = {
             MarriageSortField.ID: MarriageModel.id,
-            MarriageSortField.MARRIAD_AT: MarriageModel.married_at,
+            MarriageSortField.MARRIED_AT: MarriageModel.married_at,
             MarriageSortField.DIVORCED_AT: MarriageModel.divorced_at,
         }
         result = await paginate_and_sort(
@@ -93,7 +94,7 @@ class SQLMarriageRepository(MarriageRepository):
             page_size=result.page_size,
         )
 
-    async def get(self, marriage_id: int) -> Marriage | None:
+    async def get(self, marriage_id: UUID) -> Marriage | None:
         model = await self.session.get(MarriageModel, marriage_id)
 
         if not model:
@@ -101,20 +102,53 @@ class SQLMarriageRepository(MarriageRepository):
 
         return self._to_entity(model)
 
-    async def get_by_ids(self, husband_id: int, wife_id: int) -> Marriage | None:
-        stmt = select(MarriageModel).where(
-            MarriageModel.wife_id == wife_id,
-            MarriageModel.husband_id == husband_id,
+    async def get_by_ids(self, husband_id: UUID, wife_id: UUID) -> Marriage | None:
+        stmt = (
+            select(MarriageModel)
+            .where(
+                MarriageModel.wife_id == wife_id,
+                MarriageModel.husband_id == husband_id,
+            )
+            .order_by(MarriageModel.married_at.desc())
+            .limit(1)
         )
         result = await self.session.execute(stmt)
-        model = result.unique().scalar_one_or_none()
+        model = result.scalar_one_or_none()
 
         if not model:
             return None
 
         return self._to_entity(model)
 
-    async def delete(self, marriage_id: int) -> None:
+    async def has_active_for_person(
+        self,
+        person_id: UUID,
+        exclude_marriage_id: UUID | None = None,
+    ) -> bool:
+        stmt = select(MarriageModel.id).where(
+            MarriageModel.divorced_at.is_(None),
+            or_(
+                MarriageModel.husband_id == person_id,
+                MarriageModel.wife_id == person_id,
+            ),
+        )
+        if exclude_marriage_id is not None:
+            stmt = stmt.where(MarriageModel.id != exclude_marriage_id)
+
+        result = await self.session.execute(stmt.limit(1))
+        return result.scalar_one_or_none() is not None
+
+    async def exists_for_person(self, person_id: UUID) -> bool:
+        stmt = select(MarriageModel.id).where(
+            or_(
+                MarriageModel.husband_id == person_id,
+                MarriageModel.wife_id == person_id,
+            )
+        )
+        result = await self.session.execute(stmt.limit(1))
+        return result.scalar_one_or_none() is not None
+
+    async def delete(self, marriage_id: UUID) -> None:
         stmt = delete(MarriageModel).where(MarriageModel.id == marriage_id)
 
         await self.session.execute(stmt)

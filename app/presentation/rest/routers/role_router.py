@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends
 
 from app.application.use_cases.role.create_role_use_case import CreateRoleUseCase
@@ -19,7 +21,7 @@ from app.presentation.rest.schemas.dto.role_schema import (
     RoleUpdateRequest,
     RoleUpdateResponse,
 )
-from app.presentation.rest.schemas.mappers.comman_mappers import CommonApiMapper
+from app.presentation.rest.schemas.mappers.common_mappers import CommonApiMapper
 from app.presentation.rest.schemas.mappers.role_mappers import RoleApiMapper
 from app.presentation.rest.utils.dependencies import get_uow
 
@@ -49,7 +51,7 @@ async def create_role(
     dependencies=[Depends(RequirePermission(Permissions.ROLE_DELETE))],
 )
 async def delete_role(
-    role_id: int,
+    role_id: UUID,
     uow=Depends(get_uow),
 ) -> ResultResponse:
     usecase = DeleteRoleUseCase(uow)
@@ -81,7 +83,7 @@ async def update_role(
     dependencies=[Depends(RequirePermission(Permissions.ROLE_READ))],
 )
 async def get_role(
-    role_id: int,
+    role_id: UUID,
     uow=Depends(get_uow),
 ) -> RoleGetResponse:
     usecase = GetRoleUseCase(uow)

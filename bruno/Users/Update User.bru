@@ -1,0 +1,59 @@
+meta {
+  name: Update User
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{base_url}}/users/
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "data": {
+      "username": "updated_user",
+      "password": null,
+      "re_password": null,
+      "role_id": {{role_id}}
+    },
+    "where": {
+      "user_id": {{user_id}}
+    }
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isString
+  res.body.username: isString
+}
+
+docs {
+  # Update User
+
+  ## Input (`application/json`)
+  ```json
+  {
+    "data": {
+      "username": "string|null",
+      "password": "string|null",
+      "re_password": "string|null",
+      "role_id": "uuid|null"
+    },
+    "where": {
+      "user_id": "uuid (required)"
+    }
+  }
+  ```
+
+  ## Output `200`
+  ```json
+  {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "username": "updated_user",
+    "role_id": "00000000-0000-0000-0000-000000000001"
+  }
+  ```
+}

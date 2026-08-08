@@ -1,3 +1,6 @@
+[tool.poetry]
+package-mode = false
+
 [project]
 name = "family-tree-backend"
 version = "0.1.0"
@@ -33,7 +36,8 @@ dependencies = [
     "flower (>=2.0.1,<3.0.0)",
     "bandit (>=1.9.4,<2.0.0)",
     "mypy (>=2.0.0,<3.0.0)",
-    "neo4j-backup (>=1.0.0,<2.0.0)"
+    "neo4j-backup (>=1.0.0,<2.0.0)",
+    "strawberry-graphql[fastapi] (>=0.323.0,<0.324.0)"
 ]
 
 

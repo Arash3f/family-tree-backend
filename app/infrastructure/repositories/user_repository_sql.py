@@ -1,6 +1,7 @@
 from collections.abc import Mapping
 from enum import Enum
 from typing import Any
+from uuid import UUID
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,7 +31,7 @@ class SQLUserRepository(UserRepository):
 
         return self._to_entity(model)
 
-    async def get(self, user_id: int) -> User | None:
+    async def get(self, user_id: UUID) -> User | None:
         stmt = select(UserModel).where(UserModel.id == user_id)
 
         result = await self.session.execute(stmt)
@@ -42,7 +43,7 @@ class SQLUserRepository(UserRepository):
         return self._to_entity(model)
 
     async def get_with_details(
-        self, user_id: int
+        self, user_id: UUID
     ) -> UserGetWithDetailResponseDTO | None:
         stmt = (
             select(UserModel)
@@ -129,7 +130,7 @@ class SQLUserRepository(UserRepository):
 
         return self._to_entity(model)
 
-    async def delete(self, user_id: int) -> None:
+    async def delete(self, user_id: UUID) -> None:
         stmt = delete(UserModel).where(UserModel.id == user_id)
 
         await self.session.execute(stmt)

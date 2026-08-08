@@ -8,6 +8,9 @@ from app.infrastructure.repositories.permission_repository_sql import (
 from app.infrastructure.repositories.person_repository_sql import SQLPersonRepository
 from app.infrastructure.repositories.role_repository_sql import SQLRoleRepository
 from app.infrastructure.repositories.user_repository_sql import SQLUserRepository
+from app.infrastructure.repositories.user_session_repository_sql import (
+    SQLUserSessionRepository,
+)
 
 
 class SQLAlchemyUnitOfWork(UnitOfWork):
@@ -17,12 +20,12 @@ class SQLAlchemyUnitOfWork(UnitOfWork):
     async def __aenter__(self) -> "SQLAlchemyUnitOfWork":
         self.session = self.session_factory()
 
-        # ! Add Repositories
         self.persons = SQLPersonRepository(self.session)
         self.marriages = SQLMarriageRepository(self.session)
         self.users = SQLUserRepository(self.session)
         self.permissions = SQLPermissionRepository(self.session)
         self.roles = SQLRoleRepository(self.session)
+        self.sessions = SQLUserSessionRepository(self.session)
 
         return self
 

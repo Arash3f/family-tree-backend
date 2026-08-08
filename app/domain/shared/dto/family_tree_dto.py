@@ -1,5 +1,6 @@
 from datetime import date, datetime
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -18,7 +19,7 @@ class PersonBaseDTO(BaseModel):
 
 
 class PersonCompleteBaseDTO(PersonBaseDTO):
-    id: int
+    id: UUID
 
 
 # ==========================================
@@ -27,15 +28,15 @@ class PersonCompleteBaseDTO(PersonBaseDTO):
 
 
 class PersonUpsertDTO(PersonBaseDTO):
-    id: int
+    id: UUID
 
 
 class PersonResponseDTO(PersonBaseDTO):
-    id: int
+    id: UUID
 
 
 class PersonIdDTO(BaseModel):
-    id: int
+    id: UUID
 
 
 # ==========================================
@@ -44,23 +45,23 @@ class PersonIdDTO(BaseModel):
 
 
 class ParentRelationshipDTO(BaseModel):
-    parent_id: int
-    child_id: int
+    parent_id: UUID
+    child_id: UUID
 
 
 class SpouseRelationshipDTO(BaseModel):
-    person_id_1: int
-    person_id_2: int
+    person_id_1: UUID
+    person_id_2: UUID
 
 
 class DeleteRelationshipDTO(BaseModel):
-    parent_id: int
-    child_id: int
+    parent_id: UUID
+    child_id: UUID
 
 
 class DeleteSpouseRelationshipDTO(BaseModel):
-    person_id_1: int
-    person_id_2: int
+    person_id_1: UUID
+    person_id_2: UUID
 
 
 class ParentRelationshipResponseDTO(BaseModel):
@@ -71,3 +72,12 @@ class ParentRelationshipResponseDTO(BaseModel):
 class SpouseRelationshipResponseDTO(BaseModel):
     person_1: PersonCompleteBaseDTO
     person_2: PersonCompleteBaseDTO
+
+
+class RelationshipPathDTO(BaseModel):
+    from_person_id: UUID
+    to_person_id: UUID
+    found: bool
+    distance: int | None = None
+    path_person_ids: list[UUID] = Field(default_factory=list)
+    relationship_types: list[str] = Field(default_factory=list)

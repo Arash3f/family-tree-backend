@@ -1,0 +1,51 @@
+meta {
+  name: Login
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/auth/login
+  body: formUrlEncoded
+  auth: none
+}
+
+body:form-urlencoded {
+  username: admin
+  password: admin
+  grant_type: password
+}
+
+assert {
+  res.status: eq 200
+  res.body.access_token: isDefined
+  res.body.refresh_token: isDefined
+}
+
+script:post-response {
+  if (res.status === 200 && res.body.access_token) {
+    bru.setEnvVar("access_token", res.body.access_token);
+    bru.setEnvVar("refresh_token", res.body.refresh_token);
+  }
+}
+
+docs {
+  # Login
+
+  ## Input (Body → Form URL Encoded → Params)
+  | Param | Type | Required | Default |
+  |-------|------|----------|---------|
+  | username | string | yes | `admin` |
+  | password | string | yes | `admin` |
+  | grant_type | string | no | `password` |
+
+  ## Output `200`
+  ```json
+  {
+    "access_token": "eyJ...",
+    "refresh_token": "eyJ..."
+  }
+  ```
+
+  Saves both tokens into the Local environment.
+}

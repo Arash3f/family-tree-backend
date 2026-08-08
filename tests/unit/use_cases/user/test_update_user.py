@@ -1,3 +1,4 @@
+from uuid import UUID
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -13,24 +14,24 @@ from app.application.use_cases.user.update_user_use_case import UpdateUserUseCas
 @pytest.mark.asyncio
 async def test_update_user_full_update(mock_uow):
     dto = UserUpdateDTO(
-        where=_UserUpdateWhereDTO(user_id=1),
+        where=_UserUpdateWhereDTO(user_id=UUID(int=1)),
         data=_UserUpdateDataDTO(
             username="new_username",
-            role_id=2,
+            role_id=UUID(int=2),
             password="1234",
             re_password="1234",
         ),
     )
 
     existing_user = MagicMock(
-        id=1,
+        id=UUID(int=1),
         username="old",
-        role_id=1,
+        role_id=UUID(int=1),
         password_hash="old_hash",
     )
 
     role = MagicMock()
-    role.safe_id = 2
+    role.safe_id = UUID(int=2)
 
     updated_user = MagicMock()
 
@@ -55,8 +56,8 @@ async def test_update_user_full_update(mock_uow):
 
     assert result is expected_response
 
-    mock_uow.users.get_or_raise.assert_awaited_once_with(user_id=1)
-    mock_uow.roles.get_or_raise.assert_awaited_once_with(role_id=2)
+    mock_uow.users.get_or_raise.assert_awaited_once_with(user_id=UUID(int=1))
+    mock_uow.roles.get_or_raise.assert_awaited_once_with(role_id=UUID(int=2))
 
     password_hasher.hash.assert_called_once_with("1234")
 
@@ -67,7 +68,7 @@ async def test_update_user_full_update(mock_uow):
     user_arg = args.kwargs["user"]
 
     assert user_arg.username == "new_username"
-    assert user_arg.role_id == 2
+    assert user_arg.role_id == UUID(int=2)
     assert user_arg.password_hash == "new_hash"
 
     mock_uow.commit.assert_awaited_once()
@@ -77,18 +78,18 @@ async def test_update_user_full_update(mock_uow):
 @pytest.mark.asyncio
 async def test_update_user_only_role(mock_uow):
     dto = UserUpdateDTO(
-        where=_UserUpdateWhereDTO(user_id=1),
+        where=_UserUpdateWhereDTO(user_id=UUID(int=1)),
         data=_UserUpdateDataDTO(
-            role_id=5,
+            role_id=UUID(int=5),
             password=None,
             re_password=None,
             username=None,
         ),
     )
 
-    existing_user = MagicMock(role_id=1)
+    existing_user = MagicMock(role_id=UUID(int=1))
     role = MagicMock()
-    role.safe_id = 5
+    role.safe_id = UUID(int=5)
 
     mock_uow.users.get_or_raise = AsyncMock(return_value=existing_user)
     mock_uow.roles.get_or_raise = AsyncMock(return_value=role)
@@ -103,4 +104,4 @@ async def test_update_user_only_role(mock_uow):
         await use_case.execute(dto)
 
     password_hasher.hash.assert_not_called()
-    assert existing_user.role_id == 5
+    assert existing_user.role_id == UUID(int=5)

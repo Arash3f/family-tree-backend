@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from uuid import UUID
 
 from app.domain.exceptions.common_exceptions import UnExpectedIdException
 
@@ -12,10 +13,10 @@ class Permission:
     """
 
     name: str
-    id: int | None = None
+    id: UUID | None = None
 
     @property
-    def safe_id(self) -> int:
+    def safe_id(self) -> UUID:
         """
         Returns the permission's ID.
 
