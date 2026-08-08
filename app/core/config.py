@@ -43,6 +43,7 @@ class AppSettings(PydanticBaseSettings):
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/1"
 
     CORS_ORIGINS: str = (
+        "http://localhost:5173,http://127.0.0.1:5173,"
         "http://localhost:3000,http://127.0.0.1:3000,http://localhost:8001"
     )
     FLOWER_BASIC_AUTH: str = "admin:admin"

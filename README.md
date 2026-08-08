@@ -25,6 +25,7 @@ Built with **FastAPI** and **Clean Architecture**. Exposes both **REST** and **G
 - [Authentication & authorization](#authentication--authorization)
 - [Background jobs](#background-jobs)
 - [Testing & quality](#testing--quality)
+- [CI / GitHub Actions](#ci--github-actions)
 - [Project layout](#project-layout)
 - [API client (Bruno)](#api-client-bruno)
 - [Seeding sample data](#seeding-sample-data)
@@ -43,9 +44,9 @@ Built with **FastAPI** and **Clean Architecture**. Exposes both **REST** and **G
 - Async SQLAlchemy + Alembic migrations
 - Celery sync of person/marriage changes into Neo4j after commit
 - Scheduled database backups via Celery Beat
-- Docker stack under `docker/` (full or app-only Compose; multi-stage image)
+- Docker stack under `docker/` (Compose full stack; multi-stage image)
 - Bruno collection for manual REST API testing
-- CI: Ruff, mypy, Bandit, Pytest (GitHub Actions)
+- CI: Ruff, mypy, Bandit, Docker stack + Pytest (GitHub Actions)
 
 ---
 
@@ -93,12 +94,13 @@ After a successful Postgres commit, the application enqueues Celery tasks to mir
 | Area | Choice |
 |------|--------|
 | API | FastAPI, Uvicorn, Strawberry GraphQL |
-| ORM / DB | SQLAlchemy 2 (async), asyncpg, Alembic, PostgreSQL 15 |
+| ORM / DB | SQLAlchemy 2 (async), asyncpg, Alembic, PostgreSQL 15 (Compose) |
 | Graph | Neo4j 5 |
-| Queue | Celery, Redis 8, Flower |
+| Queue | Celery, Redis 8 (Compose), Flower |
 | Auth | OAuth2 password flow, JWT (`python-jose`), Argon2 (`passlib`) |
 | Validation | Pydantic v2 |
 | Quality | Ruff, mypy, Bandit, pre-commit, Commitizen, Pytest |
+| CI | GitHub Actions (see [CI / GitHub Actions](#ci--github-actions)) |
 
 ---
 
@@ -106,56 +108,36 @@ After a successful Postgres commit, the application enqueues Celery tasks to mir
 
 **Requirements:** Docker and Docker Compose.
 
-All Docker assets live under [`docker/`](docker/README.md).
+Run every command from the **backend repository root** (this folder). All Docker assets live under [`docker/`](docker/README.md).
 
 ```bash
 cp .env.example .env
 # Edit .env if needed. JWT_SECRET must be at least 32 characters.
 ```
 
-### Full stack (all services)
+### Start the stack
 
 Starts API, Celery worker/beat, Flower, Postgres, Redis, and Neo4j.
 
 ```bash
-docker compose -f docker/compose.full.yml --env-file .env up --build
+docker compose -f docker/compose.yml --env-file .env up --build
 ```
 
-`.env.example` already uses Docker DNS names (`db`, `redis`, `neo4j`) for this mode.
+`.env.example` already uses Docker DNS names (`db`, `redis`, `neo4j`).
 
-### App only
-
-Starts only the project containers (API, Celery worker/beat, Flower).
-
-**A) Infra on the host** (Postgres/Redis/Neo4j installed locally):
+The API entrypoint waits for Postgres, runs `alembic upgrade head`, then starts Uvicorn. Compose Celery workers use the default pool (not `--pool=solo`); use solo only for host processes on Windows — see [Local development](#6-celery-worker-and-beat).
 
 ```bash
-docker compose -f docker/compose.app.yml --env-file .env up --build
+# Stop and remove volumes
+docker compose -f docker/compose.yml --env-file .env down -v
+
+# Logs / shell
+docker compose -f docker/compose.yml --env-file .env logs -f api
+docker compose -f docker/compose.yml --env-file .env exec api sh
 ```
 
-Defaults use `host.docker.internal`. Override with `APP_POSTGRES_HOST`, `APP_CELERY_BROKER_URL`, `APP_CELERY_RESULT_BACKEND`, `APP_NEO4J_URI` if needed.
-
-**B) Infra from full Compose** (only `db` / `redis` / `neo4j` already up):
-
-```bash
-docker compose -f docker/compose.full.yml --env-file .env up -d db redis neo4j
-docker compose -f docker/compose.app.yml -f docker/compose.app.with-infra.yml --env-file .env up --build
-```
-
-With Docker DNS overrides:
-
-```bash
-# PowerShell
-$env:APP_POSTGRES_HOST="db"
-$env:APP_CELERY_BROKER_URL="redis://redis:6379/0"
-$env:APP_CELERY_RESULT_BACKEND="redis://redis:6379/1"
-$env:APP_NEO4J_URI="bolt://neo4j:7687"
-```
-
-The API entrypoint waits for Postgres, runs `alembic upgrade head`, then starts Uvicorn.
-
-| Service | URL |
-|---------|-----|
+| Service | URL / port |
+|---------|------------|
 | API | http://localhost:8001 |
 | Swagger UI | http://localhost:8001/api_docs |
 | ReDoc | http://localhost:8001/redoc |
@@ -163,7 +145,9 @@ The API entrypoint waits for Postgres, runs `alembic upgrade head`, then starts 
 | GraphQL (GraphiQL) | http://localhost:8001/graphql |
 | Health | http://localhost:8001/health |
 | Neo4j Browser | http://localhost:7474 |
-| Flower | http://localhost:5555 |
+| Flower | http://localhost:5555 (basic auth from `FLOWER_BASIC_AUTH`, default `admin:admin`) |
+
+Override published ports with `API_PORT`, `FLOWER_PORT`, `POSTGRES_PUBLISH_PORT`, `REDIS_PUBLISH_PORT`, `NEO4J_HTTP_PORT`, `NEO4J_BOLT_PORT`.
 
 Default admin (from `.env` / seed on startup):
 
@@ -171,6 +155,8 @@ Default admin (from `.env` / seed on startup):
 - Password: value of `ADMIN_PASSWORD` (default `admin`)
 
 Change these before any shared or production-like environment.
+
+> **Note:** The monorepo root may still contain an older `docker-compose.yml` that builds frontend + backend together. Prefer the stacks under `backend/docker/` for this API.
 
 ---
 
@@ -208,7 +194,7 @@ Hook split (so commits stay fast):
 | **commit-msg** | Commitizen message format (`poetry run cz commit` recommended) |
 | **push** | Heavy checks: mypy, Bandit, full pytest |
 
-CI still runs the full quality suite on every PR regardless of local hooks.
+CI still runs the quality suite on PRs / pushes regardless of local hooks.
 
 ### 3. Environment
 
@@ -221,13 +207,15 @@ For a **host** process (not inside Compose), point services at localhost, for ex
 ```env
 POSTGRES_HOST=127.0.0.1
 POSTGRES_HOST_TEST=127.0.0.1
+POSTGRES_DB_TEST=family_tree_test
 CELERY_BROKER_URL=redis://127.0.0.1:6379/0
 CELERY_RESULT_BACKEND=redis://127.0.0.1:6379/1
 NEO4J_URI=bolt://127.0.0.1:7687
 JWT_SECRET=local-dev-only-change-me-32chars-min
+CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:8001
 ```
 
-`.env.example` uses Docker DNS names (`db`, `redis`, `neo4j`) suitable for Compose.
+`.env.example` uses Docker DNS names (`db`, `redis`, `neo4j`) suitable for Compose. Always set `POSTGRES_DB_TEST` to a **separate** database (e.g. `family_tree_test`); do not point tests at the app DB.
 
 ### 4. Migrations
 
@@ -245,7 +233,7 @@ poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8001
 
 ### 6. Celery worker and beat
 
-Workers must listen on the routed queues:
+Workers must listen on the routed queues. On Windows (and for simple local runs), use `--pool=solo`:
 
 ```bash
 poetry run celery -A app.celery.celery_app worker -l info --pool=solo \
@@ -266,20 +254,24 @@ Without a running worker, Postgres writes still succeed, but Neo4j will not stay
 
 ## Configuration
 
-Managed via environment variables / `.env` (`app/core/config.py`).
+Managed via environment variables / `.env` (`app/core/config.py`). See `.env.example` for a complete template.
 
 | Variable | Purpose |
 |----------|---------|
-| `POSTGRES_*` | Application database |
-| `POSTGRES_*_TEST` | Test database |
+| `POSTGRES_*` | Application database (`HOST`, `USER`, `PASSWORD`, `DB`, `PORT`) |
+| `POSTGRES_*_TEST` | Test database (keep `POSTGRES_DB_TEST` distinct from `POSTGRES_DB`) |
 | `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD` | Graph database |
 | `JWT_SECRET` | **Required**, minimum **32** characters |
 | `JWT_ALGORITHM` | Default `HS256` |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Access token lifetime |
-| `REFRESH_TOKEN_EXPIRE_DAYS` | Refresh token lifetime |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Access token lifetime (default `15`) |
+| `REFRESH_TOKEN_EXPIRE_DAYS` | Refresh token lifetime (default `7`) |
 | `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_ROLE_NAME` | Bootstrapped admin |
 | `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND` | Celery / Redis |
-| `BACKUP_DIR` | Backup output directory |
+| `BACKUP_DIR` | Backup output directory (Compose default `/mnt/backups`) |
+| `CORS_ORIGINS` | Comma-separated allowed origins (include Vite `http://localhost:5173` for the frontend) |
+| `FLOWER_BASIC_AUTH` | Flower `user:password` (default `admin:admin`) |
+| `AUTH_RATE_LIMIT_PER_MINUTE` | Auth endpoint rate limit (default `30`) |
+| `API_PORT`, `FLOWER_PORT`, `POSTGRES_PUBLISH_PORT`, `REDIS_PUBLISH_PORT`, `NEO4J_HTTP_PORT`, `NEO4J_BOLT_PORT` | Optional published ports for Compose |
 
 ---
 
@@ -308,6 +300,8 @@ Authorization: Bearer <access_token>
 ```
 
 Returns path distance, node IDs, and relationship types when a path exists in Neo4j (requires prior sync).
+
+Person `birthDate` / `birth_date` values use **Jalali** `YYYY/MM/DD` strings (aligned with the frontend).
 
 ### GraphQL API
 
@@ -409,7 +403,32 @@ Test layout:
   - `tests/e2e/routers` — REST
   - `tests/e2e/graphql` — GraphQL (`POST /graphql`)
 
+Docker-based CI creates `POSTGRES_DB_TEST` inside the Compose Postgres service, then runs pytest in the `api` container with coverage gate `50`.
+
 See [Pre-commit & Commitizen](#2-pre-commit--commitizen) for which checks run on commit vs push.
+
+---
+
+## CI / GitHub Actions
+
+Workflow: [`ci.yml`](.github/workflows/ci.yml) on push / PR to `main`.
+
+| Job | What it does |
+|-----|--------------|
+| **quality** | Ruff, mypy, Bandit on the runner |
+| **stack** | Build `docker/compose.yml`, start `api` (+ Postgres / Redis / Neo4j), create test DB, run pytest with coverage (≥50%) |
+
+Infra versions match Compose (`postgres:15`, `redis:8`, `neo4j:5`).
+
+Simulate locally:
+
+```bash
+cp .env.example .env
+docker compose -f docker/compose.yml --env-file .env up --build -d
+docker compose -f docker/compose.yml --env-file .env exec -T db \
+  psql -U postgres -c "CREATE DATABASE family_tree_test;" || true
+docker compose -f docker/compose.yml --env-file .env exec -T api pytest -v --cov=app --cov-fail-under=50
+```
 
 ---
 
@@ -425,7 +444,8 @@ app/
     graphql/       # Strawberry schema, types, resolvers (synced with REST)
   celery/          # Celery app and tasks
   core/            # Settings
-docker/            # Dockerfile, entrypoint, Compose stacks
+docker/            # Dockerfile, entrypoint, compose.yml
+.github/workflows/ # GitHub Actions (ci.yml)
 bruno/             # Bruno API collection
 migrations/        # Alembic revisions
 tests/             # unit / integration / e2e (REST + GraphQL)
@@ -460,7 +480,8 @@ Optional family sample data:
 ## Known limitations
 
 - Neo4j stays empty unless Celery workers are running and reachable.
-- Default admin password and JWT secret in examples are for local use only.
+- Default admin password, JWT secret, and Flower basic auth in examples are for local use only.
+- The monorepo-root `docker-compose.yml` (if present) is legacy relative to `backend/docker/`.
 
 ---
 
@@ -469,6 +490,7 @@ Optional family sample data:
 - [ ] Redis caching for hot graph paths
 - [ ] Observability (structured metrics / OpenTelemetry)
 - [ ] Broader e2e coverage with live Neo4j assertions
+- [ ] Consolidate Compose file names and GitHub Actions workflows
 - [x] GraphQL API synced with REST
 
 ---

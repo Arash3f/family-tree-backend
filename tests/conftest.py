@@ -36,8 +36,8 @@ def _remap_docker_dns_for_host():
     if pg_host and not _host_resolves(pg_host):
         os.environ["POSTGRES_HOST"] = "127.0.0.1"
         os.environ["POSTGRES_HOST_TEST"] = "127.0.0.1"
-        # docker/compose.ci-local.yml publishes Postgres on 15432
-        publish = _effective("POSTGRES_PUBLISH_PORT", "15432") or "15432"
+        # Host-published Postgres port from docker/compose.yml
+        publish = _effective("POSTGRES_PUBLISH_PORT", "5432") or "5432"
         os.environ.setdefault("POSTGRES_PORT", publish)
         os.environ.setdefault("POSTGRES_PORT_TEST", publish)
         os.environ.setdefault(
@@ -49,8 +49,8 @@ def _remap_docker_dns_for_host():
     if "://" in neo4j_uri:
         neo_host = neo4j_uri.split("://", 1)[1].split(":", 1)[0]
         if neo_host and not _host_resolves(neo_host):
-            # docker/compose.ci-local.yml publishes Bolt on 17687
-            os.environ["NEO4J_URI"] = "bolt://127.0.0.1:17687"
+            bolt_port = _effective("NEO4J_BOLT_PORT", "7687") or "7687"
+            os.environ["NEO4J_URI"] = f"bolt://127.0.0.1:{bolt_port}"
 
 
 # Must run at import time so env is fixed before Settings / engines load.

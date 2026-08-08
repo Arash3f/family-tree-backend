@@ -1,7 +1,8 @@
 # Full stack: API + Celery + Flower + Postgres + Redis + Neo4j
+# Keep in sync with compose.full.yml (CI uses this file via COMPOSE_FILE).
 #
-# From repo root:
-#   docker compose -f docker/compose.full.yml --env-file .env up --build
+# From backend repo root:
+#   docker compose -f docker/compose.yml --env-file .env up --build
 
 name: family-tree
 
@@ -51,8 +52,13 @@ services:
         condition: service_healthy
       neo4j:
         condition: service_healthy
+    # Override image HEALTHCHECK (uvicorn /health); worker is not an HTTP server.
     healthcheck:
-      disable: true
+      test: ["CMD-SHELL", "celery -A app.celery.celery_app inspect ping -d celery@$$HOSTNAME --timeout 5"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   celery_beat:
     <<: *app-env
@@ -72,7 +78,11 @@ services:
       neo4j:
         condition: service_healthy
     healthcheck:
-      disable: true
+      test: ["CMD-SHELL", "test -d /proc/1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
 
   flower:
     <<: *app-env
@@ -88,7 +98,11 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:5555/"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS -u \"$${FLOWER_BASIC_AUTH:-admin:admin}\" http://127.0.0.1:5555/ || exit 1",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3

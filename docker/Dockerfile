@@ -29,9 +29,10 @@ COPY --from=builder /install /usr/local
 
 COPY --chown=app:app . .
 COPY --chown=app:app docker/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh \
+RUN sed -i 's/\r$//' /entrypoint.sh \
+    && chmod +x /entrypoint.sh \
     && mkdir -p /mnt/backups /app/celerybeat \
-    && chown -R app:app /mnt/backups /app/celerybeat
+    && chown -R app:app /app /mnt/backups /app/celerybeat
 
 USER app
 
