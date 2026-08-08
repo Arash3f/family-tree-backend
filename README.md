@@ -180,16 +180,37 @@ Run Postgres, Neo4j, and Redis yourself (or start them via the full Compose stac
 
 ### 1. Dependencies
 
-```bash
-python -m venv .venv
-# Windows: .venv\Scripts\activate
-# Unix:    source .venv/bin/activate
+Local development uses **Poetry** (hooks expect it). Requires Poetry 2+ and Python 3.11+.
 
-pip install -r requirements.txt
-# or: poetry install
+```bash
+poetry install
 ```
 
-### 2. Environment
+`requirements.txt` is the lock export used by **Docker** and **CI**. After changing deps with Poetry, re-export:
+
+```bash
+poetry export -f requirements.txt --without-hashes -o requirements.txt
+```
+
+### 2. Pre-commit & Commitizen
+
+```bash
+poetry run pre-commit install
+poetry run pre-commit install --hook-type pre-push
+poetry run pre-commit install --hook-type commit-msg
+```
+
+Hook split (so commits stay fast):
+
+| When | What runs |
+|------|-----------|
+| **commit** | Fast checks: Ruff, pyupgrade, detect-secrets, basic file hygiene |
+| **commit-msg** | Commitizen message format (`poetry run cz commit` recommended) |
+| **push** | Heavy checks: mypy, Bandit, full pytest |
+
+CI still runs the full quality suite on every PR regardless of local hooks.
+
+### 3. Environment
 
 ```bash
 cp .env.example .env
@@ -208,36 +229,35 @@ JWT_SECRET=local-dev-only-change-me-32chars-min
 
 `.env.example` uses Docker DNS names (`db`, `redis`, `neo4j`) suitable for Compose.
 
-### 3. Migrations
+### 4. Migrations
 
 ```bash
-alembic upgrade head
+poetry run alembic upgrade head
 ```
 
 > **Warning:** revision `a1b2c3d4e5f6` (integer IDs → UUID) is **destructive**. It drops and recreates application tables. Do not run it against a database that holds data you need to keep.
 
-### 4. API
+### 5. API
 
 ```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8001
-# or: poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8001
+poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8001
 ```
 
-### 5. Celery worker and beat
+### 6. Celery worker and beat
 
 Workers must listen on the routed queues:
 
 ```bash
-celery -A app.celery.celery_app worker -l info --pool=solo \
+poetry run celery -A app.celery.celery_app worker -l info --pool=solo \
   -Q celery,sync_person,sync_relationship,backup_database
 
-celery -A app.celery.celery_app beat --loglevel=info
+poetry run celery -A app.celery.celery_app beat --loglevel=info
 ```
 
 Optional Flower:
 
 ```bash
-celery -A app.celery.celery_app flower --port=5555
+poetry run celery -A app.celery.celery_app flower --port=5555
 ```
 
 Without a running worker, Postgres writes still succeed, but Neo4j will not stay in sync.
@@ -370,15 +390,15 @@ Task routing uses dedicated queues; the worker command above must include them.
 
 ```bash
 # Full suite
-pytest .
+poetry run pytest .
 
 # With coverage (CI uses --cov-fail-under=50)
-pytest -v --cov=app --cov-report=term-missing
+poetry run pytest -v --cov=app --cov-report=term-missing
 
 # Lint / types / security (as in CI)
-ruff check .
-mypy .
-bandit -r app -ll
+poetry run ruff check .
+poetry run mypy .
+poetry run bandit -r app -ll
 ```
 
 Test layout:
@@ -389,7 +409,7 @@ Test layout:
   - `tests/e2e/routers` — REST
   - `tests/e2e/graphql` — GraphQL (`POST /graphql`)
 
-Pre-commit hooks and Commitizen are configured for local quality gates (`pre-commit install`).
+See [Pre-commit & Commitizen](#2-pre-commit--commitizen) for which checks run on commit vs push.
 
 ---
 
