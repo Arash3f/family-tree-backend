@@ -4,6 +4,8 @@ repos:
     rev: v6.0.0
     hooks:
       - id: check-yaml
+        # Docker Compose custom tags (!override, !reset, etc.)
+        args: [--unsafe]
       - id: name-tests-test
         entry: pytest
         language: system
