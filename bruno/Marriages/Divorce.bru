@@ -4,7 +4,7 @@ meta {
   seq: 6
 }
 
-get {
+post {
   url: {{base_url}}/marriages/divorce
   body: json
   auth: inherit
@@ -12,7 +12,7 @@ get {
 
 body:json {
   {
-    "marriage_id": {{marriage_id}},
+    "marriage_id": "{{marriage_id}}",
     "divorced_at": "2024-06-01"
   }
 }
@@ -24,8 +24,6 @@ assert {
 
 docs {
   # Divorce
-
-  > Note: API uses GET with JSON body.
 
   ## Input (`application/json`)
   | Field | Type | Required | Notes |

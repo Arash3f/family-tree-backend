@@ -16,9 +16,11 @@ docs {
   All protected endpoints require `Authorization: Bearer {{access_token}}`.
 
   ## Flow
-  1. Run Auth / Login (admin/admin by default)
-  2. Optionally run Auth / Me to verify the token
-  3. Use other folders; tokens and created IDs are saved to Local env
+  1. Select the Local environment
+  2. Run Auth / Login (uses `{{username}}` / `{{password}}`)
+  3. Optionally run Auth / Me to verify the token
+  4. Use other folders; tokens and created IDs are saved to Local env
+  5. For Closest Relationship / Create Marriage, set `from_person_id` and `to_person_id`
 
   ## Common error body
   ```json

@@ -7,9 +7,23 @@ meta {
 post {
   url: {{base_url}}/auth/logout-all
   body: none
-  auth: bearer
+  auth: inherit
 }
 
-auth:bearer {
-  token: {{access_token}}
+assert {
+  res.status: eq 200
+  res.body.result: isDefined
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar("access_token", "");
+    bru.setEnvVar("refresh_token", "");
+  }
+}
+
+docs {
+  # Logout All
+
+  Invalidates all sessions for the current user and clears Local env tokens.
 }

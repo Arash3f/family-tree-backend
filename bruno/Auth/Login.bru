@@ -11,8 +11,8 @@ post {
 }
 
 body:form-urlencoded {
-  username: admin
-  password: admin
+  username: {{username}}
+  password: {{password}}
   grant_type: password
 }
 
@@ -35,8 +35,8 @@ docs {
   ## Input (Body → Form URL Encoded → Params)
   | Param | Type | Required | Default |
   |-------|------|----------|---------|
-  | username | string | yes | `admin` |
-  | password | string | yes | `admin` |
+  | username | string | yes | from Local `{{username}}` |
+  | password | string | yes | from Local `{{password}}` |
   | grant_type | string | no | `password` |
 
   ## Output `200`

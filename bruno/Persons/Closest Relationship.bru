@@ -7,14 +7,41 @@ meta {
 get {
   url: {{base_url}}/persons/:from_person_id/relation/:to_person_id
   body: none
-  auth: bearer
-}
-
-auth:bearer {
-  token: {{access_token}}
+  auth: inherit
 }
 
 params:path {
-  from_person_id:
-  to_person_id:
+  from_person_id: {{from_person_id}}
+  to_person_id: {{to_person_id}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.from_person_id: isString
+  res.body.to_person_id: isString
+  res.body.found: isDefined
+  res.body.path_person_ids: isArray
+  res.body.relationship_types: isArray
+}
+
+docs {
+  # Closest Relationship
+
+  Set `from_person_id` and `to_person_id` in the Local environment (or create two persons first).
+
+  ## Output `200`
+  ```json
+  {
+    "from_person_id": "00000000-0000-0000-0000-000000000001",
+    "to_person_id": "00000000-0000-0000-0000-000000000002",
+    "found": true,
+    "distance": 2,
+    "path_person_ids": [
+      "00000000-0000-0000-0000-000000000001",
+      "00000000-0000-0000-0000-000000000003",
+      "00000000-0000-0000-0000-000000000002"
+    ],
+    "relationship_types": ["PARENT_OF", "PARENT_OF"]
+  }
+  ```
 }

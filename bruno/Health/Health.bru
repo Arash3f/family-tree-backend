@@ -12,7 +12,9 @@ get {
 
 assert {
   res.status: eq 200
-  res.body.neo4j: eq OK
+  res.body.status: isDefined
+  res.body.postgres: isDefined
+  res.body.neo4j: isDefined
 }
 
 docs {
@@ -23,6 +25,12 @@ docs {
 
   ## Output `200`
   ```json
-  { "neo4j": "OK" }
+  {
+    "postgres": "ok",
+    "neo4j": "ok",
+    "status": "ok"
+  }
   ```
+
+  `status` is `ok` when both databases are healthy, otherwise `degraded`.
 }

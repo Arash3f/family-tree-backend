@@ -17,7 +17,7 @@ body:json {
       "permission_ids": []
     },
     "where": {
-      "role_id": {{role_id}}
+      "role_id": "{{role_id}}"
     }
   }
 }
@@ -36,7 +36,7 @@ docs {
   {
     "data": {
       "name": "string|null",
-      "permission_ids": "int[]|null"
+      "permission_ids": "uuid[]|null"
     },
     "where": {
       "role_id": "uuid (required)"

@@ -15,3 +15,22 @@ body:json {
     "refresh_token": "{{refresh_token}}"
   }
 }
+
+assert {
+  res.status: eq 200
+  res.body.access_token: isDefined
+  res.body.refresh_token: isDefined
+}
+
+script:post-response {
+  if (res.status === 200 && res.body.access_token) {
+    bru.setEnvVar("access_token", res.body.access_token);
+    bru.setEnvVar("refresh_token", res.body.refresh_token);
+  }
+}
+
+docs {
+  # Refresh
+
+  Uses `{{refresh_token}}` from the Local environment and replaces both tokens on success.
+}

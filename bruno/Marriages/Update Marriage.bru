@@ -13,13 +13,13 @@ put {
 body:json {
   {
     "data": {
-      "husband_id": "00000000-0000-0000-0000-000000000001",
-      "wife_id": "00000000-0000-0000-0000-000000000002",
+      "husband_id": "{{from_person_id}}",
+      "wife_id": "{{to_person_id}}",
       "married_at": "2020-01-15",
       "divorced_at": null
     },
     "where": {
-      "marriage_id": {{marriage_id}}
+      "marriage_id": "{{marriage_id}}"
     }
   }
 }

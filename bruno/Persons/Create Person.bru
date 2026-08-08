@@ -29,7 +29,15 @@ assert {
 
 script:post-response {
   if (res.status === 200 && res.body.id) {
-    bru.setEnvVar("person_id", String(res.body.id));
+    const id = String(res.body.id);
+    const previous = bru.getEnvVar("person_id");
+    bru.setEnvVar("person_id", id);
+    if (previous && previous !== id) {
+      bru.setEnvVar("from_person_id", previous);
+      bru.setEnvVar("to_person_id", id);
+    } else {
+      bru.setEnvVar("from_person_id", id);
+    }
   }
 }
 
