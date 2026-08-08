@@ -7,7 +7,7 @@ repos:
         # Docker Compose custom tags (!override, !reset, etc.)
         args: [--unsafe]
       - id: name-tests-test
-        args: [--pytest]
+        args: [--pytest-test-first]
       - id: check-ast
       - id: check-builtin-literals
       - id: check-case-conflict
