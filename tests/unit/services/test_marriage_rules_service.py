@@ -24,7 +24,9 @@ def create_person(**overrides):
 
 
 def test_validate_marriage_success():
-    husband = create_person(id=UUID(int=1), gender=Gender.MALE, birth_date=date(1995, 1, 1))
+    husband = create_person(
+        id=UUID(int=1), gender=Gender.MALE, birth_date=date(1995, 1, 1)
+    )
     wife = create_person(
         id=UUID(int=2), name="Sara", gender=Gender.FEMALE, birth_date=date(1997, 1, 1)
     )

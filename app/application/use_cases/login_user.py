@@ -42,12 +42,8 @@ class LoginUserUseCase:
                 days=settings.REFRESH_TOKEN_EXPIRE_DAYS
             )
 
-            access = self.token_service.create_access_token(
-                user.safe_id, session_id
-            )
-            refresh = self.token_service.create_refresh_token(
-                user.safe_id, session_id
-            )
+            access = self.token_service.create_access_token(user.safe_id, session_id)
+            refresh = self.token_service.create_refresh_token(user.safe_id, session_id)
 
             session = UserSession(
                 id=session_id,

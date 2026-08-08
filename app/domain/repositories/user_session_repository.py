@@ -28,7 +28,5 @@ class UserSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def revoke_all_for_user(
-        self, user_id: UUID, revoked_at: datetime
-    ) -> int:
+    async def revoke_all_for_user(self, user_id: UUID, revoked_at: datetime) -> int:
         pass

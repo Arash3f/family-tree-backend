@@ -9,7 +9,9 @@ def create_role(**overrides):
     return Role(
         id=overrides.get("id", UUID(int=1)),
         name=overrides.get("name", "admin"),
-        permission_ids=overrides.get("permission_ids", [UUID(int=1), UUID(int=2), UUID(int=3)]),
+        permission_ids=overrides.get(
+            "permission_ids", [UUID(int=1), UUID(int=2), UUID(int=3)]
+        ),
     )
 
 

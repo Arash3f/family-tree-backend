@@ -97,6 +97,4 @@ class RefreshTokenUseCase:
 
             await self.uow.commit()
 
-            return LoginResponseDTO(
-                access_token=access, refresh_token=new_refresh
-            )
+            return LoginResponseDTO(access_token=access, refresh_token=new_refresh)

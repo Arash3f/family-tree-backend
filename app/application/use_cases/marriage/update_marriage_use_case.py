@@ -1,4 +1,4 @@
-﻿from uuid import UUID
+from uuid import UUID
 
 from sqlalchemy.exc import IntegrityError
 
@@ -104,15 +104,12 @@ class UpdateMarriageUseCase:
                 raise
 
             spouses_changed = (
-                old_husband_id != marriage.husband_id
-                or old_wife_id != marriage.wife_id
+                old_husband_id != marriage.husband_id or old_wife_id != marriage.wife_id
             )
             became_divorced = (
                 old_divorced_at is None and marriage.divorced_at is not None
             )
-            became_active = (
-                old_divorced_at is not None and marriage.divorced_at is None
-            )
+            became_active = old_divorced_at is not None and marriage.divorced_at is None
             is_active = marriage.divorced_at is None
 
             # Only active marriages keep a SPOUSE_OF edge in Neo4j.
@@ -127,9 +124,7 @@ class UpdateMarriageUseCase:
                     new_person_id_2=marriage.wife_id,
                 )
             elif became_active:
-                self.sync_service.upsert_spouse(
-                    marriage.husband_id, marriage.wife_id
-                )
+                self.sync_service.upsert_spouse(marriage.husband_id, marriage.wife_id)
 
             return MarriageUpdateDTOMapper.to_response(marriage=marriage)
 

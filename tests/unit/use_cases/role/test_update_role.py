@@ -18,7 +18,7 @@ async def test_update_role_success(mock_uow):
         where=_RoleUpdateWhereDTO(role_id=UUID(int=1)),
         data=_RoleUpdateDataDTO(
             name="super_admin",
-            permission_ids = [UUID(int=10), UUID(int=20)],
+            permission_ids=[UUID(int=10), UUID(int=20)],
         ),
     )
 
@@ -136,7 +136,7 @@ async def test_update_role_without_permission_ids(mock_uow):
 async def test_update_role_only_permission_ids(mock_uow):
     dto = RoleUpdateDTO(
         where=_RoleUpdateWhereDTO(role_id=UUID(int=1)),
-        data=_RoleUpdateDataDTO(permission_ids = [UUID(int=10), UUID(int=20)], name=None),
+        data=_RoleUpdateDataDTO(permission_ids=[UUID(int=10), UUID(int=20)], name=None),
     )
 
     existing_role = MagicMock()

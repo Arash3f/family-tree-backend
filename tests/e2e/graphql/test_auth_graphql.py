@@ -19,7 +19,6 @@ async def gql(
     return await client.post(GRAPHQL_URL, json=payload, headers=headers or {})
 
 
-
 @pytest.mark.asyncio
 async def test_graphql_login_success(client):
     resp = await gql(

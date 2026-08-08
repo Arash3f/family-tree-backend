@@ -143,9 +143,7 @@ async def test_create_marriage_raises_if_rules_fail(mock_uow):
         married_at=date(2020, 1, 1),
     )
 
-    mock_uow.persons.get_or_raise = AsyncMock(
-        side_effect=[MagicMock(), MagicMock()]
-    )
+    mock_uow.persons.get_or_raise = AsyncMock(side_effect=[MagicMock(), MagicMock()])
     rules = MagicMock()
     rules.validate_marriage.side_effect = UnderageMarriageException()
 

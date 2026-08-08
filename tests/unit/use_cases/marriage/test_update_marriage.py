@@ -314,9 +314,7 @@ async def test_update_marriage_propagates_exception_from_get_or_raise(mock_uow):
 
     rules_service = MagicMock()
 
-    use_case = UpdateMarriageUseCase(
-        mock_uow, rules_service, sync_service=MagicMock()
-    )
+    use_case = UpdateMarriageUseCase(mock_uow, rules_service, sync_service=MagicMock())
 
     with pytest.raises(MarriageNotFoundException):
         await use_case.execute(dto)

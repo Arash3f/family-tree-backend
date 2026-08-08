@@ -50,11 +50,7 @@ class Person:
         if self.birth_date and self.birth_date > date.today():
             raise InvalidBirthDateException()
 
-        if (
-            self.birth_date
-            and self.death_date
-            and self.death_date < self.birth_date
-        ):
+        if self.birth_date and self.death_date and self.death_date < self.birth_date:
             raise InvalidBirthDateException(
                 detail=["death_date cannot be before birth_date"]
             )

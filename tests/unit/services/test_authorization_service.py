@@ -37,9 +37,10 @@ async def test_user_has_any_permission(mock_uow):
     mock_uow.users.get_with_details = AsyncMock(return_value=user)
 
     service = AuthorizationService(mock_uow)
-    assert await service.user_has_any_permission(
-        UUID(int=1), ["person.create", "person.read"]
-    ) is True
-    assert await service.user_has_any_permission(
-        UUID(int=1), ["role.create"]
-    ) is False
+    assert (
+        await service.user_has_any_permission(
+            UUID(int=1), ["person.create", "person.read"]
+        )
+        is True
+    )
+    assert await service.user_has_any_permission(UUID(int=1), ["role.create"]) is False

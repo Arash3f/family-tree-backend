@@ -67,9 +67,7 @@ class FamilyTreeSyncService:
         if old_father_id != person.father_id:
             if old_father_id is not None:
                 tasks.append(
-                    sync_parent_rel_delete.si(
-                        str(old_father_id), str(person.safe_id)
-                    )
+                    sync_parent_rel_delete.si(str(old_father_id), str(person.safe_id))
                 )
             if person.father_id is not None:
                 tasks.append(
@@ -81,9 +79,7 @@ class FamilyTreeSyncService:
         if old_mother_id != person.mother_id:
             if old_mother_id is not None:
                 tasks.append(
-                    sync_parent_rel_delete.si(
-                        str(old_mother_id), str(person.safe_id)
-                    )
+                    sync_parent_rel_delete.si(str(old_mother_id), str(person.safe_id))
                 )
             if person.mother_id is not None:
                 tasks.append(

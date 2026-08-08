@@ -13,7 +13,7 @@ from app.domain.entities.role import Role
 
 @pytest.mark.asyncio
 async def test_create_role(mock_uow):
-    dto = RoleCreateDTO(name="adasdasda", permission_ids = [UUID(int=1), UUID(int=2)])
+    dto = RoleCreateDTO(name="adasdasda", permission_ids=[UUID(int=1), UUID(int=2)])
 
     perm_1 = MagicMock()
     perm_1.id = UUID(int=1)

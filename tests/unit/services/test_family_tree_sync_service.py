@@ -72,9 +72,7 @@ def test_update_person_parent_change_deletes_and_creates():
         parent.si.return_value = "create"
         chain_mock.return_value.apply_async = MagicMock()
 
-        service.update_person(
-            person, old_father_id=UUID(int=1), old_mother_id=None
-        )
+        service.update_person(person, old_father_id=UUID(int=1), old_mother_id=None)
 
         chain_mock.assert_called_once_with("upsert", "del", "create")
 

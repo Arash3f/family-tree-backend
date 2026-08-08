@@ -11,7 +11,11 @@ from app.presentation.graphql.auth import (
     get_current_user,
 )
 from app.presentation.graphql.types.common import ResultType
-from app.presentation.graphql.types.user import AuthTokensType, UserType, user_from_mapping
+from app.presentation.graphql.types.user import (
+    AuthTokensType,
+    UserType,
+    user_from_mapping,
+)
 from app.presentation.rest.schemas.mappers.auth_mappers import AuthApiMapper
 from app.presentation.rest.schemas.mappers.common_mappers import CommonApiMapper
 

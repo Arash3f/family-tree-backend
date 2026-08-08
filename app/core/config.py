@@ -42,7 +42,9 @@ class AppSettings(PydanticBaseSettings):
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/1"
 
-    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000,http://localhost:8001"
+    CORS_ORIGINS: str = (
+        "http://localhost:3000,http://127.0.0.1:3000,http://localhost:8001"
+    )
     FLOWER_BASIC_AUTH: str = "admin:admin"
     AUTH_RATE_LIMIT_PER_MINUTE: int = 30
 

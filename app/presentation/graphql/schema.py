@@ -20,7 +20,10 @@ from app.presentation.graphql.types.marriage import (
     MarriageType,
     MarriageUpdateInput,
 )
-from app.presentation.graphql.types.permission import PermissionListInput, PermissionPage
+from app.presentation.graphql.types.permission import (
+    PermissionListInput,
+    PermissionPage,
+)
 from app.presentation.graphql.types.person import (
     ClosestRelationshipType,
     PersonCreateInput,

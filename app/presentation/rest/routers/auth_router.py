@@ -55,9 +55,7 @@ async def login(
     user_agent, ip_address = _client_meta(request)
     usecase = LoginUserUseCase(uow, password_hasher, token_service)
 
-    tokens = await usecase.execute(
-        data, user_agent=user_agent, ip_address=ip_address
-    )
+    tokens = await usecase.execute(data, user_agent=user_agent, ip_address=ip_address)
 
     return AuthApiMapper.from_login_dto(tokens)
 

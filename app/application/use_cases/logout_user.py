@@ -17,9 +17,7 @@ class LogoutUseCase:
                 raise InvalidCredentialsException()
 
             if session.revoked_at is None:
-                await self.uow.sessions.revoke(
-                    session_id, datetime.now(timezone.utc)
-                )
+                await self.uow.sessions.revoke(session_id, datetime.now(timezone.utc))
                 await self.uow.commit()
 
             return ResultDTO(result="Logged out successfully")

@@ -9,12 +9,8 @@ class GetClosestRelationshipUseCase:
     def __init__(self, family_tree_repo: FamilyTreeRepository):
         self.family_tree_repo = family_tree_repo
 
-    def execute(
-        self, from_person_id: UUID, to_person_id: UUID
-    ) -> RelationshipPathDTO:
-        if not self.family_tree_repo.person_exists(
-            PersonIdDTO(id=from_person_id)
-        ):
+    def execute(self, from_person_id: UUID, to_person_id: UUID) -> RelationshipPathDTO:
+        if not self.family_tree_repo.person_exists(PersonIdDTO(id=from_person_id)):
             raise PersonNotFoundException(
                 detail=[f"person {from_person_id} not found in graph"]
             )

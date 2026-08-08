@@ -36,7 +36,11 @@ async def test_get_current_user_success(mock_uow):
 @pytest.mark.asyncio
 async def test_get_current_user_rejects_refresh_token(mock_uow):
     token_service = MagicMock()
-    token_service.decode_token.return_value = {"type": "refresh", "sub": "1", "sid": "2"}
+    token_service.decode_token.return_value = {
+        "type": "refresh",
+        "sub": "1",
+        "sid": "2",
+    }
 
     with pytest.raises(InvalidCredentialsException):
         await get_current_user("token", mock_uow, token_service)

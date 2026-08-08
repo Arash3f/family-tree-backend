@@ -22,7 +22,6 @@ async def gql(
     return await client.post(GRAPHQL_URL, json=payload, headers=headers or {})
 
 
-
 CREATE_PERSON = """
 mutation CreatePerson($data: PersonCreateInput!) {
   createPerson(data: $data) {
@@ -63,7 +62,9 @@ async def test_graphql_create_person_unauthenticated(client):
 
 @pytest.mark.asyncio
 async def test_graphql_create_get_list_update_delete_person(
-    client, admin_headers, uow  # noqa: F811
+    client,
+    admin_headers,  # noqa: F811
+    uow,  # noqa: F811
 ):
     father = await uow.persons.create(
         Person(

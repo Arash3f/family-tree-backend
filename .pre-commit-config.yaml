@@ -53,7 +53,10 @@ repos:
     hooks:
       - id: mypy
         files: ^app/
-        additional_dependencies: []
+        additional_dependencies:
+          - strawberry-graphql>=0.323.0,<0.324.0
+          - pydantic>=2
+          - pydantic-settings
         verbose: true
   - repo: local
     hooks:

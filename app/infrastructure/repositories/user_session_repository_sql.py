@@ -69,9 +69,7 @@ class SQLUserSessionRepository(UserSessionRepository):
         )
         await self.session.execute(stmt)
 
-    async def revoke_all_for_user(
-        self, user_id: UUID, revoked_at: datetime
-    ) -> int:
+    async def revoke_all_for_user(self, user_id: UUID, revoked_at: datetime) -> int:
         stmt = (
             update(UserSessionModel)
             .where(
