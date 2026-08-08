@@ -1,5 +1,4 @@
 # Full stack: API + Celery + Flower + Postgres + Redis + Neo4j
-# Keep in sync with compose.full.yml (CI uses this file via COMPOSE_FILE).
 #
 # From backend repo root:
 #   docker compose -f docker/compose.yml --env-file .env up --build
