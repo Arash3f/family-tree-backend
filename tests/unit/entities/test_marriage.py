@@ -4,9 +4,11 @@ from datetime import date
 import pytest
 
 from app.domain.entities.marriage import Marriage
+from app.domain.exceptions.common_exceptions import UnExpectedIdException
 from app.domain.exceptions.marriage_exceptions import (
     DivorceBeforeMarriageException,
     MarriageAfterDivorceException,
+    MarriageAlreadyDivorcedException,
     SelfMarriageException,
 )
 
@@ -53,6 +55,39 @@ def test_divorce_sets_divorce_date():
     assert marriage.divorced_at == date(2022, 1, 1)
 
 
+def test_divorce_rejects_an_already_divorced_marriage():
+    marriage = create_marriage(divorced_at=date(2022, 1, 1))
+
+    with pytest.raises(MarriageAlreadyDivorcedException):
+        marriage.divorce(date(2023, 1, 1))
+
+    assert marriage.divorced_at == date(2022, 1, 1)
+
+
+def test_set_divorced_at_corrects_an_existing_divorce_date():
+    marriage = create_marriage(divorced_at=date(2022, 1, 1))
+
+    marriage.set_divorced_at(date(2023, 1, 1))
+
+    assert marriage.divorced_at == date(2023, 1, 1)
+
+
+def test_set_divorced_at_still_rejects_a_date_before_the_marriage():
+    marriage = create_marriage()
+
+    with pytest.raises(DivorceBeforeMarriageException):
+        marriage.set_divorced_at(date(2019, 1, 1))
+
+
+def test_clear_divorce_reactivates_the_marriage():
+    marriage = create_marriage(divorced_at=date(2022, 1, 1))
+
+    marriage.clear_divorce()
+
+    assert marriage.divorced_at is None
+    assert marriage.is_active() is True
+
+
 def test_marriage_date_cannot_be_after_divorce():
     marriage = create_marriage(
         divorced_at=date(2021, 1, 1),
@@ -91,7 +126,7 @@ def test_safe_id_returns_id():
 def test_safe_id_raises_if_none():
     marriage = create_marriage(id=None)
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(UnExpectedIdException):
         _ = marriage.safe_id
 
 

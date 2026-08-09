@@ -3,7 +3,10 @@ from uuid import UUID
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.application.services.family_tree_sync_service import FamilyTreeSyncService
 from app.application.services.person_photo_service import PersonPhotoService
-from app.domain.exceptions.person_exceptions import PersonHasMarriagesException
+from app.domain.exceptions.person_exceptions import (
+    PersonHasChildrenException,
+    PersonHasMarriagesException,
+)
 from app.domain.shared.dto.common_dto import IdDTO, ResultDTO
 
 
@@ -26,9 +29,21 @@ class DeletePersonUseCase:
             person_id = person.safe_id
             photo_key = person.photo_object_key
 
-            if await self.uow.marriages.exists_for_person(person_id):
+            # A past marriage is history worth keeping, so only a live one
+            # blocks deletion.
+            if await self.uow.marriages.has_active_for_person(person_id):
                 raise PersonHasMarriagesException(
-                    detail=[f"person {person_id} is linked to one or more marriages"]
+                    detail=[f"person {person_id} has an active marriage"]
+                )
+
+            # Deleting a parent would leave their children pointing at a person
+            # that no longer resolves.
+            children = await self.uow.persons.get_children(person_id)
+            if children:
+                raise PersonHasChildrenException(
+                    detail=[
+                        f"person {person_id} is a parent of {len(children)} person(s)"
+                    ]
                 )
 
             await self.uow.persons.delete(person_id=person_id)

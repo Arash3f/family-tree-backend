@@ -5,6 +5,7 @@ import pytest
 
 from app.domain.entities.person import Gender, Person
 from app.domain.exceptions.marriage_exceptions import (
+    InvalidMarriageGenderException,
     SelfMarriageException,
     UnderageMarriageException,
 )
@@ -66,14 +67,14 @@ def test_validate_marriage_underage():
         )
 
 
-def test_validate_marriage_same_gender_allowed():
-    spouse_a = create_person(
-        id=UUID(int=1), gender=Gender.MALE, birth_date=date(1995, 1, 1)
-    )
+@pytest.mark.parametrize("gender", [Gender.MALE, Gender.FEMALE])
+def test_validate_marriage_rejects_same_gender(gender):
+    spouse_a = create_person(id=UUID(int=1), gender=gender, birth_date=date(1995, 1, 1))
     spouse_b = create_person(
-        id=UUID(int=2), name="Sam", gender=Gender.MALE, birth_date=date(1996, 1, 1)
+        id=UUID(int=2), name="Sam", gender=gender, birth_date=date(1996, 1, 1)
     )
 
-    MarriageRulesService.validate_marriage(
-        spouse_a=spouse_a, spouse_b=spouse_b, marriage_date=date(2023, 1, 1)
-    )
+    with pytest.raises(InvalidMarriageGenderException):
+        MarriageRulesService.validate_marriage(
+            spouse_a=spouse_a, spouse_b=spouse_b, marriage_date=date(2023, 1, 1)
+        )

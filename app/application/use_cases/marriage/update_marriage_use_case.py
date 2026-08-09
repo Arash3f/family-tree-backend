@@ -1,7 +1,5 @@
 from uuid import UUID
 
-from sqlalchemy.exc import IntegrityError
-
 from app.application.dto.marriage.marriage_update_dto import (
     MarriageUpdateDTO,
     MarriageUpdateDTOMapper,
@@ -10,6 +8,7 @@ from app.application.dto.marriage.marriage_update_dto import (
 )
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.application.services.family_tree_sync_service import FamilyTreeSyncService
+from app.domain.exceptions.marriage_exceptions import ActiveMarriageExistsException
 from app.domain.services.marriage_rules import MarriageRulesService
 
 
@@ -72,9 +71,11 @@ class UpdateMarriageUseCase:
             if MarriageUpdateField.DIVORCE_AT in update_data_enum:
                 divorced_at = update_data_enum.pop(MarriageUpdateField.DIVORCE_AT)
                 if divorced_at is None:
-                    marriage.divorced_at = None
+                    marriage.clear_divorce()
                 else:
-                    marriage.divorce(divorced_at)
+                    # An update may correct the date of an existing divorce, so
+                    # this deliberately does not go through `divorce()`.
+                    marriage.set_divorced_at(divorced_at)
 
             if needs_validation:
                 if spouse_a is None:
@@ -93,14 +94,26 @@ class UpdateMarriageUseCase:
                     marriage_date=marriage.married_at,
                 )
 
+            # Reactivating a marriage, or moving it onto a new spouse, must not
+            # leave anyone with two active marriages at once.
+            if marriage.is_active() and (
+                needs_validation or old_divorced_at is not None
+            ):
+                for spouse_id in (marriage.spouse_a_id, marriage.spouse_b_id):
+                    if await self.uow.marriages.has_active_for_person(
+                        spouse_id, exclude_marriage_id=marriage.safe_id
+                    ):
+                        raise ActiveMarriageExistsException(
+                            detail=[
+                                f"person {spouse_id} already has an active marriage"
+                            ]
+                        )
+
             for field, value in update_data_enum.items():
                 setattr(marriage, field.value, value)
 
-            try:
-                marriage = await self.uow.marriages.update(marriage=marriage)
-                await self.uow.commit()
-            except IntegrityError:
-                raise
+            marriage = await self.uow.marriages.update(marriage=marriage)
+            await self.uow.commit()
 
             spouses_changed = (
                 old_spouse_a_id != marriage.spouse_a_id

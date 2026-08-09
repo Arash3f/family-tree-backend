@@ -14,6 +14,7 @@ from app.domain.entities.marriage import Marriage
 from app.domain.entities.person import Gender
 from app.domain.exceptions.person_exceptions import PersonNotFoundException
 from app.domain.exceptions.marriage_exceptions import (
+    ActiveMarriageExistsException,
     UnderageMarriageException,
 )
 
@@ -137,6 +138,34 @@ async def test_create_marriage_raises_if_wife_not_found(mock_uow):
     )
 
     with pytest.raises(PersonNotFoundException):
+        await use_case.execute(dto, tree_id=UUID(int=7))
+
+    mock_uow.marriages.create.assert_not_awaited()
+    mock_uow.commit.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("busy_spouse", [0, 1])
+async def test_create_marriage_rejects_a_spouse_who_is_already_married(
+    mock_uow, busy_spouse
+):
+    dto = MarriageCreateDTO(
+        spouse_a_id=UUID(int=1),
+        spouse_b_id=UUID(int=2),
+        married_at=date(2020, 1, 1),
+    )
+
+    spouses = [MagicMock(safe_id=UUID(int=1)), MagicMock(safe_id=UUID(int=2))]
+    mock_uow.persons.get_in_tree_or_raise = AsyncMock(side_effect=spouses)
+    mock_uow.marriages.has_active_for_person = AsyncMock(
+        side_effect=lambda person_id: person_id == spouses[busy_spouse].safe_id
+    )
+
+    use_case = CreateMarriageUseCase(
+        mock_uow, marriage_rules_service=MagicMock(), sync_service=MagicMock()
+    )
+
+    with pytest.raises(ActiveMarriageExistsException):
         await use_case.execute(dto, tree_id=UUID(int=7))
 
     mock_uow.marriages.create.assert_not_awaited()

@@ -2,9 +2,11 @@ from dataclasses import dataclass
 from datetime import date
 from uuid import UUID
 
+from app.domain.exceptions.common_exceptions import UnExpectedIdException
 from app.domain.exceptions.marriage_exceptions import (
     DivorceBeforeMarriageException,
     MarriageAfterDivorceException,
+    MarriageAlreadyDivorcedException,
     SelfMarriageException,
 )
 
@@ -37,8 +39,28 @@ class Marriage:
         """
         Mark the marriage as divorced.
 
+        This is the one-off business action. Correcting the date of a divorce
+        that already happened goes through `set_divorced_at`.
+
         Args:
             divorced_at: Date when the divorce occurred.
+
+        Raises:
+            MarriageAlreadyDivorcedException:
+                If the marriage has already been divorced.
+            DivorceBeforeMarriageException:
+                If the divorce date is before the marriage date.
+        """
+        if self.divorced_at is not None:
+            raise MarriageAlreadyDivorcedException(
+                detail=[f"marriage was already divorced on {self.divorced_at}"]
+            )
+
+        self.set_divorced_at(divorced_at)
+
+    def set_divorced_at(self, divorced_at: date) -> None:
+        """
+        Set or correct the divorce date.
 
         Raises:
             DivorceBeforeMarriageException:
@@ -48,6 +70,10 @@ class Marriage:
             raise DivorceBeforeMarriageException()
 
         self.divorced_at = divorced_at
+
+    def clear_divorce(self) -> None:
+        """Reactivate the marriage by dropping its divorce date."""
+        self.divorced_at = None
 
     def set_married_at(self, married_at: date) -> None:
         """
@@ -68,10 +94,10 @@ class Marriage:
         Return the entity ID ensuring it exists.
 
         Raises:
-            RuntimeError: If the entity has not been persisted yet.
+            UnExpectedIdException: If the entity has not been persisted yet.
         """
         if self.id is None:
-            raise RuntimeError("Entity has no id")
+            raise UnExpectedIdException(detail=["marriage has no id"])
         return self.id
 
     @property

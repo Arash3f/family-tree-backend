@@ -4,7 +4,10 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock
 from app.application.use_cases.marriage.divorce_use_case import DivorceUseCase
 from app.application.dto.marriage.divorce_dto import DivorceDTO
-from app.domain.exceptions.marriage_exceptions import MarriageNotFoundException
+from app.domain.exceptions.marriage_exceptions import (
+    MarriageAlreadyDivorcedException,
+    MarriageNotFoundException,
+)
 from app.domain.shared.dto.common_dto import ResultDTO
 
 
@@ -35,6 +38,26 @@ async def test_divorce_use_case_success(mock_uow):
         marriage_id=marriage.safe_id, divorced_at=marriage.safe_divorced_at
     )
     mock_uow.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_divorce_use_case_rejects_an_already_divorced_marriage(mock_uow):
+    dto = DivorceDTO(marriage_id=UUID(int=1), divorced_at=date(2025, 1, 1))
+
+    marriage = MagicMock()
+    marriage.divorce.side_effect = MarriageAlreadyDivorcedException()
+
+    mock_uow.marriages.get_in_tree_or_raise = AsyncMock(return_value=marriage)
+    sync_service = MagicMock()
+
+    use_case = DivorceUseCase(mock_uow, sync_service=sync_service)
+
+    with pytest.raises(MarriageAlreadyDivorcedException):
+        await use_case.execute(dto, tree_id=UUID(int=7))
+
+    mock_uow.marriages.end.assert_not_awaited()
+    mock_uow.commit.assert_not_awaited()
+    sync_service.remove_spouse.assert_not_called()
 
 
 @pytest.mark.asyncio

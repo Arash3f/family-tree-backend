@@ -26,6 +26,7 @@ class ErrorCode(int, Enum):
     MEDIA_OBJECT_NOT_FOUND = 1111
     TOO_MANY_BIOLOGICAL_PARENTS = 1112
     INVALID_PARENT_MARRIAGE = 1113
+    PERSON_HAS_CHILDREN = 1114
     # -----------------------
     # |    Domain Marriage    |
     # -----------------------
@@ -36,6 +37,7 @@ class ErrorCode(int, Enum):
     INVALID_MARRIAGE_GENDER = 1204
     MARRIAGE_NOT_FOUND = 1205
     ACTIVE_MARRIAGE_EXISTS = 1206
+    MARRIAGE_ALREADY_DIVORCED = 1207
     # -----------------------
     # |  Permission Person  |
     # -----------------------
@@ -92,6 +94,7 @@ ERROR_MESSAGES = {
         ErrorCode.MEDIA_OBJECT_NOT_FOUND: "Media object not found",
         ErrorCode.TOO_MANY_BIOLOGICAL_PARENTS: "Child cannot have more than two biological parents",
         ErrorCode.INVALID_PARENT_MARRIAGE: "Biological parents must match the origin marriage spouses",
+        ErrorCode.PERSON_HAS_CHILDREN: "Person cannot be deleted while linked to children",
         # Domain Marriage
         ErrorCode.SELF_MARRIAGE: "A person cannot marry themselves",
         ErrorCode.DIVORCED_BEFORE_MARRIAGE: "A divorced person cannot be married again without proper validation",
@@ -100,6 +103,7 @@ ERROR_MESSAGES = {
         ErrorCode.INVALID_MARRIAGE_GENDER: "Marriage is only allowed between a male and a female",
         ErrorCode.MARRIAGE_NOT_FOUND: "Marriage not found",
         ErrorCode.ACTIVE_MARRIAGE_EXISTS: "Person already has an active marriage",
+        ErrorCode.MARRIAGE_ALREADY_DIVORCED: "Marriage is already divorced",
         # Domain Permission
         ErrorCode.PERMISSION_NOT_FOUND: "Permission not found",
         ErrorCode.PERMISSION_DENIED: "Permission denied",
@@ -144,6 +148,7 @@ ERROR_MESSAGES = {
         ErrorCode.MEDIA_OBJECT_NOT_FOUND: "شیء رسانه یافت نشد",
         ErrorCode.TOO_MANY_BIOLOGICAL_PARENTS: "فرزند نمی‌تواند بیش از دو والد زیستی داشته باشد",
         ErrorCode.INVALID_PARENT_MARRIAGE: "والدهای زیستی باید با همسران ازدواج مبدأ مطابقت داشته باشند",
+        ErrorCode.PERSON_HAS_CHILDREN: "شخص دارای فرزند قابل حذف نیست",
         # Domain Marriage
         ErrorCode.SELF_MARRIAGE: "یک شخص نمی‌تواند با خودش ازدواج کند",
         ErrorCode.DIVORCED_BEFORE_MARRIAGE: "فردی که طلاق گرفته است بدون اعتبارسنجی مناسب نمی‌تواند دوباره ازدواج کند",
@@ -152,6 +157,7 @@ ERROR_MESSAGES = {
         ErrorCode.INVALID_MARRIAGE_GENDER: "ازدواج فقط بین یک مرد و یک زن مجاز است",
         ErrorCode.MARRIAGE_NOT_FOUND: "ازدواج مورد نظر یافت نشد",
         ErrorCode.ACTIVE_MARRIAGE_EXISTS: "شخص هم‌اکنون ازدواج فعال دارد",
+        ErrorCode.MARRIAGE_ALREADY_DIVORCED: "این ازدواج قبلاً به طلاق منجر شده است",
         # Domain Permission
         ErrorCode.PERMISSION_NOT_FOUND: "دسترسی پیدا نشد",
         ErrorCode.PERMISSION_DENIED: "عدم وجود دسترسی",

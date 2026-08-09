@@ -1,7 +1,5 @@
 from uuid import UUID
 
-from sqlalchemy.exc import IntegrityError
-
 from app.application.dto.marriage.marriage_create_dto import (
     MarriageCreateDTO,
     MarriageCreateMapper,
@@ -10,7 +8,7 @@ from app.application.dto.marriage.marriage_create_dto import (
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.application.services.family_tree_sync_service import FamilyTreeSyncService
 from app.domain.entities.marriage import Marriage
-from app.domain.exceptions.family_tree_exceptions import MarriageTreeMismatchException
+from app.domain.exceptions.marriage_exceptions import ActiveMarriageExistsException
 from app.domain.services.marriage_rules import MarriageRulesService
 
 
@@ -36,14 +34,19 @@ class CreateMarriageUseCase:
                 person_id=dto.spouse_b_id, tree_id=tree_id
             )
 
-            if spouse_a.tree_id != tree_id or spouse_b.tree_id != tree_id:
-                raise MarriageTreeMismatchException()
-
             self.marriage_rules_service.validate_marriage(
                 spouse_a=spouse_a,
                 spouse_b=spouse_b,
                 marriage_date=dto.married_at,
             )
+
+            for spouse in (spouse_a, spouse_b):
+                if await self.uow.marriages.has_active_for_person(spouse.safe_id):
+                    raise ActiveMarriageExistsException(
+                        detail=[
+                            f"person {spouse.safe_id} already has an active marriage"
+                        ]
+                    )
 
             marriage = Marriage(
                 id=None,
@@ -53,11 +56,8 @@ class CreateMarriageUseCase:
                 married_at=dto.married_at,
             )
 
-            try:
-                marriage = await self.uow.marriages.create(marriage)
-                await self.uow.commit()
-            except IntegrityError:
-                raise
+            marriage = await self.uow.marriages.create(marriage)
+            await self.uow.commit()
 
             self.sync_service.upsert_spouse(marriage.spouse_a_id, marriage.spouse_b_id)
 

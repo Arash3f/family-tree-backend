@@ -67,3 +67,10 @@ class PersonHasMarriagesException(AppException):
         super().__init__(
             code=ErrorCode.PERSON_HAS_MARRIAGES, status_code=422, detail=detail
         )
+
+
+class PersonHasChildrenException(AppException):
+    def __init__(self, detail: list[str] | None = None):
+        super().__init__(
+            code=ErrorCode.PERSON_HAS_CHILDREN, status_code=422, detail=detail
+        )

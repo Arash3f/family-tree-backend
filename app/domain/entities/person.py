@@ -55,12 +55,19 @@ class Person:
     deleted_at: datetime | None = None
 
     def __post_init__(self) -> None:
+        self.validate()
+
+    def validate(self) -> None:
         """
-        Validates domain invariants after initialization.
+        Validates domain invariants.
+
+        Called on construction, and again by callers that mutate fields
+        directly so that partial updates cannot bypass these rules.
 
         Raises:
             InvalidBirthDateException:
-                If the birth date is set in the future.
+                If the birth date is set in the future, or the death date
+                precedes the birth date.
 
             SelfParentException:
                 If a person is assigned as their own parent.

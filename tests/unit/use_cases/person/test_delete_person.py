@@ -2,7 +2,11 @@ from uuid import UUID
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 from app.application.use_cases.person.delete_person_use_case import DeletePersonUseCase
-from app.domain.exceptions.person_exceptions import PersonNotFoundException
+from app.domain.exceptions.person_exceptions import (
+    PersonHasChildrenException,
+    PersonHasMarriagesException,
+    PersonNotFoundException,
+)
 from app.domain.shared.dto.common_dto import IdDTO, ResultDTO
 
 
@@ -36,6 +40,53 @@ async def test_delete_person_success(mock_uow):
     mock_uow.persons.delete.assert_awaited_once_with(person_id=UUID(int=10))
     mock_uow.commit.assert_awaited_once()
     photo_service.delete_quiet.assert_awaited_once_with(person.photo_object_key)
+
+
+@pytest.mark.asyncio
+async def test_delete_person_allowed_when_only_past_marriages_exist(mock_uow):
+    person = MagicMock(safe_id=UUID(int=10), photo_object_key=None)
+    mock_uow.persons.get_in_tree_or_raise = AsyncMock(return_value=person)
+    mock_uow.marriages.has_active_for_person = AsyncMock(return_value=False)
+    mock_uow.marriages.exists_for_person = AsyncMock(return_value=True)
+
+    use_case = DeletePersonUseCase(mock_uow, _photo_service(), sync_service=MagicMock())
+
+    result = await use_case.execute(IdDTO(id=UUID(int=1)), tree_id=UUID(int=7))
+
+    assert result.result == "Person deleted successfully"
+    mock_uow.persons.delete.assert_awaited_once_with(person_id=UUID(int=10))
+
+
+@pytest.mark.asyncio
+async def test_delete_person_rejected_while_a_marriage_is_active(mock_uow):
+    mock_uow.persons.get_in_tree_or_raise = AsyncMock(
+        return_value=MagicMock(safe_id=UUID(int=10), photo_object_key=None)
+    )
+    mock_uow.marriages.has_active_for_person = AsyncMock(return_value=True)
+
+    use_case = DeletePersonUseCase(mock_uow, _photo_service(), sync_service=MagicMock())
+
+    with pytest.raises(PersonHasMarriagesException):
+        await use_case.execute(IdDTO(id=UUID(int=1)), tree_id=UUID(int=7))
+
+    mock_uow.persons.delete.assert_not_awaited()
+    mock_uow.commit.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_delete_person_rejected_while_children_reference_them(mock_uow):
+    mock_uow.persons.get_in_tree_or_raise = AsyncMock(
+        return_value=MagicMock(safe_id=UUID(int=10), photo_object_key=None)
+    )
+    mock_uow.persons.get_children = AsyncMock(return_value=[MagicMock()])
+
+    use_case = DeletePersonUseCase(mock_uow, _photo_service(), sync_service=MagicMock())
+
+    with pytest.raises(PersonHasChildrenException):
+        await use_case.execute(IdDTO(id=UUID(int=1)), tree_id=UUID(int=7))
+
+    mock_uow.persons.delete.assert_not_awaited()
+    mock_uow.commit.assert_not_awaited()
 
 
 @pytest.mark.asyncio

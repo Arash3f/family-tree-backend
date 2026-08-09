@@ -9,7 +9,40 @@ from app.application.dto.marriage.marriage_update_dto import (
     MarriageUpdateDTOMapper,
     MarriageUpdateResponseDTO,
 )
-from app.domain.exceptions.marriage_exceptions import MarriageNotFoundException
+from app.domain.exceptions.marriage_exceptions import (
+    ActiveMarriageExistsException,
+    MarriageNotFoundException,
+)
+
+
+@pytest.mark.asyncio
+async def test_update_marriage_rejects_reactivating_onto_a_busy_spouse(mock_uow):
+    """Clearing divorced_at must not give someone two active marriages."""
+    dto = MagicMock()
+    dto.where.marriage_id = UUID(int=1)
+    dto.data.model_dump.return_value = {"divorced_at": None}
+
+    marriage = MagicMock()
+    marriage.spouse_a_id = UUID(int=1)
+    marriage.spouse_b_id = UUID(int=2)
+    marriage.married_at = date(2020, 1, 1)
+    marriage.divorced_at = date(2022, 1, 1)
+    marriage.safe_id = UUID(int=1)
+    marriage.clear_divorce.side_effect = lambda: setattr(marriage, "divorced_at", None)
+    marriage.is_active.side_effect = lambda: marriage.divorced_at is None
+
+    mock_uow.marriages.get_in_tree_or_raise = AsyncMock(return_value=marriage)
+    mock_uow.marriages.has_active_for_person = AsyncMock(return_value=True)
+
+    use_case = UpdateMarriageUseCase(
+        mock_uow, marriage_rules_service=MagicMock(), sync_service=MagicMock()
+    )
+
+    with pytest.raises(ActiveMarriageExistsException):
+        await use_case.execute(dto, tree_id=UUID(int=7))
+
+    mock_uow.marriages.update.assert_not_awaited()
+    mock_uow.commit.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -162,10 +195,10 @@ async def test_update_marriage_divorced_at_without_validation(mock_uow):
     marriage.divorced_at = None
     marriage.safe_id = UUID(int=1)
 
-    def _divorce(divorced_at):
+    def _set_divorced_at(divorced_at):
         marriage.divorced_at = divorced_at
 
-    marriage.divorce.side_effect = _divorce
+    marriage.set_divorced_at.side_effect = _set_divorced_at
 
     mock_uow.marriages.get_in_tree_or_raise = AsyncMock(return_value=marriage)
     mock_uow.marriages.update = AsyncMock(return_value=marriage)
@@ -190,7 +223,7 @@ async def test_update_marriage_divorced_at_without_validation(mock_uow):
         result = await use_case.execute(dto, tree_id=UUID(int=7))
 
     assert result is expected_result
-    marriage.divorce.assert_called_once_with(date(2023, 1, 1))
+    marriage.set_divorced_at.assert_called_once_with(date(2023, 1, 1))
     sync_service.remove_spouse.assert_called_once_with(UUID(int=1), UUID(int=2))
     mock_uow.marriages.update.assert_awaited_once()
 

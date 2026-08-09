@@ -87,6 +87,8 @@ class UpdatePersonUseCase:
             for field, value in update_data_enum.items():
                 setattr(person, field.value, value)
 
+            person.validate()
+
             person = await self.uow.persons.update(person=person)
 
             await self.uow.commit()

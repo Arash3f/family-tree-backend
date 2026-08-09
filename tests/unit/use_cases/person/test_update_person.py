@@ -4,9 +4,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from datetime import timedelta
+
 from app.application.dto.person.person_update_dto import PersonUpdateMapper
 from app.application.use_cases.person.update_person_use_case import UpdatePersonUseCase
-from app.domain.entities.person import Gender
+from app.domain.entities.person import Gender, Person
+from app.domain.exceptions.person_exceptions import InvalidBirthDateException
 
 
 def _photo_service():
@@ -15,6 +18,33 @@ def _photo_service():
     service.presign = AsyncMock(return_value=None)
     service.delete_quiet = AsyncMock()
     return service
+
+
+@pytest.mark.asyncio
+async def test_update_person_revalidates_the_entity_after_applying_fields(mock_uow):
+    """A partial update must not be able to write a value the entity rejects."""
+    dto = MagicMock()
+    dto.where.person_id = UUID(int=1)
+    dto.data.model_dump.return_value = {
+        "birth_date": date.today() + timedelta(days=1),
+    }
+
+    person = Person(
+        id=UUID(int=1),
+        name="Ali",
+        gender=Gender.MALE,
+        tree_id=UUID(int=7),
+        birth_date=date(2000, 1, 1),
+    )
+    mock_uow.persons.get_in_tree_or_raise = AsyncMock(return_value=person)
+
+    use_case = UpdatePersonUseCase(mock_uow, _photo_service(), sync_service=MagicMock())
+
+    with pytest.raises(InvalidBirthDateException):
+        await use_case.execute(dto, tree_id=UUID(int=7))
+
+    mock_uow.persons.update.assert_not_awaited()
+    mock_uow.commit.assert_not_awaited()
 
 
 @pytest.mark.asyncio

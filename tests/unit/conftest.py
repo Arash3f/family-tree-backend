@@ -31,6 +31,7 @@ def mock_uow():
     persons_repo.create = AsyncMock()
     persons_repo.delete = AsyncMock()
     persons_repo.get_in_tree_or_raise = AsyncMock()
+    persons_repo.get_children = AsyncMock(return_value=[])
 
     marriages_repo = MagicMock(spec_set=MarriageRepository)
     marriages_repo.create = AsyncMock()
