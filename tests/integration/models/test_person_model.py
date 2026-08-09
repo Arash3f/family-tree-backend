@@ -33,3 +33,16 @@ async def test_unique_constraint_same_name_and_parents(uow):
 
     with pytest.raises(IntegrityError):
         await uow.session.flush()
+
+
+@pytest.mark.asyncio
+async def test_unique_constraint_same_name_with_null_parents(uow):
+    person1 = PersonModel(name="Reza", gender="male")
+    uow.session.add(person1)
+    await uow.session.flush()
+
+    person2 = PersonModel(name="Reza", gender="male")
+    uow.session.add(person2)
+
+    with pytest.raises(IntegrityError):
+        await uow.session.flush()

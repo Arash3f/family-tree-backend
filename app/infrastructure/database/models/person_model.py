@@ -24,7 +24,11 @@ class PersonModel(Base):
 
     __table_args__ = (
         UniqueConstraint(
-            "name", "father_id", "mother_id", name="uq_person_name_parents"
+            "name",
+            "father_id",
+            "mother_id",
+            name="uq_person_name_parents",
+            postgresql_nulls_not_distinct=True,
         ),
         CheckConstraint(
             "death_date IS NULL OR birth_date IS NULL OR death_date >= birth_date",
