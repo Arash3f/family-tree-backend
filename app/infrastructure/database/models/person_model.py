@@ -1,7 +1,7 @@
 from datetime import date
 from uuid import UUID
 
-from sqlalchemy import Date, ForeignKey, String, UniqueConstraint
+from sqlalchemy import CheckConstraint, Date, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
@@ -25,6 +25,10 @@ class PersonModel(Base):
     __table_args__ = (
         UniqueConstraint(
             "name", "father_id", "mother_id", name="uq_person_name_parents"
+        ),
+        CheckConstraint(
+            "death_date IS NULL OR birth_date IS NULL OR death_date >= birth_date",
+            name="ck_person_death_after_birth",
         ),
     )
 
