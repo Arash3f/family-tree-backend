@@ -21,6 +21,7 @@ class MarriageFilterDataDTO(BaseModel):
     spouse_b_id: UUID | None = None
     married_at: RangeDTO[date] | None = None
     divorced_at: RangeDTO[date] | None = None
+    tree_id: UUID | None = None
 
 
 class FilterMarriageDTO(BaseModel):

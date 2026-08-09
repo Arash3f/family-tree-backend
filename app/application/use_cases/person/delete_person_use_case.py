@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.application.services.family_tree_sync_service import FamilyTreeSyncService
 from app.application.services.person_photo_service import PersonPhotoService
@@ -16,9 +18,11 @@ class DeletePersonUseCase:
         self.photo_service = photo_service
         self.sync_service = sync_service or FamilyTreeSyncService()
 
-    async def execute(self, dto: IdDTO) -> ResultDTO:
+    async def execute(self, dto: IdDTO, *, tree_id: UUID) -> ResultDTO:
         async with self.uow:
-            person = await self.uow.persons.get_or_raise(person_id=dto.id)
+            person = await self.uow.persons.get_in_tree_or_raise(
+                person_id=dto.id, tree_id=tree_id
+            )
             person_id = person.safe_id
             photo_key = person.photo_object_key
 

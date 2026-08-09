@@ -42,6 +42,7 @@ class Person:
     id: UUID | None
     name: str
     gender: Gender
+    tree_id: UUID
     birth_date: date | None = None
     death_date: date | None = None
     parents: list[ParentLink] = field(default_factory=list)

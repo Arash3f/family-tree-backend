@@ -24,8 +24,20 @@ class PersonRepository(ABC):
 
     @abstractmethod
     async def get_by_name(
-        self, name: str, marriage_id: UUID | None
+        self, name: str, marriage_id: UUID | None, tree_id: UUID
     ) -> Person | None: ...
+
+    async def get_in_tree_or_raise(self, person_id: UUID, tree_id: UUID) -> Person:
+        from app.domain.exceptions.family_tree_exceptions import (
+            PersonTreeMismatchException,
+        )
+
+        person = await self.get_or_raise(person_id=person_id)
+        if person.tree_id != tree_id:
+            raise PersonTreeMismatchException(
+                detail=[f"person_id={person_id} tree_id={tree_id}"]
+            )
+        return person
 
     @abstractmethod
     async def get_list_by_filter(

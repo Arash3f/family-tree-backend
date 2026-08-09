@@ -11,9 +11,13 @@ from app.domain.exceptions.marriage_exceptions import (
 )
 
 
+TEST_TREE_ID = UUID(int=1)
+
+
 def create_marriage(**overrides):
     return Marriage(
         id=overrides.get("id", UUID(int=1)),
+        tree_id=overrides.get("tree_id", TEST_TREE_ID),
         divorced_at=overrides.get("divorced_at", None),
         married_at=overrides.get("married_at", date(2020, 1, 1)),
         spouse_a_id=overrides.get("spouse_a_id", UUID(int=1)),

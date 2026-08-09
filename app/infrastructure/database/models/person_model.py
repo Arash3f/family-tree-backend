@@ -16,6 +16,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.infrastructure.database.base import Base
 
 if TYPE_CHECKING:
+    from app.infrastructure.database.models.family_tree_model import FamilyTreeModel
     from app.infrastructure.database.models.marriage_model import MarriageModel
     from app.infrastructure.database.models.parent_link_model import ParentLinkModel
 
@@ -31,6 +32,11 @@ class PersonModel(Base):
     birth_place: Mapped[str | None] = mapped_column(String, nullable=True)
     death_place: Mapped[str | None] = mapped_column(String, nullable=True)
     notes: Mapped[str | None] = mapped_column(String, nullable=True)
+    tree_id: Mapped[UUID] = mapped_column(
+        ForeignKey("family_trees.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     marriage_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("marriages.id", ondelete="SET NULL", use_alter=True),
         nullable=True,
@@ -43,7 +49,8 @@ class PersonModel(Base):
 
     __table_args__ = (
         Index(
-            "uq_person_name_marriage",
+            "uq_person_tree_name_marriage",
+            "tree_id",
             "name",
             "marriage_id",
             unique=True,
@@ -57,6 +64,11 @@ class PersonModel(Base):
             "gender IN ('male', 'female')",
             name="ck_person_gender",
         ),
+    )
+
+    family_tree: Mapped["FamilyTreeModel"] = relationship(
+        "FamilyTreeModel",
+        foreign_keys=[tree_id],
     )
 
     origin_marriage: Mapped["MarriageModel | None"] = relationship(

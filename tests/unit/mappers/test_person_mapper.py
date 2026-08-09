@@ -7,11 +7,15 @@ from app.application.dto.person.person_update_dto import PersonUpdateMapper
 from app.domain.entities.person import Gender, Person
 
 
+TEST_TREE_ID = UUID(int=1)
+
+
 def create_person(**overrides):
     return Person(
         id=overrides.get("id", UUID(int=1)),
         name=overrides.get("name", "Ali"),
         gender=overrides.get("gender", Gender.MALE),
+        tree_id=overrides.get("tree_id", TEST_TREE_ID),
         birth_date=overrides.get("birth_date", date(2000, 1, 1)),
         parents=overrides.get("parents", []),
         marriage_id=overrides.get("marriage_id", None),

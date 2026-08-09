@@ -1,4 +1,5 @@
 import pytest
+from uuid import UUID
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from app.application.dto.person.person_get_dto import PersonGetMapper
@@ -11,6 +12,7 @@ from app.domain.shared.dto.pagination_dto import PaginatedResult
 @pytest.mark.asyncio
 async def test_get_person_list_by_filter_success(mock_uow):
     query = MagicMock()
+    query.model_copy = MagicMock(return_value=query)
 
     person = MagicMock()
     person.photo_object_key = None
@@ -24,7 +26,7 @@ async def test_get_person_list_by_filter_success(mock_uow):
 
     with patch.object(PersonGetMapper, "to_response", return_value=mapped) as mapper:
         use_case = GetPersonListByFilterUseCase(mock_uow, photo_service)
-        result = await use_case.execute(query)
+        result = await use_case.execute(query, tree_id=UUID(int=7))
 
     assert result.items == [mapped]
     assert result.total == 1

@@ -1,4 +1,4 @@
-from uuid import uuid4
+from uuid import UUID, uuid4
 from unittest.mock import MagicMock
 
 import pytest
@@ -10,7 +10,9 @@ from app.utils.error_codes import ERROR_MESSAGES, ErrorCode
 from tests.e2e.auth_headers import admin_headers as admin_headers
 from tests.e2e.auth_headers import member_headers as member_headers
 
-BASE_URL = "/persons"
+
+def persons_url(tree_id: UUID, suffix: str = "") -> str:
+    return f"/family-trees/{tree_id}/persons{suffix}"
 
 
 @pytest.fixture
@@ -27,11 +29,11 @@ def mock_neo():
 
 @pytest.mark.asyncio
 async def test_closest_relationship_permission_denied(
-    client, member_headers, mock_neo  # noqa: F811
+    client, tree_id, member_headers, mock_neo  # noqa: F811
 ):
     from_id, to_id = uuid4(), uuid4()
     resp = await client.get(
-        f"{BASE_URL}/{from_id}/relation/{to_id}",
+        persons_url(tree_id, f"/{from_id}/relation/{to_id}"),
         headers=member_headers,
     )
     assert resp.status_code == 403
@@ -42,14 +44,16 @@ async def test_closest_relationship_permission_denied(
 
 
 @pytest.mark.asyncio
-async def test_closest_relationship_unauthenticated(client, mock_neo):
-    resp = await client.get(f"{BASE_URL}/{uuid4()}/relation/{uuid4()}")
+async def test_closest_relationship_unauthenticated(client, tree_id, mock_neo):
+    resp = await client.get(persons_url(tree_id, f"/{uuid4()}/relation/{uuid4()}"))
     assert resp.status_code == 401
     assert resp.json()["detail"] == "Not authenticated"
 
 
 @pytest.mark.asyncio
-async def test_closest_relationship_success(client, admin_headers, mock_neo):  # noqa: F811
+async def test_closest_relationship_success(
+    client, tree_id, admin_headers, mock_neo  # noqa: F811
+):
     from_id, to_id, mid = uuid4(), uuid4(), uuid4()
     mock_neo.person_exists.return_value = True
     mock_neo.find_shortest_relationship_path.return_value = RelationshipPathDTO(
@@ -62,7 +66,7 @@ async def test_closest_relationship_success(client, admin_headers, mock_neo):  #
     )
 
     resp = await client.get(
-        f"{BASE_URL}/{from_id}/relation/{to_id}",
+        persons_url(tree_id, f"/{from_id}/relation/{to_id}"),
         headers=admin_headers,
     )
     assert resp.status_code == 200
@@ -77,13 +81,13 @@ async def test_closest_relationship_success(client, admin_headers, mock_neo):  #
 
 @pytest.mark.asyncio
 async def test_closest_relationship_person_missing(
-    client, admin_headers, mock_neo  # noqa: F811
+    client, tree_id, admin_headers, mock_neo  # noqa: F811
 ):
     from_id, to_id = uuid4(), uuid4()
     mock_neo.person_exists.return_value = False
 
     resp = await client.get(
-        f"{BASE_URL}/{from_id}/relation/{to_id}",
+        persons_url(tree_id, f"/{from_id}/relation/{to_id}"),
         headers=admin_headers,
     )
     assert resp.status_code == 404

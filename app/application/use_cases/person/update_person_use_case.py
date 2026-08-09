@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from app.application.dto.person.person_create_dto import (
     ParentLinkDTO,
     PersonCreateMapper,
@@ -26,9 +28,13 @@ class UpdatePersonUseCase:
         self.photo_service = photo_service
         self.sync_service = sync_service or FamilyTreeSyncService()
 
-    async def execute(self, dto: PersonUpdateDTO) -> PersonUpdateResponseDTO:
+    async def execute(
+        self, dto: PersonUpdateDTO, *, tree_id: UUID
+    ) -> PersonUpdateResponseDTO:
         async with self.uow:
-            person = await self.uow.persons.get_or_raise(person_id=dto.where.person_id)
+            person = await self.uow.persons.get_in_tree_or_raise(
+                person_id=dto.where.person_id, tree_id=tree_id
+            )
             old_parent_ids = set(person.parent_ids)
             old_photo_key = person.photo_object_key
             photo_key_to_delete: str | None = None
@@ -45,18 +51,22 @@ class UpdatePersonUseCase:
                     [ParentLinkDTO.model_validate(item) for item in parents_data]
                 )
                 for link in parents:
-                    await self.uow.persons.get_or_raise(person_id=link.parent_id)
+                    await self.uow.persons.get_in_tree_or_raise(
+                        person_id=link.parent_id, tree_id=tree_id
+                    )
                 person.set_parents(parents)
 
             if PersonUpdateField.MARRIAGE_ID in update_data_enum:
                 marriage_id = update_data_enum.pop(PersonUpdateField.MARRIAGE_ID)
                 if marriage_id is not None:
-                    await self.uow.marriages.get_or_raise(marriage_id=marriage_id)
+                    await self.uow.marriages.get_in_tree_or_raise(
+                        marriage_id=marriage_id, tree_id=tree_id
+                    )
                 person.marriage_id = marriage_id
 
             if person.marriage_id is not None:
-                marriage = await self.uow.marriages.get_or_raise(
-                    marriage_id=person.marriage_id
+                marriage = await self.uow.marriages.get_in_tree_or_raise(
+                    marriage_id=person.marriage_id, tree_id=tree_id
                 )
                 spouse_ids = {marriage.spouse_a_id, marriage.spouse_b_id}
                 for link in person.parents:

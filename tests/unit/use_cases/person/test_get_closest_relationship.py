@@ -1,4 +1,4 @@
-from uuid import uuid4
+from uuid import UUID, uuid4
 from unittest.mock import MagicMock
 
 import pytest
@@ -9,8 +9,11 @@ from app.application.use_cases.person.get_closest_relationship_use_case import (
 from app.domain.exceptions.person_exceptions import PersonNotFoundException
 from app.domain.shared.dto.family_tree_dto import RelationshipPathDTO
 
+TREE_ID = UUID(int=7)
 
-def test_get_closest_relationship_success():
+
+@pytest.mark.asyncio
+async def test_get_closest_relationship_success():
     from_id = uuid4()
     to_id = uuid4()
     repo = MagicMock()
@@ -24,18 +27,25 @@ def test_get_closest_relationship_success():
         relationship_types=["PARENT_OF"],
     )
 
-    result = GetClosestRelationshipUseCase(repo).execute(from_id, to_id)
+    result = await GetClosestRelationshipUseCase(repo).execute(
+        from_id, to_id, tree_id=TREE_ID
+    )
 
     assert result.found is True
     assert result.distance == 1
     repo.find_shortest_relationship_path.assert_called_once_with(
-        from_person_id=from_id, to_person_id=to_id
+        from_person_id=from_id,
+        to_person_id=to_id,
+        tree_id=TREE_ID,
     )
 
 
-def test_get_closest_relationship_missing_person():
+@pytest.mark.asyncio
+async def test_get_closest_relationship_missing_person():
     repo = MagicMock()
     repo.person_exists.return_value = False
 
     with pytest.raises(PersonNotFoundException):
-        GetClosestRelationshipUseCase(repo).execute(uuid4(), uuid4())
+        await GetClosestRelationshipUseCase(repo).execute(
+            uuid4(), uuid4(), tree_id=TREE_ID
+        )

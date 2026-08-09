@@ -12,8 +12,8 @@ from tests.e2e.auth_headers import member_headers as member_headers
 from tests.e2e.graphql.test_person_graphql import gql
 
 CLOSEST = """
-query ClosestRelationship($fromId: UUID!, $toId: UUID!) {
-  closestRelationship(fromPersonId: $fromId, toPersonId: $toId) {
+query ClosestRelationship($treeId: UUID!, $fromId: UUID!, $toId: UUID!) {
+  closestRelationship(treeId: $treeId, fromPersonId: $fromId, toPersonId: $toId) {
     fromPersonId
     toPersonId
     found
@@ -39,12 +39,16 @@ def mock_neo():
 
 @pytest.mark.asyncio
 async def test_graphql_closest_relationship_permission_denied(
-    client, member_headers, mock_neo  # noqa: F811
+    client, tree_id, member_headers, mock_neo  # noqa: F811
 ):
     resp = await gql(
         client,
         CLOSEST,
-        {"fromId": str(uuid4()), "toId": str(uuid4())},
+        {
+            "treeId": str(tree_id),
+            "fromId": str(uuid4()),
+            "toId": str(uuid4()),
+        },
         headers=member_headers,
     )
     assert resp.status_code == 200
@@ -55,7 +59,7 @@ async def test_graphql_closest_relationship_permission_denied(
 
 @pytest.mark.asyncio
 async def test_graphql_closest_relationship_success(
-    client, admin_headers, mock_neo  # noqa: F811
+    client, tree_id, admin_headers, mock_neo  # noqa: F811
 ):
     from_id, to_id = uuid4(), uuid4()
     mock_neo.person_exists.return_value = True
@@ -71,7 +75,11 @@ async def test_graphql_closest_relationship_success(
     resp = await gql(
         client,
         CLOSEST,
-        {"fromId": str(from_id), "toId": str(to_id)},
+        {
+            "treeId": str(tree_id),
+            "fromId": str(from_id),
+            "toId": str(to_id),
+        },
         headers=admin_headers,
     )
     assert resp.status_code == 200

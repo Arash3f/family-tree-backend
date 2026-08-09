@@ -19,6 +19,7 @@ class Marriage:
     """
 
     id: UUID | None
+    tree_id: UUID
     spouse_a_id: UUID
     spouse_b_id: UUID
     married_at: date

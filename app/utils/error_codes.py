@@ -57,6 +57,17 @@ class ErrorCode(int, Enum):
     TICKET_NOT_FOUND = 1600
     TICKET_CLOSED = 1601
     TICKET_ACCESS_DENIED = 1602
+    # -----------------------
+    # |  Domain FamilyTree  |
+    # -----------------------
+    FAMILY_TREE_NOT_FOUND = 1700
+    TREE_MEMBERSHIP_DENIED = 1701
+    TREE_OWNER_REQUIRED = 1702
+    TREE_MEMBER_ALREADY_EXISTS = 1703
+    TREE_MEMBER_NOT_FOUND = 1704
+    CANNOT_REMOVE_LAST_OWNER = 1705
+    PERSON_TREE_MISMATCH = 1706
+    MARRIAGE_TREE_MISMATCH = 1707
 
 
 ERROR_MESSAGES = {
@@ -102,6 +113,15 @@ ERROR_MESSAGES = {
         ErrorCode.TICKET_NOT_FOUND: "Ticket not found",
         ErrorCode.TICKET_CLOSED: "Ticket is closed",
         ErrorCode.TICKET_ACCESS_DENIED: "Ticket access denied",
+        # Domain FamilyTree
+        ErrorCode.FAMILY_TREE_NOT_FOUND: "Family tree not found",
+        ErrorCode.TREE_MEMBERSHIP_DENIED: "You are not a member of this family tree",
+        ErrorCode.TREE_OWNER_REQUIRED: "Only the tree owner can perform this action",
+        ErrorCode.TREE_MEMBER_ALREADY_EXISTS: "User is already a member of this tree",
+        ErrorCode.TREE_MEMBER_NOT_FOUND: "Tree membership not found",
+        ErrorCode.CANNOT_REMOVE_LAST_OWNER: "Cannot remove the last owner of a family tree",
+        ErrorCode.PERSON_TREE_MISMATCH: "Person does not belong to this family tree",
+        ErrorCode.MARRIAGE_TREE_MISMATCH: "Marriage or related persons are not in this family tree",
     },
     "fa": {
         ErrorCode.UN_EXPECTED_ID: "شناسه غیرمنتظره",
@@ -145,5 +165,14 @@ ERROR_MESSAGES = {
         ErrorCode.TICKET_NOT_FOUND: "تیکت یافت نشد",
         ErrorCode.TICKET_CLOSED: "تیکت بسته شده است",
         ErrorCode.TICKET_ACCESS_DENIED: "دسترسی به تیکت مجاز نیست",
+        # Domain FamilyTree
+        ErrorCode.FAMILY_TREE_NOT_FOUND: "شجره‌نامه یافت نشد",
+        ErrorCode.TREE_MEMBERSHIP_DENIED: "شما عضو این شجره‌نامه نیستید",
+        ErrorCode.TREE_OWNER_REQUIRED: "فقط مالک شجره‌نامه می‌تواند این کار را انجام دهد",
+        ErrorCode.TREE_MEMBER_ALREADY_EXISTS: "کاربر از قبل عضو این شجره‌نامه است",
+        ErrorCode.TREE_MEMBER_NOT_FOUND: "عضویت در شجره‌نامه یافت نشد",
+        ErrorCode.CANNOT_REMOVE_LAST_OWNER: "نمی‌توان آخرین مالک شجره‌نامه را حذف کرد",
+        ErrorCode.PERSON_TREE_MISMATCH: "شخص متعلق به این شجره‌نامه نیست",
+        ErrorCode.MARRIAGE_TREE_MISMATCH: "ازدواج یا افراد مرتبط در این شجره‌نامه نیستند",
     },
 }

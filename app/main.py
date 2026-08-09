@@ -19,6 +19,7 @@ from app.infrastructure.utils.logging import configure_logging
 from app.presentation.graphql.schema import graphql_router
 from app.presentation.rest.errors.handlers import app_exception_handler
 from app.presentation.rest.routers.auth_router import router as auth_router
+from app.presentation.rest.routers.family_tree_router import router as family_tree_router
 from app.presentation.rest.routers.marriage_router import router as marriage_router
 from app.presentation.rest.routers.media_router import router as media_router
 from app.presentation.rest.routers.permission_router import router as permission_router
@@ -191,9 +192,10 @@ if cors_origins:
 app.add_exception_handler(AppException, app_exception_handler)
 
 # Register API routers
-app.include_router(person_router)
+app.include_router(family_tree_router)
+app.include_router(person_router, prefix="/family-trees/{tree_id}")
 app.include_router(media_router)
-app.include_router(marriage_router)
+app.include_router(marriage_router, prefix="/family-trees/{tree_id}")
 app.include_router(user_router)
 app.include_router(permission_router)
 app.include_router(role_router)

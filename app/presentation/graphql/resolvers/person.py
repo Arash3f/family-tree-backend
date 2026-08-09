@@ -4,6 +4,7 @@ import strawberry
 from strawberry.types import Info
 
 from app.application.dto.person.person_update_dto import PersonUpdateDTO
+from app.application.services.tree_access_service import TreeAccessService
 from app.application.use_cases.person.create_person_use_case import CreatePersonUseCase
 from app.application.use_cases.person.delete_person_use_case import DeletePersonUseCase
 from app.application.use_cases.person.get_closest_relationship_use_case import (
@@ -14,7 +15,8 @@ from app.application.use_cases.person.get_person_list_by_filter_use_case import 
 )
 from app.application.use_cases.person.get_person_use_case import GetPersonUseCase
 from app.application.use_cases.person.update_person_use_case import UpdatePersonUseCase
-from app.infrastructure.utils.constants.permissions import Permissions
+from app.domain.entities.user import User
+from app.domain.shared.permissions import Permissions
 from app.presentation.graphql.auth import require_permission
 from app.presentation.graphql.types.common import (
     ResultType,
@@ -52,6 +54,17 @@ def _optional_jalali(value: str | None):
     if value is None:
         return None
     return jalali_to_gregorian(value)
+
+
+async def _require_tree_member(
+    info: Info, tree_id: UUID, permission: str
+) -> User:
+    user = await require_permission(info, permission)
+    async with info.context.uow:
+        await TreeAccessService(info.context.uow).require_member(
+            tree_id=tree_id, user_id=user.safe_id
+        )
+    return user
 
 
 def _person_create_request(data: PersonCreateInput) -> PersonCreateRequest:
@@ -150,49 +163,59 @@ def _person_list_request(data: PersonListInput | None) -> FilterPersonRequest:
     )
 
 
-async def resolve_create_person(info: Info, data: PersonCreateInput) -> PersonType:
-    await require_permission(info, Permissions.PERSON_CREATE)
+async def resolve_create_person(
+    info: Info, tree_id: UUID, data: PersonCreateInput
+) -> PersonType:
+    await _require_tree_member(info, tree_id, Permissions.PERSON_CREATE)
     usecase = CreatePersonUseCase(info.context.uow, info.context.photo_service)
     res = await usecase.execute(
-        PersonApiMapper.to_create_person_dto(_person_create_request(data))
+        PersonApiMapper.to_create_person_dto(_person_create_request(data)),
+        tree_id=tree_id,
     )
     mapped = PersonApiMapper.from_create_person_dto(res)
     return person_from_mapping(mapped.model_dump())
 
 
-async def resolve_update_person(info: Info, data: PersonUpdateInput) -> PersonType:
-    await require_permission(info, Permissions.PERSON_UPDATE)
+async def resolve_update_person(
+    info: Info, tree_id: UUID, data: PersonUpdateInput
+) -> PersonType:
+    await _require_tree_member(info, tree_id, Permissions.PERSON_UPDATE)
     usecase = UpdatePersonUseCase(info.context.uow, info.context.photo_service)
-    res = await usecase.execute(_person_update_dto(data))
+    res = await usecase.execute(_person_update_dto(data), tree_id=tree_id)
     mapped = PersonApiMapper.from_update_person_dto(res)
     return person_from_mapping(mapped.model_dump())
 
 
-async def resolve_delete_person(info: Info, person_id: UUID) -> ResultType:
-    await require_permission(info, Permissions.PERSON_DELETE)
+async def resolve_delete_person(
+    info: Info, tree_id: UUID, person_id: UUID
+) -> ResultType:
+    await _require_tree_member(info, tree_id, Permissions.PERSON_DELETE)
     usecase = DeletePersonUseCase(info.context.uow, info.context.photo_service)
-    res = await usecase.execute(CommonApiMapper.to_id_dto(person_id))
+    res = await usecase.execute(CommonApiMapper.to_id_dto(person_id), tree_id=tree_id)
     mapped = CommonApiMapper.from_result_dto(res)
     return ResultType(result=mapped.result)
 
 
-async def resolve_person(info: Info, person_id: UUID) -> PersonType:
-    await require_permission(info, Permissions.PERSON_READ)
+async def resolve_person(
+    info: Info, tree_id: UUID, person_id: UUID
+) -> PersonType:
+    await _require_tree_member(info, tree_id, Permissions.PERSON_READ)
     usecase = GetPersonUseCase(info.context.uow, info.context.photo_service)
-    res = await usecase.execute(CommonApiMapper.to_id_dto(person_id))
+    res = await usecase.execute(CommonApiMapper.to_id_dto(person_id), tree_id=tree_id)
     mapped = PersonApiMapper.from_get_person_dto(res)
     return person_from_mapping(mapped.model_dump())
 
 
 async def resolve_persons(
-    info: Info, data: PersonListInput | None = None
+    info: Info, tree_id: UUID, data: PersonListInput | None = None
 ) -> PersonPage:
-    await require_permission(info, Permissions.PERSON_READ)
+    await _require_tree_member(info, tree_id, Permissions.PERSON_READ)
     usecase = GetPersonListByFilterUseCase(
         info.context.uow, info.context.photo_service
     )
     res = await usecase.execute(
-        PersonApiMapper.to_get_list_person_dto(_person_list_request(data))
+        PersonApiMapper.to_get_list_person_dto(_person_list_request(data)),
+        tree_id=tree_id,
     )
     mapped = PersonApiMapper.from_get_list_person_dto(res)
     return PersonPage(
@@ -205,12 +228,15 @@ async def resolve_persons(
 
 async def resolve_closest_relationship(
     info: Info,
+    tree_id: UUID,
     from_person_id: UUID,
     to_person_id: UUID,
 ) -> ClosestRelationshipType:
-    await require_permission(info, Permissions.PERSON_READ)
-    usecase = GetClosestRelationshipUseCase(info.context.neo)
-    result = usecase.execute(from_person_id, to_person_id)
+    await _require_tree_member(info, tree_id, Permissions.PERSON_READ)
+    usecase = GetClosestRelationshipUseCase(info.context.neo, info.context.uow)
+    result = await usecase.execute(
+        from_person_id, to_person_id, tree_id=tree_id
+    )
     data = result.model_dump()
     return ClosestRelationshipType(
         from_person_id=data["from_person_id"],

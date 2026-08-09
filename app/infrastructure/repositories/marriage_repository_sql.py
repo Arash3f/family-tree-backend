@@ -51,6 +51,9 @@ class SQLMarriageRepository(MarriageRepository):
         filters = query.filters
 
         if filters:
+            if filters.tree_id is not None:
+                stmt = stmt.where(MarriageModel.tree_id == filters.tree_id)
+
             if filters.spouse_a_id is not None:
                 stmt = stmt.where(MarriageModel.spouse_a_id == filters.spouse_a_id)
 
@@ -160,6 +163,7 @@ class SQLMarriageRepository(MarriageRepository):
         if not model:
             raise MarriageNotFoundException(detail=[f"marriage id is {marriage.id}"])
 
+        model.tree_id = marriage.tree_id
         model.spouse_a_id = marriage.spouse_a_id
         model.spouse_b_id = marriage.spouse_b_id
         model.married_at = marriage.married_at
@@ -173,6 +177,7 @@ class SQLMarriageRepository(MarriageRepository):
     def _to_entity(self, model: MarriageModel) -> Marriage:
         return Marriage(
             id=model.id,
+            tree_id=model.tree_id,
             spouse_a_id=model.spouse_a_id,
             spouse_b_id=model.spouse_b_id,
             married_at=model.married_at,
@@ -182,6 +187,7 @@ class SQLMarriageRepository(MarriageRepository):
     def _to_model(self, entity: Marriage) -> MarriageModel:
         return MarriageModel(
             id=entity.id,
+            tree_id=entity.tree_id,
             spouse_a_id=entity.spouse_a_id,
             spouse_b_id=entity.spouse_b_id,
             married_at=entity.married_at,

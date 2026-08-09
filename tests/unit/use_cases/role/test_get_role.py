@@ -1,4 +1,3 @@
-from uuid import UUID
 import pytest
 from unittest.mock import MagicMock, patch
 from app.application.dto.role.role_get_dto import RoleGetMapper

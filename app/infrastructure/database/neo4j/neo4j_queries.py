@@ -16,6 +16,7 @@ SET p.full_name  = $full_name,
     p.gender     = $gender,
     p.birth_date = $birth_date,
     p.death_date = $death_date,
+    p.tree_id    = $tree_id,
     p.created_at = coalesce(p.created_at, $created_at),
     p.updated_at = $updated_at
 RETURN p
@@ -34,6 +35,7 @@ RETURN p
 
 PERSON_EXISTS: LiteralString = """
 MATCH (p:Person {id: $id})
+WHERE $tree_id IS NULL OR p.tree_id = $tree_id
 RETURN p LIMIT 1
 """
 
@@ -69,6 +71,7 @@ RETURN COUNT(r) > 0 AS deleted
 
 SHORTEST_RELATIONSHIP_PATH: LiteralString = """
 MATCH (a:Person {id: $from_id}), (b:Person {id: $to_id})
+WHERE ($tree_id IS NULL OR (a.tree_id = $tree_id AND b.tree_id = $tree_id))
 OPTIONAL MATCH path = shortestPath((a)-[*..15]-(b))
 RETURN
   CASE WHEN path IS NULL THEN [] ELSE [n IN nodes(path) | n.id] END AS person_ids,

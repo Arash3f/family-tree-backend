@@ -32,21 +32,21 @@ from app.utils.error_codes import ERROR_MESSAGES, ErrorCode
 from tests.e2e.auth_headers import admin_headers as admin_headers
 from tests.e2e.auth_headers import member_headers as member_headers
 
-BASE_URL = "/marriages"
+
+def marriages_url(tree_id: UUID, suffix: str = "") -> str:
+    return f"/family-trees/{tree_id}/marriages{suffix}"
 
 
 async def _create_spouses(uow: SQLAlchemyUnitOfWork, suffix: str = ""):
     husband = await uow.persons.create(
-        Person(
-            id=None,
+        Person(tree_id=uow.tree_id, id=None,
             name=f"husband{suffix}",
             gender=Gender.MALE,
             birth_date=date(1990, 1, 1),
         )
     )
     wife = await uow.persons.create(
-        Person(
-            id=None,
+        Person(tree_id=uow.tree_id, id=None,
             name=f"wife{suffix}",
             gender=Gender.FEMALE,
             birth_date=date(1992, 1, 1),
@@ -61,14 +61,14 @@ async def _create_spouses(uow: SQLAlchemyUnitOfWork, suffix: str = ""):
 
 
 @pytest.mark.asyncio
-async def test_create_marriage_permission_denied(client, member_headers):  # noqa: F811
+async def test_create_marriage_permission_denied(client, tree_id, member_headers):  # noqa: F811
     req = MarriageCreateRequest(
         spouse_a_id=UUID(int=1),
         spouse_b_id=UUID(int=2),
         married_at=date(2020, 1, 1),
     )
     resp = await client.post(
-        f"{BASE_URL}/",
+        marriages_url(tree_id, "/"),
         json=req.model_dump(mode="json"),
         headers=member_headers,
     )
@@ -81,14 +81,14 @@ async def test_create_marriage_permission_denied(client, member_headers):  # noq
 
 
 @pytest.mark.asyncio
-async def test_create_marriage_unauthenticated(client):
+async def test_create_marriage_unauthenticated(client, tree_id):
     req = MarriageCreateRequest(
         spouse_a_id=UUID(int=1),
         spouse_b_id=UUID(int=2),
         married_at=date(2020, 1, 1),
     )
     resp = await client.post(
-        f"{BASE_URL}/",
+        marriages_url(tree_id, "/"),
         json=req.model_dump(mode="json"),
     )
 
@@ -97,7 +97,7 @@ async def test_create_marriage_unauthenticated(client):
 
 
 @pytest.mark.asyncio
-async def test_create_marriage_success(client, admin_headers, uow):  # noqa: F811
+async def test_create_marriage_success(client, tree_id, admin_headers, uow):  # noqa: F811
     husband, wife = await _create_spouses(uow, suffix="_create")
     await uow.commit()
 
@@ -108,7 +108,7 @@ async def test_create_marriage_success(client, admin_headers, uow):  # noqa: F81
     )
 
     resp = await client.post(
-        f"{BASE_URL}/",
+        marriages_url(tree_id, "/"),
         json=req.model_dump(mode="json"),
         headers=admin_headers,
     )
@@ -135,9 +135,9 @@ async def test_create_marriage_success(client, admin_headers, uow):  # noqa: F81
 
 
 @pytest.mark.asyncio
-async def test_get_marriage_permission_denied(client, member_headers):  # noqa: F811
+async def test_get_marriage_permission_denied(client, tree_id, member_headers):  # noqa: F811
     resp = await client.get(
-        f"{BASE_URL}/{UUID(int=1)}",
+        marriages_url(tree_id, f"/{UUID(int=1)}"),
         headers=member_headers,
     )
 
@@ -148,19 +148,18 @@ async def test_get_marriage_permission_denied(client, member_headers):  # noqa: 
 
 
 @pytest.mark.asyncio
-async def test_get_marriage_unauthenticated(client):
-    resp = await client.get(f"{BASE_URL}/{UUID(int=1)}")
+async def test_get_marriage_unauthenticated(client, tree_id):
+    resp = await client.get(marriages_url(tree_id, f"/{UUID(int=1)}"))
 
     assert resp.status_code == 401
     assert resp.json()["detail"] == "Not authenticated"
 
 
 @pytest.mark.asyncio
-async def test_get_marriage_success(client, admin_headers, uow: SQLAlchemyUnitOfWork):  # noqa: F811
+async def test_get_marriage_success(client, tree_id, admin_headers, uow: SQLAlchemyUnitOfWork):  # noqa: F811
     husband, wife = await _create_spouses(uow, suffix="_get")
     marriage = await uow.marriages.create(
-        Marriage(
-            id=None,
+        Marriage(tree_id=uow.tree_id, id=None,
             spouse_a_id=husband.safe_id,
             spouse_b_id=wife.safe_id,
             married_at=date(2020, 1, 1),
@@ -169,7 +168,7 @@ async def test_get_marriage_success(client, admin_headers, uow: SQLAlchemyUnitOf
     await uow.commit()
 
     resp = await client.get(
-        f"{BASE_URL}/{marriage.safe_id}",
+        marriages_url(tree_id, f"/{marriage.safe_id}"),
         headers=admin_headers,
     )
 
@@ -182,9 +181,9 @@ async def test_get_marriage_success(client, admin_headers, uow: SQLAlchemyUnitOf
 
 
 @pytest.mark.asyncio
-async def test_get_marriage_with_invalid_id(client, admin_headers):  # noqa: F811
+async def test_get_marriage_with_invalid_id(client, tree_id, admin_headers):  # noqa: F811
     resp = await client.get(
-        f"{BASE_URL}/{UUID(int=999999)}",
+        marriages_url(tree_id, f"/{UUID(int=999999)}"),
         headers=admin_headers,
     )
 
@@ -201,7 +200,7 @@ async def test_get_marriage_with_invalid_id(client, admin_headers):  # noqa: F81
 
 
 @pytest.mark.asyncio
-async def test_update_marriage_permission_denied(client, member_headers):  # noqa: F811
+async def test_update_marriage_permission_denied(client, tree_id, member_headers):  # noqa: F811
     payload = MarriageUpdateRequest(
         where=_MarriageUpdateWhereRequest(marriage_id=UUID(int=1)),
         data=_MarriageUpdateDateRequest(
@@ -213,7 +212,7 @@ async def test_update_marriage_permission_denied(client, member_headers):  # noq
     )
 
     resp = await client.put(
-        f"{BASE_URL}/",
+        marriages_url(tree_id, "/"),
         json=payload.model_dump(mode="json"),
         headers=member_headers,
     )
@@ -226,7 +225,7 @@ async def test_update_marriage_permission_denied(client, member_headers):  # noq
 
 
 @pytest.mark.asyncio
-async def test_update_marriage_unauthenticated(client):
+async def test_update_marriage_unauthenticated(client, tree_id):
     payload = MarriageUpdateRequest(
         where=_MarriageUpdateWhereRequest(marriage_id=UUID(int=1)),
         data=_MarriageUpdateDateRequest(
@@ -238,7 +237,7 @@ async def test_update_marriage_unauthenticated(client):
     )
 
     resp = await client.put(
-        f"{BASE_URL}/",
+        marriages_url(tree_id, "/"),
         json=payload.model_dump(mode="json"),
     )
 
@@ -248,14 +247,13 @@ async def test_update_marriage_unauthenticated(client):
 
 @pytest.mark.asyncio
 async def test_update_marriage_success(
-    client,
+    client, tree_id,
     admin_headers,  # noqa: F811
     uow: SQLAlchemyUnitOfWork,
 ):
     husband, wife = await _create_spouses(uow, suffix="_update")
     marriage = await uow.marriages.create(
-        Marriage(
-            id=None,
+        Marriage(tree_id=uow.tree_id, id=None,
             spouse_a_id=husband.safe_id,
             spouse_b_id=wife.safe_id,
             married_at=date(2020, 1, 1),
@@ -271,7 +269,7 @@ async def test_update_marriage_success(
     )
 
     resp = await client.put(
-        f"{BASE_URL}/",
+        marriages_url(tree_id, "/"),
         json=payload.model_dump(mode="json", exclude_unset=True),
         headers=admin_headers,
     )
@@ -286,7 +284,7 @@ async def test_update_marriage_success(
 
 
 @pytest.mark.asyncio
-async def test_update_marriage_with_invalid_id(client, admin_headers):  # noqa: F811
+async def test_update_marriage_with_invalid_id(client, tree_id, admin_headers):  # noqa: F811
     payload = MarriageUpdateRequest(
         where=_MarriageUpdateWhereRequest(marriage_id=UUID(int=88888)),
         data=_MarriageUpdateDateRequest(
@@ -295,7 +293,7 @@ async def test_update_marriage_with_invalid_id(client, admin_headers):  # noqa: 
     )
 
     resp = await client.put(
-        f"{BASE_URL}/",
+        marriages_url(tree_id, "/"),
         json=payload.model_dump(mode="json", exclude_unset=True),
         headers=admin_headers,
     )
@@ -313,10 +311,10 @@ async def test_update_marriage_with_invalid_id(client, admin_headers):  # noqa: 
 
 
 @pytest.mark.asyncio
-async def test_delete_marriage_permission_denied(client, member_headers):  # noqa: F811
+async def test_delete_marriage_permission_denied(client, tree_id, member_headers):  # noqa: F811
     resp = await client.request(
         "DELETE",
-        f"{BASE_URL}/",
+        marriages_url(tree_id, "/"),
         json={"id": str(UUID(int=1))},
         headers=member_headers,
     )
@@ -328,10 +326,10 @@ async def test_delete_marriage_permission_denied(client, member_headers):  # noq
 
 
 @pytest.mark.asyncio
-async def test_delete_marriage_unauthenticated(client):
+async def test_delete_marriage_unauthenticated(client, tree_id):
     resp = await client.request(
         "DELETE",
-        f"{BASE_URL}/",
+        marriages_url(tree_id, "/"),
         json={"id": str(UUID(int=1))},
     )
 
@@ -341,14 +339,13 @@ async def test_delete_marriage_unauthenticated(client):
 
 @pytest.mark.asyncio
 async def test_delete_marriage_success(
-    client,
+    client, tree_id,
     admin_headers,  # noqa: F811
     uow: SQLAlchemyUnitOfWork,
 ):
     husband, wife = await _create_spouses(uow, suffix="_delete")
     marriage = await uow.marriages.create(
-        Marriage(
-            id=None,
+        Marriage(tree_id=uow.tree_id, id=None,
             spouse_a_id=husband.safe_id,
             spouse_b_id=wife.safe_id,
             married_at=date(2020, 1, 1),
@@ -358,7 +355,7 @@ async def test_delete_marriage_success(
 
     resp = await client.request(
         "DELETE",
-        f"{BASE_URL}/",
+        marriages_url(tree_id, "/"),
         json={"id": str(marriage.safe_id)},
         headers=admin_headers,
     )
@@ -374,10 +371,10 @@ async def test_delete_marriage_success(
 
 
 @pytest.mark.asyncio
-async def test_delete_marriage_with_invalid_id(client, admin_headers):  # noqa: F811
+async def test_delete_marriage_with_invalid_id(client, tree_id, admin_headers):  # noqa: F811
     resp = await client.request(
         "DELETE",
-        f"{BASE_URL}/",
+        marriages_url(tree_id, "/"),
         json={"id": str(UUID(int=999999))},
         headers=admin_headers,
     )
@@ -395,14 +392,14 @@ async def test_delete_marriage_with_invalid_id(client, admin_headers):  # noqa: 
 
 
 @pytest.mark.asyncio
-async def test_divorce_permission_denied(client, member_headers):  # noqa: F811
+async def test_divorce_permission_denied(client, tree_id, member_headers):  # noqa: F811
     req = DivorceRequest(
         marriage_id=UUID(int=1),
         divorced_at=date(2022, 1, 1),
     )
 
     resp = await client.post(
-        f"{BASE_URL}/divorce",
+        marriages_url(tree_id, "/divorce"),
         json=req.model_dump(mode="json"),
         headers=member_headers,
     )
@@ -414,14 +411,14 @@ async def test_divorce_permission_denied(client, member_headers):  # noqa: F811
 
 
 @pytest.mark.asyncio
-async def test_divorce_unauthenticated(client):
+async def test_divorce_unauthenticated(client, tree_id):
     req = DivorceRequest(
         marriage_id=UUID(int=1),
         divorced_at=date(2022, 1, 1),
     )
 
     resp = await client.post(
-        f"{BASE_URL}/divorce",
+        marriages_url(tree_id, "/divorce"),
         json=req.model_dump(mode="json"),
     )
 
@@ -430,11 +427,10 @@ async def test_divorce_unauthenticated(client):
 
 
 @pytest.mark.asyncio
-async def test_divorce_success(client, admin_headers, uow: SQLAlchemyUnitOfWork):  # noqa: F811
+async def test_divorce_success(client, tree_id, admin_headers, uow: SQLAlchemyUnitOfWork):  # noqa: F811
     husband, wife = await _create_spouses(uow, suffix="_divorce")
     marriage = await uow.marriages.create(
-        Marriage(
-            id=None,
+        Marriage(tree_id=uow.tree_id, id=None,
             spouse_a_id=husband.safe_id,
             spouse_b_id=wife.safe_id,
             married_at=date(2020, 1, 1),
@@ -448,7 +444,7 @@ async def test_divorce_success(client, admin_headers, uow: SQLAlchemyUnitOfWork)
     )
 
     resp = await client.post(
-        f"{BASE_URL}/divorce",
+        marriages_url(tree_id, "/divorce"),
         json=req.model_dump(mode="json"),
         headers=admin_headers,
     )
@@ -463,14 +459,14 @@ async def test_divorce_success(client, admin_headers, uow: SQLAlchemyUnitOfWork)
 
 
 @pytest.mark.asyncio
-async def test_divorce_with_invalid_id(client, admin_headers):  # noqa: F811
+async def test_divorce_with_invalid_id(client, tree_id, admin_headers):  # noqa: F811
     req = DivorceRequest(
         marriage_id=UUID(int=999999),
         divorced_at=date(2022, 1, 1),
     )
 
     resp = await client.post(
-        f"{BASE_URL}/divorce",
+        marriages_url(tree_id, "/divorce"),
         json=req.model_dump(mode="json"),
         headers=admin_headers,
     )
@@ -488,7 +484,7 @@ async def test_divorce_with_invalid_id(client, admin_headers):  # noqa: F811
 
 
 @pytest.mark.asyncio
-async def test_get_marriage_list_by_filter_permission_denied(client, member_headers):  # noqa: F811
+async def test_get_marriage_list_by_filter_permission_denied(client, tree_id, member_headers):  # noqa: F811
     req = FilterMarriageRequest(
         filters=MarriageFilterRequestData(),
         pagination=PaginationRequestParams(offset=0, page=1, page_size=30),
@@ -499,7 +495,7 @@ async def test_get_marriage_list_by_filter_permission_denied(client, member_head
     )
 
     resp = await client.post(
-        f"{BASE_URL}/list",
+        marriages_url(tree_id, "/list"),
         json=req.model_dump(mode="json"),
         headers=member_headers,
     )
@@ -511,7 +507,7 @@ async def test_get_marriage_list_by_filter_permission_denied(client, member_head
 
 
 @pytest.mark.asyncio
-async def test_get_marriage_list_by_filter_unauthenticated(client):
+async def test_get_marriage_list_by_filter_unauthenticated(client, tree_id):
     req = FilterMarriageRequest(
         filters=MarriageFilterRequestData(),
         pagination=PaginationRequestParams(offset=0, page=1, page_size=30),
@@ -522,7 +518,7 @@ async def test_get_marriage_list_by_filter_unauthenticated(client):
     )
 
     resp = await client.post(
-        f"{BASE_URL}/list",
+        marriages_url(tree_id, "/list"),
         json=req.model_dump(mode="json"),
     )
 
@@ -532,7 +528,7 @@ async def test_get_marriage_list_by_filter_unauthenticated(client):
 
 @pytest.mark.asyncio
 async def test_get_marriage_list_by_filter_success(
-    client,
+    client, tree_id,
     admin_headers,  # noqa: F811
     uow: SQLAlchemyUnitOfWork,
 ):
@@ -540,8 +536,7 @@ async def test_get_marriage_list_by_filter_success(
     for i in range(5):
         husband, wife = await _create_spouses(uow, suffix=f"_list_{i}")
         marriage = await uow.marriages.create(
-            Marriage(
-                id=None,
+            Marriage(tree_id=uow.tree_id, id=None,
                 spouse_a_id=husband.safe_id,
                 spouse_b_id=wife.safe_id,
                 married_at=date(2020, 1, i + 1),
@@ -560,7 +555,7 @@ async def test_get_marriage_list_by_filter_success(
     )
 
     resp = await client.post(
-        f"{BASE_URL}/list",
+        marriages_url(tree_id, "/list"),
         json=req.model_dump(mode="json"),
         headers=admin_headers,
     )

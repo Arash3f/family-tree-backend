@@ -7,9 +7,13 @@ from app.application.dto.marriage.marriage_update_dto import MarriageUpdateDTOMa
 from app.domain.entities.marriage import Marriage
 
 
+TEST_TREE_ID = UUID(int=1)
+
+
 def create_marriage(**overrides):
     return Marriage(
         id=overrides.get("id", UUID(int=1)),
+        tree_id=overrides.get("tree_id", TEST_TREE_ID),
         spouse_a_id=overrides.get("spouse_a_id", UUID(int=10)),
         spouse_b_id=overrides.get("spouse_b_id", UUID(int=20)),
         married_at=overrides.get("married_at", date(2020, 1, 1)),

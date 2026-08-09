@@ -11,11 +11,15 @@ from app.domain.exceptions.marriage_exceptions import (
 from app.domain.services.marriage_rules import MarriageRulesService
 
 
+TEST_TREE_ID = UUID(int=1)
+
+
 def create_person(**overrides):
     return Person(
         id=overrides.get("id", UUID(int=1)),
         name=overrides.get("name", "Ali"),
         gender=overrides.get("gender", Gender.MALE),
+        tree_id=overrides.get("tree_id", TEST_TREE_ID),
         birth_date=overrides.get("birth_date", date(2000, 1, 1)),
     )
 

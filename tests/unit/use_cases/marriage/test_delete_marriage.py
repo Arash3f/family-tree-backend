@@ -17,16 +17,18 @@ async def test_delete_marriage_success(mock_uow):
     marriage.spouse_a_id = UUID(int=1)
     marriage.spouse_b_id = UUID(int=2)
 
-    mock_uow.marriages.get_or_raise = AsyncMock(return_value=marriage)
+    mock_uow.marriages.get_in_tree_or_raise = AsyncMock(return_value=marriage)
 
     use_case = DeleteMarriageUseCase(mock_uow, sync_service=MagicMock())
 
-    result = await use_case.execute(dto)
+    result = await use_case.execute(dto, tree_id=UUID(int=7))
 
     assert isinstance(result, ResultDTO)
     assert result.result == "Marriage deleted successfully"
 
-    mock_uow.marriages.get_or_raise.assert_awaited_once_with(marriage_id=dto.id)
+    mock_uow.marriages.get_in_tree_or_raise.assert_awaited_once_with(
+        marriage_id=dto.id, tree_id=UUID(int=7)
+    )
     mock_uow.marriages.delete.assert_awaited_once_with(marriage_id=marriage.safe_id)
     mock_uow.commit.assert_awaited_once()
 
@@ -35,15 +37,17 @@ async def test_delete_marriage_success(mock_uow):
 async def test_delete_marriage_propagates_exception_from_get_or_raise(mock_uow):
     dto = IdDTO(id=UUID(int=1))
 
-    mock_uow.marriages.get_or_raise = AsyncMock(side_effect=MarriageNotFoundException())
+    mock_uow.marriages.get_in_tree_or_raise = AsyncMock(side_effect=MarriageNotFoundException())
 
     use_case = DeleteMarriageUseCase(mock_uow, sync_service=MagicMock())
 
     # Act / Assert
     with pytest.raises(MarriageNotFoundException):
-        await use_case.execute(dto)
+        await use_case.execute(dto, tree_id=UUID(int=7))
 
-    mock_uow.marriages.get_or_raise.assert_awaited_once_with(marriage_id=dto.id)
+    mock_uow.marriages.get_in_tree_or_raise.assert_awaited_once_with(
+        marriage_id=dto.id, tree_id=UUID(int=7)
+    )
 
     mock_uow.marriages.delete.assert_not_awaited()
     mock_uow.commit.assert_not_awaited()

@@ -8,11 +8,18 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.infrastructure.database.base import Base
 
 if TYPE_CHECKING:
+    from .family_tree_model import FamilyTreeModel
     from .person_model import PersonModel
 
 
 class MarriageModel(Base):
     __tablename__ = "marriages"
+
+    tree_id: Mapped[UUID] = mapped_column(
+        ForeignKey("family_trees.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
 
     spouse_a_id: Mapped[UUID] = mapped_column(
         ForeignKey("persons.id", ondelete="RESTRICT"), nullable=False, index=True
@@ -26,6 +33,11 @@ class MarriageModel(Base):
 
     divorced_at: Mapped[date | None] = mapped_column(Date, nullable=True)
 
+    family_tree: Mapped["FamilyTreeModel"] = relationship(
+        "FamilyTreeModel",
+        foreign_keys=[tree_id],
+    )
+
     spouse_a: Mapped["PersonModel"] = relationship(
         "PersonModel", foreign_keys=[spouse_a_id], lazy="joined"
     )
@@ -36,10 +48,11 @@ class MarriageModel(Base):
 
     __table_args__ = (
         UniqueConstraint(
+            "tree_id",
             "spouse_a_id",
             "spouse_b_id",
             "married_at",
-            name="uq_marriage_couple_date",
+            name="uq_marriage_tree_couple_date",
         ),
         CheckConstraint(
             "spouse_a_id != spouse_b_id", name="ck_marriage_no_self_marriage"

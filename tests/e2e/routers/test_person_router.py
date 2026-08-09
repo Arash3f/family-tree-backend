@@ -30,7 +30,9 @@ from app.utils.error_codes import ERROR_MESSAGES, ErrorCode
 from tests.e2e.auth_headers import admin_headers as admin_headers
 from tests.e2e.auth_headers import member_headers as member_headers
 
-BASE_URL = "/persons"
+
+def persons_url(tree_id: UUID, suffix: str = "") -> str:
+    return f"/family-trees/{tree_id}/persons{suffix}"
 
 
 # ============================================================
@@ -39,13 +41,13 @@ BASE_URL = "/persons"
 
 
 @pytest.mark.asyncio
-async def test_create_person_permission_denied(client, member_headers):  # noqa: F811
+async def test_create_person_permission_denied(client, tree_id, member_headers):  # noqa: F811
     req = PersonCreateRequest(
         name="limited-person",
         gender=Gender.MALE,
     )
     resp = await client.post(
-        f"{BASE_URL}/",
+        persons_url(tree_id, "/"),
         json=req.model_dump(mode="json"),
         headers=member_headers,
     )
@@ -58,13 +60,13 @@ async def test_create_person_permission_denied(client, member_headers):  # noqa:
 
 
 @pytest.mark.asyncio
-async def test_create_person_unauthenticated(client):
+async def test_create_person_unauthenticated(client, tree_id):
     req = PersonCreateRequest(
         name="limited-person",
         gender=Gender.MALE,
     )
     resp = await client.post(
-        f"{BASE_URL}/",
+        persons_url(tree_id, "/"),
         json=req.model_dump(mode="json"),
     )
 
@@ -73,18 +75,16 @@ async def test_create_person_unauthenticated(client):
 
 
 @pytest.mark.asyncio
-async def test_create_person_success(client, admin_headers, uow):  # noqa: F811
+async def test_create_person_success(client, tree_id, admin_headers, uow):  # noqa: F811
     father = await uow.persons.create(
-        Person(
-            id=None,
+        Person(tree_id=uow.tree_id, id=None,
             name="father",
             gender=Gender.MALE,
             birth_date=date(1970, 1, 1),
         )
     )
     mother = await uow.persons.create(
-        Person(
-            id=None,
+        Person(tree_id=uow.tree_id, id=None,
             name="mother",
             gender=Gender.FEMALE,
             birth_date=date(1972, 1, 1),
@@ -102,7 +102,7 @@ async def test_create_person_success(client, admin_headers, uow):  # noqa: F811
     )
 
     resp = await client.post(
-        f"{BASE_URL}/",
+        persons_url(tree_id, "/"),
         json=req.model_dump(mode="json"),
         headers=admin_headers,
     )
@@ -132,9 +132,9 @@ async def test_create_person_success(client, admin_headers, uow):  # noqa: F811
 
 
 @pytest.mark.asyncio
-async def test_get_person_permission_denied(client, member_headers):  # noqa: F811
+async def test_get_person_permission_denied(client, tree_id, member_headers):  # noqa: F811
     resp = await client.get(
-        f"{BASE_URL}/{UUID(int=1)}",
+        persons_url(tree_id, f"/{UUID(int=1)}"),
         headers=member_headers,
     )
 
@@ -145,18 +145,17 @@ async def test_get_person_permission_denied(client, member_headers):  # noqa: F8
 
 
 @pytest.mark.asyncio
-async def test_get_person_unauthenticated(client):
-    resp = await client.get(f"{BASE_URL}/{UUID(int=1)}")
+async def test_get_person_unauthenticated(client, tree_id):
+    resp = await client.get(persons_url(tree_id, f"/{UUID(int=1)}"))
 
     assert resp.status_code == 401
     assert resp.json()["detail"] == "Not authenticated"
 
 
 @pytest.mark.asyncio
-async def test_get_person_success(client, admin_headers, uow: SQLAlchemyUnitOfWork):  # noqa: F811
+async def test_get_person_success(client, tree_id, admin_headers, uow: SQLAlchemyUnitOfWork):  # noqa: F811
     person = await uow.persons.create(
-        Person(
-            id=None,
+        Person(tree_id=uow.tree_id, id=None,
             name="Ali",
             gender=Gender.MALE,
             birth_date=date(1990, 1, 1),
@@ -165,7 +164,7 @@ async def test_get_person_success(client, admin_headers, uow: SQLAlchemyUnitOfWo
     await uow.commit()
 
     resp = await client.get(
-        f"{BASE_URL}/{person.safe_id}",
+        persons_url(tree_id, f"/{person.safe_id}"),
         headers=admin_headers,
     )
 
@@ -181,9 +180,9 @@ async def test_get_person_success(client, admin_headers, uow: SQLAlchemyUnitOfWo
 
 
 @pytest.mark.asyncio
-async def test_get_person_with_invalid_id(client, admin_headers):  # noqa: F811
+async def test_get_person_with_invalid_id(client, tree_id, admin_headers):  # noqa: F811
     resp = await client.get(
-        f"{BASE_URL}/{UUID(int=999999)}",
+        persons_url(tree_id, f"/{UUID(int=999999)}"),
         headers=admin_headers,
     )
 
@@ -200,14 +199,14 @@ async def test_get_person_with_invalid_id(client, admin_headers):  # noqa: F811
 
 
 @pytest.mark.asyncio
-async def test_update_person_permission_denied(client, member_headers):  # noqa: F811
+async def test_update_person_permission_denied(client, tree_id, member_headers):  # noqa: F811
     payload = PersonUpdateRequest(
         where=_PersonUpdateWhereRequest(person_id=UUID(int=1)),
         data=_PersonUpdateDateRequest(name="updated"),
     )
 
     resp = await client.put(
-        f"{BASE_URL}/",
+        persons_url(tree_id, "/"),
         json=payload.model_dump(mode="json"),
         headers=member_headers,
     )
@@ -220,14 +219,14 @@ async def test_update_person_permission_denied(client, member_headers):  # noqa:
 
 
 @pytest.mark.asyncio
-async def test_update_person_unauthenticated(client):
+async def test_update_person_unauthenticated(client, tree_id):
     payload = PersonUpdateRequest(
         where=_PersonUpdateWhereRequest(person_id=UUID(int=1)),
         data=_PersonUpdateDateRequest(name="updated"),
     )
 
     resp = await client.put(
-        f"{BASE_URL}/",
+        persons_url(tree_id, "/"),
         json=payload.model_dump(mode="json"),
     )
 
@@ -236,10 +235,9 @@ async def test_update_person_unauthenticated(client):
 
 
 @pytest.mark.asyncio
-async def test_update_person_success(client, admin_headers, uow: SQLAlchemyUnitOfWork):  # noqa: F811
+async def test_update_person_success(client, tree_id, admin_headers, uow: SQLAlchemyUnitOfWork):  # noqa: F811
     person = await uow.persons.create(
-        Person(
-            id=None,
+        Person(tree_id=uow.tree_id, id=None,
             name="old-name",
             gender=Gender.MALE,
             birth_date=date(1990, 1, 1),
@@ -253,7 +251,7 @@ async def test_update_person_success(client, admin_headers, uow: SQLAlchemyUnitO
     )
 
     resp = await client.put(
-        f"{BASE_URL}/",
+        persons_url(tree_id, "/"),
         json=payload.model_dump(mode="json"),
         headers=admin_headers,
     )
@@ -269,14 +267,14 @@ async def test_update_person_success(client, admin_headers, uow: SQLAlchemyUnitO
 
 
 @pytest.mark.asyncio
-async def test_update_person_with_invalid_id(client, admin_headers):  # noqa: F811
+async def test_update_person_with_invalid_id(client, tree_id, admin_headers):  # noqa: F811
     payload = PersonUpdateRequest(
         where=_PersonUpdateWhereRequest(person_id=UUID(int=88888)),
         data=_PersonUpdateDateRequest(name="new-name"),
     )
 
     resp = await client.put(
-        f"{BASE_URL}/",
+        persons_url(tree_id, "/"),
         json=payload.model_dump(mode="json"),
         headers=admin_headers,
     )
@@ -294,9 +292,9 @@ async def test_update_person_with_invalid_id(client, admin_headers):  # noqa: F8
 
 
 @pytest.mark.asyncio
-async def test_delete_person_permission_denied(client, member_headers):  # noqa: F811
+async def test_delete_person_permission_denied(client, tree_id, member_headers):  # noqa: F811
     resp = await client.delete(
-        f"{BASE_URL}/{UUID(int=1)}",
+        persons_url(tree_id, f"/{UUID(int=1)}"),
         headers=member_headers,
     )
 
@@ -307,26 +305,24 @@ async def test_delete_person_permission_denied(client, member_headers):  # noqa:
 
 
 @pytest.mark.asyncio
-async def test_delete_person_unauthenticated(client):
-    resp = await client.delete(f"{BASE_URL}/{UUID(int=1)}")
+async def test_delete_person_unauthenticated(client, tree_id):
+    resp = await client.delete(persons_url(tree_id, f"/{UUID(int=1)}"))
 
     assert resp.status_code == 401
     assert resp.json()["detail"] == "Not authenticated"
 
 
 @pytest.mark.asyncio
-async def test_delete_person_success(client, admin_headers, uow: SQLAlchemyUnitOfWork):  # noqa: F811
+async def test_delete_person_success(client, tree_id, admin_headers, uow: SQLAlchemyUnitOfWork):  # noqa: F811
     person = await uow.persons.create(
-        Person(
-            id=None,
+        Person(tree_id=uow.tree_id, id=None,
             name="to-delete",
-            gender=Gender.MALE,
-        )
+            gender=Gender.MALE,)
     )
     await uow.commit()
 
     resp = await client.delete(
-        f"{BASE_URL}/{person.safe_id}",
+        persons_url(tree_id, f"/{person.safe_id}"),
         headers=admin_headers,
     )
 
@@ -341,9 +337,9 @@ async def test_delete_person_success(client, admin_headers, uow: SQLAlchemyUnitO
 
 
 @pytest.mark.asyncio
-async def test_delete_person_with_invalid_id(client, admin_headers):  # noqa: F811
+async def test_delete_person_with_invalid_id(client, tree_id, admin_headers):  # noqa: F811
     resp = await client.delete(
-        f"{BASE_URL}/{UUID(int=999999)}",
+        persons_url(tree_id, f"/{UUID(int=999999)}"),
         headers=admin_headers,
     )
 
@@ -360,7 +356,7 @@ async def test_delete_person_with_invalid_id(client, admin_headers):  # noqa: F8
 
 
 @pytest.mark.asyncio
-async def test_get_person_list_by_filter_permission_denied(client, member_headers):  # noqa: F811
+async def test_get_person_list_by_filter_permission_denied(client, tree_id, member_headers):  # noqa: F811
     req = FilterPersonRequest(
         filters=PersonFilterRequestData(),
         pagination=PaginationRequestParams(offset=0, page=1, page_size=30),
@@ -371,7 +367,7 @@ async def test_get_person_list_by_filter_permission_denied(client, member_header
     )
 
     resp = await client.post(
-        f"{BASE_URL}/list",
+        persons_url(tree_id, "/list"),
         json=req.model_dump(mode="json"),
         headers=member_headers,
     )
@@ -383,7 +379,7 @@ async def test_get_person_list_by_filter_permission_denied(client, member_header
 
 
 @pytest.mark.asyncio
-async def test_get_person_list_by_filter_unauthenticated(client):
+async def test_get_person_list_by_filter_unauthenticated(client, tree_id):
     req = FilterPersonRequest(
         filters=PersonFilterRequestData(),
         pagination=PaginationRequestParams(offset=0, page=1, page_size=30),
@@ -394,7 +390,7 @@ async def test_get_person_list_by_filter_unauthenticated(client):
     )
 
     resp = await client.post(
-        f"{BASE_URL}/list",
+        persons_url(tree_id, "/list"),
         json=req.model_dump(mode="json"),
     )
 
@@ -404,24 +400,24 @@ async def test_get_person_list_by_filter_unauthenticated(client):
 
 @pytest.mark.asyncio
 async def test_get_person_list_by_filter_success(
-    client,
+    client, tree_id,
     admin_headers,  # noqa: F811
     uow: SQLAlchemyUnitOfWork,
 ):
     person1 = await uow.persons.create(
-        Person(id=None, name="cus_person1", gender=Gender.MALE)
+        Person(tree_id=uow.tree_id, id=None, name="cus_person1", gender=Gender.MALE)
     )
     person2 = await uow.persons.create(
-        Person(id=None, name="cus_person2", gender=Gender.FEMALE)
+        Person(tree_id=uow.tree_id, id=None, name="cus_person2", gender=Gender.FEMALE)
     )
     person3 = await uow.persons.create(
-        Person(id=None, name="cus_person3", gender=Gender.MALE)
+        Person(tree_id=uow.tree_id, id=None, name="cus_person3", gender=Gender.MALE)
     )
     person4 = await uow.persons.create(
-        Person(id=None, name="cus_person4", gender=Gender.FEMALE)
+        Person(tree_id=uow.tree_id, id=None, name="cus_person4", gender=Gender.FEMALE)
     )
     person5 = await uow.persons.create(
-        Person(id=None, name="cus_person5", gender=Gender.MALE)
+        Person(tree_id=uow.tree_id, id=None, name="cus_person5", gender=Gender.MALE)
     )
     await uow.commit()
 
@@ -435,7 +431,7 @@ async def test_get_person_list_by_filter_success(
     )
 
     resp = await client.post(
-        f"{BASE_URL}/list",
+        persons_url(tree_id, "/list"),
         json=req.model_dump(mode="json"),
         headers=admin_headers,
     )
@@ -455,3 +451,135 @@ async def test_get_person_list_by_filter_success(
     assert data.items[0].name == expected[0].name
     assert data.items[1].id == expected[1].safe_id
     assert data.items[1].name == expected[1].name
+
+
+# ============================================================
+# TREE MEMBERSHIP
+# ============================================================
+
+
+async def _reader_headers(client, uow):
+    from app.domain.entities.role import Role
+    from app.domain.entities.user import User
+    from app.domain.shared.permissions import Permissions
+    from app.infrastructure.services.security.password_hasher_impl import (
+        Argon2PasswordHasher,
+    )
+
+    perm = await uow.permissions.get_by_name(Permissions.PERSON_READ)
+    role = await uow.roles.create(
+        Role(name="person_reader", permission_ids=[perm.safe_id])
+    )
+    hasher = Argon2PasswordHasher()
+    reader = await uow.users.create(
+        User(
+            username="person_reader",
+            password_hash=hasher.hash("person_reader"),
+            role_id=role.safe_id,
+        )
+    )
+    await uow.commit()
+
+    login = await client.post(
+        "/auth/login",
+        data={"username": "person_reader", "password": "person_reader"},
+    )
+    assert login.status_code == 200
+    return {"Authorization": f"Bearer {login.json()['access_token']}"}, reader
+
+
+@pytest.mark.asyncio
+async def test_list_persons_denied_for_non_member(client, tree_id, uow):
+    headers, _reader = await _reader_headers(client, uow)
+
+    req = FilterPersonRequest(
+        filters=PersonFilterRequestData(),
+        pagination=PaginationRequestParams(offset=0, page=1, page_size=30),
+        sort=SortRequestParams(
+            sort_by=PersonSortField.ID,
+            sort_order=SortOrderField.DESC,
+        ),
+    )
+
+    resp = await client.post(
+        persons_url(tree_id, "/list"),
+        json=req.model_dump(mode="json"),
+        headers=headers,
+    )
+
+    assert resp.status_code == 403
+    body = resp.json()
+    assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
+
+
+@pytest.mark.asyncio
+async def test_list_persons_allowed_for_member(client, tree_id, uow):
+    headers, reader = await _reader_headers(client, uow)
+    from tests.helpers.family_tree import add_tree_member
+
+    await add_tree_member(uow, tree_id=tree_id, user_id=reader.safe_id)
+    await uow.commit()
+
+    await uow.persons.create(
+        Person(id=None, tree_id=uow.tree_id, name="member-visible", gender=Gender.MALE)
+    )
+    await uow.commit()
+
+    req = FilterPersonRequest(
+        filters=PersonFilterRequestData(name="member-visible"),
+        pagination=PaginationRequestParams(offset=0, page=1, page_size=30),
+        sort=SortRequestParams(
+            sort_by=PersonSortField.ID,
+            sort_order=SortOrderField.DESC,
+        ),
+    )
+
+    resp = await client.post(
+        persons_url(tree_id, "/list"),
+        json=req.model_dump(mode="json"),
+        headers=headers,
+    )
+
+    assert resp.status_code == 200
+    data = TypeAdapter(PaginatedResponse[PersonModel]).validate_python(resp.json())
+    assert data.total >= 1
+    assert any(item.name == "member-visible" for item in data.items)
+
+
+@pytest.mark.asyncio
+async def test_person_lists_are_isolated_per_tree(client, admin_headers, uow):
+    from tests.helpers.family_tree import create_family_tree_with_owner, get_admin_user
+
+    admin = await get_admin_user(uow)
+    other_tree = await create_family_tree_with_owner(uow, owner=admin, name="Other Tree")
+    await uow.commit()
+
+    await uow.persons.create(
+        Person(id=None, tree_id=uow.tree_id, name="tree-a-only", gender=Gender.MALE)
+    )
+    await uow.commit()
+
+    req = FilterPersonRequest(
+        filters=PersonFilterRequestData(name="tree-a-only"),
+        pagination=PaginationRequestParams(offset=0, page=1, page_size=30),
+        sort=SortRequestParams(
+            sort_by=PersonSortField.ID,
+            sort_order=SortOrderField.DESC,
+        ),
+    )
+
+    in_own_tree = await client.post(
+        persons_url(uow.tree_id, "/list"),
+        json=req.model_dump(mode="json"),
+        headers=admin_headers,
+    )
+    assert in_own_tree.status_code == 200
+    assert in_own_tree.json()["total"] >= 1
+
+    in_other_tree = await client.post(
+        persons_url(other_tree.safe_id, "/list"),
+        json=req.model_dump(mode="json"),
+        headers=admin_headers,
+    )
+    assert in_other_tree.status_code == 200
+    assert in_other_tree.json()["total"] == 0

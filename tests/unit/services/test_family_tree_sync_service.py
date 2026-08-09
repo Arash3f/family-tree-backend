@@ -6,11 +6,15 @@ from app.application.services.family_tree_sync_service import FamilyTreeSyncServ
 from app.domain.entities.person import Gender, ParentLink, Person
 
 
+TEST_TREE_ID = UUID(int=1)
+
+
 def _person(**kwargs: object) -> Person:
     defaults: dict[str, object] = {
         "id": UUID(int=10),
         "name": "Ali",
         "gender": Gender.MALE,
+        "tree_id": TEST_TREE_ID,
         "birth_date": date(2000, 1, 1),
         "death_date": None,
         "parents": [],
@@ -20,6 +24,7 @@ def _person(**kwargs: object) -> Person:
         id=defaults["id"],  # type: ignore[arg-type]
         name=defaults["name"],  # type: ignore[arg-type]
         gender=defaults["gender"],  # type: ignore[arg-type]
+        tree_id=defaults["tree_id"],  # type: ignore[arg-type]
         birth_date=defaults["birth_date"],  # type: ignore[arg-type]
         death_date=defaults["death_date"],  # type: ignore[arg-type]
         parents=defaults["parents"],  # type: ignore[arg-type]

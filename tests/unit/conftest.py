@@ -7,6 +7,7 @@ from app.domain.repositories.marriage_repository import MarriageRepository
 from app.domain.repositories.permission_repository import PermissionRepository
 from app.domain.repositories.person_repository import PersonRepository
 from app.domain.repositories.role_repository import RoleRepository
+from app.domain.repositories.tree_repository import TreeMembershipRepository, TreeRepository
 from app.domain.repositories.user_repository import UserRepository
 
 
@@ -26,7 +27,7 @@ def mock_uow():
     persons_repo = MagicMock(spec_set=PersonRepository)
     persons_repo.create = AsyncMock()
     persons_repo.delete = AsyncMock()
-    persons_repo.get_or_raise = AsyncMock()
+    persons_repo.get_in_tree_or_raise = AsyncMock()
 
     marriages_repo = MagicMock(spec_set=MarriageRepository)
     marriages_repo.create = AsyncMock()
@@ -55,12 +56,21 @@ def mock_uow():
     ticket_messages_repo.create = AsyncMock()
     ticket_messages_repo.get_by_ticket_id = AsyncMock()
 
+    marriages_repo.get_in_tree_or_raise = AsyncMock()
+
+    family_trees_repo = MagicMock(spec_set=TreeRepository)
+    family_trees_repo.get_or_raise = AsyncMock()
+
+    tree_memberships_repo = MagicMock(spec_set=TreeMembershipRepository)
+
     uow = MagicMock(spec=UnitOfWork)
     uow.permissions = permissions_repo
     uow.roles = roles_repo
     uow.users = users_repo
     uow.persons = persons_repo
     uow.marriages = marriages_repo
+    uow.family_trees = family_trees_repo
+    uow.tree_memberships = tree_memberships_repo
     uow.sessions = sessions_repo
     uow.tickets = tickets_repo
     uow.ticket_messages = ticket_messages_repo

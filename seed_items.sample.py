@@ -20,6 +20,8 @@ from typing import NotRequired, TypedDict
 from uuid import UUID
 
 from app.application.interfaces.unit_of_work import UnitOfWork
+from app.core.config import settings
+from app.domain.entities.family_tree import FamilyTree, TreeMemberRole, TreeMembership
 from app.domain.entities.marriage import Marriage
 from app.domain.entities.person import Gender, ParentLink, ParentRelationshipType, Person
 from app.domain.exceptions.person_exceptions import InvalidParentMarriageException
@@ -61,16 +63,64 @@ class MarriageSeedData(TypedDict):
     divorced_at: NotRequired[date | None]
 
 
+SAMPLE_TREE_NAME = "سمپل خانواده"
+
+
+async def get_or_create_sample_tree(uow: UnitOfWork) -> FamilyTree:
+    admin = await uow.users.get_by_username(settings.ADMIN_USERNAME)
+    if not admin:
+        raise RuntimeError(
+            f"Admin user {settings.ADMIN_USERNAME!r} not found; run seed_initial_user first"
+        )
+
+    for tree in await uow.family_trees.list_for_user(admin.safe_id):
+        if tree.name == SAMPLE_TREE_NAME:
+            membership = await uow.tree_memberships.get(
+                tree_id=tree.safe_id, user_id=admin.safe_id
+            )
+            if not membership:
+                await uow.tree_memberships.create(
+                    TreeMembership(
+                        id=None,
+                        tree_id=tree.safe_id,
+                        user_id=admin.safe_id,
+                        role=TreeMemberRole.OWNER,
+                    )
+                )
+                await uow.commit()
+            return tree
+
+    tree = await uow.family_trees.create(
+        FamilyTree(
+            id=None,
+            name=SAMPLE_TREE_NAME,
+            owner_user_id=admin.safe_id,
+        )
+    )
+    await uow.tree_memberships.create(
+        TreeMembership(
+            id=None,
+            tree_id=tree.safe_id,
+            user_id=admin.safe_id,
+            role=TreeMemberRole.OWNER,
+        )
+    )
+    await uow.commit()
+    return tree
+
+
 async def get_or_create_person(
     uow: UnitOfWork,
     person: Person,
     neo_repo: Neo4jFamilyTreeRepository,
+    *,
+    tree_id: UUID,
 ) -> Person:
     now_utc = datetime.now(timezone.utc)
     created_at: datetime | None = None
 
     find_person = await uow.persons.get_by_name(
-        name=person.name, marriage_id=person.marriage_id
+        name=person.name, marriage_id=person.marriage_id, tree_id=tree_id
     )
 
     if find_person:
@@ -83,6 +133,7 @@ async def get_or_create_person(
     neo_repo.upsert_person(
         PersonUpsertDTO(
             id=person.safe_id,
+            tree_id=tree_id,
             full_name=person.name,
             gender=person.gender.value.upper(),
             birth_date=person.birth_date,
@@ -108,6 +159,8 @@ async def get_or_create_marriage(
     uow: UnitOfWork,
     marriage: Marriage,
     neo_repo: Neo4jFamilyTreeRepository,
+    *,
+    tree_id: UUID,
 ) -> Marriage:
     find_marriage = await uow.marriages.get_by_ids(
         spouse_a_id=marriage.spouse_a_id,
@@ -337,12 +390,15 @@ def _can_seed_marriage(
     return item["spouse_a"] in people_map and item["spouse_b"] in people_map
 
 
-async def seed_initial_items(uow: UnitOfWork) -> None:
+async def seed_initial_items(uow: UnitOfWork) -> FamilyTree:
     people_map: dict[str, Person] = {}
     marriages_map: dict[str, Marriage] = {}
     neo_repo = Neo4jFamilyTreeRepository()
 
     async with uow:
+        tree = await get_or_create_sample_tree(uow)
+        tree_id = tree.safe_id
+
         # Multi-pass: roots → marriages → children → next-gen marriages → …
         while True:
             progressed = False
@@ -355,12 +411,14 @@ async def seed_initial_items(uow: UnitOfWork) -> None:
                     uow=uow,
                     marriage=Marriage(
                         id=None,
+                        tree_id=tree_id,
                         spouse_a_id=people_map[marriage_item["spouse_a"]].safe_id,
                         spouse_b_id=people_map[marriage_item["spouse_b"]].safe_id,
                         married_at=marriage_item["married_at"],
                         divorced_at=marriage_item.get("divorced_at"),
                     ),
                     neo_repo=neo_repo,
+                    tree_id=tree_id,
                 )
                 marriages_map[marriage_item["key"]] = marriage
                 progressed = True
@@ -384,6 +442,7 @@ async def seed_initial_items(uow: UnitOfWork) -> None:
                     uow=uow,
                     person=Person(
                         id=None,
+                        tree_id=tree_id,
                         name=person_item["name"],
                         gender=person_item["gender"],
                         family_name=person_item.get("family_name"),
@@ -396,6 +455,7 @@ async def seed_initial_items(uow: UnitOfWork) -> None:
                         marriage_id=marriage_id,
                     ),
                     neo_repo=neo_repo,
+                    tree_id=tree_id,
                 )
                 people_map[person_item["key"]] = person
                 progressed = True
@@ -412,3 +472,5 @@ async def seed_initial_items(uow: UnitOfWork) -> None:
                 "Seed graph has unresolved dependencies: "
                 f"people={missing_people}, marriages={missing_marriages}"
             )
+
+        return tree

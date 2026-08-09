@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from app.application.dto.person.person_get_dto import (
     PersonGetMapper,
     PersonGetResponseDTO,
@@ -5,7 +7,7 @@ from app.application.dto.person.person_get_dto import (
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.application.services.person_photo_service import PersonPhotoService
 from app.domain.shared.dto.pagination_dto import PaginatedResult
-from app.domain.shared.dto.person_filter_dto import FilterPersonQuery
+from app.domain.shared.dto.person_filter_dto import FilterPersonQuery, PersonFilterDTO
 
 
 class GetPersonListByFilterUseCase:
@@ -14,9 +16,13 @@ class GetPersonListByFilterUseCase:
         self.photo_service = photo_service
 
     async def execute(
-        self, query: FilterPersonQuery
+        self, query: FilterPersonQuery, *, tree_id: UUID
     ) -> PaginatedResult[PersonGetResponseDTO]:
         async with self.uow:
+            filters = query.filters or PersonFilterDTO()
+            filters.tree_id = tree_id
+            query = query.model_copy(update={"filters": filters})
+
             person_list = await self.uow.persons.get_list_by_filter(query=query)
 
             items: list[PersonGetResponseDTO] = []

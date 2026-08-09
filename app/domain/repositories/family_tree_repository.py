@@ -34,7 +34,9 @@ class FamilyTreeRepository(ABC):
         pass
 
     @abstractmethod
-    def person_exists(self, data: PersonIdDTO) -> bool:
+    def person_exists(
+        self, data: PersonIdDTO, tree_id: UUID | None = None
+    ) -> bool:
         pass
 
     # -------------------------
@@ -63,6 +65,9 @@ class FamilyTreeRepository(ABC):
 
     @abstractmethod
     def find_shortest_relationship_path(
-        self, from_person_id: UUID, to_person_id: UUID
+        self,
+        from_person_id: UUID,
+        to_person_id: UUID,
+        tree_id: UUID | None = None,
     ) -> RelationshipPathDTO:
         pass

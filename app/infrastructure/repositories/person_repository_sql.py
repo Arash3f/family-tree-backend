@@ -55,11 +55,12 @@ class SQLPersonRepository(PersonRepository):
         return self._to_entity(model)
 
     async def get_by_name(
-        self, name: str, marriage_id: UUID | None
+        self, name: str, marriage_id: UUID | None, tree_id: UUID
     ) -> Person | None:
         stmt = self._active_person_stmt().where(
             PersonModel.name == name,
             PersonModel.marriage_id == marriage_id,
+            PersonModel.tree_id == tree_id,
         )
         result = await self.session.execute(stmt)
         model = result.unique().scalar_one_or_none()
@@ -76,6 +77,9 @@ class SQLPersonRepository(PersonRepository):
         filters = query.filters
 
         if filters:
+            if filters.tree_id:
+                stmt = stmt.where(PersonModel.tree_id == filters.tree_id)
+
             if filters.name:
                 stmt = stmt.where(PersonModel.name.ilike(f"%{filters.name}%"))
 
@@ -158,6 +162,7 @@ class SQLPersonRepository(PersonRepository):
         model.birth_place = person.birth_place
         model.death_place = person.death_place
         model.notes = person.notes
+        model.tree_id = person.tree_id
         model.marriage_id = person.marriage_id
         model.photo_object_key = person.photo_object_key
         model.deleted_at = person.deleted_at
@@ -203,6 +208,7 @@ class SQLPersonRepository(PersonRepository):
             id=model.id,
             name=model.name,
             gender=Gender(model.gender),
+            tree_id=model.tree_id,
             birth_date=model.birth_date,
             death_date=model.death_date,
             parents=[
@@ -232,6 +238,7 @@ class SQLPersonRepository(PersonRepository):
             birth_place=entity.birth_place,
             death_place=entity.death_place,
             notes=entity.notes,
+            tree_id=entity.tree_id,
             marriage_id=entity.marriage_id,
             photo_object_key=entity.photo_object_key,
             deleted_at=entity.deleted_at,

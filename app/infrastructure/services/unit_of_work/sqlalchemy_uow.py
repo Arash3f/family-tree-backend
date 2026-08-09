@@ -11,6 +11,10 @@ from app.infrastructure.repositories.ticket_message_repository_sql import (
     SQLTicketMessageRepository,
 )
 from app.infrastructure.repositories.ticket_repository_sql import SQLTicketRepository
+from app.infrastructure.repositories.tree_repository_sql import (
+    SQLTreeMembershipRepository,
+    SQLTreeRepository,
+)
 from app.infrastructure.repositories.user_repository_sql import SQLUserRepository
 from app.infrastructure.repositories.user_session_repository_sql import (
     SQLUserSessionRepository,
@@ -32,6 +36,8 @@ class SQLAlchemyUnitOfWork(UnitOfWork):
         self.sessions = SQLUserSessionRepository(self.session)
         self.tickets = SQLTicketRepository(self.session)
         self.ticket_messages = SQLTicketMessageRepository(self.session)
+        self.family_trees = SQLTreeRepository(self.session)
+        self.tree_memberships = SQLTreeMembershipRepository(self.session)
 
         return self
 

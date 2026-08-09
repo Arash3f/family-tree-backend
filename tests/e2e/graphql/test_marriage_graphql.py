@@ -21,30 +21,45 @@ async def gql(
 
 
 @pytest.mark.asyncio
-async def test_graphql_marriage_crud_and_divorce(client, admin_headers, uow):  # noqa: F811
+async def test_graphql_marriage_crud_and_divorce(
+    client, tree_id, admin_headers, uow  # noqa: F811
+):
     husband = await uow.persons.create(
-        Person(id=None, name="h", gender=Gender.MALE, birth_date=date(1990, 1, 1))
+        Person(
+            id=None,
+            tree_id=uow.tree_id,
+            name="h",
+            gender=Gender.MALE,
+            birth_date=date(1990, 1, 1),
+        )
     )
     wife = await uow.persons.create(
-        Person(id=None, name="w", gender=Gender.FEMALE, birth_date=date(1992, 1, 1))
+        Person(
+            id=None,
+            tree_id=uow.tree_id,
+            name="w",
+            gender=Gender.FEMALE,
+            birth_date=date(1992, 1, 1),
+        )
     )
     await uow.commit()
 
     create = await gql(
         client,
         """
-        mutation ($data: MarriageCreateInput!) {
-          createMarriage(data: $data) {
+        mutation ($treeId: UUID!, $data: MarriageCreateInput!) {
+          createMarriage(treeId: $treeId, data: $data) {
             id spouseAId spouseBId marriedAt divorcedAt
           }
         }
         """,
         {
+            "treeId": str(tree_id),
             "data": {
                 "spouseAId": str(husband.safe_id),
                 "spouseBId": str(wife.safe_id),
                 "marriedAt": "2020-01-01",
-            }
+            },
         },
         headers=admin_headers,
     )
@@ -55,11 +70,11 @@ async def test_graphql_marriage_crud_and_divorce(client, admin_headers, uow):  #
     get_one = await gql(
         client,
         """
-        query ($id: UUID!) {
-          marriage(marriageId: $id) { id spouseAId spouseBId }
+        query ($treeId: UUID!, $id: UUID!) {
+          marriage(treeId: $treeId, marriageId: $id) { id spouseAId spouseBId }
         }
         """,
-        {"id": marriage_id},
+        {"treeId": str(tree_id), "id": marriage_id},
         headers=admin_headers,
     )
     assert "errors" not in get_one.json()
@@ -67,11 +82,14 @@ async def test_graphql_marriage_crud_and_divorce(client, admin_headers, uow):  #
     divorce = await gql(
         client,
         """
-        mutation ($data: DivorceInput!) {
-          divorce(data: $data) { result }
+        mutation ($treeId: UUID!, $data: DivorceInput!) {
+          divorce(treeId: $treeId, data: $data) { result }
         }
         """,
-        {"data": {"marriageId": marriage_id, "divorcedAt": "2021-06-01"}},
+        {
+            "treeId": str(tree_id),
+            "data": {"marriageId": marriage_id, "divorcedAt": "2021-06-01"},
+        },
         headers=admin_headers,
     )
     assert "errors" not in divorce.json(), divorce.json()
@@ -79,13 +97,14 @@ async def test_graphql_marriage_crud_and_divorce(client, admin_headers, uow):  #
     listed = await gql(
         client,
         """
-        query {
-          marriages {
+        query ($treeId: UUID!) {
+          marriages(treeId: $treeId) {
             total
             items { id }
           }
         }
         """,
+        {"treeId": str(tree_id)},
         headers=admin_headers,
     )
     assert "errors" not in listed.json()
@@ -94,11 +113,11 @@ async def test_graphql_marriage_crud_and_divorce(client, admin_headers, uow):  #
     deleted = await gql(
         client,
         """
-        mutation ($id: UUID!) {
-          deleteMarriage(marriageId: $id) { result }
+        mutation ($treeId: UUID!, $id: UUID!) {
+          deleteMarriage(treeId: $treeId, marriageId: $id) { result }
         }
         """,
-        {"id": marriage_id},
+        {"treeId": str(tree_id), "id": marriage_id},
         headers=admin_headers,
     )
     assert "errors" not in deleted.json()

@@ -25,6 +25,12 @@ from app.infrastructure.utils.mapper.spouse_mapper import map_neo4j_spouse
 class _PathParams(BaseModel):
     from_id: UUID
     to_id: UUID
+    tree_id: UUID | None = None
+
+
+class _PersonExistsParams(BaseModel):
+    id: UUID
+    tree_id: UUID | None = None
 
 
 class Neo4jFamilyTreeRepository(FamilyTreeRepository):
@@ -48,8 +54,15 @@ class Neo4jFamilyTreeRepository(FamilyTreeRepository):
         result = neo4j_client.execute_read(query=q.GET_PERSON, params=data)
         return map_neo4j_person(result[0])
 
-    def person_exists(self, data: PersonIdDTO) -> bool:
-        result = neo4j_client.execute_read(query=q.PERSON_EXISTS, params=data)
+    def person_exists(
+        self, data: PersonIdDTO, tree_id: UUID | None = None
+    ) -> bool:
+        result = neo4j_client.execute_read(
+            query=q.PERSON_EXISTS,
+            params=_PersonExistsParams(
+                id=data.id, tree_id=tree_id if tree_id is not None else data.tree_id
+            ),
+        )
         return len(result) > 0
 
     # ============================
@@ -97,11 +110,16 @@ class Neo4jFamilyTreeRepository(FamilyTreeRepository):
         return bool(records[0]["deleted"])
 
     def find_shortest_relationship_path(
-        self, from_person_id: UUID, to_person_id: UUID
+        self,
+        from_person_id: UUID,
+        to_person_id: UUID,
+        tree_id: UUID | None = None,
     ) -> RelationshipPathDTO:
         records = neo4j_client.execute_read(
             query=q.SHORTEST_RELATIONSHIP_PATH,
-            params=_PathParams(from_id=from_person_id, to_id=to_person_id),
+            params=_PathParams(
+                from_id=from_person_id, to_id=to_person_id, tree_id=tree_id
+            ),
         )
 
         if not records:

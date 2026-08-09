@@ -31,6 +31,7 @@ class FamilyTreeSyncService:
             "gender": person.gender.value.upper(),
             "birth_date": person.birth_date.isoformat() if person.birth_date else None,
             "death_date": person.death_date.isoformat() if person.death_date else None,
+            "tree_id": str(person.tree_id),
         }
 
         tasks = [sync_person_upsert.si(payload)]
@@ -54,6 +55,7 @@ class FamilyTreeSyncService:
             "gender": person.gender.value.upper(),
             "birth_date": person.birth_date.isoformat() if person.birth_date else None,
             "death_date": person.death_date.isoformat() if person.death_date else None,
+            "tree_id": str(person.tree_id),
         }
 
         tasks = [sync_person_upsert.si(payload)]

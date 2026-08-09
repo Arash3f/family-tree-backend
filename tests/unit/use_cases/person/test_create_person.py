@@ -33,7 +33,8 @@ async def test_create_person_success_with_parents(mock_uow):
     created_person = MagicMock()
     created_person.photo_object_key = None
 
-    mock_uow.persons.get_or_raise = AsyncMock(return_value=parent)
+    mock_uow.family_trees.get_or_raise = AsyncMock()
+    mock_uow.persons.get_in_tree_or_raise = AsyncMock(return_value=parent)
     mock_uow.persons.create = AsyncMock(return_value=created_person)
 
     expected_response = MagicMock()
@@ -46,12 +47,16 @@ async def test_create_person_success_with_parents(mock_uow):
         use_case = CreatePersonUseCase(
             mock_uow, photo_service, sync_service=sync_service
         )
-        result = await use_case.execute(dto)
+        result = await use_case.execute(dto, tree_id=UUID(int=7))
 
     assert result == expected_response
 
-    mock_uow.persons.get_or_raise.assert_any_await(person_id=UUID(int=1))
-    mock_uow.persons.get_or_raise.assert_any_await(person_id=UUID(int=2))
+    mock_uow.persons.get_in_tree_or_raise.assert_any_await(
+        person_id=UUID(int=1), tree_id=UUID(int=7)
+    )
+    mock_uow.persons.get_in_tree_or_raise.assert_any_await(
+        person_id=UUID(int=2), tree_id=UUID(int=7)
+    )
 
     mock_uow.persons.create.assert_awaited_once()
 
@@ -88,14 +93,15 @@ async def test_create_person_allows_any_parent_gender(mock_uow):
     created_person = MagicMock()
     created_person.photo_object_key = None
 
-    mock_uow.persons.get_or_raise = AsyncMock(return_value=parent)
+    mock_uow.family_trees.get_or_raise = AsyncMock()
+    mock_uow.persons.get_in_tree_or_raise = AsyncMock(return_value=parent)
     mock_uow.persons.create = AsyncMock(return_value=created_person)
 
     with patch.object(PersonCreateMapper, "to_response", return_value=MagicMock()):
         use_case = CreatePersonUseCase(
             mock_uow, _photo_service(), sync_service=MagicMock()
         )
-        await use_case.execute(dto)
+        await use_case.execute(dto, tree_id=UUID(int=7))
 
     mock_uow.persons.create.assert_awaited_once()
 
@@ -114,6 +120,7 @@ async def test_create_person_without_parents(mock_uow):
     created_person = MagicMock()
     created_person.photo_object_key = None
 
+    mock_uow.family_trees.get_or_raise = AsyncMock()
     mock_uow.persons.create = AsyncMock(return_value=created_person)
     mock_uow.commit = AsyncMock()
 
@@ -126,7 +133,7 @@ async def test_create_person_without_parents(mock_uow):
         use_case = CreatePersonUseCase(
             mock_uow, photo_service, sync_service=sync_service
         )
-        result = await use_case.execute(dto)
+        result = await use_case.execute(dto, tree_id=UUID(int=7))
 
     assert result == expected_response
 
@@ -139,7 +146,7 @@ async def test_create_person_without_parents(mock_uow):
     assert created_entity.gender == Gender.MALE
     assert created_entity.parents == []
 
-    mock_uow.persons.get_or_raise.assert_not_called()
+    mock_uow.persons.get_in_tree_or_raise.assert_not_called()
     mock_uow.persons.create.assert_awaited_once()
     mock_uow.commit.assert_awaited_once()
 
@@ -159,6 +166,7 @@ async def test_create_person_with_photo(mock_uow):
     created_person = MagicMock()
     created_person.photo_object_key = key
 
+    mock_uow.family_trees.get_or_raise = AsyncMock()
     mock_uow.persons.create = AsyncMock(return_value=created_person)
     photo_service = _photo_service()
     photo_service.presign = AsyncMock(return_value="https://example/presigned")
@@ -169,7 +177,7 @@ async def test_create_person_with_photo(mock_uow):
         use_case = CreatePersonUseCase(
             mock_uow, photo_service, sync_service=MagicMock()
         )
-        await use_case.execute(dto)
+        await use_case.execute(dto, tree_id=UUID(int=7))
 
     photo_service.ensure_object_exists.assert_awaited_once_with(key)
     mapper_mock.assert_called_once_with(

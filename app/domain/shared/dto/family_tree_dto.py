@@ -29,14 +29,17 @@ class PersonCompleteBaseDTO(PersonBaseDTO):
 
 class PersonUpsertDTO(PersonBaseDTO):
     id: UUID
+    tree_id: UUID
 
 
 class PersonResponseDTO(PersonBaseDTO):
     id: UUID
+    tree_id: UUID | None = None
 
 
 class PersonIdDTO(BaseModel):
     id: UUID
+    tree_id: UUID | None = None
 
 
 # ==========================================

@@ -1,4 +1,3 @@
-from uuid import UUID
 from unittest.mock import MagicMock
 
 from app.application.use_cases.role.delete_role_use_case import DeleteRoleUseCase

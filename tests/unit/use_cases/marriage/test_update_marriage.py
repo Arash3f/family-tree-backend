@@ -32,9 +32,9 @@ async def test_update_marriage_husband_triggers_validation(mock_uow):
     wife = MagicMock()
     wife.safe_id = UUID(int=2)
 
-    mock_uow.marriages.get_or_raise = AsyncMock(return_value=marriage)
+    mock_uow.marriages.get_in_tree_or_raise = AsyncMock(return_value=marriage)
 
-    mock_uow.persons.get_or_raise = AsyncMock(side_effect=[husband, wife])
+    mock_uow.persons.get_in_tree_or_raise = AsyncMock(side_effect=[husband, wife])
 
     marriage.spouse_a_id = UUID(int=10)
     mock_uow.marriages.update = AsyncMock(return_value=marriage)
@@ -55,7 +55,7 @@ async def test_update_marriage_husband_triggers_validation(mock_uow):
         use_case = UpdateMarriageUseCase(
             mock_uow, rules_service, sync_service=MagicMock()
         )
-        result = await use_case.execute(dto)
+        result = await use_case.execute(dto, tree_id=UUID(int=7))
 
     # --- Assert ---
     assert result is expected_result
@@ -65,13 +65,16 @@ async def test_update_marriage_husband_triggers_validation(mock_uow):
 
     mapper_mock.assert_called_once_with(marriage=marriage)
 
-    assert mock_uow.marriages.get_or_raise.await_count == 1
-    assert mock_uow.persons.get_or_raise.await_count == 2
+    assert mock_uow.marriages.get_in_tree_or_raise.await_count == 1
+    assert mock_uow.persons.get_in_tree_or_raise.await_count == 2
 
-    husband_call = mock_uow.persons.get_or_raise.await_args_list[0]
-    assert husband_call.kwargs == {"person_id": UUID(int=10)}
-    husband_call = mock_uow.persons.get_or_raise.await_args_list[1]
-    assert husband_call.kwargs == {"person_id": UUID(int=2)}
+    husband_call = mock_uow.persons.get_in_tree_or_raise.await_args_list[0]
+    assert husband_call.kwargs == {
+        "person_id": UUID(int=10),
+        "tree_id": UUID(int=7),
+    }
+    wife_call = mock_uow.persons.get_in_tree_or_raise.await_args_list[1]
+    assert wife_call.kwargs == {"person_id": UUID(int=2), "tree_id": UUID(int=7)}
 
     mock_uow.marriages.update.assert_awaited_once_with(marriage=marriage)
     mock_uow.commit.assert_awaited_once()
@@ -97,9 +100,9 @@ async def test_update_marriage_wife_triggers_validation(mock_uow):
     wife = MagicMock()
     wife.safe_id = UUID(int=2)
 
-    mock_uow.marriages.get_or_raise = AsyncMock(return_value=marriage)
+    mock_uow.marriages.get_in_tree_or_raise = AsyncMock(return_value=marriage)
 
-    mock_uow.persons.get_or_raise = AsyncMock(side_effect=[husband, wife])
+    mock_uow.persons.get_in_tree_or_raise = AsyncMock(side_effect=[husband, wife])
 
     marriage.spouse_b_id = UUID(int=20)
     mock_uow.marriages.update = AsyncMock(return_value=marriage)
@@ -120,7 +123,7 @@ async def test_update_marriage_wife_triggers_validation(mock_uow):
         use_case = UpdateMarriageUseCase(
             mock_uow, rules_service, sync_service=MagicMock()
         )
-        result = await use_case.execute(dto)
+        result = await use_case.execute(dto, tree_id=UUID(int=7))
 
     # --- Assert ---
     assert result is expected_result
@@ -130,13 +133,16 @@ async def test_update_marriage_wife_triggers_validation(mock_uow):
 
     mapper_mock.assert_called_once_with(marriage=marriage)
 
-    assert mock_uow.marriages.get_or_raise.await_count == 1
-    assert mock_uow.persons.get_or_raise.await_count == 2
+    assert mock_uow.marriages.get_in_tree_or_raise.await_count == 1
+    assert mock_uow.persons.get_in_tree_or_raise.await_count == 2
 
-    husband_call = mock_uow.persons.get_or_raise.await_args_list[0]
-    assert husband_call.kwargs == {"person_id": UUID(int=20)}
-    husband_call = mock_uow.persons.get_or_raise.await_args_list[1]
-    assert husband_call.kwargs == {"person_id": UUID(int=1)}
+    spouse_call = mock_uow.persons.get_in_tree_or_raise.await_args_list[0]
+    assert spouse_call.kwargs == {
+        "person_id": UUID(int=20),
+        "tree_id": UUID(int=7),
+    }
+    other_call = mock_uow.persons.get_in_tree_or_raise.await_args_list[1]
+    assert other_call.kwargs == {"person_id": UUID(int=1), "tree_id": UUID(int=7)}
 
     mock_uow.marriages.update.assert_awaited_once_with(marriage=marriage)
     mock_uow.commit.assert_awaited_once()
@@ -161,7 +167,7 @@ async def test_update_marriage_divorced_at_without_validation(mock_uow):
 
     marriage.divorce.side_effect = _divorce
 
-    mock_uow.marriages.get_or_raise = AsyncMock(return_value=marriage)
+    mock_uow.marriages.get_in_tree_or_raise = AsyncMock(return_value=marriage)
     mock_uow.marriages.update = AsyncMock(return_value=marriage)
 
     rules_service = MagicMock()
@@ -181,7 +187,7 @@ async def test_update_marriage_divorced_at_without_validation(mock_uow):
         use_case = UpdateMarriageUseCase(
             mock_uow, rules_service, sync_service=sync_service
         )
-        result = await use_case.execute(dto)
+        result = await use_case.execute(dto, tree_id=UUID(int=7))
 
     assert result is expected_result
     marriage.divorce.assert_called_once_with(date(2023, 1, 1))
@@ -190,8 +196,8 @@ async def test_update_marriage_divorced_at_without_validation(mock_uow):
 
     mapper_mock.assert_called_once_with(marriage=marriage)
 
-    assert mock_uow.marriages.get_or_raise.await_count == 1
-    assert mock_uow.persons.get_or_raise.await_count == 0
+    assert mock_uow.marriages.get_in_tree_or_raise.await_count == 1
+    assert mock_uow.persons.get_in_tree_or_raise.await_count == 0
 
     mock_uow.commit.assert_awaited_once()
 
@@ -213,9 +219,9 @@ async def test_update_marriage_married_at_triggers_validation(mock_uow):
     husband = MagicMock()
     wife = MagicMock()
 
-    mock_uow.marriages.get_or_raise = AsyncMock(return_value=marriage)
+    mock_uow.marriages.get_in_tree_or_raise = AsyncMock(return_value=marriage)
 
-    mock_uow.persons.get_or_raise = AsyncMock(side_effect=[husband, wife])
+    mock_uow.persons.get_in_tree_or_raise = AsyncMock(side_effect=[husband, wife])
 
     marriage.married_at = date(2021, 1, 1)
     mock_uow.marriages.update = AsyncMock(return_value=marriage)
@@ -236,7 +242,7 @@ async def test_update_marriage_married_at_triggers_validation(mock_uow):
         use_case = UpdateMarriageUseCase(
             mock_uow, rules_service, sync_service=MagicMock()
         )
-        result = await use_case.execute(dto)
+        result = await use_case.execute(dto, tree_id=UUID(int=7))
 
     # --- Assert ---
     assert result is expected_result
@@ -246,13 +252,19 @@ async def test_update_marriage_married_at_triggers_validation(mock_uow):
 
     mapper_mock.assert_called_once_with(marriage=marriage)
 
-    assert mock_uow.marriages.get_or_raise.await_count == 1
-    assert mock_uow.persons.get_or_raise.await_count == 2
+    assert mock_uow.marriages.get_in_tree_or_raise.await_count == 1
+    assert mock_uow.persons.get_in_tree_or_raise.await_count == 2
 
-    husband_call = mock_uow.persons.get_or_raise.await_args_list[0]
-    assert husband_call.kwargs == {"person_id": UUID(int=1)}
-    husband_call = mock_uow.persons.get_or_raise.await_args_list[1]
-    assert husband_call.kwargs == {"person_id": UUID(int=2)}
+    spouse_a_call = mock_uow.persons.get_in_tree_or_raise.await_args_list[0]
+    assert spouse_a_call.kwargs == {
+        "person_id": UUID(int=1),
+        "tree_id": UUID(int=7),
+    }
+    spouse_b_call = mock_uow.persons.get_in_tree_or_raise.await_args_list[1]
+    assert spouse_b_call.kwargs == {
+        "person_id": UUID(int=2),
+        "tree_id": UUID(int=7),
+    }
 
     mock_uow.marriages.update.assert_awaited_once_with(marriage=marriage)
     mock_uow.commit.assert_awaited_once()
@@ -277,8 +289,8 @@ async def test_update_divorced_marriage_spouses_does_not_sync_spouse_edge(mock_u
     wife = MagicMock()
     wife.safe_id = UUID(int=2)
 
-    mock_uow.marriages.get_or_raise = AsyncMock(return_value=marriage)
-    mock_uow.persons.get_or_raise = AsyncMock(side_effect=[husband, wife])
+    mock_uow.marriages.get_in_tree_or_raise = AsyncMock(return_value=marriage)
+    mock_uow.persons.get_in_tree_or_raise = AsyncMock(side_effect=[husband, wife])
 
     marriage.spouse_a_id = UUID(int=10)
     mock_uow.marriages.update = AsyncMock(return_value=marriage)
@@ -300,7 +312,7 @@ async def test_update_divorced_marriage_spouses_does_not_sync_spouse_edge(mock_u
         use_case = UpdateMarriageUseCase(
             mock_uow, rules_service, sync_service=sync_service
         )
-        result = await use_case.execute(dto)
+        result = await use_case.execute(dto, tree_id=UUID(int=7))
 
     assert result is expected_result
     sync_service.replace_spouse.assert_not_called()
@@ -314,14 +326,14 @@ async def test_update_marriage_propagates_exception_from_get_or_raise(mock_uow):
     dto.where.marriage_id = UUID(int=1)
     dto.data.model_dump.return_value = {}
 
-    mock_uow.marriages.get_or_raise = AsyncMock(side_effect=MarriageNotFoundException())
+    mock_uow.marriages.get_in_tree_or_raise = AsyncMock(side_effect=MarriageNotFoundException())
 
     rules_service = MagicMock()
 
     use_case = UpdateMarriageUseCase(mock_uow, rules_service, sync_service=MagicMock())
 
     with pytest.raises(MarriageNotFoundException):
-        await use_case.execute(dto)
+        await use_case.execute(dto, tree_id=UUID(int=7))
 
     mock_uow.marriages.update.assert_not_awaited()
     mock_uow.commit.assert_not_awaited()

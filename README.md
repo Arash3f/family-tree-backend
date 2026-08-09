@@ -487,7 +487,7 @@ Permissions and the admin user are seeded automatically on API startup.
 Optional family sample data:
 
 1. Copy `seed_items.sample.py` to `seed_items.py` (the latter is gitignored).
-2. Fill the person and marriage lists in `seed_items.py`.
+2. Fill the person and marriage lists in `seed_items.py` (sample data creates a family tree named «سمپل خانواده» owned by the admin user, with owner membership, then seeds people/marriages scoped to that `tree_id`).
 3. Import and uncomment in `app/main.py` lifespan:
    ```python
    from seed_items import seed_initial_items
@@ -495,6 +495,8 @@ Optional family sample data:
    await seed_initial_items(uow=uow)
    ```
 4. Restart the API.
+
+Person and marriage REST/GraphQL endpoints require a `tree_id` and tree membership (in addition to the usual permissions). Create a family tree via `POST /family-trees` or GraphQL `createFamilyTree`, then add members under `/family-trees/{tree_id}/members` if needed.
 
 ---
 

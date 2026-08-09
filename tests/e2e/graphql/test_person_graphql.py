@@ -23,8 +23,8 @@ async def gql(
 
 
 CREATE_PERSON = """
-mutation CreatePerson($data: PersonCreateInput!) {
-  createPerson(data: $data) {
+mutation CreatePerson($treeId: UUID!, $data: PersonCreateInput!) {
+  createPerson(treeId: $treeId, data: $data) {
     id
     name
     gender
@@ -38,11 +38,16 @@ mutation CreatePerson($data: PersonCreateInput!) {
 
 
 @pytest.mark.asyncio
-async def test_graphql_create_person_permission_denied(client, member_headers):  # noqa: F811
+async def test_graphql_create_person_permission_denied(
+    client, tree_id, member_headers  # noqa: F811
+):
     resp = await gql(
         client,
         CREATE_PERSON,
-        {"data": {"name": "limited-person", "gender": "MALE"}},
+        {
+            "treeId": str(tree_id),
+            "data": {"name": "limited-person", "gender": "MALE"},
+        },
         headers=member_headers,
     )
     assert resp.status_code == 200
@@ -52,11 +57,14 @@ async def test_graphql_create_person_permission_denied(client, member_headers): 
 
 
 @pytest.mark.asyncio
-async def test_graphql_create_person_unauthenticated(client):
+async def test_graphql_create_person_unauthenticated(client, tree_id):
     resp = await gql(
         client,
         CREATE_PERSON,
-        {"data": {"name": "limited-person", "gender": "MALE"}},
+        {
+            "treeId": str(tree_id),
+            "data": {"name": "limited-person", "gender": "MALE"},
+        },
     )
     assert resp.status_code == 200
     assert resp.json().get("errors")
@@ -65,12 +73,14 @@ async def test_graphql_create_person_unauthenticated(client):
 @pytest.mark.asyncio
 async def test_graphql_create_get_list_update_delete_person(
     client,
+    tree_id,
     admin_headers,  # noqa: F811
     uow,  # noqa: F811
 ):
     father = await uow.persons.create(
         Person(
             id=None,
+            tree_id=uow.tree_id,
             name="father",
             gender=Gender.MALE,
             birth_date=date(1970, 1, 1),
@@ -79,6 +89,7 @@ async def test_graphql_create_get_list_update_delete_person(
     mother = await uow.persons.create(
         Person(
             id=None,
+            tree_id=uow.tree_id,
             name="mother",
             gender=Gender.FEMALE,
             birth_date=date(1972, 1, 1),
@@ -90,6 +101,7 @@ async def test_graphql_create_get_list_update_delete_person(
         client,
         CREATE_PERSON,
         {
+            "treeId": str(tree_id),
             "data": {
                 "name": "child",
                 "gender": "MALE",
@@ -97,7 +109,7 @@ async def test_graphql_create_get_list_update_delete_person(
                     {"parentId": str(father.safe_id), "relationshipType": "BIOLOGICAL"},
                     {"parentId": str(mother.safe_id), "relationshipType": "BIOLOGICAL"},
                 ],
-            }
+            },
         },
         headers=admin_headers,
     )
@@ -113,11 +125,11 @@ async def test_graphql_create_get_list_update_delete_person(
     get_one = await gql(
         client,
         """
-        query ($id: UUID!) {
-          person(personId: $id) { id name gender }
+        query ($treeId: UUID!, $id: UUID!) {
+          person(treeId: $treeId, personId: $id) { id name gender }
         }
         """,
-        {"id": person_id},
+        {"treeId": str(tree_id), "id": person_id},
         headers=admin_headers,
     )
     assert "errors" not in get_one.json()
@@ -126,13 +138,14 @@ async def test_graphql_create_get_list_update_delete_person(
     listed = await gql(
         client,
         """
-        query {
-          persons(data: { filters: { name: "child" } }) {
+        query ($treeId: UUID!) {
+          persons(treeId: $treeId, data: { filters: { name: "child" } }) {
             total
             items { id name }
           }
         }
         """,
+        {"treeId": str(tree_id)},
         headers=admin_headers,
     )
     assert "errors" not in listed.json()
@@ -143,15 +156,16 @@ async def test_graphql_create_get_list_update_delete_person(
     updated = await gql(
         client,
         """
-        mutation ($data: PersonUpdateInput!) {
-          updatePerson(data: $data) { id name }
+        mutation ($treeId: UUID!, $data: PersonUpdateInput!) {
+          updatePerson(treeId: $treeId, data: $data) { id name }
         }
         """,
         {
+            "treeId": str(tree_id),
             "data": {
                 "data": {"name": "child-updated"},
                 "where": {"personId": person_id},
-            }
+            },
         },
         headers=admin_headers,
     )
@@ -161,11 +175,11 @@ async def test_graphql_create_get_list_update_delete_person(
     deleted = await gql(
         client,
         """
-        mutation ($id: UUID!) {
-          deletePerson(personId: $id) { result }
+        mutation ($treeId: UUID!, $id: UUID!) {
+          deletePerson(treeId: $treeId, personId: $id) { result }
         }
         """,
-        {"id": person_id},
+        {"treeId": str(tree_id), "id": person_id},
         headers=admin_headers,
     )
     assert "errors" not in deleted.json()

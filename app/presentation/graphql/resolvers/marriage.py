@@ -3,6 +3,7 @@ from uuid import UUID
 from strawberry.types import Info
 
 from app.application.dto.marriage.marriage_update_dto import MarriageUpdateDTO
+from app.application.services.tree_access_service import TreeAccessService
 from app.application.use_cases.marriage.create_marriage_use_case import (
     CreateMarriageUseCase,
 )
@@ -17,7 +18,8 @@ from app.application.use_cases.marriage.get_marriage_use_case import GetMarriage
 from app.application.use_cases.marriage.update_marriage_use_case import (
     UpdateMarriageUseCase,
 )
-from app.infrastructure.utils.constants.permissions import Permissions
+from app.domain.entities.user import User
+from app.domain.shared.permissions import Permissions
 from app.presentation.graphql.auth import require_permission
 from app.presentation.graphql.types.common import (
     ResultType,
@@ -47,6 +49,17 @@ from app.presentation.rest.schemas.dto.marriage_schema import (
 )
 from app.presentation.rest.schemas.mappers.common_mappers import CommonApiMapper
 from app.presentation.rest.schemas.mappers.marriage_mappers import MarriageApiMapper
+
+
+async def _require_tree_member(
+    info: Info, tree_id: UUID, permission: str
+) -> User:
+    user = await require_permission(info, permission)
+    async with info.context.uow:
+        await TreeAccessService(info.context.uow).require_member(
+            tree_id=tree_id, user_id=user.safe_id
+        )
+    return user
 
 
 def _marriage_create_request(data: MarriageCreateInput) -> MarriageCreateRequest:
@@ -101,63 +114,73 @@ def _marriage_list_request(data: MarriageListInput | None) -> FilterMarriageRequ
 
 
 async def resolve_create_marriage(
-    info: Info, data: MarriageCreateInput
+    info: Info, tree_id: UUID, data: MarriageCreateInput
 ) -> MarriageType:
-    await require_permission(info, Permissions.MARRIAGE_CREATE)
+    await _require_tree_member(info, tree_id, Permissions.MARRIAGE_CREATE)
     usecase = CreateMarriageUseCase(
         info.context.uow, info.context.marriage_rule_service
     )
     res = await usecase.execute(
-        MarriageApiMapper.to_create_marriage_dto(_marriage_create_request(data))
+        MarriageApiMapper.to_create_marriage_dto(_marriage_create_request(data)),
+        tree_id=tree_id,
     )
     mapped = MarriageApiMapper.from_create_marriage_dto(res)
     return marriage_from_mapping(mapped.model_dump())
 
 
 async def resolve_update_marriage(
-    info: Info, data: MarriageUpdateInput
+    info: Info, tree_id: UUID, data: MarriageUpdateInput
 ) -> MarriageType:
-    await require_permission(info, Permissions.MARRIAGE_UPDATE)
+    await _require_tree_member(info, tree_id, Permissions.MARRIAGE_UPDATE)
     usecase = UpdateMarriageUseCase(
         info.context.uow, info.context.marriage_rule_service
     )
-    res = await usecase.execute(_marriage_update_dto(data))
+    res = await usecase.execute(_marriage_update_dto(data), tree_id=tree_id)
     mapped = MarriageApiMapper.from_update_marriage_dto(res)
     return marriage_from_mapping(mapped.model_dump())
 
 
-async def resolve_delete_marriage(info: Info, marriage_id: UUID) -> ResultType:
-    await require_permission(info, Permissions.MARRIAGE_DELETE)
+async def resolve_delete_marriage(
+    info: Info, tree_id: UUID, marriage_id: UUID
+) -> ResultType:
+    await _require_tree_member(info, tree_id, Permissions.MARRIAGE_DELETE)
     usecase = DeleteMarriageUseCase(info.context.uow)
-    res = await usecase.execute(CommonApiMapper.to_id_dto(id=marriage_id))
+    res = await usecase.execute(CommonApiMapper.to_id_dto(id=marriage_id), tree_id=tree_id)
     mapped = CommonApiMapper.from_result_dto(res)
     return ResultType(result=mapped.result)
 
 
-async def resolve_divorce(info: Info, data: DivorceInput) -> ResultType:
-    await require_permission(info, Permissions.MARRIAGE_DIVORCE)
+async def resolve_divorce(
+    info: Info, tree_id: UUID, data: DivorceInput
+) -> ResultType:
+    await _require_tree_member(info, tree_id, Permissions.MARRIAGE_DIVORCE)
     usecase = DivorceUseCase(info.context.uow)
     req = DivorceRequest(marriage_id=data.marriage_id, divorced_at=data.divorced_at)
-    res = await usecase.execute(MarriageApiMapper.to_add_divorce_dto(req))
+    res = await usecase.execute(
+        MarriageApiMapper.to_add_divorce_dto(req), tree_id=tree_id
+    )
     mapped = CommonApiMapper.from_result_dto(res)
     return ResultType(result=mapped.result)
 
 
-async def resolve_marriage(info: Info, marriage_id: UUID) -> MarriageType:
-    await require_permission(info, Permissions.MARRIAGE_READ)
+async def resolve_marriage(
+    info: Info, tree_id: UUID, marriage_id: UUID
+) -> MarriageType:
+    await _require_tree_member(info, tree_id, Permissions.MARRIAGE_READ)
     usecase = GetMarriageUseCase(info.context.uow)
-    res = await usecase.execute(CommonApiMapper.to_id_dto(id=marriage_id))
+    res = await usecase.execute(CommonApiMapper.to_id_dto(id=marriage_id), tree_id=tree_id)
     mapped = MarriageApiMapper.from_get_marriage_dto(res)
     return marriage_from_mapping(mapped.model_dump())
 
 
 async def resolve_marriages(
-    info: Info, data: MarriageListInput | None = None
+    info: Info, tree_id: UUID, data: MarriageListInput | None = None
 ) -> MarriagePage:
-    await require_permission(info, Permissions.MARRIAGE_READ)
+    await _require_tree_member(info, tree_id, Permissions.MARRIAGE_READ)
     usecase = GetMarriageListByFilterUseCase(info.context.uow)
     res = await usecase.execute(
-        MarriageApiMapper.to_get_list_marriage_dto(_marriage_list_request(data))
+        MarriageApiMapper.to_get_list_marriage_dto(_marriage_list_request(data)),
+        tree_id=tree_id,
     )
     mapped = MarriageApiMapper.from_get_list_marriage_dto(res)
     return MarriagePage(

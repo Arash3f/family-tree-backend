@@ -38,7 +38,7 @@ async def test_update_person_success(mock_uow):
     sync_service = MagicMock()
     photo_service = _photo_service()
 
-    mock_uow.persons.get_or_raise = AsyncMock(return_value=person)
+    mock_uow.persons.get_in_tree_or_raise = AsyncMock(return_value=person)
     mock_uow.persons.update = AsyncMock(return_value=person)
 
     with patch.object(
@@ -47,7 +47,7 @@ async def test_update_person_success(mock_uow):
         use_case = UpdatePersonUseCase(
             mock_uow, photo_service, sync_service=sync_service
         )
-        result = await use_case.execute(dto)
+        result = await use_case.execute(dto, tree_id=UUID(int=7))
 
     assert result is expected_result
     mock_uow.persons.update.assert_awaited_once_with(person=person)
@@ -73,7 +73,7 @@ async def test_update_person_replaces_photo(mock_uow):
     person.gender = Gender.MALE
     person.photo_object_key = old_key
 
-    mock_uow.persons.get_or_raise = AsyncMock(return_value=person)
+    mock_uow.persons.get_in_tree_or_raise = AsyncMock(return_value=person)
     mock_uow.persons.update = AsyncMock(return_value=person)
 
     photo_service = _photo_service()
@@ -83,7 +83,7 @@ async def test_update_person_replaces_photo(mock_uow):
         use_case = UpdatePersonUseCase(
             mock_uow, photo_service, sync_service=MagicMock()
         )
-        await use_case.execute(dto)
+        await use_case.execute(dto, tree_id=UUID(int=7))
 
     photo_service.ensure_object_exists.assert_awaited_once_with(new_key)
     assert person.photo_object_key == new_key

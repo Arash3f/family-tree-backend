@@ -1,4 +1,3 @@
-from uuid import UUID
 from app.application.dto.user.user_create_dto import (
     UserCreateDTO,
     UserCreateMapper,

@@ -20,6 +20,7 @@ from app.infrastructure.services.security.password_hasher_impl import (
 from app.infrastructure.services.unit_of_work.sqlalchemy_uow import SQLAlchemyUnitOfWork
 from app.main import app
 from app.presentation.rest.utils.dependencies import get_uow
+from tests.helpers.family_tree import create_family_tree_with_owner, get_admin_user
 
 # Avoid cross-test auth rate-limit bleed (shared client IP in ASGI tests)
 settings.AUTH_RATE_LIMIT_PER_MINUTE = 0
@@ -74,16 +75,25 @@ async def prepare_database(db_engine):
     async with db_engine.begin() as conn:
         await _reset_schema(conn)
 
-    await db_engine.dispose()
-
 
 @pytest_asyncio.fixture
-async def uow(db_engine):
+async def uow(db_engine, prepare_database):
     session = AsyncSession(db_engine, expire_on_commit=False)
     uow = SQLAlchemyUnitOfWork(session_factory=lambda: session)
 
     async with uow:
+        admin = await get_admin_user(uow)
+        tree = await create_family_tree_with_owner(
+            uow, owner=admin, name="E2E Test Tree"
+        )
+        await uow.commit()
+        uow.tree_id = tree.safe_id
         yield uow
+
+
+@pytest_asyncio.fixture
+async def tree_id(uow):
+    return uow.tree_id
 
 
 @pytest_asyncio.fixture(autouse=True)

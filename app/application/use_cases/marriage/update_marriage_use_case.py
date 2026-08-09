@@ -24,12 +24,14 @@ class UpdateMarriageUseCase:
         self.marriage_rules_service = marriage_rules_service
         self.sync_service = sync_service or FamilyTreeSyncService()
 
-    async def execute(self, dto: MarriageUpdateDTO) -> MarriageUpdateResponseDTO:
+    async def execute(
+        self, dto: MarriageUpdateDTO, *, tree_id: UUID
+    ) -> MarriageUpdateResponseDTO:
         async with self.uow:
             update_data = dto.data.model_dump(exclude_unset=True)
 
-            marriage = await self.uow.marriages.get_or_raise(
-                marriage_id=dto.where.marriage_id
+            marriage = await self.uow.marriages.get_in_tree_or_raise(
+                marriage_id=dto.where.marriage_id, tree_id=tree_id
             )
 
             old_spouse_a_id = marriage.spouse_a_id
@@ -48,12 +50,16 @@ class UpdateMarriageUseCase:
             spouse_b = None
 
             if spouse_a_id is not None:
-                spouse_a = await self.uow.persons.get_or_raise(person_id=spouse_a_id)
+                spouse_a = await self.uow.persons.get_in_tree_or_raise(
+                    person_id=spouse_a_id, tree_id=tree_id
+                )
                 marriage.spouse_a_id = spouse_a.safe_id
                 needs_validation = True
 
             if spouse_b_id is not None:
-                spouse_b = await self.uow.persons.get_or_raise(person_id=spouse_b_id)
+                spouse_b = await self.uow.persons.get_in_tree_or_raise(
+                    person_id=spouse_b_id, tree_id=tree_id
+                )
                 marriage.spouse_b_id = spouse_b.safe_id
                 needs_validation = True
 
@@ -72,13 +78,13 @@ class UpdateMarriageUseCase:
 
             if needs_validation:
                 if spouse_a is None:
-                    spouse_a = await self.uow.persons.get_or_raise(
-                        person_id=marriage.spouse_a_id
+                    spouse_a = await self.uow.persons.get_in_tree_or_raise(
+                        person_id=marriage.spouse_a_id, tree_id=tree_id
                     )
 
                 if spouse_b is None:
-                    spouse_b = await self.uow.persons.get_or_raise(
-                        person_id=marriage.spouse_b_id
+                    spouse_b = await self.uow.persons.get_in_tree_or_raise(
+                        person_id=marriage.spouse_b_id, tree_id=tree_id
                     )
 
                 self.marriage_rules_service.validate_marriage(

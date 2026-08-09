@@ -25,6 +25,7 @@ class PersonFilterDTO(BaseModel):
     parent_id: UUID | None = None
     relationship_type: ParentRelationshipType | None = None
     marriage_id: UUID | None = None
+    tree_id: UUID | None = None
 
 
 class FilterPersonQuery(BaseModel):

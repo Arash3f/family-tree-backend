@@ -32,6 +32,13 @@ class Permissions:
     TICKET_REPLY = "ticket_reply"
     TICKET_MANAGE = "ticket_manage"
 
+    TREE_CREATE = "tree_create"
+    TREE_READ = "tree_read"
+    TREE_UPDATE = "tree_update"
+    TREE_DELETE = "tree_delete"
+    TREE_MEMBER_ADD = "tree_member_add"
+    TREE_MEMBER_REMOVE = "tree_member_remove"
+
     @classmethod
     def get_all_permissions(cls) -> List[str]:
         return [

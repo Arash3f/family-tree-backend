@@ -50,6 +50,18 @@ class MarriageRepository(ABC):
     @abstractmethod
     async def update(self, marriage: Marriage) -> Marriage: ...
 
+    async def get_in_tree_or_raise(self, marriage_id: UUID, tree_id: UUID) -> Marriage:
+        from app.domain.exceptions.family_tree_exceptions import (
+            MarriageTreeMismatchException,
+        )
+
+        marriage = await self.get_or_raise(marriage_id=marriage_id)
+        if marriage.tree_id != tree_id:
+            raise MarriageTreeMismatchException(
+                detail=[f"marriage_id={marriage_id} tree_id={tree_id}"]
+            )
+        return marriage
+
     async def get_or_raise(self, marriage_id: UUID) -> Marriage:
         """
         Find a person by id or raise an exception if not found.

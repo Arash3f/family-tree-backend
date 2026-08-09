@@ -30,6 +30,7 @@ async def test_create_marriage_success(mock_uow):
     husband.gender = Gender.MALE
     husband.id = UUID(int=1)
     husband.safe_id = UUID(int=1)
+    husband.tree_id = UUID(int=7)
     husband.name = "Ali"
     husband.age = MagicMock(return_value=30)
 
@@ -37,10 +38,11 @@ async def test_create_marriage_success(mock_uow):
     wife.gender = Gender.FEMALE
     wife.id = UUID(int=2)
     wife.safe_id = UUID(int=2)
+    wife.tree_id = UUID(int=7)
     wife.name = "Sara"
     wife.age = MagicMock(return_value=28)
 
-    mock_uow.persons.get_or_raise = AsyncMock(side_effect=[husband, wife])
+    mock_uow.persons.get_in_tree_or_raise = AsyncMock(side_effect=[husband, wife])
 
     created_marriage = MagicMock(spec=Marriage)
     created_marriage.spouse_a_id = UUID(int=1)
@@ -64,7 +66,7 @@ async def test_create_marriage_success(mock_uow):
         use_case = CreateMarriageUseCase(
             mock_uow, marriage_rules_service=rules, sync_service=sync_service
         )
-        result = await use_case.execute(dto)
+        result = await use_case.execute(dto, tree_id=UUID(int=7))
 
     assert result == expected_response
 
@@ -73,14 +75,19 @@ async def test_create_marriage_success(mock_uow):
     )
     sync_service.upsert_spouse.assert_called_once_with(UUID(int=1), UUID(int=2))
 
-    mock_uow.persons.get_or_raise.assert_any_await(person_id=dto.spouse_a_id)
-    mock_uow.persons.get_or_raise.assert_any_await(person_id=dto.spouse_b_id)
+    mock_uow.persons.get_in_tree_or_raise.assert_any_await(
+        person_id=dto.spouse_a_id, tree_id=UUID(int=7)
+    )
+    mock_uow.persons.get_in_tree_or_raise.assert_any_await(
+        person_id=dto.spouse_b_id, tree_id=UUID(int=7)
+    )
 
     mock_uow.marriages.create.assert_awaited_once()
 
     assert mock_uow.marriages.create.await_args is not None
     created_entity = mock_uow.marriages.create.await_args.args[0]
     assert isinstance(created_entity, Marriage)
+    assert created_entity.tree_id == UUID(int=7)
     assert created_entity.spouse_a_id == dto.spouse_a_id
     assert created_entity.spouse_b_id == dto.spouse_b_id
     assert created_entity.married_at == dto.married_at
@@ -98,14 +105,14 @@ async def test_create_marriage_raises_if_husband_not_found(mock_uow):
         married_at=date(2020, 1, 1),
     )
 
-    mock_uow.persons.get_or_raise = AsyncMock(side_effect=PersonNotFoundException())
+    mock_uow.persons.get_in_tree_or_raise = AsyncMock(side_effect=PersonNotFoundException())
 
     use_case = CreateMarriageUseCase(
         mock_uow, marriage_rules_service=MagicMock(), sync_service=MagicMock()
     )
 
     with pytest.raises(PersonNotFoundException):
-        await use_case.execute(dto)
+        await use_case.execute(dto, tree_id=UUID(int=7))
 
     mock_uow.marriages.create.assert_not_awaited()
     mock_uow.commit.assert_not_awaited()
@@ -119,7 +126,7 @@ async def test_create_marriage_raises_if_wife_not_found(mock_uow):
         married_at=date(2020, 1, 1),
     )
 
-    mock_uow.persons.get_or_raise = AsyncMock(
+    mock_uow.persons.get_in_tree_or_raise = AsyncMock(
         side_effect=[MagicMock(), PersonNotFoundException()]
     )
 
@@ -128,7 +135,7 @@ async def test_create_marriage_raises_if_wife_not_found(mock_uow):
     )
 
     with pytest.raises(PersonNotFoundException):
-        await use_case.execute(dto)
+        await use_case.execute(dto, tree_id=UUID(int=7))
 
     mock_uow.marriages.create.assert_not_awaited()
     mock_uow.commit.assert_not_awaited()
@@ -142,7 +149,9 @@ async def test_create_marriage_raises_if_rules_fail(mock_uow):
         married_at=date(2020, 1, 1),
     )
 
-    mock_uow.persons.get_or_raise = AsyncMock(side_effect=[MagicMock(), MagicMock()])
+    mock_uow.persons.get_in_tree_or_raise = AsyncMock(
+        side_effect=[MagicMock(tree_id=UUID(int=7)), MagicMock(tree_id=UUID(int=7))]
+    )
     rules = MagicMock()
     rules.validate_marriage.side_effect = UnderageMarriageException()
 
@@ -151,7 +160,7 @@ async def test_create_marriage_raises_if_rules_fail(mock_uow):
     )
 
     with pytest.raises(UnderageMarriageException):
-        await use_case.execute(dto)
+        await use_case.execute(dto, tree_id=UUID(int=7))
 
     mock_uow.marriages.create.assert_not_awaited()
     mock_uow.commit.assert_not_awaited()
