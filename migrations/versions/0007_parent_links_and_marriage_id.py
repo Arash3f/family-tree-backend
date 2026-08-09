@@ -91,11 +91,12 @@ def upgrade() -> None:
         ["id"],
         ondelete="SET NULL",
     )
-    op.create_unique_constraint(
+    op.create_index(
         "uq_person_name_marriage",
         "persons",
         ["name", "marriage_id"],
-        postgresql_nulls_not_distinct=True,
+        unique=True,
+        postgresql_where=sa.text("marriage_id IS NOT NULL"),
     )
 
     op.execute(PARENT_LINK_RULES_FUNCTION)
@@ -110,7 +111,7 @@ def downgrade() -> None:
     op.execute("DROP TRIGGER IF EXISTS trg_parent_link_rules ON parent_links")
     op.execute("DROP FUNCTION IF EXISTS enforce_parent_link_rules()")
 
-    op.drop_constraint("uq_person_name_marriage", "persons", type_="unique")
+    op.drop_index("uq_person_name_marriage", table_name="persons")
     op.drop_constraint("persons_marriage_id_fkey", "persons", type_="foreignkey")
     op.drop_index(op.f("ix_persons_marriage_id"), table_name="persons")
     op.drop_column("persons", "marriage_id")

@@ -1,20 +1,46 @@
+from datetime import date
+
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from app.infrastructure.database.models import ParentLinkModel, PersonModel
+from app.infrastructure.database.models import MarriageModel, ParentLinkModel, PersonModel
 
 
 @pytest.mark.asyncio
-async def test_unique_constraint_same_name_and_marriage(uow):
-    person1 = PersonModel(name="Reza", gender="male")
-    uow.session.add(person1)
+async def test_unique_constraint_same_name_under_same_marriage(uow):
+    husband = PersonModel(name="Ali", gender="male")
+    wife = PersonModel(name="Sara", gender="female")
+    uow.session.add_all([husband, wife])
     await uow.session.flush()
 
-    person2 = PersonModel(name="Reza", gender="male")
-    uow.session.add(person2)
+    marriage = MarriageModel(
+        husband_id=husband.id,
+        wife_id=wife.id,
+        married_at=date(2000, 1, 1),
+    )
+    uow.session.add(marriage)
+    await uow.session.flush()
+
+    child1 = PersonModel(name="Reza", gender="male", marriage_id=marriage.id)
+    uow.session.add(child1)
+    await uow.session.flush()
+
+    child2 = PersonModel(name="Reza", gender="male", marriage_id=marriage.id)
+    uow.session.add(child2)
 
     with pytest.raises(IntegrityError):
         await uow.session.flush()
+
+
+@pytest.mark.asyncio
+async def test_same_name_without_marriage_is_allowed(uow):
+    uow.session.add_all(
+        [
+            PersonModel(name="Reza", gender="male"),
+            PersonModel(name="Reza", gender="male"),
+        ]
+    )
+    await uow.session.flush()
 
 
 @pytest.mark.asyncio

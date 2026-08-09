@@ -1,6 +1,7 @@
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
@@ -33,10 +34,16 @@ def db_engine():
     )
 
 
+async def _reset_schema(conn) -> None:
+    # Cascade avoids DROP failures when persons ↔ marriages form an FK cycle.
+    await conn.execute(text("DROP SCHEMA public CASCADE"))
+    await conn.execute(text("CREATE SCHEMA public"))
+
+
 @pytest_asyncio.fixture(autouse=True)
 async def prepare_database(db_engine):
     async with db_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+        await _reset_schema(conn)
         await conn.run_sync(Base.metadata.create_all)
         await conn.run_sync(install_parent_integrity_ddl)
 
@@ -65,7 +72,7 @@ async def prepare_database(db_engine):
     yield
 
     async with db_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+        await _reset_schema(conn)
 
     await db_engine.dispose()
 

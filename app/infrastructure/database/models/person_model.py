@@ -2,7 +2,14 @@ from datetime import date
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import CheckConstraint, Date, ForeignKey, String, UniqueConstraint
+from sqlalchemy import (
+    CheckConstraint,
+    Date,
+    ForeignKey,
+    Index,
+    String,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
@@ -20,16 +27,19 @@ class PersonModel(Base):
     birth_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     death_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     marriage_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("marriages.id", ondelete="SET NULL"), nullable=True, index=True
+        ForeignKey("marriages.id", ondelete="SET NULL", use_alter=True),
+        nullable=True,
+        index=True,
     )
     photo_object_key: Mapped[str | None] = mapped_column(String, nullable=True)
 
     __table_args__ = (
-        UniqueConstraint(
+        Index(
+            "uq_person_name_marriage",
             "name",
             "marriage_id",
-            name="uq_person_name_marriage",
-            postgresql_nulls_not_distinct=True,
+            unique=True,
+            postgresql_where=text("marriage_id IS NOT NULL"),
         ),
         CheckConstraint(
             "death_date IS NULL OR birth_date IS NULL OR death_date >= birth_date",

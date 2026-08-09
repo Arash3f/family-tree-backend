@@ -241,7 +241,12 @@ async def test_get_list_by_filter_pagination(uow: UnitOfWork):
     async with uow:
         for i in range(15):
             await uow.persons.create(
-                Person(None, f"person{i}", Gender.MALE, None, None, None)
+                Person(
+                    id=None,
+                    name=f"person{i}",
+                    gender=Gender.MALE,
+                    birth_date=None,
+                )
             )
 
         query = FilterPersonQuery(

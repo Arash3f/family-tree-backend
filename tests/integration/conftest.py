@@ -1,6 +1,6 @@
 import pytest
 import pytest_asyncio
-from sqlalchemy import NullPool
+from sqlalchemy import NullPool, text
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
@@ -34,14 +34,17 @@ def db_engine():
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def prepare_database(db_engine):
     async with db_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+        # Cascade avoids DROP failures when persons ↔ marriages form an FK cycle.
+        await conn.execute(text("DROP SCHEMA public CASCADE"))
+        await conn.execute(text("CREATE SCHEMA public"))
         await conn.run_sync(Base.metadata.create_all)
         await conn.run_sync(install_parent_integrity_ddl)
 
     yield
 
     async with db_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+        await conn.execute(text("DROP SCHEMA public CASCADE"))
+        await conn.execute(text("CREATE SCHEMA public"))
 
     await db_engine.dispose()
 
