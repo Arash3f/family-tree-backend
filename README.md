@@ -212,7 +212,7 @@ Hook split (so commits stay fast):
 
 | When | What runs |
 |------|-----------|
-| **commit** | Fast checks: Ruff, pyupgrade, detect-secrets, basic file hygiene |
+| **commit** | Fast checks: Ruff, pyupgrade, detect-secrets, basic file hygiene, plus the `.env.example` / requirements sync checks when their inputs change |
 | **commit-msg** | Commitizen message format (`poetry run cz commit` recommended) |
 | **push** | Heavy checks: mypy, Bandit, full pytest |
 
@@ -245,7 +245,7 @@ CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:8001
 poetry run alembic upgrade head
 ```
 
-Schema history is a single initial revision (`0001_initial`). If you previously applied older multi-step revisions, reset the database (drop volume / recreate schema) before upgrading.
+Schema history is a linear chain starting at `0001_initial`; `alembic downgrade base` and back up is covered by `tests/integration/migrations/test_schema_matches_models.py`, which also fails if the migrations and the SQLAlchemy models drift apart.
 
 ### 5. API
 
@@ -292,8 +292,14 @@ Managed via environment variables / `.env` (`app/core/config.py`). See `.env.exa
 | `BACKUP_DIR` | Backup output directory (Compose default `/mnt/backups`) |
 | `CORS_ORIGINS` | Comma-separated allowed origins (include Vite `http://localhost:5173` for the frontend) |
 | `FLOWER_BASIC_AUTH` | Flower `user:password` (default `admin:admin`) |
-| `AUTH_RATE_LIMIT_PER_MINUTE` | Auth endpoint rate limit (default `30`) |
+| `AUTH_RATE_LIMIT_PER_MINUTE` | Auth endpoint rate limit (default `30`); outside development the limiter refuses logins when Redis is unreachable |
+| `ENVIRONMENT` | `local` / `development` / `staging` / `production`; anything but the first two rejects demo secrets, disables GraphiQL, and blocks introspection |
+| `GRAPHQL_MAX_DEPTH`, `GRAPHQL_MAX_ALIASES`, `GRAPHQL_MAX_TOKENS` | Per-document GraphQL limits (defaults `10` / `15` / `2000`) |
+| `MINIO_*` | S3-compatible photo storage (endpoint, credentials, bucket, presign lifetime) |
 | `API_PORT`, `FLOWER_PORT`, `POSTGRES_PUBLISH_PORT`, `REDIS_PUBLISH_PORT`, `NEO4J_HTTP_PORT`, `NEO4J_BOLT_PORT` | Optional published ports for Compose |
+| `APP_IMAGE_TARGET` | Compose build stage: `runtime` (default) or `ci` (adds pytest and linters) |
+
+`scripts/check_env_example_sync.py` fails if a setting is added here without documenting it in `.env.example`.
 
 ---
 
