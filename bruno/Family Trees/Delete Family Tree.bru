@@ -1,0 +1,37 @@
+meta {
+  name: Delete Family Tree
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{base_url}}/family-trees/{{tree_id}}
+  body: none
+  auth: inherit
+}
+
+params:path {
+  tree_id: {{tree_id}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.result: isDefined
+}
+
+docs {
+  # Delete Family Tree
+
+  Owner only, and destructive: run it last, since every Persons and Marriages
+  request in this collection is scoped to `{{tree_id}}`.
+
+  ## Input (path)
+  | Param | Type | Required |
+  |-------|------|----------|
+  | tree_id | uuid | yes |
+
+  ## Output `200`
+  ```json
+  { "result": "ok" }
+  ```
+}

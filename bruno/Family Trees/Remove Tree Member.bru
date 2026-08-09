@@ -1,0 +1,39 @@
+meta {
+  name: Remove Tree Member
+  type: http
+  seq: 7
+}
+
+delete {
+  url: {{base_url}}/family-trees/{{tree_id}}/members/{{user_id}}
+  body: none
+  auth: inherit
+}
+
+params:path {
+  tree_id: {{tree_id}}
+  user_id: {{user_id}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.result: isDefined
+}
+
+docs {
+  # Remove Tree Member
+
+  Owner only. Removing the last owner is rejected, so a tree always keeps
+  someone who can manage it.
+
+  ## Input (path)
+  | Param | Type | Required |
+  |-------|------|----------|
+  | tree_id | uuid | yes |
+  | user_id | uuid | yes |
+
+  ## Output `200`
+  ```json
+  { "result": "ok" }
+  ```
+}

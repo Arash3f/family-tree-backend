@@ -1,0 +1,48 @@
+meta {
+  name: Update Family Tree
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{base_url}}/family-trees/{{tree_id}}
+  body: json
+  auth: inherit
+}
+
+params:path {
+  tree_id: {{tree_id}}
+}
+
+body:json {
+  {
+    "name": "Karimi family (renamed)"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isString
+  res.body.name: eq Karimi family (renamed)
+}
+
+docs {
+  # Update Family Tree
+
+  Owner only: a plain member gets `403`.
+
+  ## Input (path + `application/json`)
+  | Field | Type | Required | Notes |
+  |-------|------|----------|-------|
+  | tree_id | uuid | yes | Path param |
+  | name | string | yes | 1–100 characters |
+
+  ## Output `200`
+  ```json
+  {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "name": "Karimi family (renamed)",
+    "owner_user_id": "00000000-0000-0000-0000-000000000002"
+  }
+  ```
+}

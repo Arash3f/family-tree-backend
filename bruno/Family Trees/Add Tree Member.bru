@@ -1,0 +1,55 @@
+meta {
+  name: Add Tree Member
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/family-trees/{{tree_id}}/members
+  body: json
+  auth: inherit
+}
+
+params:path {
+  tree_id: {{tree_id}}
+}
+
+body:json {
+  {
+    "user_id": "{{user_id}}"
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.id: isString
+  res.body.tree_id: isString
+  res.body.user_id: isString
+  res.body.role: eq member
+}
+
+docs {
+  # Add Tree Member
+
+  Owner only. The new member joins with the `member` role, which grants read
+  and write access to the tree's persons and marriages but not to tree
+  settings or membership. Adding the same user twice returns `409`.
+
+  Run Users / Create User first so `{{user_id}}` points at a real account.
+
+  ## Input (path + `application/json`)
+  | Field | Type | Required |
+  |-------|------|----------|
+  | tree_id | uuid | yes (path) |
+  | user_id | uuid | yes |
+
+  ## Output `201`
+  ```json
+  {
+    "id": "00000000-0000-0000-0000-000000000003",
+    "tree_id": "00000000-0000-0000-0000-000000000001",
+    "user_id": "00000000-0000-0000-0000-000000000002",
+    "role": "member"
+  }
+  ```
+}

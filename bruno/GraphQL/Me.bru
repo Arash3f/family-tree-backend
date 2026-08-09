@@ -1,0 +1,36 @@
+meta {
+  name: Me
+  type: graphql
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  query: '''
+    query Me {
+      me {
+        id
+        username
+        roleId
+      }
+    }
+  '''
+}
+
+assert {
+  res.status: eq 200
+  res.body.data.me.id: isString
+  res.body.data.me.username: isString
+}
+
+docs {
+  # GraphQL Me
+
+  Equivalent to REST `GET /auth/me`. Confirms the bearer token set by **Login**
+  reaches the GraphQL context.
+}

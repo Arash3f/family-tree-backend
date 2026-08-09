@@ -1,0 +1,51 @@
+meta {
+  name: Update Ticket Status
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{base_url}}/tickets/{{ticket_id}}/status
+  body: json
+  auth: inherit
+}
+
+params:path {
+  ticket_id: {{ticket_id}}
+}
+
+body:json {
+  {
+    "status": "in_progress"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isString
+  res.body.status: eq in_progress
+}
+
+docs {
+  # Update Ticket Status
+
+  Staff action: requires `ticket:manage`.
+
+  ## Input (path + `application/json`)
+  | Field | Type | Required | Notes |
+  |-------|------|----------|-------|
+  | ticket_id | uuid | yes (path) | |
+  | status | string | yes | `open` \| `in_progress` \| `closed` |
+
+  ## Output `200`
+  ```json
+  {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "title": "Need help",
+    "status": "in_progress",
+    "created_by_user_id": "00000000-0000-0000-0000-000000000003",
+    "created_at": "2026-01-01T10:00:00",
+    "updated_at": "2026-01-01T10:05:00"
+  }
+  ```
+}

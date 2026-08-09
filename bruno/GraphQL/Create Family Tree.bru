@@ -1,0 +1,48 @@
+meta {
+  name: Create Family Tree
+  type: graphql
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  query: '''
+    mutation CreateFamilyTree($data: FamilyTreeCreateInput!) {
+      createFamilyTree(data: $data) {
+        id
+        name
+        ownerUserId
+      }
+    }
+  '''
+  variables: '''
+    {
+      "data": { "name": "Karimi family (GraphQL)" }
+    }
+  '''
+}
+
+assert {
+  res.status: eq 200
+  res.body.data.createFamilyTree.id: isString
+  res.body.data.createFamilyTree.name: isString
+}
+
+script:post-response {
+  const tree = res.body && res.body.data && res.body.data.createFamilyTree;
+  if (tree && tree.id) {
+    bru.setEnvVar("tree_id", String(tree.id));
+  }
+}
+
+docs {
+  # GraphQL Create Family Tree
+
+  Equivalent to REST `POST /family-trees`. Stores the new id in `tree_id`, so the
+  GraphQL person requests below work straight after this one.
+}

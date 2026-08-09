@@ -1,7 +1,7 @@
 meta {
   name: Closest Relationship
   type: graphql
-  seq: 2
+  seq: 7
 }
 
 post {
@@ -12,8 +12,8 @@ post {
 
 body:graphql {
   query: '''
-    query ClosestRelationship($fromId: UUID!, $toId: UUID!) {
-      closestRelationship(fromPersonId: $fromId, toPersonId: $toId) {
+    query ClosestRelationship($treeId: UUID!, $fromId: UUID!, $toId: UUID!) {
+      closestRelationship(treeId: $treeId, fromPersonId: $fromId, toPersonId: $toId) {
         fromPersonId
         toPersonId
         found
@@ -25,6 +25,7 @@ body:graphql {
   '''
   variables: '''
     {
+      "treeId": "{{tree_id}}",
       "fromId": "{{from_person_id}}",
       "toId": "{{to_person_id}}"
     }
@@ -40,7 +41,8 @@ assert {
 docs {
   # GraphQL Closest Relationship
 
-  Equivalent to REST `GET /persons/{from}/relation/{to}`.
+  Equivalent to REST `GET /family-trees/{tree_id}/persons/{from}/relation/{to}`.
+  Both persons must belong to `tree_id`; the path never routes through another tree.
   Set `from_person_id` and `to_person_id` in Local (create persons first).
   Requires Neo4j graph data (Celery sync) for a real path.
 }

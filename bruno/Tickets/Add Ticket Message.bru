@@ -1,0 +1,50 @@
+meta {
+  name: Add Ticket Message
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/tickets/{{ticket_id}}/messages
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "body": "Any update on this?"
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.id: isString
+  res.body.ticket_id: isString
+  res.body.author_user_id: isString
+  res.body.body: isString
+}
+
+docs {
+  # Add Ticket Message
+
+  Appends a reply to an existing ticket. Requires the `ticket:reply` permission;
+  without `ticket:manage` you can only reply to your own tickets.
+
+  ## Input (path + `application/json`)
+  | Field | Type | Required | Notes |
+  |-------|------|----------|-------|
+  | ticket_id | uuid | yes | Path param, saved by Create Ticket |
+  | body | string | yes | Non-empty message text |
+
+  ## Output `201`
+  ```json
+  {
+    "id": "00000000-0000-0000-0000-000000000002",
+    "ticket_id": "00000000-0000-0000-0000-000000000001",
+    "author_user_id": "00000000-0000-0000-0000-000000000003",
+    "body": "Any update on this?",
+    "created_at": "2026-01-01T10:00:00",
+    "updated_at": null
+  }
+  ```
+}

@@ -1,0 +1,42 @@
+meta {
+  name: List Tree Members
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/family-trees/{{tree_id}}/members
+  body: none
+  auth: inherit
+}
+
+params:path {
+  tree_id: {{tree_id}}
+}
+
+assert {
+  res.status: eq 200
+  res.body: isArray
+}
+
+docs {
+  # List Tree Members
+
+  ## Input (path)
+  | Param | Type | Required |
+  |-------|------|----------|
+  | tree_id | uuid | yes |
+
+  ## Output `200`
+  ```json
+  [
+    {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "tree_id": "00000000-0000-0000-0000-000000000001",
+      "user_id": "00000000-0000-0000-0000-000000000002",
+      "role": "owner"
+    }
+  ]
+  ```
+  `role` is `owner` or `member`.
+}

@@ -19,9 +19,17 @@ docs {
   1. Select the Local environment
   2. Run Auth / Login (uses `{{username}}` / `{{password}}`)
   3. Optionally run Auth / Me to verify the token
-  4. Use other folders; tokens and created IDs are saved to Local env
-  5. For Closest Relationship / Create Marriage, set `from_person_id` and `to_person_id`
-  6. GraphQL folder mirrors login + closest relationship against `/graphql`
+  4. Run Family Trees / Create Family Tree — this fills `tree_id`
+  5. Use other folders; tokens and created IDs are saved to Local env
+  6. For Closest Relationship / Create Marriage, set `from_person_id` and `to_person_id`
+  7. GraphQL folder mirrors the same flow against `/graphql`
+
+  ## Family trees are the tenant boundary
+  Persons and marriages live under `/family-trees/{{tree_id}}/…`. Nothing in those
+  folders works until `tree_id` is set, and you only reach a tree you belong to:
+  an unknown tree returns `404` and a tree you are not a member of returns `403`,
+  even when your role carries the matching permission. Renaming or deleting a tree
+  and managing its members are owner-only actions.
 
   ## Common error body
   ```json

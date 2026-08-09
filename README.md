@@ -38,9 +38,10 @@ Built with **FastAPI** and **Clean Architecture**. Exposes both **REST** and **G
 
 - Hybrid persistence: PostgreSQL (CRUD, auth, history) + Neo4j (graph edges & path queries)
 - Dual API surface: REST routers + GraphQL (Strawberry) sharing the same application layer
-- Closest relationship between two people: REST `GET /persons/{from_id}/relation/{to_id}` or GraphQL `closestRelationship`
+- Closest relationship between two people: REST `GET /family-trees/{tree_id}/persons/{from_id}/relation/{to_id}` or GraphQL `closestRelationship`
 - JWT auth with access + refresh tokens (same tokens for REST and GraphQL)
-- Role-based access control (permissions on roles)
+- Role-based access control (permissions on roles) on top of per-tree membership
+- Multi-tenant family trees: persons, marriages, and graph paths never cross a tree boundary
 - Async SQLAlchemy + Alembic migrations
 - Celery sync of person/marriage changes into Neo4j after commit
 - Scheduled database backups via Celery Beat
@@ -308,15 +309,22 @@ Interactive docs: [/api_docs](http://localhost:8001/api_docs) (default `/docs` i
 | `/users` | User CRUD (permission-guarded) |
 | `/roles` | Role CRUD |
 | `/permissions` | Permission listing |
-| `/persons` | Person CRUD, filtered list, closest relationship |
-| `/marriages` | Marriage CRUD, divorce, filtered list |
+| `/family-trees` | Tree CRUD plus membership (`GET/POST /{tree_id}/members`, `DELETE /{tree_id}/members/{user_id}`) |
+| `/family-trees/{tree_id}/persons` | Person CRUD, filtered list, closest relationship |
+| `/family-trees/{tree_id}/marriages` | Marriage CRUD, divorce, filtered list |
+| `/tickets` | Ticket CRUD, replies (`POST /{id}/messages`), status (`PATCH /{id}/status`) |
+| `/media` | `POST /upload` — returns the object key referenced by `photo_object_key` |
 | `/health` | Postgres + Neo4j status (`200` / `status:ok`, or `503` / `status:degraded`) |
 | `/health/neo4j` | Neo4j probe |
+
+Persons and marriages are **tenant-scoped**: every path carries a `tree_id`, and the
+caller must be a member of that tree. Non-members get `404` rather than `403`, so a
+tree's existence is not disclosed. Create a tree with `POST /family-trees` first.
 
 Closest relationship:
 
 ```http
-GET /persons/{from_person_id}/relation/{to_person_id}
+GET /family-trees/{tree_id}/persons/{from_person_id}/relation/{to_person_id}
 Authorization: Bearer <access_token>
 ```
 
@@ -333,11 +341,17 @@ GraphQL mirrors REST: same use cases, JWT auth (`Authorization: Bearer <access_t
 | GraphQL | REST equivalent |
 |---------|-----------------|
 | `login` / `refreshToken` / `logout` / `logoutAll` / `me` | `/auth/*` |
-| `person` / `persons` / `createPerson` / `updatePerson` / `deletePerson` / `closestRelationship` | `/persons/*` |
+| `familyTree` / `familyTrees` / `createFamilyTree` / `updateFamilyTree` / `deleteFamilyTree` | `/family-trees/*` |
+| `treeMembers` / `addTreeMember` / `removeTreeMember` | `/family-trees/{tree_id}/members` |
+| `person` / `persons` / `createPerson` / `updatePerson` / `deletePerson` / `closestRelationship` | `/family-trees/{tree_id}/persons/*` |
 | `user` / `users` / `createUser` / `updateUser` / `deleteUser` | `/users/*` |
 | `role` / `roles` / `createRole` / `updateRole` / `deleteRole` | `/roles/*` |
 | `permissions` | `/permissions/list` |
-| `marriage` / `marriages` / `createMarriage` / `updateMarriage` / `deleteMarriage` / `divorce` | `/marriages/*` |
+| `marriage` / `marriages` / `createMarriage` / `updateMarriage` / `deleteMarriage` / `divorce` | `/family-trees/{tree_id}/marriages/*` |
+| `ticket` / `tickets` / `createTicket` / `addTicketMessage` / `updateTicketStatus` | `/tickets/*` |
+
+Tree-scoped fields take a `treeId` argument that mirrors the REST path segment.
+File upload has no GraphQL counterpart; use `POST /media/upload`.
 
 Example login + create person:
 
@@ -350,7 +364,16 @@ mutation {
 }
 
 mutation {
-  createPerson(data: { name: "Ali", gender: MALE, birthDate: "1375/05/10" }) {
+  createFamilyTree(data: { name: "Karimi family" }) {
+    id
+  }
+}
+
+mutation {
+  createPerson(
+    treeId: "<id from createFamilyTree>"
+    data: { name: "Ali", gender: MALE, birthDate: "1375/05/10" }
+  ) {
     id
     name
     gender
@@ -481,7 +504,11 @@ tests/             # unit / integration / e2e (REST + GraphQL)
 
 ## API client (Bruno)
 
-Open the `bruno/` collection in [Bruno](https://www.usebruno.com/). Use the `Local` environment (`base_url`, credentials, tokens). Requests cover auth, users, roles, permissions, persons (including closest relationship), marriages, and GraphQL counterparts under `bruno/GraphQL/`.
+Open the `bruno/` collection in [Bruno](https://www.usebruno.com/). Use the `Local` environment (`base_url`, credentials, tokens, and the ids captured by post-response scripts).
+
+Run **Auth → Login** and then **Family Trees → Create Family Tree**: the latter stores `tree_id`, which every person and marriage request needs. The collection covers all REST endpoints — auth, users, roles, permissions, family trees and membership, persons (including closest relationship), marriages, media upload, tickets, and health — plus GraphQL counterparts for the main flow under `bruno/GraphQL/`.
+
+`tests/unit/api/test_bruno_collection_matches_routes.py` fails if a request points at a route the app no longer serves, if a route has no request at all, if a GraphQL body no longer validates against the schema, or if a request uses a variable the `Local` environment does not define — so the collection cannot silently rot.
 
 ---
 

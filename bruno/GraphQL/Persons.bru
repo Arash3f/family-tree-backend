@@ -1,0 +1,50 @@
+meta {
+  name: Persons
+  type: graphql
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  query: '''
+    query Persons($treeId: UUID!, $data: PersonListInput) {
+      persons(treeId: $treeId, data: $data) {
+        total
+        page
+        pageSize
+        items {
+          id
+          name
+          familyName
+          gender
+        }
+      }
+    }
+  '''
+  variables: '''
+    {
+      "treeId": "{{tree_id}}",
+      "data": {
+        "pagination": { "page": 1, "pageSize": 10 }
+      }
+    }
+  '''
+}
+
+assert {
+  res.status: eq 200
+  res.body.data.persons.items: isArray
+  res.body.data.persons.total: isNumber
+}
+
+docs {
+  # GraphQL Persons
+
+  Equivalent to REST `POST /family-trees/{tree_id}/persons/list`. `pageSize` is
+  capped at 100 by the server.
+}

@@ -1,0 +1,40 @@
+meta {
+  name: List Family Trees
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/family-trees/
+  body: none
+  auth: inherit
+}
+
+assert {
+  res.status: eq 200
+  res.body: isArray
+}
+
+script:post-response {
+  if (res.status === 200 && Array.isArray(res.body) && res.body.length > 0) {
+    bru.setEnvVar("tree_id", String(res.body[0].id));
+  }
+}
+
+docs {
+  # List Family Trees
+
+  Returns only the trees the caller is a member of, so it is safe to run with
+  any account. The first tree is saved to `tree_id`.
+
+  ## Output `200`
+  ```json
+  [
+    {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "name": "Karimi family",
+      "owner_user_id": "00000000-0000-0000-0000-000000000002"
+    }
+  ]
+  ```
+}

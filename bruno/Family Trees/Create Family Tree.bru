@@ -1,0 +1,52 @@
+meta {
+  name: Create Family Tree
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/family-trees/
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Karimi family"
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.id: isString
+  res.body.name: isString
+  res.body.owner_user_id: isString
+}
+
+script:post-response {
+  if (res.status === 201 && res.body.id) {
+    bru.setEnvVar("tree_id", String(res.body.id));
+  }
+}
+
+docs {
+  # Create Family Tree
+
+  Run this first: every Persons and Marriages request is scoped to
+  `/family-trees/{{tree_id}}/...`, and this request saves `tree_id` to the
+  Local environment. The caller becomes the tree owner.
+
+  ## Input (`application/json`)
+  | Field | Type | Required | Notes |
+  |-------|------|----------|-------|
+  | name | string | yes | 1–100 characters |
+
+  ## Output `201`
+  ```json
+  {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "name": "Karimi family",
+    "owner_user_id": "00000000-0000-0000-0000-000000000002"
+  }
+  ```
+}

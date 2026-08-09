@@ -1,0 +1,64 @@
+meta {
+  name: Create Person
+  type: graphql
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  query: '''
+    mutation CreatePerson($treeId: UUID!, $data: PersonCreateInput!) {
+      createPerson(treeId: $treeId, data: $data) {
+        id
+        name
+        familyName
+        gender
+        birthDate
+      }
+    }
+  '''
+  variables: '''
+    {
+      "treeId": "{{tree_id}}",
+      "data": {
+        "name": "arash",
+        "familyName": "karimi",
+        "gender": "male",
+        "birthDate": "1379/09/01"
+      }
+    }
+  '''
+}
+
+assert {
+  res.status: eq 200
+  res.body.data.createPerson.id: isString
+  res.body.data.createPerson.name: isString
+}
+
+script:post-response {
+  const person = res.body && res.body.data && res.body.data.createPerson;
+  if (person && person.id) {
+    const id = String(person.id);
+    const previous = bru.getEnvVar("person_id");
+    bru.setEnvVar("person_id", id);
+    if (previous && previous !== id) {
+      bru.setEnvVar("from_person_id", previous);
+      bru.setEnvVar("to_person_id", id);
+    } else {
+      bru.setEnvVar("from_person_id", id);
+    }
+  }
+}
+
+docs {
+  # GraphQL Create Person
+
+  Equivalent to REST `POST /family-trees/{tree_id}/persons/`. The caller must be a
+  member of `treeId`; input fields are camelCase versions of the REST body.
+}
