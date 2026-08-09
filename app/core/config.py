@@ -8,6 +8,9 @@ from pydantic_settings import SettingsConfigDict
 class AppSettings(PydanticBaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
+    # local | development | staging | production
+    ENVIRONMENT: str = "local"
+
     # Neo4J
     NEO4J_URI: str = "bolt://neo4j:7687"
     NEO4J_USER: str = "neo4j"
@@ -74,6 +77,34 @@ class AppSettings(PydanticBaseSettings):
                 "(same host/port/name would let tests wipe app data). "
                 f"Got {self.POSTGRES_DB!r} on "
                 f"{self.POSTGRES_HOST}:{self.POSTGRES_PORT}."
+            )
+        return self
+
+    @model_validator(mode="after")
+    def reject_weak_secrets_outside_local(self) -> Self:
+        """Allow weak demo defaults only in local/development."""
+        env = (self.ENVIRONMENT or "local").strip().lower()
+        if env in {"local", "development", "dev", "test"}:
+            return self
+
+        weak: list[str] = []
+        if self.ADMIN_PASSWORD in {"admin", "password", "123456"}:
+            weak.append("ADMIN_PASSWORD")
+        if self.NEO4J_PASSWORD in {"postgres", "neo4j", "password"}:
+            weak.append("NEO4J_PASSWORD")
+        if self.POSTGRES_PASSWORD in {"postgres", "password"}:
+            weak.append("POSTGRES_PASSWORD")
+        if self.FLOWER_BASIC_AUTH in {"admin:admin", "admin:password"}:
+            weak.append("FLOWER_BASIC_AUTH")
+        if self.MINIO_ACCESS_KEY == "minioadmin" or self.MINIO_SECRET_KEY == "minioadmin":
+            weak.append("MINIO_ACCESS_KEY/MINIO_SECRET_KEY")
+        if self.JWT_SECRET.startswith("local-dev-only"):
+            weak.append("JWT_SECRET")
+
+        if weak:
+            raise ValueError(
+                "Weak/default secrets are not allowed when "
+                f"ENVIRONMENT={env!r}. Change: {', '.join(weak)}."
             )
         return self
 

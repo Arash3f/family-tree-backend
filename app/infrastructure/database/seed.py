@@ -6,7 +6,7 @@ from app.domain.entities.user import User
 from app.infrastructure.services.security.password_hasher_impl import (
     Argon2PasswordHasher,
 )
-from app.infrastructure.utils.constants.permissions import Permissions
+from app.domain.shared.permissions import Permissions
 
 
 async def seed_initial_user(uow: UnitOfWork, password_hasher: Argon2PasswordHasher):

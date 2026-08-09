@@ -14,7 +14,7 @@ from app.application.use_cases.user.get_user_list_by_filter_use_case import (
 )
 from app.application.use_cases.user.get_user_use_case import GetUserUseCase
 from app.application.use_cases.user.update_user_use_case import UpdateUserUseCase
-from app.infrastructure.utils.constants.permissions import Permissions
+from app.domain.shared.permissions import Permissions
 from app.presentation.graphql.auth import require_permission
 from app.presentation.graphql.types.common import (
     ResultType,

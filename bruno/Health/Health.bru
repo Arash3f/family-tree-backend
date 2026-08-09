@@ -32,5 +32,6 @@ docs {
   }
   ```
 
-  `status` is `ok` when both databases are healthy, otherwise `degraded`.
+  HTTP `200` when both databases are healthy; HTTP `503` with `status: degraded`
+  when Postgres or Neo4j fails (Compose HEALTHCHECK uses this).
 }

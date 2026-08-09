@@ -44,7 +44,7 @@ repos:
     hooks:
       - id: bandit
         files: ^app/
-        args: ["-r", "app", "-ll"]
+        args: ["-r", "app", "-c", "pyproject.toml", "-ll"]
         pass_filenames: false
         stages: [pre-push]
   - repo: https://github.com/pre-commit/mirrors-mypy

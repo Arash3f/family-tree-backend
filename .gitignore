@@ -3,7 +3,6 @@
 ############################
 
 seed_items.py
-seed_iteams.py
 
 celerybeat-schedule*
 

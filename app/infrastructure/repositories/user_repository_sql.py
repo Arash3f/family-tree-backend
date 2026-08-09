@@ -16,6 +16,7 @@ from app.domain.shared.dto.user_with_detail_dto import UserGetWithDetailResponse
 from app.infrastructure.database.models.role_model import RoleModel
 from app.infrastructure.database.models.user_model import UserModel
 from app.infrastructure.database.utils.pagination_and_sort import paginate_and_sort
+from app.infrastructure.mappers.user_detail_mapper import user_model_to_detail_dto
 
 
 class SQLUserRepository(UserRepository):
@@ -58,7 +59,7 @@ class SQLUserRepository(UserRepository):
         if model is None:
             return None
 
-        return UserGetWithDetailResponseDTO.from_model(model)
+        return user_model_to_detail_dto(model)
 
     async def get_by_username(self, username: str) -> User | None:
         stmt = select(UserModel).where(UserModel.username == username)

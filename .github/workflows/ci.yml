@@ -33,7 +33,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements.txt -r requirements-dev.txt
 
       - name: Ruff
         run: ruff check .
@@ -49,7 +49,7 @@ jobs:
           python -m pip install "poetry>=2.0,<3.0"
           poetry self add poetry-plugin-export
 
-      - name: Check requirements.txt sync
+      - name: Check requirements sync
         run: python scripts/check_requirements_sync.py
 
   stack:
@@ -69,6 +69,17 @@ jobs:
       - name: Start stack
         # api + its depends_on (db, redis, neo4j, minio). Celery/Flower not needed for pytest.
         run: docker compose --env-file .env up -d --wait --wait-timeout 180 api
+
+      - name: Alembic migration smoke
+        run: |
+          docker compose --env-file .env exec -T api alembic current
+          docker compose --env-file .env exec -T api alembic heads
+          # App DB is migrated by entrypoint; assert version table exists and matches head.
+          docker compose --env-file .env exec -T api sh -c '
+            current="$(alembic current 2>/dev/null | awk "{print \$1}" | head -n1)"
+            head="$(alembic heads 2>/dev/null | awk "{print \$1}" | head -n1)"
+            test -n "$current" && test "$current" = "$head"
+          '
 
       - name: Create test database
         run: |
@@ -90,6 +101,12 @@ jobs:
               --cov-fail-under=55 \
               -o cache_dir=/tmp/pytest_cache
           '
+
+      - name: Live Neo4j closest-relationship e2e
+        run: |
+          docker compose --env-file .env exec -T api pytest -v --tb=short --no-cov \
+            tests/e2e/routers/test_closest_relationship_live.py \
+            -o cache_dir=/tmp/pytest_cache
 
       - name: Collect test artifacts
         if: always()

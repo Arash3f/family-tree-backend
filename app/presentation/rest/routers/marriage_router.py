@@ -16,7 +16,7 @@ from app.application.use_cases.marriage.get_marriage_use_case import GetMarriage
 from app.application.use_cases.marriage.update_marriage_use_case import (
     UpdateMarriageUseCase,
 )
-from app.infrastructure.utils.constants.permissions import Permissions
+from app.domain.shared.permissions import Permissions
 from app.presentation.rest.dependencies.permission_guard import RequirePermission
 from app.presentation.rest.schemas.dto.common import (
     IdRequest,

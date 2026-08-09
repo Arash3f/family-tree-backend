@@ -13,7 +13,7 @@ from app.application.use_cases.person.get_person_list_by_filter_use_case import 
 )
 from app.application.use_cases.person.get_person_use_case import GetPersonUseCase
 from app.application.use_cases.person.update_person_use_case import UpdatePersonUseCase
-from app.infrastructure.utils.constants.permissions import Permissions
+from app.domain.shared.permissions import Permissions
 from app.presentation.rest.dependencies.permission_guard import RequirePermission
 from app.presentation.rest.schemas.dto.common import PaginatedResponse, ResultResponse
 from app.presentation.rest.schemas.dto.person_schema import (

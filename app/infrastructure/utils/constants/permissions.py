@@ -1,40 +1,5 @@
-from typing import List
+"""Backward-compatible re-export; prefer ``app.domain.shared.permissions``. """
 
+from app.domain.shared.permissions import Permissions
 
-class Permissions:
-    USER_CREATE = "user_create"
-    USER_DELETE = "user_delete"
-    USER_READ = "user_read"
-    USER_UPDATE = "user_update"
-
-    ROLE_CREATE = "role_create"
-    ROLE_DELETE = "role_delete"
-    ROLE_READ = "role_read"
-    ROLE_UPDATE = "role_update"
-
-    PERMISSION_READ = "permission_read"
-
-    MARRIAGE_CREATE = "marriage_create"
-    MARRIAGE_READ = "marriage_read"
-    MARRIAGE_UPDATE = "marriage_update"
-    MARRIAGE_DELETE = "marriage_delete"
-    MARRIAGE_DIVORCE = "marriage_divorce"
-
-    PERSON_CREATE = "person_create"
-    PERSON_READ = "person_read"
-    PERSON_UPDATE = "person_update"
-    PERSON_DELETE = "person_delete"
-
-    MEDIA_UPLOAD = "media_upload"
-
-    @classmethod
-    def get_all_permissions(cls) -> List[str]:
-        return [
-            value
-            for name, value in vars(cls).items()
-            if not name.startswith("_") and isinstance(value, str)
-        ]
-
-    @classmethod
-    def get_count(cls) -> int:
-        return len(cls.get_all_permissions())
+__all__ = ["Permissions"]

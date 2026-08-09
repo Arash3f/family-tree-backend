@@ -10,7 +10,7 @@ from app.application.use_cases.user.get_user_list_by_filter_use_case import (
 from app.application.use_cases.user.get_user_use_case import GetUserUseCase
 from app.application.use_cases.user.update_user_use_case import UpdateUserUseCase
 from app.domain.services.password_hasher import PasswordHasher
-from app.infrastructure.utils.constants.permissions import Permissions
+from app.domain.shared.permissions import Permissions
 from app.presentation.rest.dependencies.permission_guard import RequirePermission
 from app.presentation.rest.schemas.dto.common import PaginatedResponse, ResultResponse
 from app.presentation.rest.schemas.dto.user_schema import (

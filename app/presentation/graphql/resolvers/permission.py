@@ -3,7 +3,7 @@ from strawberry.types import Info
 from app.application.use_cases.permission.get_permission_list_by_filter_use_case import (
     GetPermissionListByFilterUseCase,
 )
-from app.infrastructure.utils.constants.permissions import Permissions
+from app.domain.shared.permissions import Permissions
 from app.presentation.graphql.auth import require_permission
 from app.presentation.graphql.types.common import (
     pagination_dict,

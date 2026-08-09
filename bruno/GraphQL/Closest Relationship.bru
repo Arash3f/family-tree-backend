@@ -1,0 +1,46 @@
+meta {
+  name: Closest Relationship
+  type: graphql
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  query: '''
+    query ClosestRelationship($fromId: UUID!, $toId: UUID!) {
+      closestRelationship(fromPersonId: $fromId, toPersonId: $toId) {
+        fromPersonId
+        toPersonId
+        found
+        distance
+        pathPersonIds
+        relationshipTypes
+      }
+    }
+  '''
+  variables: '''
+    {
+      "fromId": "{{from_person_id}}",
+      "toId": "{{to_person_id}}"
+    }
+  '''
+}
+
+assert {
+  res.status: eq 200
+  res.body.data.closestRelationship.found: isDefined
+  res.body.data.closestRelationship.pathPersonIds: isArray
+}
+
+docs {
+  # GraphQL Closest Relationship
+
+  Equivalent to REST `GET /persons/{from}/relation/{to}`.
+  Set `from_person_id` and `to_person_id` in Local (create persons first).
+  Requires Neo4j graph data (Celery sync) for a real path.
+}

@@ -35,3 +35,19 @@ def test_settings_reject_identical_app_and_test_database():
 def test_default_test_database_name_is_family_tree_test():
     field = AppSettings.model_fields["POSTGRES_DB_TEST"]
     assert field.default == "family_tree_test"
+
+
+def test_settings_reject_weak_secrets_in_production():
+    with pytest.raises(ValidationError, match="Weak/default secrets"):
+        AppSettings(
+            _env_file=None,
+            **_base_kwargs(ENVIRONMENT="production"),  # type: ignore[arg-type]
+        )
+
+
+def test_settings_allow_weak_secrets_in_local():
+    settings = AppSettings(
+        _env_file=None,
+        **_base_kwargs(ENVIRONMENT="local", ADMIN_PASSWORD="admin"),  # type: ignore[arg-type]
+    )
+    assert settings.ENVIRONMENT == "local"

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from app.application.use_cases.permission.get_permission_list_by_filter_use_case import (
     GetPermissionListByFilterUseCase,
 )
-from app.infrastructure.utils.constants.permissions import Permissions
+from app.domain.shared.permissions import Permissions
 from app.presentation.rest.dependencies.permission_guard import RequirePermission
 from app.presentation.rest.schemas.dto.common import PaginatedResponse
 from app.presentation.rest.schemas.dto.permission_schema import (

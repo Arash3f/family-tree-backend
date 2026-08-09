@@ -144,18 +144,29 @@ docker compose -f docker/compose.yml --env-file .env exec api sh
 | OpenAPI JSON | http://localhost:8001/openapi.json |
 | GraphQL (GraphiQL) | http://localhost:8001/graphql |
 | Health | http://localhost:8001/health (HTTP 200 when ok, 503 when degraded) |
-| Neo4j Browser | http://localhost:7474 |
-| MinIO API / Console | http://localhost:9000 / http://localhost:9001 |
 | Flower | http://localhost:5555 (basic auth from `FLOWER_BASIC_AUTH`, default `admin:admin`) |
 
-Override published ports with `API_PORT`, `FLOWER_PORT`, `POSTGRES_PUBLISH_PORT`, `REDIS_PUBLISH_PORT`, `NEO4J_HTTP_PORT`, `NEO4J_BOLT_PORT`, `MINIO_API_PORT`, `MINIO_CONSOLE_PORT`.
+DB / Redis / Neo4j / MinIO ports are **not** published by default. For host access
+(Neo4j Browser, MinIO console, psql):
+
+```bash
+docker compose -f docker/compose.yml -f docker/compose.host-ports.yml --env-file .env up -d
+```
+
+Then: Neo4j Browser `http://localhost:7474`, MinIO `http://localhost:9000` /
+`http://localhost:9001`.
+
+Override published ports with `API_PORT`, `FLOWER_PORT`, and (with host-ports file)
+`POSTGRES_PUBLISH_PORT`, `REDIS_PUBLISH_PORT`, `NEO4J_HTTP_PORT`, `NEO4J_BOLT_PORT`,
+`MINIO_API_PORT`, `MINIO_CONSOLE_PORT`.
 
 Default admin (from `.env` / seed on startup):
 
 - Username: value of `ADMIN_USERNAME` (default `admin`)
 - Password: value of `ADMIN_PASSWORD` (default `admin`)
 
-Change these before any shared or production-like environment.
+Keep `ENVIRONMENT=local` for demo secrets. Staging/production reject weak defaults
+(admin/postgres/minioadmin/`local-dev-only…` JWT, etc.).
 
 Docker assets for this API live under [`docker/`](docker/README.md). Run Compose from the repository root.
 
@@ -170,17 +181,20 @@ Run Postgres, Neo4j, and Redis yourself (or start them via the full Compose stac
 Local development uses **Poetry** (hooks expect it). Requires Poetry 2+ and Python 3.11+.
 
 ```bash
-poetry install
+poetry install --with dev
 ```
 
-`requirements.txt` is the lock export used by **Docker** and **CI**. Poetry 2 does
-not bundle `export` by default; this repo declares `poetry-plugin-export` under
+`requirements.txt` is the **runtime** lock export used by Docker production/`runtime` image stages.  
+`requirements-dev.txt` is the **dev/test** group (pytest, ruff, mypy, …) used by the Compose/`ci` image and the CI quality job.
+
+Poetry 2 does not bundle `export` by default; this repo declares `poetry-plugin-export` under
 `[tool.poetry.requires-plugins]` (installed automatically on `poetry install`).
 
 After changing deps with Poetry, re-export and verify:
 
 ```bash
 poetry export -f requirements.txt --without-hashes -o requirements.txt
+poetry export -f requirements.txt --without-hashes --only dev -o requirements-dev.txt
 python scripts/check_requirements_sync.py
 ```
 
@@ -425,7 +439,7 @@ Workflow: [`ci.yml`](.github/workflows/ci.yml) on push / PR to `main`.
 | **quality** | Ruff, mypy, Bandit on the runner |
 | **stack** | Build `docker/compose.yml`, start `api` (+ Postgres / Redis / Neo4j / MinIO), create test DB, run pytest with coverage (≥55%) |
 
-Infra versions match Compose (`postgres:15`, `redis:8`, `neo4j:5`).
+Infra versions match Compose (`postgres:15.13`, `redis:8.2.1`, `neo4j:5.26.4`, pinned MinIO release tags).
 
 Simulate locally:
 
@@ -486,8 +500,8 @@ Optional family sample data:
 
 ## Known limitations
 
-- Neo4j stays empty unless Celery workers are running and reachable.
-- Default admin password, JWT secret, and Flower basic auth in examples are for local use only.
+- Neo4j graph edges are written by Celery sync; without workers the graph stays empty aside from tests that seed Neo4j directly.
+- Example `.env` credentials are for `ENVIRONMENT=local` only; staging/production refuse weak defaults.
 
 ---
 
@@ -495,7 +509,7 @@ Optional family sample data:
 
 - [ ] Redis caching for hot graph paths
 - [ ] Observability (structured metrics / OpenTelemetry)
-- [ ] Broader e2e coverage with live Neo4j assertions
+- [x] Live Neo4j closest-relationship e2e in CI
 - [x] GraphQL API synced with REST
 
 ---

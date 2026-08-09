@@ -1,0 +1,47 @@
+meta {
+  name: Login
+  type: graphql
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: none
+}
+
+body:graphql {
+  query: '''
+    mutation Login($username: String!, $password: String!) {
+      login(username: $username, password: $password) {
+        accessToken
+        refreshToken
+      }
+    }
+  '''
+  variables: '''
+    {
+      "username": "{{username}}",
+      "password": "{{password}}"
+    }
+  '''
+}
+
+assert {
+  res.status: eq 200
+  res.body.data.login.accessToken: isDefined
+  res.body.data.login.refreshToken: isDefined
+}
+
+script:post-response {
+  if (res.status === 200 && res.body.data && res.body.data.login) {
+    bru.setEnvVar("access_token", res.body.data.login.accessToken);
+    bru.setEnvVar("refresh_token", res.body.data.login.refreshToken);
+  }
+}
+
+docs {
+  # GraphQL Login
+
+  Equivalent to REST `POST /auth/login`. Saves tokens into the Local environment.
+}

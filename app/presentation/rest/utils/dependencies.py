@@ -3,6 +3,7 @@ from fastapi import Depends
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.application.services.authorization_service import AuthorizationService
 from app.application.services.person_photo_service import PersonPhotoService
+from app.domain.repositories.family_tree_repository import FamilyTreeRepository
 from app.domain.repositories.object_storage import ObjectStorage
 from app.domain.services.marriage_rules import MarriageRulesService
 from app.domain.services.password_hasher import PasswordHasher
@@ -22,7 +23,7 @@ def get_uow():
     return SQLAlchemyUnitOfWork(async_session)
 
 
-def get_neo() -> Neo4jFamilyTreeRepository:
+def get_neo() -> FamilyTreeRepository:
     return Neo4jFamilyTreeRepository()
 
 
