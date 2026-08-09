@@ -30,6 +30,10 @@ class PersonModel(Base):
             "death_date IS NULL OR birth_date IS NULL OR death_date >= birth_date",
             name="ck_person_death_after_birth",
         ),
+        CheckConstraint(
+            "gender IN ('male', 'female')",
+            name="ck_person_gender",
+        ),
     )
 
     # -------------------------
