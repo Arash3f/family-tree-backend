@@ -56,9 +56,7 @@ def _optional_jalali(value: str | None):
     return jalali_to_gregorian(value)
 
 
-async def _require_tree_member(
-    info: Info, tree_id: UUID, permission: str
-) -> User:
+async def _require_tree_member(info: Info, tree_id: UUID, permission: str) -> User:
     user = await require_permission(info, permission)
     async with info.context.uow:
         await TreeAccessService(info.context.uow).require_member(
@@ -196,9 +194,7 @@ async def resolve_delete_person(
     return ResultType(result=mapped.result)
 
 
-async def resolve_person(
-    info: Info, tree_id: UUID, person_id: UUID
-) -> PersonType:
+async def resolve_person(info: Info, tree_id: UUID, person_id: UUID) -> PersonType:
     await _require_tree_member(info, tree_id, Permissions.PERSON_READ)
     usecase = GetPersonUseCase(info.context.uow, info.context.photo_service)
     res = await usecase.execute(CommonApiMapper.to_id_dto(person_id), tree_id=tree_id)
@@ -210,9 +206,7 @@ async def resolve_persons(
     info: Info, tree_id: UUID, data: PersonListInput | None = None
 ) -> PersonPage:
     await _require_tree_member(info, tree_id, Permissions.PERSON_READ)
-    usecase = GetPersonListByFilterUseCase(
-        info.context.uow, info.context.photo_service
-    )
+    usecase = GetPersonListByFilterUseCase(info.context.uow, info.context.photo_service)
     res = await usecase.execute(
         PersonApiMapper.to_get_list_person_dto(_person_list_request(data)),
         tree_id=tree_id,
@@ -234,9 +228,7 @@ async def resolve_closest_relationship(
 ) -> ClosestRelationshipType:
     await _require_tree_member(info, tree_id, Permissions.PERSON_READ)
     usecase = GetClosestRelationshipUseCase(info.context.neo, info.context.uow)
-    result = await usecase.execute(
-        from_person_id, to_person_id, tree_id=tree_id
-    )
+    result = await usecase.execute(from_person_id, to_person_id, tree_id=tree_id)
     data = result.model_dump()
     return ClosestRelationshipType(
         from_person_id=data["from_person_id"],

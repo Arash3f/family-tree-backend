@@ -32,7 +32,9 @@ class MarriageRepository(ABC):
     async def get(self, marriage_id: UUID) -> Marriage | None: ...
 
     @abstractmethod
-    async def get_by_ids(self, spouse_a_id: UUID, spouse_b_id: UUID) -> Marriage | None: ...
+    async def get_by_ids(
+        self, spouse_a_id: UUID, spouse_b_id: UUID
+    ) -> Marriage | None: ...
 
     @abstractmethod
     async def has_active_for_person(

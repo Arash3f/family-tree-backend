@@ -3,7 +3,10 @@ from datetime import date
 
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from app.application.dto.person.person_create_dto import ParentLinkDTO, PersonCreateMapper
+from app.application.dto.person.person_create_dto import (
+    ParentLinkDTO,
+    PersonCreateMapper,
+)
 from app.application.use_cases.person.create_person_use_case import CreatePersonUseCase
 from app.domain.entities.person import Gender, ParentRelationshipType
 

@@ -12,6 +12,7 @@ from app.celery.tasks import sync_relationships as sync_rel_module
 def test_sync_person_upsert_success():
     payload = {
         "id": str(UUID(int=1)),
+        "tree_id": str(UUID(int=99)),
         "full_name": "Ali",
         "gender": "MALE",
         "birth_date": None,
@@ -25,6 +26,7 @@ def test_sync_person_upsert_success():
 def test_sync_person_upsert_retries_on_error():
     payload = {
         "id": str(UUID(int=1)),
+        "tree_id": str(UUID(int=99)),
         "full_name": "Ali",
         "gender": "MALE",
         "birth_date": None,

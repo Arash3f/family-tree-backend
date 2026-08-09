@@ -12,7 +12,9 @@ from sqlalchemy.pool import NullPool
 from app.core.config import settings
 from app.domain.entities.user import User
 from app.infrastructure.database.base import Base
-from app.infrastructure.database.parent_integrity_ddl import install_parent_integrity_ddl
+from app.infrastructure.database.parent_integrity_ddl import (
+    install_parent_integrity_ddl,
+)
 from app.infrastructure.database.seed import seed_initial_permissions, seed_initial_user
 from app.infrastructure.services.security.password_hasher_impl import (
     Argon2PasswordHasher,
@@ -21,6 +23,7 @@ from app.infrastructure.services.unit_of_work.sqlalchemy_uow import SQLAlchemyUn
 from app.main import app
 from app.presentation.rest.utils.dependencies import get_uow
 from tests.helpers.family_tree import create_family_tree_with_owner, get_admin_user
+from tests.helpers.uow import TreeUnitOfWork
 
 # Avoid cross-test auth rate-limit bleed (shared client IP in ASGI tests)
 settings.AUTH_RATE_LIMIT_PER_MINUTE = 0
@@ -79,7 +82,7 @@ async def prepare_database(db_engine):
 @pytest_asyncio.fixture
 async def uow(db_engine, prepare_database):
     session = AsyncSession(db_engine, expire_on_commit=False)
-    uow = SQLAlchemyUnitOfWork(session_factory=lambda: session)
+    uow = TreeUnitOfWork(session_factory=lambda: session)
 
     async with uow:
         admin = await get_admin_user(uow)

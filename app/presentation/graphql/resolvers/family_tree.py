@@ -36,6 +36,7 @@ from app.presentation.graphql.types.family_tree import (
     tree_membership_from_mapping,
 )
 
+
 async def resolve_family_trees(info: Info) -> list[FamilyTreeType]:
     user = await require_permission(info, Permissions.TREE_READ)
     usecase = ListFamilyTreesUseCase(info.context.uow)
@@ -50,9 +51,7 @@ async def resolve_family_tree(info: Info, tree_id: UUID) -> FamilyTreeType:
     return family_tree_from_mapping(res.model_dump())
 
 
-async def resolve_tree_members(
-    info: Info, tree_id: UUID
-) -> list[TreeMembershipType]:
+async def resolve_tree_members(info: Info, tree_id: UUID) -> list[TreeMembershipType]:
     user = await require_permission(info, Permissions.TREE_READ)
     usecase = ListTreeMembersUseCase(info.context.uow)
     res = await usecase.execute(tree_id=tree_id, user_id=user.safe_id)

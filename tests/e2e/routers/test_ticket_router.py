@@ -163,9 +163,9 @@ async def test_ticket_flow_owner_and_admin(client, admin_headers, uow):  # noqa:
 
     status_resp = await client.patch(
         f"{BASE_URL}/{ticket_id}/status",
-        json=TicketUpdateStatusRequest(
-            status=TicketStatus.IN_PROGRESS
-        ).model_dump(mode="json"),
+        json=TicketUpdateStatusRequest(status=TicketStatus.IN_PROGRESS).model_dump(
+            mode="json"
+        ),
         headers=admin_headers,
     )
     assert status_resp.status_code == 200
@@ -176,9 +176,7 @@ async def test_ticket_flow_owner_and_admin(client, admin_headers, uow):  # noqa:
 
     admin_msg = await client.post(
         f"{BASE_URL}/{ticket_id}/messages",
-        json=TicketMessageCreateRequest(body="We are checking").model_dump(
-            mode="json"
-        ),
+        json=TicketMessageCreateRequest(body="We are checking").model_dump(mode="json"),
         headers=admin_headers,
     )
     assert admin_msg.status_code == 201
@@ -200,10 +198,7 @@ async def test_ticket_flow_owner_and_admin(client, admin_headers, uow):  # noqa:
     )
     assert closed_msg.status_code == 409
     assert closed_msg.json()["error_code"] == ErrorCode.TICKET_CLOSED
-    assert (
-        closed_msg.json()["message"]
-        == ERROR_MESSAGES["en"][ErrorCode.TICKET_CLOSED]
-    )
+    assert closed_msg.json()["message"] == ERROR_MESSAGES["en"][ErrorCode.TICKET_CLOSED]
 
     # silence unused variable warning for other user creation side-effect
     assert other.username == "ticket_other"

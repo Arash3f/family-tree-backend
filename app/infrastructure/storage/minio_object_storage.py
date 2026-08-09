@@ -82,7 +82,9 @@ class MinioObjectStorage(ObjectStorage):
                 raise
 
     async def presign_get(self, key: str, expires_seconds: int) -> str:
-        async with self._session.client(**self._client_kwargs(for_presign=True)) as client:
+        async with self._session.client(
+            **self._client_kwargs(for_presign=True)
+        ) as client:
             url = await client.generate_presigned_url(
                 "get_object",
                 Params={"Bucket": self._bucket, "Key": key},

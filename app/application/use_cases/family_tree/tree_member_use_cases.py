@@ -63,9 +63,7 @@ class RemoveTreeMemberUseCase:
             if membership.is_owner():
                 owners = await self.uow.tree_memberships.count_owners(tree_id)
                 if owners <= 1:
-                    raise CannotRemoveLastOwnerException(
-                        detail=[f"tree_id={tree_id}"]
-                    )
+                    raise CannotRemoveLastOwnerException(detail=[f"tree_id={tree_id}"])
 
             await self.uow.tree_memberships.delete(
                 tree_id=tree_id, user_id=target_user_id

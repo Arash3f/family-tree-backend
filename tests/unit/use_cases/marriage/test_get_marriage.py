@@ -34,7 +34,9 @@ async def test_get_marriage_success(mock_uow):
 async def test_get_marriage_propagates_exception(mock_uow):
     dto = IdDTO(id=UUID(int=1))
 
-    mock_uow.marriages.get_in_tree_or_raise = AsyncMock(side_effect=MarriageNotFoundException())
+    mock_uow.marriages.get_in_tree_or_raise = AsyncMock(
+        side_effect=MarriageNotFoundException()
+    )
 
     use_case = GetMarriageUseCase(mock_uow)
 

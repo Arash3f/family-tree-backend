@@ -27,12 +27,14 @@ def neo_repo():
 
 
 def test_neo4j_upsert_parent_and_shortest_path(neo_repo):
+    tree_id = uuid4()
     father_id = uuid4()
     child_id = uuid4()
 
     neo_repo.upsert_person(
         PersonUpsertDTO(
             id=father_id,
+            tree_id=tree_id,
             full_name="Father",
             gender="MALE",
             birth_date=date(1970, 1, 1),
@@ -41,6 +43,7 @@ def test_neo4j_upsert_parent_and_shortest_path(neo_repo):
     neo_repo.upsert_person(
         PersonUpsertDTO(
             id=child_id,
+            tree_id=tree_id,
             full_name="Child",
             gender="MALE",
             birth_date=date(2000, 1, 1),
@@ -50,7 +53,9 @@ def test_neo4j_upsert_parent_and_shortest_path(neo_repo):
         ParentRelationshipDTO(parent_id=father_id, child_id=child_id)
     )
 
-    path = neo_repo.find_shortest_relationship_path(father_id, child_id)
+    path = neo_repo.find_shortest_relationship_path(
+        father_id, child_id, tree_id=tree_id
+    )
 
     assert path.found is True
     assert path.distance == 1

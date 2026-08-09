@@ -62,9 +62,7 @@ class FamilyTreeSyncService:
         new_parent_ids = set(person.parent_ids)
 
         for parent_id in old_parent_ids - new_parent_ids:
-            tasks.append(
-                sync_parent_rel_delete.si(str(parent_id), str(person.safe_id))
-            )
+            tasks.append(sync_parent_rel_delete.si(str(parent_id), str(person.safe_id)))
 
         for parent_id in new_parent_ids - old_parent_ids:
             tasks.append(

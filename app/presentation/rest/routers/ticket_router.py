@@ -38,12 +38,8 @@ from app.presentation.rest.utils.dependencies import (
 router = APIRouter(prefix="/tickets", tags=["Tickets"])
 
 
-async def _user_can_manage(
-    user_id: UUID, auth_service: AuthorizationService
-) -> bool:
-    return await auth_service.user_has_permission(
-        user_id, Permissions.TICKET_MANAGE
-    )
+async def _user_can_manage(user_id: UUID, auth_service: AuthorizationService) -> bool:
+    return await auth_service.user_has_permission(user_id, Permissions.TICKET_MANAGE)
 
 
 @router.post(
@@ -78,9 +74,7 @@ async def list_tickets(
     can_manage = await _user_can_manage(current_user.safe_id, auth_service)
     usecase = GetTicketListByFilterUseCase(uow)
     res = await usecase.execute(
-        TicketApiMapper.to_list_ticket_dto(
-            data, current_user.safe_id, can_manage
-        )
+        TicketApiMapper.to_list_ticket_dto(data, current_user.safe_id, can_manage)
     )
     return TicketApiMapper.from_list_ticket_dto(res)
 
@@ -99,9 +93,7 @@ async def get_ticket(
     can_manage = await _user_can_manage(current_user.safe_id, auth_service)
     usecase = GetTicketUseCase(uow)
     res = await usecase.execute(
-        TicketApiMapper.to_get_ticket_dto(
-            ticket_id, current_user.safe_id, can_manage
-        )
+        TicketApiMapper.to_get_ticket_dto(ticket_id, current_user.safe_id, can_manage)
     )
     return TicketApiMapper.from_get_ticket_dto(res)
 
@@ -140,7 +132,5 @@ async def update_ticket_status(
     uow=Depends(get_uow),
 ) -> TicketUpdateStatusResponse:
     usecase = UpdateTicketStatusUseCase(uow)
-    res = await usecase.execute(
-        TicketApiMapper.to_update_status_dto(ticket_id, data)
-    )
+    res = await usecase.execute(TicketApiMapper.to_update_status_dto(ticket_id, data))
     return TicketApiMapper.from_update_status_dto(res)

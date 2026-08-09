@@ -5,6 +5,7 @@ from app.application.dto.user.user_create_dto import (
 from app.application.use_cases.user.create_user_use_case import CreateUserUseCase
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import UUID
 
 
 @pytest.mark.asyncio

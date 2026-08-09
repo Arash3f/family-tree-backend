@@ -19,7 +19,9 @@ from app.infrastructure.utils.logging import configure_logging
 from app.presentation.graphql.schema import graphql_router
 from app.presentation.rest.errors.handlers import app_exception_handler
 from app.presentation.rest.routers.auth_router import router as auth_router
-from app.presentation.rest.routers.family_tree_router import router as family_tree_router
+from app.presentation.rest.routers.family_tree_router import (
+    router as family_tree_router,
+)
 from app.presentation.rest.routers.marriage_router import router as marriage_router
 from app.presentation.rest.routers.media_router import router as media_router
 from app.presentation.rest.routers.permission_router import router as permission_router

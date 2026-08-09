@@ -7,7 +7,7 @@ from pydantic import TypeAdapter
 from app.domain.entities.person import Gender, Person
 from app.domain.shared.dto.person_filter_dto import PersonSortField
 from app.domain.shared.dto.sorter_dto import SortOrderField
-from app.infrastructure.services.unit_of_work.sqlalchemy_uow import SQLAlchemyUnitOfWork
+from tests.helpers.uow import TreeUnitOfWork
 from app.presentation.rest.schemas.dto.common import (
     PaginatedResponse,
     PaginationRequestParams,
@@ -77,14 +77,18 @@ async def test_create_person_unauthenticated(client, tree_id):
 @pytest.mark.asyncio
 async def test_create_person_success(client, tree_id, admin_headers, uow):  # noqa: F811
     father = await uow.persons.create(
-        Person(tree_id=uow.tree_id, id=None,
+        Person(
+            tree_id=uow.tree_id,
+            id=None,
             name="father",
             gender=Gender.MALE,
             birth_date=date(1970, 1, 1),
         )
     )
     mother = await uow.persons.create(
-        Person(tree_id=uow.tree_id, id=None,
+        Person(
+            tree_id=uow.tree_id,
+            id=None,
             name="mother",
             gender=Gender.FEMALE,
             birth_date=date(1972, 1, 1),
@@ -153,9 +157,11 @@ async def test_get_person_unauthenticated(client, tree_id):
 
 
 @pytest.mark.asyncio
-async def test_get_person_success(client, tree_id, admin_headers, uow: SQLAlchemyUnitOfWork):  # noqa: F811
+async def test_get_person_success(client, tree_id, admin_headers, uow: TreeUnitOfWork):  # noqa: F811
     person = await uow.persons.create(
-        Person(tree_id=uow.tree_id, id=None,
+        Person(
+            tree_id=uow.tree_id,
+            id=None,
             name="Ali",
             gender=Gender.MALE,
             birth_date=date(1990, 1, 1),
@@ -235,9 +241,13 @@ async def test_update_person_unauthenticated(client, tree_id):
 
 
 @pytest.mark.asyncio
-async def test_update_person_success(client, tree_id, admin_headers, uow: SQLAlchemyUnitOfWork):  # noqa: F811
+async def test_update_person_success(
+    client, tree_id, admin_headers, uow: TreeUnitOfWork
+):  # noqa: F811
     person = await uow.persons.create(
-        Person(tree_id=uow.tree_id, id=None,
+        Person(
+            tree_id=uow.tree_id,
+            id=None,
             name="old-name",
             gender=Gender.MALE,
             birth_date=date(1990, 1, 1),
@@ -313,11 +323,16 @@ async def test_delete_person_unauthenticated(client, tree_id):
 
 
 @pytest.mark.asyncio
-async def test_delete_person_success(client, tree_id, admin_headers, uow: SQLAlchemyUnitOfWork):  # noqa: F811
+async def test_delete_person_success(
+    client, tree_id, admin_headers, uow: TreeUnitOfWork
+):  # noqa: F811
     person = await uow.persons.create(
-        Person(tree_id=uow.tree_id, id=None,
+        Person(
+            tree_id=uow.tree_id,
+            id=None,
             name="to-delete",
-            gender=Gender.MALE,)
+            gender=Gender.MALE,
+        )
     )
     await uow.commit()
 
@@ -356,7 +371,9 @@ async def test_delete_person_with_invalid_id(client, tree_id, admin_headers):  #
 
 
 @pytest.mark.asyncio
-async def test_get_person_list_by_filter_permission_denied(client, tree_id, member_headers):  # noqa: F811
+async def test_get_person_list_by_filter_permission_denied(
+    client, tree_id, member_headers
+):  # noqa: F811
     req = FilterPersonRequest(
         filters=PersonFilterRequestData(),
         pagination=PaginationRequestParams(offset=0, page=1, page_size=30),
@@ -400,9 +417,10 @@ async def test_get_person_list_by_filter_unauthenticated(client, tree_id):
 
 @pytest.mark.asyncio
 async def test_get_person_list_by_filter_success(
-    client, tree_id,
+    client,
+    tree_id,
     admin_headers,  # noqa: F811
-    uow: SQLAlchemyUnitOfWork,
+    uow: TreeUnitOfWork,
 ):
     person1 = await uow.persons.create(
         Person(tree_id=uow.tree_id, id=None, name="cus_person1", gender=Gender.MALE)
@@ -551,7 +569,9 @@ async def test_person_lists_are_isolated_per_tree(client, admin_headers, uow):
     from tests.helpers.family_tree import create_family_tree_with_owner, get_admin_user
 
     admin = await get_admin_user(uow)
-    other_tree = await create_family_tree_with_owner(uow, owner=admin, name="Other Tree")
+    other_tree = await create_family_tree_with_owner(
+        uow, owner=admin, name="Other Tree"
+    )
     await uow.commit()
 
     await uow.persons.create(

@@ -37,7 +37,9 @@ async def test_delete_marriage_success(mock_uow):
 async def test_delete_marriage_propagates_exception_from_get_or_raise(mock_uow):
     dto = IdDTO(id=UUID(int=1))
 
-    mock_uow.marriages.get_in_tree_or_raise = AsyncMock(side_effect=MarriageNotFoundException())
+    mock_uow.marriages.get_in_tree_or_raise = AsyncMock(
+        side_effect=MarriageNotFoundException()
+    )
 
     use_case = DeleteMarriageUseCase(mock_uow, sync_service=MagicMock())
 

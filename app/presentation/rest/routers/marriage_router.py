@@ -76,9 +76,7 @@ async def delete_marriage(
     uow=Depends(get_uow),
 ) -> ResultResponse:
     usecase = DeleteMarriageUseCase(uow)
-    res = await usecase.execute(
-        CommonApiMapper.to_id_dto(id=data.id), tree_id=tree_id
-    )
+    res = await usecase.execute(CommonApiMapper.to_id_dto(id=data.id), tree_id=tree_id)
     return CommonApiMapper.from_result_dto(res)
 
 

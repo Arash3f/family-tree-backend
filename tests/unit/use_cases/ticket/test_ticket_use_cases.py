@@ -124,9 +124,7 @@ async def test_list_tickets_scopes_to_owner(mock_uow):
         created_by_user_id=user_id,
     )
     mock_uow.tickets.get_list_by_filter = AsyncMock(
-        return_value=PaginatedResult(
-            items=[ticket], total=1, page=1, page_size=30
-        )
+        return_value=PaginatedResult(items=[ticket], total=1, page=1, page_size=30)
     )
 
     query = FilterTicketQuery(

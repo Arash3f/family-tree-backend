@@ -54,9 +54,7 @@ class Neo4jFamilyTreeRepository(FamilyTreeRepository):
         result = neo4j_client.execute_read(query=q.GET_PERSON, params=data)
         return map_neo4j_person(result[0])
 
-    def person_exists(
-        self, data: PersonIdDTO, tree_id: UUID | None = None
-    ) -> bool:
+    def person_exists(self, data: PersonIdDTO, tree_id: UUID | None = None) -> bool:
         result = neo4j_client.execute_read(
             query=q.PERSON_EXISTS,
             params=_PersonExistsParams(

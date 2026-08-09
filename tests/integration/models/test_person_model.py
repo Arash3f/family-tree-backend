@@ -3,7 +3,11 @@ from datetime import date
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from app.infrastructure.database.models import MarriageModel, ParentLinkModel, PersonModel
+from app.infrastructure.database.models import (
+    MarriageModel,
+    ParentLinkModel,
+    PersonModel,
+)
 
 
 @pytest.mark.asyncio
@@ -13,18 +17,24 @@ async def test_unique_constraint_same_name_under_same_marriage(uow):
     uow.session.add_all([husband, wife])
     await uow.session.flush()
 
-    marriage = MarriageModel(tree_id=uow.tree_id, spouse_a_id=husband.id,
+    marriage = MarriageModel(
+        tree_id=uow.tree_id,
+        spouse_a_id=husband.id,
         spouse_b_id=wife.id,
         married_at=date(2000, 1, 1),
     )
     uow.session.add(marriage)
     await uow.session.flush()
 
-    child1 = PersonModel(tree_id=uow.tree_id, name="Reza", gender="male", marriage_id=marriage.id)
+    child1 = PersonModel(
+        tree_id=uow.tree_id, name="Reza", gender="male", marriage_id=marriage.id
+    )
     uow.session.add(child1)
     await uow.session.flush()
 
-    child2 = PersonModel(tree_id=uow.tree_id, name="Reza", gender="male", marriage_id=marriage.id)
+    child2 = PersonModel(
+        tree_id=uow.tree_id, name="Reza", gender="male", marriage_id=marriage.id
+    )
     uow.session.add(child2)
 
     with pytest.raises(IntegrityError):
@@ -164,7 +174,9 @@ async def test_same_gender_marriage_is_allowed(uow):
     await uow.session.flush()
 
     uow.session.add(
-        MarriageModel(tree_id=uow.tree_id, spouse_a_id=spouse_a.id,
+        MarriageModel(
+            tree_id=uow.tree_id,
+            spouse_a_id=spouse_a.id,
             spouse_b_id=spouse_b.id,
             married_at=date(2020, 1, 1),
         )
@@ -182,11 +194,15 @@ async def test_multiple_active_marriages_for_same_person_allowed(uow):
 
     uow.session.add_all(
         [
-            MarriageModel(tree_id=uow.tree_id, spouse_a_id=spouse_a.id,
+            MarriageModel(
+                tree_id=uow.tree_id,
+                spouse_a_id=spouse_a.id,
                 spouse_b_id=spouse_b.id,
                 married_at=date(2010, 1, 1),
             ),
-            MarriageModel(tree_id=uow.tree_id, spouse_a_id=spouse_a.id,
+            MarriageModel(
+                tree_id=uow.tree_id,
+                spouse_a_id=spouse_a.id,
                 spouse_b_id=spouse_c.id,
                 married_at=date(2015, 1, 1),
             ),
@@ -203,7 +219,9 @@ async def test_divorce_before_marriage_rejected(uow):
     await uow.session.flush()
 
     uow.session.add(
-        MarriageModel(tree_id=uow.tree_id, spouse_a_id=spouse_a.id,
+        MarriageModel(
+            tree_id=uow.tree_id,
+            spouse_a_id=spouse_a.id,
             spouse_b_id=spouse_b.id,
             married_at=date(2020, 1, 1),
             divorced_at=date(2019, 1, 1),
@@ -223,24 +241,32 @@ async def test_soft_deleted_person_frees_name_under_marriage(uow):
     uow.session.add_all([spouse_a, spouse_b])
     await uow.session.flush()
 
-    marriage = MarriageModel(tree_id=uow.tree_id, spouse_a_id=spouse_a.id,
+    marriage = MarriageModel(
+        tree_id=uow.tree_id,
+        spouse_a_id=spouse_a.id,
         spouse_b_id=spouse_b.id,
         married_at=date(2000, 1, 1),
     )
     uow.session.add(marriage)
     await uow.session.flush()
 
-    child = PersonModel(tree_id=uow.tree_id, name="Reza",
+    child = PersonModel(
+        tree_id=uow.tree_id,
+        name="Reza",
         gender="male",
-        marriage_id=marriage.id,)
+        marriage_id=marriage.id,
+    )
     uow.session.add(child)
     await uow.session.flush()
 
     child.deleted_at = datetime.now(timezone.utc)
     await uow.session.flush()
 
-    replacement = PersonModel(tree_id=uow.tree_id, name="Reza",
+    replacement = PersonModel(
+        tree_id=uow.tree_id,
+        name="Reza",
         gender="male",
-        marriage_id=marriage.id,)
+        marriage_id=marriage.id,
+    )
     uow.session.add(replacement)
     await uow.session.flush()

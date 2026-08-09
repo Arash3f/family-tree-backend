@@ -69,9 +69,7 @@ class PersonPhotoService:
     async def ensure_object_exists(self, key: str) -> None:
         self.validate_person_key(key)
         if not await self.storage.exists(key):
-            raise MediaObjectNotFoundException(
-                detail=[f"object not found: {key}"]
-            )
+            raise MediaObjectNotFoundException(detail=[f"object not found: {key}"])
 
     async def presign(self, key: str | None) -> str | None:
         if not key:
@@ -86,9 +84,7 @@ class PersonPhotoService:
         except Exception:
             logger.exception("Best-effort delete failed for key=%s", key)
 
-    async def upload_person_photo(
-        self, data: bytes, content_type: str | None
-    ) -> str:
+    async def upload_person_photo(self, data: bytes, content_type: str | None) -> str:
         normalized = self.validate_upload(content_type, len(data))
         key = self.build_object_key(normalized)
         return await self.storage.upload(data, normalized, key)

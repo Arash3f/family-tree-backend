@@ -51,9 +51,7 @@ from app.presentation.rest.schemas.mappers.common_mappers import CommonApiMapper
 from app.presentation.rest.schemas.mappers.marriage_mappers import MarriageApiMapper
 
 
-async def _require_tree_member(
-    info: Info, tree_id: UUID, permission: str
-) -> User:
+async def _require_tree_member(info: Info, tree_id: UUID, permission: str) -> User:
     user = await require_permission(info, permission)
     async with info.context.uow:
         await TreeAccessService(info.context.uow).require_member(
@@ -145,14 +143,14 @@ async def resolve_delete_marriage(
 ) -> ResultType:
     await _require_tree_member(info, tree_id, Permissions.MARRIAGE_DELETE)
     usecase = DeleteMarriageUseCase(info.context.uow)
-    res = await usecase.execute(CommonApiMapper.to_id_dto(id=marriage_id), tree_id=tree_id)
+    res = await usecase.execute(
+        CommonApiMapper.to_id_dto(id=marriage_id), tree_id=tree_id
+    )
     mapped = CommonApiMapper.from_result_dto(res)
     return ResultType(result=mapped.result)
 
 
-async def resolve_divorce(
-    info: Info, tree_id: UUID, data: DivorceInput
-) -> ResultType:
+async def resolve_divorce(info: Info, tree_id: UUID, data: DivorceInput) -> ResultType:
     await _require_tree_member(info, tree_id, Permissions.MARRIAGE_DIVORCE)
     usecase = DivorceUseCase(info.context.uow)
     req = DivorceRequest(marriage_id=data.marriage_id, divorced_at=data.divorced_at)
@@ -168,7 +166,9 @@ async def resolve_marriage(
 ) -> MarriageType:
     await _require_tree_member(info, tree_id, Permissions.MARRIAGE_READ)
     usecase = GetMarriageUseCase(info.context.uow)
-    res = await usecase.execute(CommonApiMapper.to_id_dto(id=marriage_id), tree_id=tree_id)
+    res = await usecase.execute(
+        CommonApiMapper.to_id_dto(id=marriage_id), tree_id=tree_id
+    )
     mapped = MarriageApiMapper.from_get_marriage_dto(res)
     return marriage_from_mapping(mapped.model_dump())
 

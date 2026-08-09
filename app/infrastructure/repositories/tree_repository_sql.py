@@ -101,9 +101,13 @@ class SQLTreeMembershipRepository(TreeMembershipRepository):
         return [self._to_entity(m) for m in result.scalars().all()]
 
     async def count_owners(self, tree_id: UUID) -> int:
-        stmt = select(func.count()).select_from(TreeMembershipModel).where(
-            TreeMembershipModel.tree_id == tree_id,
-            TreeMembershipModel.role == TreeMemberRole.OWNER.value,
+        stmt = (
+            select(func.count())
+            .select_from(TreeMembershipModel)
+            .where(
+                TreeMembershipModel.tree_id == tree_id,
+                TreeMembershipModel.role == TreeMemberRole.OWNER.value,
+            )
         )
         result = await self.session.execute(stmt)
         return int(result.scalar_one())

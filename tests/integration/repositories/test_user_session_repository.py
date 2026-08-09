@@ -10,7 +10,9 @@ from app.infrastructure.services.unit_of_work.sqlalchemy_uow import UnitOfWork
 
 
 async def _create_user(uow: UnitOfWork, username: str) -> User:
-    role = await uow.roles.create(Role(id=None, name=f"role_{username}", permission_ids=[]))
+    role = await uow.roles.create(
+        Role(id=None, name=f"role_{username}", permission_ids=[])
+    )
     return await uow.users.create(
         User(
             id=None,
@@ -112,9 +114,13 @@ async def test_revoke_all_for_user(uow: UnitOfWork):
         )
         assert revoked_count == 2
 
-        assert (await uow.sessions.get(first.safe_id)).revoked_at is not None
-        assert (await uow.sessions.get(second.safe_id)).revoked_at is not None
-        assert (await uow.sessions.get(other_session.safe_id)).revoked_at is None
+        reloaded_first = await uow.sessions.get(first.safe_id)
+        reloaded_second = await uow.sessions.get(second.safe_id)
+        reloaded_other = await uow.sessions.get(other_session.safe_id)
+
+        assert reloaded_first is not None and reloaded_first.revoked_at is not None
+        assert reloaded_second is not None and reloaded_second.revoked_at is not None
+        assert reloaded_other is not None and reloaded_other.revoked_at is None
 
 
 @pytest.mark.asyncio

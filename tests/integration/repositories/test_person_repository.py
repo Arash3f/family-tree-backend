@@ -11,16 +11,19 @@ from app.domain.shared.dto.person_filter_dto import (
     PersonSortField,
 )
 from app.domain.shared.dto.sorter_dto import SortOrderField, SortParams
-from app.infrastructure.services.unit_of_work.sqlalchemy_uow import UnitOfWork
+from tests.helpers.uow import TreeUnitOfWork
 
 
 @pytest.mark.asyncio
-async def test_create_and_get_person(uow: UnitOfWork):
+async def test_create_and_get_person(uow: TreeUnitOfWork):
     async with uow:
-        person = Person(tree_id=uow.tree_id, id=None,
+        person = Person(
+            tree_id=uow.tree_id,
+            id=None,
             name="Ali",
             gender=Gender.MALE,
-            birth_date=None,)
+            birth_date=None,
+        )
 
         created = await uow.persons.create(person)
 
@@ -33,19 +36,22 @@ async def test_create_and_get_person(uow: UnitOfWork):
 
 
 @pytest.mark.asyncio
-async def test_get_or_raise_not_found(uow: UnitOfWork):
+async def test_get_or_raise_not_found(uow: TreeUnitOfWork):
     async with uow:
         with pytest.raises(PersonNotFoundException):
             await uow.persons.get_or_raise(UUID(int=99999))
 
 
 @pytest.mark.asyncio
-async def test_update_person(uow: UnitOfWork):
+async def test_update_person(uow: TreeUnitOfWork):
     async with uow:
-        person = Person(tree_id=uow.tree_id, id=None,
+        person = Person(
+            tree_id=uow.tree_id,
+            id=None,
             name="Ali",
             gender=Gender.MALE,
-            birth_date=None,)
+            birth_date=None,
+        )
 
         created = await uow.persons.create(person)
 
@@ -57,12 +63,15 @@ async def test_update_person(uow: UnitOfWork):
 
 
 @pytest.mark.asyncio
-async def test_delete_person(uow: UnitOfWork):
+async def test_delete_person(uow: TreeUnitOfWork):
     async with uow:
-        person = Person(tree_id=uow.tree_id, id=None,
+        person = Person(
+            tree_id=uow.tree_id,
+            id=None,
             name="Ali",
             gender=Gender.MALE,
-            birth_date=None,)
+            birth_date=None,
+        )
 
         created = await uow.persons.create(person)
         person_id = created.safe_id
@@ -85,17 +94,22 @@ async def test_delete_person(uow: UnitOfWork):
 
 
 @pytest.mark.asyncio
-async def test_get_children(uow: UnitOfWork):
+async def test_get_children(uow: TreeUnitOfWork):
     async with uow:
         father = await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 name="Father",
                 gender=Gender.MALE,
-                birth_date=None,)
+                birth_date=None,
+            )
         )
 
         child = await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 name="Child",
                 gender=Gender.MALE,
                 birth_date=None,
@@ -110,24 +124,32 @@ async def test_get_children(uow: UnitOfWork):
 
 
 @pytest.mark.asyncio
-async def test_get_by_name(uow: UnitOfWork):
+async def test_get_by_name(uow: TreeUnitOfWork):
     async with uow:
         user_1 = await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 name="user_1",
                 gender=Gender.MALE,
-                birth_date=None,)
+                birth_date=None,
+            )
         )
 
         user_2 = await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 name="user_2",
                 gender=Gender.FEMALE,
-                birth_date=None,)
+                birth_date=None,
+            )
         )
 
         user_3 = await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 name="user_3",
                 gender=Gender.MALE,
                 birth_date=None,
@@ -147,25 +169,34 @@ async def test_get_by_name(uow: UnitOfWork):
 
 
 @pytest.mark.asyncio
-async def test_get_list_by_filter_name(uow: UnitOfWork):
+async def test_get_list_by_filter_name(uow: TreeUnitOfWork):
     async with uow:
         await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 name="Ali",
                 gender=Gender.MALE,
-                birth_date=None,)
+                birth_date=None,
+            )
         )
         await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 name="Alireza",
                 gender=Gender.MALE,
-                birth_date=None,)
+                birth_date=None,
+            )
         )
         await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 name="Sara",
                 gender=Gender.FEMALE,
-                birth_date=None,)
+                birth_date=None,
+            )
         )
 
         query = FilterPersonQuery(
@@ -191,19 +222,25 @@ async def test_get_list_by_filter_name(uow: UnitOfWork):
 
 
 @pytest.mark.asyncio
-async def test_get_list_by_filter_gender(uow: UnitOfWork):
+async def test_get_list_by_filter_gender(uow: TreeUnitOfWork):
     async with uow:
         await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 name="Ali",
                 gender=Gender.MALE,
-                birth_date=None,)
+                birth_date=None,
+            )
         )
         await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 name="Sara",
                 gender=Gender.FEMALE,
-                birth_date=None,)
+                birth_date=None,
+            )
         )
 
         query = FilterPersonQuery(
@@ -224,14 +261,17 @@ async def test_get_list_by_filter_gender(uow: UnitOfWork):
 
 
 @pytest.mark.asyncio
-async def test_get_list_by_filter_pagination(uow: UnitOfWork):
+async def test_get_list_by_filter_pagination(uow: TreeUnitOfWork):
     async with uow:
         for i in range(15):
             await uow.persons.create(
-                Person(tree_id=uow.tree_id, id=None,
+                Person(
+                    tree_id=uow.tree_id,
+                    id=None,
                     name=f"person{i}",
                     gender=Gender.MALE,
-                    birth_date=None,)
+                    birth_date=None,
+                )
             )
 
         query = FilterPersonQuery(

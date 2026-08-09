@@ -45,7 +45,9 @@ async def test_get_person_success(mock_uow):
 async def test_get_person_propagates_exception(mock_uow):
     dto = IdDTO(id=UUID(int=1))
 
-    mock_uow.persons.get_in_tree_or_raise = AsyncMock(side_effect=PersonNotFoundException())
+    mock_uow.persons.get_in_tree_or_raise = AsyncMock(
+        side_effect=PersonNotFoundException()
+    )
 
     use_case = GetPersonUseCase(mock_uow, _photo_service())
 

@@ -9,9 +9,11 @@ from sqlalchemy.ext.asyncio import (
 
 from app.core.config import settings
 from app.infrastructure.database.base import Base
-from app.infrastructure.database.parent_integrity_ddl import install_parent_integrity_ddl
-from app.infrastructure.services.unit_of_work.sqlalchemy_uow import SQLAlchemyUnitOfWork
+from app.infrastructure.database.parent_integrity_ddl import (
+    install_parent_integrity_ddl,
+)
 from tests.helpers.family_tree import create_family_tree_with_owner
+from tests.helpers.uow import TreeUnitOfWork
 
 # ------------------------------------------------
 # Engine (sync fixture to avoid event loop issues)
@@ -88,7 +90,7 @@ async def session_factory(db_connection):
 
 @pytest_asyncio.fixture
 async def uow(session_factory):
-    uow = SQLAlchemyUnitOfWork(session_factory=session_factory)
+    uow = TreeUnitOfWork(session_factory=session_factory)
     async with uow:
         tree = await create_family_tree_with_owner(uow)
         uow.tree_id = tree.safe_id

@@ -1,5 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
+from uuid import UUID
+
 from app.application.dto.role.role_get_dto import RoleGetMapper
 from app.application.use_cases.role.get_role_use_case import GetRoleUseCase
 from app.domain.exceptions.role_exceptions import RoleNotFoundException

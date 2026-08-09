@@ -3,7 +3,7 @@ from datetime import date
 
 import pytest
 
-from app.application.interfaces.unit_of_work import UnitOfWork
+from tests.helpers.uow import TreeUnitOfWork
 from app.domain.entities.marriage import Marriage
 from app.domain.entities.person import Gender, Person
 from app.domain.exceptions.marriage_exceptions import MarriageNotFoundException
@@ -18,21 +18,27 @@ from app.domain.shared.dto.sorter_dto import SortOrderField, SortParams
 
 
 @pytest.mark.asyncio
-async def test_create_and_get_marriage(uow: UnitOfWork):
+async def test_create_and_get_marriage(uow: TreeUnitOfWork):
     async with uow:
-        new_husband = Person(tree_id=uow.tree_id, id=None,
+        new_husband = Person(
+            tree_id=uow.tree_id,
+            id=None,
             gender=Gender.MALE,
             name="spouse_a",
             birth_date=date(2000, 1, 1),
         )
-        new_wife = Person(tree_id=uow.tree_id, id=None,
+        new_wife = Person(
+            tree_id=uow.tree_id,
+            id=None,
             gender=Gender.FEMALE,
             name="spouse_b",
             birth_date=date(2000, 1, 1),
         )
         husband = await uow.persons.create(new_husband)
         wife = await uow.persons.create(new_wife)
-        new_marriage = Marriage(tree_id=uow.tree_id, spouse_a_id=husband.safe_id,
+        new_marriage = Marriage(
+            tree_id=uow.tree_id,
+            spouse_a_id=husband.safe_id,
             spouse_b_id=wife.safe_id,
             married_at=date(2020, 1, 1),
             divorced_at=None,
@@ -50,21 +56,27 @@ async def test_create_and_get_marriage(uow: UnitOfWork):
 
 
 @pytest.mark.asyncio
-async def test_get_or_raise_success(uow: UnitOfWork):
+async def test_get_or_raise_success(uow: TreeUnitOfWork):
     async with uow:
-        new_husband = Person(tree_id=uow.tree_id, id=None,
+        new_husband = Person(
+            tree_id=uow.tree_id,
+            id=None,
             gender=Gender.MALE,
             name="spouse_a",
             birth_date=date(2000, 1, 1),
         )
-        new_wife = Person(tree_id=uow.tree_id, id=None,
+        new_wife = Person(
+            tree_id=uow.tree_id,
+            id=None,
             gender=Gender.FEMALE,
             name="spouse_b",
             birth_date=date(2000, 1, 1),
         )
         husband = await uow.persons.create(new_husband)
         wife = await uow.persons.create(new_wife)
-        new_marriage = Marriage(tree_id=uow.tree_id, spouse_a_id=husband.safe_id,
+        new_marriage = Marriage(
+            tree_id=uow.tree_id,
+            spouse_a_id=husband.safe_id,
             spouse_b_id=wife.safe_id,
             married_at=date(2020, 1, 1),
             divorced_at=None,
@@ -82,28 +94,34 @@ async def test_get_or_raise_success(uow: UnitOfWork):
 
 
 @pytest.mark.asyncio
-async def test_get_or_raise_not_found(uow: UnitOfWork):
+async def test_get_or_raise_not_found(uow: TreeUnitOfWork):
     async with uow:
         with pytest.raises(MarriageNotFoundException):
             await uow.marriages.get_or_raise(marriage_id=UUID(int=999))
 
 
 @pytest.mark.asyncio
-async def test_update_marriage(uow: UnitOfWork):
+async def test_update_marriage(uow: TreeUnitOfWork):
     async with uow:
-        new_husband = Person(tree_id=uow.tree_id, id=None,
+        new_husband = Person(
+            tree_id=uow.tree_id,
+            id=None,
             gender=Gender.MALE,
             name="spouse_a",
             birth_date=date(2000, 1, 1),
         )
-        new_wife = Person(tree_id=uow.tree_id, id=None,
+        new_wife = Person(
+            tree_id=uow.tree_id,
+            id=None,
             gender=Gender.FEMALE,
             name="spouse_b",
             birth_date=date(2000, 1, 1),
         )
         husband = await uow.persons.create(new_husband)
         wife = await uow.persons.create(new_wife)
-        new_marriage = Marriage(tree_id=uow.tree_id, spouse_a_id=husband.safe_id,
+        new_marriage = Marriage(
+            tree_id=uow.tree_id,
+            spouse_a_id=husband.safe_id,
             spouse_b_id=wife.safe_id,
             married_at=date(2020, 1, 1),
             divorced_at=None,
@@ -111,12 +129,16 @@ async def test_update_marriage(uow: UnitOfWork):
         )
         marriage = await uow.marriages.create(new_marriage)
 
-        new_husband_2 = Person(tree_id=uow.tree_id, id=None,
+        new_husband_2 = Person(
+            tree_id=uow.tree_id,
+            id=None,
             gender=Gender.MALE,
             name="spouse_a",
             birth_date=date(2000, 1, 1),
         )
-        new_wife_2 = Person(tree_id=uow.tree_id, id=None,
+        new_wife_2 = Person(
+            tree_id=uow.tree_id,
+            id=None,
             gender=Gender.FEMALE,
             name="spouse_b",
             birth_date=date(2000, 1, 1),
@@ -138,9 +160,11 @@ async def test_update_marriage(uow: UnitOfWork):
 
 
 @pytest.mark.asyncio
-async def test_update_marriage_not_found(uow: UnitOfWork):
+async def test_update_marriage_not_found(uow: TreeUnitOfWork):
     async with uow:
-        marriage = Marriage(tree_id=uow.tree_id, spouse_a_id=UUID(int=1),
+        marriage = Marriage(
+            tree_id=uow.tree_id,
+            spouse_a_id=UUID(int=1),
             spouse_b_id=UUID(int=2),
             married_at=date(2020, 1, 1),
             divorced_at=None,
@@ -151,18 +175,22 @@ async def test_update_marriage_not_found(uow: UnitOfWork):
 
 
 @pytest.mark.asyncio
-async def test_get_list_by_filter_with_husband_and_spouse_b_id(uow: UnitOfWork):
+async def test_get_list_by_filter_with_husband_and_spouse_b_id(uow: TreeUnitOfWork):
     async with uow:
         # persons for first marriage
         husband_1 = await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 gender=Gender.MALE,
                 name="husband_1",
                 birth_date=date(2000, 1, 1),
             )
         )
         wife_1 = await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 gender=Gender.FEMALE,
                 name="wife_1",
                 birth_date=date(2000, 1, 1),
@@ -171,14 +199,18 @@ async def test_get_list_by_filter_with_husband_and_spouse_b_id(uow: UnitOfWork):
 
         # persons for second marriage
         husband_2 = await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 gender=Gender.MALE,
                 name="husband_2",
                 birth_date=date(2000, 1, 1),
             )
         )
         wife_2 = await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 gender=Gender.FEMALE,
                 name="wife_2",
                 birth_date=date(2000, 1, 1),
@@ -186,7 +218,9 @@ async def test_get_list_by_filter_with_husband_and_spouse_b_id(uow: UnitOfWork):
         )
 
         cr_1 = await uow.marriages.create(
-            Marriage(tree_id=uow.tree_id, id=None,
+            Marriage(
+                tree_id=uow.tree_id,
+                id=None,
                 spouse_a_id=husband_1.safe_id,
                 spouse_b_id=wife_1.safe_id,
                 married_at=date(2020, 1, 1),
@@ -195,7 +229,9 @@ async def test_get_list_by_filter_with_husband_and_spouse_b_id(uow: UnitOfWork):
         )
 
         await uow.marriages.create(
-            Marriage(tree_id=uow.tree_id, id=None,
+            Marriage(
+                tree_id=uow.tree_id,
+                id=None,
                 spouse_a_id=husband_2.safe_id,
                 spouse_b_id=wife_2.safe_id,
                 married_at=date(2021, 1, 1),
@@ -231,18 +267,22 @@ async def test_get_list_by_filter_with_husband_and_spouse_b_id(uow: UnitOfWork):
 
 
 @pytest.mark.asyncio
-async def test_get_list_by_filter_with_married_and_divorced_at(uow: UnitOfWork):
+async def test_get_list_by_filter_with_married_and_divorced_at(uow: TreeUnitOfWork):
     async with uow:
         # persons for first marriage
         husband_1 = await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 gender=Gender.MALE,
                 name="husband_1",
                 birth_date=date(2000, 1, 1),
             )
         )
         wife_1 = await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 gender=Gender.FEMALE,
                 name="wife_1",
                 birth_date=date(2000, 1, 1),
@@ -251,14 +291,18 @@ async def test_get_list_by_filter_with_married_and_divorced_at(uow: UnitOfWork):
 
         # persons for second marriage
         husband_2 = await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 gender=Gender.MALE,
                 name="husband_2",
                 birth_date=date(2000, 1, 1),
             )
         )
         wife_2 = await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 gender=Gender.FEMALE,
                 name="wife_2",
                 birth_date=date(2000, 1, 1),
@@ -266,7 +310,9 @@ async def test_get_list_by_filter_with_married_and_divorced_at(uow: UnitOfWork):
         )
 
         await uow.marriages.create(
-            Marriage(tree_id=uow.tree_id, id=None,
+            Marriage(
+                tree_id=uow.tree_id,
+                id=None,
                 spouse_a_id=husband_1.safe_id,
                 spouse_b_id=wife_1.safe_id,
                 married_at=date(2020, 1, 1),
@@ -275,7 +321,9 @@ async def test_get_list_by_filter_with_married_and_divorced_at(uow: UnitOfWork):
         )
 
         cr_2 = await uow.marriages.create(
-            Marriage(tree_id=uow.tree_id, id=None,
+            Marriage(
+                tree_id=uow.tree_id,
+                id=None,
                 spouse_a_id=husband_2.safe_id,
                 spouse_b_id=wife_2.safe_id,
                 married_at=date(2021, 1, 1),
@@ -317,18 +365,22 @@ async def test_get_list_by_filter_with_married_and_divorced_at(uow: UnitOfWork):
 
 
 @pytest.mark.asyncio
-async def test_get_list_without_filter(uow: UnitOfWork):
+async def test_get_list_without_filter(uow: TreeUnitOfWork):
     async with uow:
         # persons for first marriage
         husband_1 = await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 gender=Gender.MALE,
                 name="husband_1",
                 birth_date=date(2000, 1, 1),
             )
         )
         wife_1 = await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 gender=Gender.FEMALE,
                 name="wife_1",
                 birth_date=date(2000, 1, 1),
@@ -337,14 +389,18 @@ async def test_get_list_without_filter(uow: UnitOfWork):
 
         # persons for second marriage
         husband_2 = await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 gender=Gender.MALE,
                 name="husband_2",
                 birth_date=date(2000, 1, 1),
             )
         )
         wife_2 = await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 gender=Gender.FEMALE,
                 name="wife_2",
                 birth_date=date(2000, 1, 1),
@@ -352,7 +408,9 @@ async def test_get_list_without_filter(uow: UnitOfWork):
         )
 
         marriage_1 = await uow.marriages.create(
-            Marriage(tree_id=uow.tree_id, id=None,
+            Marriage(
+                tree_id=uow.tree_id,
+                id=None,
                 spouse_a_id=husband_1.safe_id,
                 spouse_b_id=wife_1.safe_id,
                 married_at=date(2020, 1, 1),
@@ -361,7 +419,9 @@ async def test_get_list_without_filter(uow: UnitOfWork):
         )
 
         marriage_2 = await uow.marriages.create(
-            Marriage(tree_id=uow.tree_id, id=None,
+            Marriage(
+                tree_id=uow.tree_id,
+                id=None,
                 spouse_a_id=husband_2.safe_id,
                 spouse_b_id=wife_2.safe_id,
                 married_at=date(2021, 1, 1),
@@ -370,28 +430,36 @@ async def test_get_list_without_filter(uow: UnitOfWork):
         )
 
         husband_3 = await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 gender=Gender.MALE,
                 name="husband_3",
                 birth_date=date(2000, 1, 1),
             )
         )
         wife_3 = await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 gender=Gender.FEMALE,
                 name="wife_3",
                 birth_date=date(2000, 1, 1),
             )
         )
         husband_4 = await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 gender=Gender.MALE,
                 name="husband_4",
                 birth_date=date(2000, 1, 1),
             )
         )
         wife_4 = await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 gender=Gender.FEMALE,
                 name="wife_4",
                 birth_date=date(2000, 1, 1),
@@ -399,7 +467,9 @@ async def test_get_list_without_filter(uow: UnitOfWork):
         )
 
         marriage_3 = await uow.marriages.create(
-            Marriage(tree_id=uow.tree_id, id=None,
+            Marriage(
+                tree_id=uow.tree_id,
+                id=None,
                 spouse_a_id=husband_3.safe_id,
                 spouse_b_id=wife_3.safe_id,
                 married_at=date(2021, 1, 1),
@@ -408,7 +478,9 @@ async def test_get_list_without_filter(uow: UnitOfWork):
         )
 
         marriage_4 = await uow.marriages.create(
-            Marriage(tree_id=uow.tree_id, id=None,
+            Marriage(
+                tree_id=uow.tree_id,
+                id=None,
                 spouse_a_id=husband_4.safe_id,
                 spouse_b_id=wife_4.safe_id,
                 married_at=date(2021, 1, 1),
@@ -447,20 +519,24 @@ async def test_get_list_without_filter(uow: UnitOfWork):
 
 
 @pytest.mark.asyncio
-async def test_get_list_by_filter_with_pagination(uow: UnitOfWork):
+async def test_get_list_by_filter_with_pagination(uow: TreeUnitOfWork):
     async with uow:
         created_marriages = []
 
         for i in range(10):
             husband = await uow.persons.create(
-                Person(tree_id=uow.tree_id, id=None,
+                Person(
+                    tree_id=uow.tree_id,
+                    id=None,
                     gender=Gender.MALE,
                     name=f"husband_{i}",
                     birth_date=date(2000, 1, 1),
                 )
             )
             wife = await uow.persons.create(
-                Person(tree_id=uow.tree_id, id=None,
+                Person(
+                    tree_id=uow.tree_id,
+                    id=None,
                     gender=Gender.FEMALE,
                     name=f"wife_{i}",
                     birth_date=date(2000, 1, 1),
@@ -468,7 +544,9 @@ async def test_get_list_by_filter_with_pagination(uow: UnitOfWork):
             )
 
             marriage = await uow.marriages.create(
-                Marriage(tree_id=uow.tree_id, id=None,
+                Marriage(
+                    tree_id=uow.tree_id,
+                    id=None,
                     spouse_a_id=husband.safe_id,
                     spouse_b_id=wife.safe_id,
                     married_at=date(2020, 1, i + 1),
@@ -515,24 +593,32 @@ async def test_get_list_by_filter_with_pagination(uow: UnitOfWork):
 
 
 @pytest.mark.asyncio
-async def test_get_by_ids(uow: UnitOfWork):
+async def test_get_by_ids(uow: TreeUnitOfWork):
     async with uow:
         user_1 = await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 name="user_1",
                 gender=Gender.MALE,
-                birth_date=None,)
+                birth_date=None,
+            )
         )
 
         user_2 = await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 name="user_2",
                 gender=Gender.FEMALE,
-                birth_date=None,)
+                birth_date=None,
+            )
         )
 
         marriage = await uow.marriages.create(
-            Marriage(tree_id=uow.tree_id, id=None,
+            Marriage(
+                tree_id=uow.tree_id,
+                id=None,
                 married_at=date(2000, 1, 1),
                 spouse_b_id=user_2.safe_id,
                 spouse_a_id=user_1.safe_id,
@@ -549,21 +635,27 @@ async def test_get_by_ids(uow: UnitOfWork):
 
 
 @pytest.mark.asyncio
-async def test_end_marriage(uow: UnitOfWork):
+async def test_end_marriage(uow: TreeUnitOfWork):
     async with uow:
-        new_husband = Person(tree_id=uow.tree_id, id=None,
+        new_husband = Person(
+            tree_id=uow.tree_id,
+            id=None,
             gender=Gender.MALE,
             name="spouse_a",
             birth_date=date(2000, 1, 1),
         )
-        new_wife = Person(tree_id=uow.tree_id, id=None,
+        new_wife = Person(
+            tree_id=uow.tree_id,
+            id=None,
             gender=Gender.FEMALE,
             name="spouse_b",
             birth_date=date(2000, 1, 1),
         )
         husband = await uow.persons.create(new_husband)
         wife = await uow.persons.create(new_wife)
-        new_marriage = Marriage(tree_id=uow.tree_id, spouse_a_id=husband.safe_id,
+        new_marriage = Marriage(
+            tree_id=uow.tree_id,
+            spouse_a_id=husband.safe_id,
             spouse_b_id=wife.safe_id,
             married_at=date(2020, 1, 1),
             divorced_at=None,
@@ -580,21 +672,27 @@ async def test_end_marriage(uow: UnitOfWork):
 
 
 @pytest.mark.asyncio
-async def test_delete_marriage(uow: UnitOfWork):
+async def test_delete_marriage(uow: TreeUnitOfWork):
     async with uow:
-        new_husband = Person(tree_id=uow.tree_id, id=None,
+        new_husband = Person(
+            tree_id=uow.tree_id,
+            id=None,
             gender=Gender.MALE,
             name="spouse_a",
             birth_date=date(2000, 1, 1),
         )
-        new_wife = Person(tree_id=uow.tree_id, id=None,
+        new_wife = Person(
+            tree_id=uow.tree_id,
+            id=None,
             gender=Gender.FEMALE,
             name="spouse_b",
             birth_date=date(2000, 1, 1),
         )
         husband = await uow.persons.create(new_husband)
         wife = await uow.persons.create(new_wife)
-        new_marriage = Marriage(tree_id=uow.tree_id, spouse_a_id=husband.safe_id,
+        new_marriage = Marriage(
+            tree_id=uow.tree_id,
+            spouse_a_id=husband.safe_id,
             spouse_b_id=wife.safe_id,
             married_at=date(2020, 1, 1),
             divorced_at=None,
@@ -609,24 +707,30 @@ async def test_delete_marriage(uow: UnitOfWork):
 
 
 @pytest.mark.asyncio
-async def test_has_active_for_person(uow: UnitOfWork):
+async def test_has_active_for_person(uow: TreeUnitOfWork):
     async with uow:
         husband = await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 gender=Gender.MALE,
                 name="active_husband",
                 birth_date=date(2000, 1, 1),
             )
         )
         wife = await uow.persons.create(
-            Person(tree_id=uow.tree_id, id=None,
+            Person(
+                tree_id=uow.tree_id,
+                id=None,
                 gender=Gender.FEMALE,
                 name="active_wife",
                 birth_date=date(2000, 1, 1),
             )
         )
         marriage = await uow.marriages.create(
-            Marriage(tree_id=uow.tree_id, spouse_a_id=husband.safe_id,
+            Marriage(
+                tree_id=uow.tree_id,
+                spouse_a_id=husband.safe_id,
                 spouse_b_id=wife.safe_id,
                 married_at=date(2020, 1, 1),
                 divorced_at=None,

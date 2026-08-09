@@ -39,7 +39,9 @@ mutation CreatePerson($treeId: UUID!, $data: PersonCreateInput!) {
 
 @pytest.mark.asyncio
 async def test_graphql_create_person_permission_denied(
-    client, tree_id, member_headers  # noqa: F811
+    client,
+    tree_id,
+    member_headers,  # noqa: F811
 ):
     resp = await gql(
         client,

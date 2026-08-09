@@ -326,7 +326,9 @@ async def test_update_marriage_propagates_exception_from_get_or_raise(mock_uow):
     dto.where.marriage_id = UUID(int=1)
     dto.data.model_dump.return_value = {}
 
-    mock_uow.marriages.get_in_tree_or_raise = AsyncMock(side_effect=MarriageNotFoundException())
+    mock_uow.marriages.get_in_tree_or_raise = AsyncMock(
+        side_effect=MarriageNotFoundException()
+    )
 
     rules_service = MagicMock()
 

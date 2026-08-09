@@ -12,9 +12,7 @@ class TreeAccessService:
     def __init__(self, uow: UnitOfWork):
         self.uow = uow
 
-    async def require_member(
-        self, *, tree_id: UUID, user_id: UUID
-    ) -> TreeMembership:
+    async def require_member(self, *, tree_id: UUID, user_id: UUID) -> TreeMembership:
         await self.uow.family_trees.get_or_raise(tree_id)
         membership = await self.uow.tree_memberships.get(
             tree_id=tree_id, user_id=user_id
@@ -25,9 +23,7 @@ class TreeAccessService:
             )
         return membership
 
-    async def require_owner(
-        self, *, tree_id: UUID, user_id: UUID
-    ) -> TreeMembership:
+    async def require_owner(self, *, tree_id: UUID, user_id: UUID) -> TreeMembership:
         membership = await self.require_member(tree_id=tree_id, user_id=user_id)
         if not membership.is_owner():
             raise TreeOwnerRequiredException(

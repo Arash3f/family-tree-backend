@@ -23,9 +23,7 @@ class GetFamilyTreeUseCase:
         self.uow = uow
         self.access = TreeAccessService(uow)
 
-    async def execute(
-        self, *, tree_id: UUID, user_id: UUID
-    ) -> FamilyTreeResponseDTO:
+    async def execute(self, *, tree_id: UUID, user_id: UUID) -> FamilyTreeResponseDTO:
         async with self.uow:
             await self.access.require_member(tree_id=tree_id, user_id=user_id)
             tree = await self.uow.family_trees.get_or_raise(tree_id)

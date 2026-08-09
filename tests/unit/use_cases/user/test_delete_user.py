@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
+from uuid import UUID
 
 from app.application.use_cases.user.delete_user_use_case import DeleteUserUseCase
 from app.domain.exceptions.user_exceptions import UserNotFoundException

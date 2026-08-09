@@ -96,7 +96,10 @@ class AppSettings(PydanticBaseSettings):
             weak.append("POSTGRES_PASSWORD")
         if self.FLOWER_BASIC_AUTH in {"admin:admin", "admin:password"}:
             weak.append("FLOWER_BASIC_AUTH")
-        if self.MINIO_ACCESS_KEY == "minioadmin" or self.MINIO_SECRET_KEY == "minioadmin":
+        if (
+            self.MINIO_ACCESS_KEY == "minioadmin"
+            or self.MINIO_SECRET_KEY == "minioadmin"
+        ):
             weak.append("MINIO_ACCESS_KEY/MINIO_SECRET_KEY")
         if self.JWT_SECRET.startswith("local-dev-only"):
             weak.append("JWT_SECRET")

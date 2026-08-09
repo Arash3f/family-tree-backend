@@ -8,7 +8,7 @@ from app.domain.entities.marriage import Marriage
 from app.domain.entities.person import Gender, Person
 from app.domain.shared.dto.marriage_filter_dto import MarriageSortField
 from app.domain.shared.dto.sorter_dto import SortOrderField
-from app.infrastructure.services.unit_of_work.sqlalchemy_uow import SQLAlchemyUnitOfWork
+from tests.helpers.uow import TreeUnitOfWork
 from app.presentation.rest.schemas.dto.common import (
     PaginatedResponse,
     PaginationRequestParams,
@@ -37,16 +37,20 @@ def marriages_url(tree_id: UUID, suffix: str = "") -> str:
     return f"/family-trees/{tree_id}/marriages{suffix}"
 
 
-async def _create_spouses(uow: SQLAlchemyUnitOfWork, suffix: str = ""):
+async def _create_spouses(uow: TreeUnitOfWork, suffix: str = ""):
     husband = await uow.persons.create(
-        Person(tree_id=uow.tree_id, id=None,
+        Person(
+            tree_id=uow.tree_id,
+            id=None,
             name=f"husband{suffix}",
             gender=Gender.MALE,
             birth_date=date(1990, 1, 1),
         )
     )
     wife = await uow.persons.create(
-        Person(tree_id=uow.tree_id, id=None,
+        Person(
+            tree_id=uow.tree_id,
+            id=None,
             name=f"wife{suffix}",
             gender=Gender.FEMALE,
             birth_date=date(1992, 1, 1),
@@ -156,10 +160,14 @@ async def test_get_marriage_unauthenticated(client, tree_id):
 
 
 @pytest.mark.asyncio
-async def test_get_marriage_success(client, tree_id, admin_headers, uow: SQLAlchemyUnitOfWork):  # noqa: F811
+async def test_get_marriage_success(
+    client, tree_id, admin_headers, uow: TreeUnitOfWork
+):  # noqa: F811
     husband, wife = await _create_spouses(uow, suffix="_get")
     marriage = await uow.marriages.create(
-        Marriage(tree_id=uow.tree_id, id=None,
+        Marriage(
+            tree_id=uow.tree_id,
+            id=None,
             spouse_a_id=husband.safe_id,
             spouse_b_id=wife.safe_id,
             married_at=date(2020, 1, 1),
@@ -247,13 +255,16 @@ async def test_update_marriage_unauthenticated(client, tree_id):
 
 @pytest.mark.asyncio
 async def test_update_marriage_success(
-    client, tree_id,
+    client,
+    tree_id,
     admin_headers,  # noqa: F811
-    uow: SQLAlchemyUnitOfWork,
+    uow: TreeUnitOfWork,
 ):
     husband, wife = await _create_spouses(uow, suffix="_update")
     marriage = await uow.marriages.create(
-        Marriage(tree_id=uow.tree_id, id=None,
+        Marriage(
+            tree_id=uow.tree_id,
+            id=None,
             spouse_a_id=husband.safe_id,
             spouse_b_id=wife.safe_id,
             married_at=date(2020, 1, 1),
@@ -339,13 +350,16 @@ async def test_delete_marriage_unauthenticated(client, tree_id):
 
 @pytest.mark.asyncio
 async def test_delete_marriage_success(
-    client, tree_id,
+    client,
+    tree_id,
     admin_headers,  # noqa: F811
-    uow: SQLAlchemyUnitOfWork,
+    uow: TreeUnitOfWork,
 ):
     husband, wife = await _create_spouses(uow, suffix="_delete")
     marriage = await uow.marriages.create(
-        Marriage(tree_id=uow.tree_id, id=None,
+        Marriage(
+            tree_id=uow.tree_id,
+            id=None,
             spouse_a_id=husband.safe_id,
             spouse_b_id=wife.safe_id,
             married_at=date(2020, 1, 1),
@@ -427,10 +441,12 @@ async def test_divorce_unauthenticated(client, tree_id):
 
 
 @pytest.mark.asyncio
-async def test_divorce_success(client, tree_id, admin_headers, uow: SQLAlchemyUnitOfWork):  # noqa: F811
+async def test_divorce_success(client, tree_id, admin_headers, uow: TreeUnitOfWork):  # noqa: F811
     husband, wife = await _create_spouses(uow, suffix="_divorce")
     marriage = await uow.marriages.create(
-        Marriage(tree_id=uow.tree_id, id=None,
+        Marriage(
+            tree_id=uow.tree_id,
+            id=None,
             spouse_a_id=husband.safe_id,
             spouse_b_id=wife.safe_id,
             married_at=date(2020, 1, 1),
@@ -484,7 +500,9 @@ async def test_divorce_with_invalid_id(client, tree_id, admin_headers):  # noqa:
 
 
 @pytest.mark.asyncio
-async def test_get_marriage_list_by_filter_permission_denied(client, tree_id, member_headers):  # noqa: F811
+async def test_get_marriage_list_by_filter_permission_denied(
+    client, tree_id, member_headers
+):  # noqa: F811
     req = FilterMarriageRequest(
         filters=MarriageFilterRequestData(),
         pagination=PaginationRequestParams(offset=0, page=1, page_size=30),
@@ -528,15 +546,18 @@ async def test_get_marriage_list_by_filter_unauthenticated(client, tree_id):
 
 @pytest.mark.asyncio
 async def test_get_marriage_list_by_filter_success(
-    client, tree_id,
+    client,
+    tree_id,
     admin_headers,  # noqa: F811
-    uow: SQLAlchemyUnitOfWork,
+    uow: TreeUnitOfWork,
 ):
     marriages = []
     for i in range(5):
         husband, wife = await _create_spouses(uow, suffix=f"_list_{i}")
         marriage = await uow.marriages.create(
-            Marriage(tree_id=uow.tree_id, id=None,
+            Marriage(
+                tree_id=uow.tree_id,
+                id=None,
                 spouse_a_id=husband.safe_id,
                 spouse_b_id=wife.safe_id,
                 married_at=date(2020, 1, i + 1),

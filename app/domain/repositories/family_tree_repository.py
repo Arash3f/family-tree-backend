@@ -34,9 +34,7 @@ class FamilyTreeRepository(ABC):
         pass
 
     @abstractmethod
-    def person_exists(
-        self, data: PersonIdDTO, tree_id: UUID | None = None
-    ) -> bool:
+    def person_exists(self, data: PersonIdDTO, tree_id: UUID | None = None) -> bool:
         pass
 
     # -------------------------

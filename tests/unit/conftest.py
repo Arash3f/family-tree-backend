@@ -7,7 +7,10 @@ from app.domain.repositories.marriage_repository import MarriageRepository
 from app.domain.repositories.permission_repository import PermissionRepository
 from app.domain.repositories.person_repository import PersonRepository
 from app.domain.repositories.role_repository import RoleRepository
-from app.domain.repositories.tree_repository import TreeMembershipRepository, TreeRepository
+from app.domain.repositories.tree_repository import (
+    TreeMembershipRepository,
+    TreeRepository,
+)
 from app.domain.repositories.user_repository import UserRepository
 
 

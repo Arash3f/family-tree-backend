@@ -105,7 +105,9 @@ async def test_create_marriage_raises_if_husband_not_found(mock_uow):
         married_at=date(2020, 1, 1),
     )
 
-    mock_uow.persons.get_in_tree_or_raise = AsyncMock(side_effect=PersonNotFoundException())
+    mock_uow.persons.get_in_tree_or_raise = AsyncMock(
+        side_effect=PersonNotFoundException()
+    )
 
     use_case = CreateMarriageUseCase(
         mock_uow, marriage_rules_service=MagicMock(), sync_service=MagicMock()

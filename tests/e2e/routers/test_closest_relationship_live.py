@@ -1,8 +1,8 @@
 from datetime import date
-from uuid import uuid4
 
 import pytest
 
+from app.domain.entities.person import Gender, Person
 from app.domain.shared.dto.family_tree_dto import (
     ParentRelationshipDTO,
     PersonIdDTO,
@@ -13,6 +13,11 @@ from app.infrastructure.repositories.neo4j_family_tree_repository import (
     Neo4jFamilyTreeRepository,
 )
 from tests.e2e.auth_headers import admin_headers as admin_headers
+from tests.helpers.uow import TreeUnitOfWork
+
+
+def persons_url(tree_id, suffix: str = "") -> str:
+    return f"/family-trees/{tree_id}/persons{suffix}"
 
 
 @pytest.fixture
@@ -27,14 +32,43 @@ def live_neo():
 
 
 @pytest.mark.asyncio
-async def test_live_closest_relationship_rest(client, admin_headers, live_neo):  # noqa: F811
+async def test_live_closest_relationship_rest(
+    client,
+    tree_id,
+    admin_headers,
+    uow: TreeUnitOfWork,
+    live_neo,  # noqa: F811
+):
     """API closest-relationship against real Neo4j (no mocked get_neo)."""
-    father_id = uuid4()
-    child_id = uuid4()
+    # The endpoint validates both persons against Postgres before querying the
+    # graph, so they must exist in the tree as well as in Neo4j.
+    father = await uow.persons.create(
+        Person(
+            id=None,
+            tree_id=tree_id,
+            name="Live Father",
+            gender=Gender.MALE,
+            birth_date=date(1970, 1, 1),
+        )
+    )
+    child = await uow.persons.create(
+        Person(
+            id=None,
+            tree_id=tree_id,
+            name="Live Child",
+            gender=Gender.MALE,
+            birth_date=date(2000, 1, 1),
+        )
+    )
+    await uow.commit()
+
+    father_id = father.safe_id
+    child_id = child.safe_id
 
     live_neo.upsert_person(
         PersonUpsertDTO(
             id=father_id,
+            tree_id=tree_id,
             full_name="Live Father",
             gender="MALE",
             birth_date=date(1970, 1, 1),
@@ -43,6 +77,7 @@ async def test_live_closest_relationship_rest(client, admin_headers, live_neo): 
     live_neo.upsert_person(
         PersonUpsertDTO(
             id=child_id,
+            tree_id=tree_id,
             full_name="Live Child",
             gender="MALE",
             birth_date=date(2000, 1, 1),
@@ -54,7 +89,7 @@ async def test_live_closest_relationship_rest(client, admin_headers, live_neo): 
 
     try:
         resp = await client.get(
-            f"/persons/{father_id}/relation/{child_id}",
+            persons_url(tree_id, f"/{father_id}/relation/{child_id}"),
             headers=admin_headers,
         )
         assert resp.status_code == 200, resp.text

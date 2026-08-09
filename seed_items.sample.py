@@ -23,7 +23,12 @@ from app.application.interfaces.unit_of_work import UnitOfWork
 from app.core.config import settings
 from app.domain.entities.family_tree import FamilyTree, TreeMemberRole, TreeMembership
 from app.domain.entities.marriage import Marriage
-from app.domain.entities.person import Gender, ParentLink, ParentRelationshipType, Person
+from app.domain.entities.person import (
+    Gender,
+    ParentLink,
+    ParentRelationshipType,
+    Person,
+)
 from app.domain.exceptions.person_exceptions import InvalidParentMarriageException
 from app.domain.shared.dto.family_tree_dto import (
     ParentRelationshipDTO,

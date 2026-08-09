@@ -41,7 +41,9 @@ async def test_divorce_use_case_success(mock_uow):
 async def test_divorce_use_case_propagates_exception_from_get_or_raise(mock_uow):
     dto = DivorceDTO(marriage_id=UUID(int=1), divorced_at=date(2025, 1, 1))
 
-    mock_uow.marriages.get_in_tree_or_raise = AsyncMock(side_effect=MarriageNotFoundException())
+    mock_uow.marriages.get_in_tree_or_raise = AsyncMock(
+        side_effect=MarriageNotFoundException()
+    )
 
     use_case = DivorceUseCase(mock_uow, sync_service=MagicMock())
 

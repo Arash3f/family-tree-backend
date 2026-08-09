@@ -181,14 +181,25 @@ async def test_get_list_by_filter_with_pagination(uow: UnitOfWork):
         assert len(result.items) == query.pagination.page_size
         assert result.total >= 10
 
-        sorted_users = sorted(created_users, key=lambda user: user.safe_id)
+        # The tree fixture seeds an owner user too, so the expected window has to
+        # come from everything in the table rather than just the users created here.
+        all_users = await uow.users.get_list_by_filter(
+            FilterUserQuery(
+                filters=None,
+                pagination=PaginationParams(page=1, page_size=100, offset=0),
+                sort=SortParams(
+                    sort_by=UserSortField.ID,
+                    sort_order=SortOrderField.ASC,
+                ),
+            )
+        )
         start = (
             query.pagination.offset
             + (query.pagination.page - 1) * query.pagination.page_size
         )
         expected_usernames = {
-            sorted_users[start].username,
-            sorted_users[start + 1].username,
+            user.username
+            for user in all_users.items[start : start + query.pagination.page_size]
         }
         returned_usernames = {u.username for u in result.items}
         assert returned_usernames == expected_usernames

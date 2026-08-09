@@ -22,7 +22,10 @@ async def gql(
 
 @pytest.mark.asyncio
 async def test_graphql_marriage_crud_and_divorce(
-    client, tree_id, admin_headers, uow  # noqa: F811
+    client,
+    tree_id,
+    admin_headers,
+    uow,  # noqa: F811
 ):
     husband = await uow.persons.create(
         Person(

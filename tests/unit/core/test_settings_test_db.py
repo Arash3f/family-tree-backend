@@ -1,11 +1,13 @@
+from typing import Any
+
 import pytest
 from pydantic import ValidationError
 
 from app.core.config import AppSettings
 
 
-def _base_kwargs(**overrides: object) -> dict[str, object]:
-    data: dict[str, object] = {
+def _base_kwargs(**overrides: Any) -> dict[str, Any]:
+    data: dict[str, Any] = {
         "JWT_SECRET": "local-dev-only-change-me-32chars-min",
         "POSTGRES_HOST": "127.0.0.1",
         "POSTGRES_PORT": 5432,
@@ -27,8 +29,8 @@ def test_settings_accept_distinct_test_database():
 def test_settings_reject_identical_app_and_test_database():
     with pytest.raises(ValidationError, match="POSTGRES_DB_TEST must target"):
         AppSettings(
-            _env_file=None,
-            **_base_kwargs(POSTGRES_DB_TEST="family_tree"),  # type: ignore[arg-type]
+            _env_file=None,  # type: ignore[call-arg]
+            **_base_kwargs(POSTGRES_DB_TEST="family_tree"),
         )
 
 
@@ -40,14 +42,14 @@ def test_default_test_database_name_is_family_tree_test():
 def test_settings_reject_weak_secrets_in_production():
     with pytest.raises(ValidationError, match="Weak/default secrets"):
         AppSettings(
-            _env_file=None,
-            **_base_kwargs(ENVIRONMENT="production"),  # type: ignore[arg-type]
+            _env_file=None,  # type: ignore[call-arg]
+            **_base_kwargs(ENVIRONMENT="production"),
         )
 
 
 def test_settings_allow_weak_secrets_in_local():
     settings = AppSettings(
-        _env_file=None,
-        **_base_kwargs(ENVIRONMENT="local", ADMIN_PASSWORD="admin"),  # type: ignore[arg-type]
+        _env_file=None,  # type: ignore[call-arg]
+        **_base_kwargs(ENVIRONMENT="local", ADMIN_PASSWORD="admin"),
     )
     assert settings.ENVIRONMENT == "local"

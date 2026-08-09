@@ -11,9 +11,7 @@ class TicketNotFoundException(AppException):
 
 class TicketClosedException(AppException):
     def __init__(self, detail: list[str] = []):
-        super().__init__(
-            code=ErrorCode.TICKET_CLOSED, status_code=409, detail=detail
-        )
+        super().__init__(code=ErrorCode.TICKET_CLOSED, status_code=409, detail=detail)
 
 
 class TicketAccessDeniedException(AppException):

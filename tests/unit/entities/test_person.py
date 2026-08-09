@@ -3,7 +3,12 @@ from datetime import date, timedelta
 
 import pytest
 
-from app.domain.entities.person import Gender, ParentLink, ParentRelationshipType, Person
+from app.domain.entities.person import (
+    Gender,
+    ParentLink,
+    ParentRelationshipType,
+    Person,
+)
 from app.domain.exceptions.common_exceptions import UnExpectedIdException
 from app.domain.exceptions.person_exceptions import (
     InvalidBirthDateException,

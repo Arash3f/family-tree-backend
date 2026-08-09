@@ -101,7 +101,9 @@ def to_ticket_status_enum(value: DomainTicketStatus | str) -> TicketStatusEnum:
     return TicketStatusEnum(raw)
 
 
-def to_domain_ticket_status(value: TicketStatusEnum | DomainTicketStatus) -> DomainTicketStatus:
+def to_domain_ticket_status(
+    value: TicketStatusEnum | DomainTicketStatus,
+) -> DomainTicketStatus:
     if isinstance(value, DomainTicketStatus):
         return value
     return DomainTicketStatus(value.value)
@@ -123,9 +125,7 @@ def ticket_message_from_mapping(data: dict) -> TicketMessageType:
 
 
 def ticket_from_mapping(data: dict) -> TicketType:
-    messages = [
-        ticket_message_from_mapping(m) for m in (data.get("messages") or [])
-    ]
+    messages = [ticket_message_from_mapping(m) for m in (data.get("messages") or [])]
     return TicketType(
         id=data["id"],
         title=data["title"],

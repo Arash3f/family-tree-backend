@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import UUID
 
 from app.application.dto.user.user_update_dto import (
     _UserUpdateDataDTO,

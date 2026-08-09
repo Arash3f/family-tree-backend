@@ -3,7 +3,12 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from app.domain.entities.person import Gender, ParentLink, ParentRelationshipType, Person
+from app.domain.entities.person import (
+    Gender,
+    ParentLink,
+    ParentRelationshipType,
+    Person,
+)
 
 
 class ParentLinkDTO(BaseModel):

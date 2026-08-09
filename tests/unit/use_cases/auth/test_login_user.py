@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
+from uuid import UUID
 
 from app.application.dto.auth_dto import LoginDTO
 from app.application.use_cases.login_user import LoginUserUseCase
