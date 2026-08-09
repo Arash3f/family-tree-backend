@@ -35,14 +35,14 @@ async def test_graphql_marriage_crud_and_divorce(client, admin_headers, uow):  #
         """
         mutation ($data: MarriageCreateInput!) {
           createMarriage(data: $data) {
-            id husbandId wifeId marriedAt divorcedAt
+            id spouseAId spouseBId marriedAt divorcedAt
           }
         }
         """,
         {
             "data": {
-                "husbandId": str(husband.safe_id),
-                "wifeId": str(wife.safe_id),
+                "spouseAId": str(husband.safe_id),
+                "spouseBId": str(wife.safe_id),
                 "marriedAt": "2020-01-01",
             }
         },
@@ -56,7 +56,7 @@ async def test_graphql_marriage_crud_and_divorce(client, admin_headers, uow):  #
         client,
         """
         query ($id: UUID!) {
-          marriage(marriageId: $id) { id husbandId wifeId }
+          marriage(marriageId: $id) { id spouseAId spouseBId }
         }
         """,
         {"id": marriage_id},

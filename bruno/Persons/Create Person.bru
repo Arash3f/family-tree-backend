@@ -13,8 +13,13 @@ post {
 body:json {
   {
     "name": "arash",
+    "family_name": "karimi",
     "gender": "male",
     "birth_date": "1379/09/01",
+    "death_date": null,
+    "birth_place": "Tehran",
+    "death_place": null,
+    "notes": null,
     "parents": [],
     "marriage_id": null,
     "photo_object_key": null
@@ -48,9 +53,14 @@ docs {
   ## Input (`application/json`)
   | Field | Type | Required | Notes |
   |-------|------|----------|-------|
-  | name | string | yes | |
+  | name | string | yes | Given name |
+  | family_name | string\|null | no | Family / surname |
   | gender | string | yes | `male` \| `female` |
   | birth_date | string\|null | no | Jalali `YYYY/MM/DD` or Gregorian `YYYY-MM-DD` |
+  | death_date | string\|null | no | Must be >= birth_date when both set |
+  | birth_place | string\|null | no | |
+  | death_place | string\|null | no | |
+  | notes | string\|null | no | Free-form notes |
   | parents | array | no | `{ parent_id, relationship_type }` |
   | marriage_id | uuid\|null | no | Origin marriage |
   | photo_object_key | string\|null | no | From `POST /media/upload` |
@@ -60,8 +70,13 @@ docs {
   {
     "id": "00000000-0000-0000-0000-000000000001",
     "name": "arash",
+    "family_name": "karimi",
     "gender": "male",
     "birth_date": "1379/09/01",
+    "death_date": null,
+    "birth_place": "Tehran",
+    "death_place": null,
+    "notes": null,
     "parents": [],
     "marriage_id": null,
     "photo_object_key": null,

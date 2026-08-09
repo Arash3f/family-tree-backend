@@ -19,8 +19,8 @@ body:json {
     },
     "filters": {
       "id": null,
-      "husband_id": null,
-      "wife_id": null,
+      "spouse_a_id": null,
+      "spouse_b_id": null,
       "married_at": null,
       "divorced_at": null
     },
@@ -46,8 +46,8 @@ docs {
   | pagination | object | no | default: `page=1`, `page_size=30`, `offset=0` |
   | filters | object | no | omit for no filtering |
   | filters.id | uuid\|null | no | |
-  | filters.husband_id | uuid\|null | no | |
-  | filters.wife_id | uuid\|null | no | |
+  | filters.spouse_a_id | uuid\|null | no | |
+  | filters.spouse_b_id | uuid\|null | no | |
   | filters.married_at | `{min,max}`\|null | no | |
   | filters.divorced_at | `{min,max}`\|null | no | |
   | sort | object | no | default: `sort_order=desc`, `sort_by=id` |
@@ -60,8 +60,8 @@ docs {
     "items": [
       {
         "id": "00000000-0000-0000-0000-000000000001",
-        "husband_id": "00000000-0000-0000-0000-000000000001",
-        "wife_id": "00000000-0000-0000-0000-000000000002",
+        "spouse_a_id": "00000000-0000-0000-0000-000000000001",
+        "spouse_b_id": "00000000-0000-0000-0000-000000000002",
         "married_at": "2020-01-15",
         "divorced_at": null
       }

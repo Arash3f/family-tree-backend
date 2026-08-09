@@ -10,8 +10,8 @@ from app.domain.entities.marriage import Marriage
 def create_marriage(**overrides):
     return Marriage(
         id=overrides.get("id", UUID(int=1)),
-        husband_id=overrides.get("husband_id", UUID(int=10)),
-        wife_id=overrides.get("wife_id", UUID(int=20)),
+        spouse_a_id=overrides.get("spouse_a_id", UUID(int=10)),
+        spouse_b_id=overrides.get("spouse_b_id", UUID(int=20)),
         married_at=overrides.get("married_at", date(2020, 1, 1)),
         divorced_at=overrides.get("divorced_at", None),
     )
@@ -23,8 +23,8 @@ def test_create_mapper_to_response():
     dto = MarriageCreateMapper.to_response(marriage)
 
     assert dto.id == marriage.id
-    assert dto.husband_id == marriage.husband_id
-    assert dto.wife_id == marriage.wife_id
+    assert dto.spouse_a_id == marriage.spouse_a_id
+    assert dto.spouse_b_id == marriage.spouse_b_id
     assert dto.married_at == marriage.married_at
     assert dto.divorced_at == marriage.divorced_at
 
@@ -35,8 +35,8 @@ def test_get_mapper_to_response():
     dto = MarriageGetMapper.to_response(marriage)
 
     assert dto.id == marriage.id
-    assert dto.husband_id == marriage.husband_id
-    assert dto.wife_id == marriage.wife_id
+    assert dto.spouse_a_id == marriage.spouse_a_id
+    assert dto.spouse_b_id == marriage.spouse_b_id
     assert dto.married_at == marriage.married_at
     assert dto.divorced_at == marriage.divorced_at
 
@@ -47,7 +47,7 @@ def test_update_mapper_to_response():
     dto = MarriageUpdateDTOMapper.to_response(marriage)
 
     assert dto.id == marriage.id
-    assert dto.husband_id == marriage.husband_id
-    assert dto.wife_id == marriage.wife_id
+    assert dto.spouse_a_id == marriage.spouse_a_id
+    assert dto.spouse_b_id == marriage.spouse_b_id
     assert dto.married_at == marriage.married_at
     assert dto.divorced_at == marriage.divorced_at

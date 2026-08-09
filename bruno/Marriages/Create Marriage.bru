@@ -12,8 +12,8 @@ post {
 
 body:json {
   {
-    "husband_id": "{{from_person_id}}",
-    "wife_id": "{{to_person_id}}",
+    "spouse_a_id": "{{from_person_id}}",
+    "spouse_b_id": "{{to_person_id}}",
     "married_at": "2020-01-15"
   }
 }
@@ -21,8 +21,8 @@ body:json {
 assert {
   res.status: eq 200
   res.body.id: isString
-  res.body.husband_id: isString
-  res.body.wife_id: isString
+  res.body.spouse_a_id: isString
+  res.body.spouse_b_id: isString
   res.body.married_at: isDefined
 }
 
@@ -38,16 +38,16 @@ docs {
   ## Input (`application/json`)
   | Field | Type | Required | Notes |
   |-------|------|----------|-------|
-  | husband_id | uuid | yes | Person uuid |
-  | wife_id | uuid | yes | Person uuid |
+  | spouse_a_id | uuid | yes | Person uuid |
+  | spouse_b_id | uuid | yes | Person uuid |
   | married_at | date | yes | `YYYY-MM-DD` |
 
   ## Output `200`
   ```json
   {
     "id": "00000000-0000-0000-0000-000000000001",
-    "husband_id": "00000000-0000-0000-0000-000000000001",
-    "wife_id": "00000000-0000-0000-0000-000000000002",
+    "spouse_a_id": "00000000-0000-0000-0000-000000000001",
+    "spouse_b_id": "00000000-0000-0000-0000-000000000002",
     "married_at": "2020-01-15",
     "divorced_at": null
   }

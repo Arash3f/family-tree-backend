@@ -28,8 +28,10 @@ mutation CreatePerson($data: PersonCreateInput!) {
     id
     name
     gender
-    fatherId
-    motherId
+    parents {
+      parentId
+      relationshipType
+    }
   }
 }
 """
@@ -91,8 +93,10 @@ async def test_graphql_create_get_list_update_delete_person(
             "data": {
                 "name": "child",
                 "gender": "MALE",
-                "fatherId": str(father.safe_id),
-                "motherId": str(mother.safe_id),
+                "parents": [
+                    {"parentId": str(father.safe_id), "relationshipType": "BIOLOGICAL"},
+                    {"parentId": str(mother.safe_id), "relationshipType": "BIOLOGICAL"},
+                ],
             }
         },
         headers=admin_headers,
@@ -101,7 +105,10 @@ async def test_graphql_create_get_list_update_delete_person(
     person = create.json()["data"]["createPerson"]
     person_id = person["id"]
     assert person["name"] == "child"
-    assert person["fatherId"] == str(father.safe_id)
+    assert {p["parentId"] for p in person["parents"]} == {
+        str(father.safe_id),
+        str(mother.safe_id),
+    }
 
     get_one = await gql(
         client,

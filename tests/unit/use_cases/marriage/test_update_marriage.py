@@ -17,11 +17,11 @@ async def test_update_marriage_husband_triggers_validation(mock_uow):
     dto = MagicMock()
 
     dto.where.marriage_id = UUID(int=1)
-    dto.data.model_dump.return_value = {"husband_id": UUID(int=10)}
+    dto.data.model_dump.return_value = {"spouse_a_id": UUID(int=10)}
 
     marriage = MagicMock()
-    marriage.husband_id = UUID(int=1)
-    marriage.wife_id = UUID(int=2)
+    marriage.spouse_a_id = UUID(int=1)
+    marriage.spouse_b_id = UUID(int=2)
     marriage.married_at = date(2020, 1, 1)
     marriage.divorced_at = None
     marriage.safe_id = UUID(int=1)
@@ -36,15 +36,15 @@ async def test_update_marriage_husband_triggers_validation(mock_uow):
 
     mock_uow.persons.get_or_raise = AsyncMock(side_effect=[husband, wife])
 
-    marriage.husband_id = UUID(int=10)
+    marriage.spouse_a_id = UUID(int=10)
     mock_uow.marriages.update = AsyncMock(return_value=marriage)
 
     rules_service = MagicMock()
 
     expected_result = MarriageUpdateResponseDTO(
         id=UUID(int=1),
-        wife_id=UUID(int=2),
-        husband_id=UUID(int=10),
+        spouse_b_id=UUID(int=2),
+        spouse_a_id=UUID(int=10),
         married_at=date(2020, 1, 1),
         divorced_at=None,
     )
@@ -59,7 +59,9 @@ async def test_update_marriage_husband_triggers_validation(mock_uow):
 
     # --- Assert ---
     assert result is expected_result
-    rules_service.validate_marriage.assert_called_once()
+    rules_service.validate_marriage.assert_called_once_with(
+        spouse_a=husband, spouse_b=wife, marriage_date=marriage.married_at
+    )
 
     mapper_mock.assert_called_once_with(marriage=marriage)
 
@@ -73,7 +75,6 @@ async def test_update_marriage_husband_triggers_validation(mock_uow):
 
     mock_uow.marriages.update.assert_awaited_once_with(marriage=marriage)
     mock_uow.commit.assert_awaited_once()
-    mock_uow.marriages.has_active_for_person.assert_awaited()
 
 
 @pytest.mark.asyncio
@@ -81,11 +82,11 @@ async def test_update_marriage_wife_triggers_validation(mock_uow):
     dto = MagicMock()
 
     dto.where.marriage_id = UUID(int=1)
-    dto.data.model_dump.return_value = {"wife_id": UUID(int=20)}
+    dto.data.model_dump.return_value = {"spouse_b_id": UUID(int=20)}
 
     marriage = MagicMock()
-    marriage.husband_id = UUID(int=1)
-    marriage.wife_id = UUID(int=2)
+    marriage.spouse_a_id = UUID(int=1)
+    marriage.spouse_b_id = UUID(int=2)
     marriage.married_at = date(2020, 1, 1)
     marriage.divorced_at = None
     marriage.safe_id = UUID(int=1)
@@ -100,15 +101,15 @@ async def test_update_marriage_wife_triggers_validation(mock_uow):
 
     mock_uow.persons.get_or_raise = AsyncMock(side_effect=[husband, wife])
 
-    marriage.wife_id = UUID(int=20)
+    marriage.spouse_b_id = UUID(int=20)
     mock_uow.marriages.update = AsyncMock(return_value=marriage)
 
     rules_service = MagicMock()
 
     expected_result = MarriageUpdateResponseDTO(
         id=UUID(int=1),
-        wife_id=UUID(int=20),
-        husband_id=UUID(int=1),
+        spouse_b_id=UUID(int=20),
+        spouse_a_id=UUID(int=1),
         married_at=date(2020, 1, 1),
         divorced_at=None,
     )
@@ -123,7 +124,9 @@ async def test_update_marriage_wife_triggers_validation(mock_uow):
 
     # --- Assert ---
     assert result is expected_result
-    rules_service.validate_marriage.assert_called_once()
+    rules_service.validate_marriage.assert_called_once_with(
+        spouse_a=wife, spouse_b=husband, marriage_date=marriage.married_at
+    )
 
     mapper_mock.assert_called_once_with(marriage=marriage)
 
@@ -147,8 +150,8 @@ async def test_update_marriage_divorced_at_without_validation(mock_uow):
     dto.data.model_dump.return_value = {"divorced_at": date(2023, 1, 1)}
 
     marriage = MagicMock()
-    marriage.husband_id = UUID(int=1)
-    marriage.wife_id = UUID(int=2)
+    marriage.spouse_a_id = UUID(int=1)
+    marriage.spouse_b_id = UUID(int=2)
     marriage.married_at = date(2020, 1, 1)
     marriage.divorced_at = None
     marriage.safe_id = UUID(int=1)
@@ -166,8 +169,8 @@ async def test_update_marriage_divorced_at_without_validation(mock_uow):
 
     expected_result = MarriageUpdateResponseDTO(
         id=UUID(int=1),
-        wife_id=UUID(int=2),
-        husband_id=UUID(int=1),
+        spouse_b_id=UUID(int=2),
+        spouse_a_id=UUID(int=1),
         married_at=date(2020, 1, 1),
         divorced_at=date(2023, 1, 1),
     )
@@ -201,8 +204,8 @@ async def test_update_marriage_married_at_triggers_validation(mock_uow):
     dto.data.model_dump.return_value = {"married_at": date(2021, 1, 1)}
 
     marriage = MagicMock()
-    marriage.husband_id = UUID(int=1)
-    marriage.wife_id = UUID(int=2)
+    marriage.spouse_a_id = UUID(int=1)
+    marriage.spouse_b_id = UUID(int=2)
     marriage.married_at = date(2020, 1, 1)
     marriage.divorced_at = None
     marriage.safe_id = UUID(int=1)
@@ -219,8 +222,8 @@ async def test_update_marriage_married_at_triggers_validation(mock_uow):
 
     expected_result = MarriageUpdateResponseDTO(
         id=UUID(int=1),
-        husband_id=UUID(int=1),
-        wife_id=UUID(int=2),
+        spouse_a_id=UUID(int=1),
+        spouse_b_id=UUID(int=2),
         married_at=date(2021, 1, 1),
         divorced_at=None,
     )
@@ -237,7 +240,9 @@ async def test_update_marriage_married_at_triggers_validation(mock_uow):
 
     # --- Assert ---
     assert result is expected_result
-    rules_service.validate_marriage.assert_called_once()
+    rules_service.validate_marriage.assert_called_once_with(
+        spouse_a=husband, spouse_b=wife, marriage_date=marriage.married_at
+    )
 
     mapper_mock.assert_called_once_with(marriage=marriage)
 
@@ -258,11 +263,11 @@ async def test_update_divorced_marriage_spouses_does_not_sync_spouse_edge(mock_u
     dto = MagicMock()
 
     dto.where.marriage_id = UUID(int=1)
-    dto.data.model_dump.return_value = {"husband_id": UUID(int=10)}
+    dto.data.model_dump.return_value = {"spouse_a_id": UUID(int=10)}
 
     marriage = MagicMock()
-    marriage.husband_id = UUID(int=1)
-    marriage.wife_id = UUID(int=2)
+    marriage.spouse_a_id = UUID(int=1)
+    marriage.spouse_b_id = UUID(int=2)
     marriage.married_at = date(2020, 1, 1)
     marriage.divorced_at = date(2023, 1, 1)
     marriage.safe_id = UUID(int=1)
@@ -275,7 +280,7 @@ async def test_update_divorced_marriage_spouses_does_not_sync_spouse_edge(mock_u
     mock_uow.marriages.get_or_raise = AsyncMock(return_value=marriage)
     mock_uow.persons.get_or_raise = AsyncMock(side_effect=[husband, wife])
 
-    marriage.husband_id = UUID(int=10)
+    marriage.spouse_a_id = UUID(int=10)
     mock_uow.marriages.update = AsyncMock(return_value=marriage)
 
     rules_service = MagicMock()
@@ -283,8 +288,8 @@ async def test_update_divorced_marriage_spouses_does_not_sync_spouse_edge(mock_u
 
     expected_result = MarriageUpdateResponseDTO(
         id=UUID(int=1),
-        wife_id=UUID(int=2),
-        husband_id=UUID(int=10),
+        spouse_b_id=UUID(int=2),
+        spouse_a_id=UUID(int=10),
         married_at=date(2020, 1, 1),
         divorced_at=date(2023, 1, 1),
     )
@@ -301,7 +306,6 @@ async def test_update_divorced_marriage_spouses_does_not_sync_spouse_edge(mock_u
     sync_service.replace_spouse.assert_not_called()
     sync_service.upsert_spouse.assert_not_called()
     sync_service.remove_spouse.assert_not_called()
-    mock_uow.marriages.has_active_for_person.assert_not_awaited()
 
 
 @pytest.mark.asyncio

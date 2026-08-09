@@ -16,14 +16,14 @@ def create_marriage(**overrides):
         id=overrides.get("id", UUID(int=1)),
         divorced_at=overrides.get("divorced_at", None),
         married_at=overrides.get("married_at", date(2020, 1, 1)),
-        husband_id=overrides.get("husband_id", UUID(int=1)),
-        wife_id=overrides.get("wife_id", UUID(int=2)),
+        spouse_a_id=overrides.get("spouse_a_id", UUID(int=1)),
+        spouse_b_id=overrides.get("spouse_b_id", UUID(int=2)),
     )
 
 
 def test_cannot_marry_self():
     with pytest.raises(SelfMarriageException):
-        create_marriage(husband_id=UUID(int=1), wife_id=UUID(int=1))
+        create_marriage(spouse_a_id=UUID(int=1), spouse_b_id=UUID(int=1))
 
 
 def test_divorce_before_marriage_not_allowed_on_creation():

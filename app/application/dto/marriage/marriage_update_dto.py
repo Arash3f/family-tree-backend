@@ -8,15 +8,15 @@ from app.domain.entities.marriage import Marriage
 
 
 class MarriageUpdateField(str, Enum):
-    HUSBAND_ID = "husband_id"
-    WIFE_ID = "wife_id"
+    spouse_a_id = "spouse_a_id"
+    spouse_b_id = "spouse_b_id"
     MARRIAGE_AT = "married_at"
     DIVORCE_AT = "divorced_at"
 
 
 class _MarriageUpdateDataDTO(BaseModel):
-    husband_id: UUID | None = None
-    wife_id: UUID | None = None
+    spouse_a_id: UUID | None = None
+    spouse_b_id: UUID | None = None
     married_at: date | None = None
     divorced_at: date | None = None
 
@@ -32,8 +32,8 @@ class MarriageUpdateDTO(BaseModel):
 
 class MarriageUpdateResponseDTO(BaseModel):
     id: UUID
-    husband_id: UUID
-    wife_id: UUID
+    spouse_a_id: UUID
+    spouse_b_id: UUID
     married_at: date
     divorced_at: date | None
 
@@ -43,8 +43,8 @@ class MarriageUpdateDTOMapper(BaseModel):
     def to_response(marriage: Marriage) -> MarriageUpdateResponseDTO:
         return MarriageUpdateResponseDTO(
             id=marriage.safe_id,
-            husband_id=marriage.husband_id,
-            wife_id=marriage.wife_id,
+            spouse_a_id=marriage.spouse_a_id,
+            spouse_b_id=marriage.spouse_b_id,
             married_at=marriage.married_at,
             divorced_at=marriage.divorced_at,
         )

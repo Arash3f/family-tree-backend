@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, datetime
 from enum import Enum
 from uuid import UUID
 
@@ -46,7 +46,12 @@ class Person:
     death_date: date | None = None
     parents: list[ParentLink] = field(default_factory=list)
     marriage_id: UUID | None = None
+    family_name: str | None = None
+    birth_place: str | None = None
+    death_place: str | None = None
+    notes: str | None = None
     photo_object_key: str | None = None
+    deleted_at: datetime | None = None
 
     def __post_init__(self) -> None:
         """

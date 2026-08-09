@@ -2,14 +2,7 @@ from datetime import date
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import (
-    CheckConstraint,
-    Date,
-    ForeignKey,
-    Index,
-    UniqueConstraint,
-    text,
-)
+from sqlalchemy import CheckConstraint, Date, ForeignKey, Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
@@ -21,46 +14,39 @@ if TYPE_CHECKING:
 class MarriageModel(Base):
     __tablename__ = "marriages"
 
-    husband_id: Mapped[UUID] = mapped_column(
-        ForeignKey("persons.id"), nullable=False, index=True
+    spouse_a_id: Mapped[UUID] = mapped_column(
+        ForeignKey("persons.id", ondelete="RESTRICT"), nullable=False, index=True
     )
 
-    wife_id: Mapped[UUID] = mapped_column(
-        ForeignKey("persons.id"), nullable=False, index=True
+    spouse_b_id: Mapped[UUID] = mapped_column(
+        ForeignKey("persons.id", ondelete="RESTRICT"), nullable=False, index=True
     )
 
     married_at: Mapped[date] = mapped_column(Date, nullable=False)
 
     divorced_at: Mapped[date | None] = mapped_column(Date, nullable=True)
 
-    # -------------------------
-    # relationships
-    # -------------------------
-
-    husband: Mapped["PersonModel"] = relationship(
-        "PersonModel", foreign_keys=[husband_id], lazy="joined"
+    spouse_a: Mapped["PersonModel"] = relationship(
+        "PersonModel", foreign_keys=[spouse_a_id], lazy="joined"
     )
 
-    wife: Mapped["PersonModel"] = relationship(
-        "PersonModel", foreign_keys=[wife_id], lazy="joined"
+    spouse_b: Mapped["PersonModel"] = relationship(
+        "PersonModel", foreign_keys=[spouse_b_id], lazy="joined"
     )
 
     __table_args__ = (
         UniqueConstraint(
-            "husband_id", "wife_id", "married_at", name="uq_marriage_couple_date"
+            "spouse_a_id",
+            "spouse_b_id",
+            "married_at",
+            name="uq_marriage_couple_date",
         ),
-        CheckConstraint("husband_id != wife_id", name="ck_marriage_no_self_marriage"),
-        Index("ix_marriage_husband_wife", "husband_id", "wife_id"),
-        Index(
-            "uq_active_marriage_husband",
-            "husband_id",
-            unique=True,
-            postgresql_where=text("divorced_at IS NULL"),
+        CheckConstraint(
+            "spouse_a_id != spouse_b_id", name="ck_marriage_no_self_marriage"
         ),
-        Index(
-            "uq_active_marriage_wife",
-            "wife_id",
-            unique=True,
-            postgresql_where=text("divorced_at IS NULL"),
+        CheckConstraint(
+            "divorced_at IS NULL OR divorced_at >= married_at",
+            name="ck_marriage_divorce_after_married",
         ),
+        Index("ix_marriage_spouses", "spouse_a_id", "spouse_b_id"),
     )

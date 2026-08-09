@@ -25,6 +25,10 @@ class PersonModel(BaseModel):
     gender: Gender
     birth_date: date | None = None
     death_date: date | None = None
+    family_name: str | None = None
+    birth_place: str | None = None
+    death_place: str | None = None
+    notes: str | None = None
     parents: list[ParentLinkRequest] = Field(default_factory=list)
     marriage_id: UUID | None = None
     photo_object_key: str | None = None
@@ -42,6 +46,10 @@ class _PersonUpdateDateRequest(BaseModel):
     gender: Gender | None = None
     birth_date: date | None = None
     death_date: date | None = None
+    family_name: str | None = None
+    birth_place: str | None = None
+    death_place: str | None = None
+    notes: str | None = None
     parents: list[ParentLinkRequest] | None = None
     marriage_id: UUID | None = None
     photo_object_key: str | None = None
@@ -68,6 +76,10 @@ class PersonUpdateResponse(BaseModel):
     gender: Gender
     birth_date: date | None
     death_date: date | None = None
+    family_name: str | None = None
+    birth_place: str | None = None
+    death_place: str | None = None
+    notes: str | None = None
     parents: list[ParentLinkRequest] = Field(default_factory=list)
     marriage_id: UUID | None = None
     photo_object_key: str | None = None
@@ -80,6 +92,10 @@ class PersonGetResponse(BaseModel):
     gender: Gender
     birth_date: date | None
     death_date: date | None = None
+    family_name: str | None = None
+    birth_place: str | None = None
+    death_place: str | None = None
+    notes: str | None = None
     parents: list[ParentLinkRequest] = Field(default_factory=list)
     marriage_id: UUID | None = None
     photo_object_key: str | None = None
@@ -107,6 +123,10 @@ class PersonCreateRequest(BaseModel):
     gender: Gender
     birth_date: date | None = None
     death_date: date | None = None
+    family_name: str | None = None
+    birth_place: str | None = None
+    death_place: str | None = None
+    notes: str | None = None
     parents: list[ParentLinkRequest] = Field(default_factory=list)
     marriage_id: UUID | None = None
     photo_object_key: str | None = None
@@ -144,6 +164,10 @@ class PersonCreateResponse(BaseModel):
     gender: Gender
     birth_date: date | None
     death_date: date | None = None
+    family_name: str | None = None
+    birth_place: str | None = None
+    death_place: str | None = None
+    notes: str | None = None
     parents: list[ParentLinkRequest] = Field(default_factory=list)
     marriage_id: UUID | None = None
     photo_object_key: str | None = None

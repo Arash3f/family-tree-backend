@@ -13,8 +13,8 @@ put {
 body:json {
   {
     "data": {
-      "husband_id": "{{from_person_id}}",
-      "wife_id": "{{to_person_id}}",
+      "spouse_a_id": "{{from_person_id}}",
+      "spouse_b_id": "{{to_person_id}}",
       "married_at": "2020-01-15",
       "divorced_at": null
     },
@@ -36,8 +36,8 @@ docs {
   ```json
   {
     "data": {
-      "husband_id": "uuid|null",
-      "wife_id": "uuid|null",
+      "spouse_a_id": "uuid|null",
+      "spouse_b_id": "uuid|null",
       "married_at": "YYYY-MM-DD|null",
       "divorced_at": "YYYY-MM-DD|null"
     },
@@ -51,8 +51,8 @@ docs {
   ```json
   {
     "id": "00000000-0000-0000-0000-000000000001",
-    "husband_id": "00000000-0000-0000-0000-000000000001",
-    "wife_id": "00000000-0000-0000-0000-000000000002",
+    "spouse_a_id": "00000000-0000-0000-0000-000000000001",
+    "spouse_b_id": "00000000-0000-0000-0000-000000000002",
     "married_at": "2020-01-15",
     "divorced_at": null
   }

@@ -51,18 +51,18 @@ from app.presentation.rest.schemas.mappers.marriage_mappers import MarriageApiMa
 
 def _marriage_create_request(data: MarriageCreateInput) -> MarriageCreateRequest:
     return MarriageCreateRequest(
-        husband_id=data.husband_id,
-        wife_id=data.wife_id,
+        spouse_a_id=data.spouse_a_id,
+        spouse_b_id=data.spouse_b_id,
         married_at=data.married_at,
     )
 
 
 def _marriage_update_dto(data: MarriageUpdateInput) -> MarriageUpdateDTO:
     raw: dict = {}
-    if data.data.husband_id is not None:
-        raw["husband_id"] = data.data.husband_id
-    if data.data.wife_id is not None:
-        raw["wife_id"] = data.data.wife_id
+    if data.data.spouse_a_id is not None:
+        raw["spouse_a_id"] = data.data.spouse_a_id
+    if data.data.spouse_b_id is not None:
+        raw["spouse_b_id"] = data.data.spouse_b_id
     if data.data.married_at is not None:
         raw["married_at"] = data.data.married_at
     if data.data.divorced_at is not None:
@@ -85,8 +85,8 @@ def _marriage_list_request(data: MarriageListInput | None) -> FilterMarriageRequ
             divorced_at = RangeRequest(min=f.divorced_at.min, max=f.divorced_at.max)
         filters = MarriageFilterRequestData(
             id=f.id,
-            husband_id=f.husband_id,
-            wife_id=f.wife_id,
+            spouse_a_id=f.spouse_a_id,
+            spouse_b_id=f.spouse_b_id,
             married_at=married_at,
             divorced_at=divorced_at,
         )

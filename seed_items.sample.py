@@ -23,8 +23,8 @@ class PersonSeedData(TypedDict):
 
 
 class MarriageSeedData(TypedDict):
-    husband: str
-    wife: str
+    spouse_a: str
+    spouse_b: str
     married_at: date
 
 
@@ -78,8 +78,8 @@ async def get_or_create_marriage(
     neo_repo: Neo4jFamilyTreeRepository,
 ) -> Marriage:
     find_marriage = await uow.marriages.get_by_ids(
-        husband_id=marriage.husband_id,
-        wife_id=marriage.wife_id,
+        spouse_a_id=marriage.spouse_a_id,
+        spouse_b_id=marriage.spouse_b_id,
     )
 
     if find_marriage:
@@ -90,8 +90,8 @@ async def get_or_create_marriage(
 
     neo_repo.create_spouse_relationship(
         data=SpouseRelationshipDTO(
-            person_id_1=marriage.husband_id,
-            person_id_2=marriage.wife_id,
+            person_id_1=marriage.spouse_a_id,
+            person_id_2=marriage.spouse_b_id,
         )
     )
 
@@ -121,8 +121,8 @@ SEED_PEOPLE: list[PersonSeedData] = [
 
 SEED_MARRIAGES: list[MarriageSeedData] = [
     {
-        "husband": "arash_alfooneh",
-        "wife": "roz_ebrahimi",
+        "spouse_a": "arash_alfooneh",
+        "spouse_b": "roz_ebrahimi",
         "married_at": date(2000, 1, 1),
     },
 ]
@@ -158,15 +158,15 @@ async def seed_initial_items(uow: UnitOfWork):
             people_map[item["key"]] = person
 
         for marriage_item in SEED_MARRIAGES:
-            husband_node = people_map[marriage_item["husband"]]
-            wife_node = people_map[marriage_item["wife"]]
+            spouse_a_node = people_map[marriage_item["spouse_a"]]
+            spouse_b_node = people_map[marriage_item["spouse_b"]]
 
             await get_or_create_marriage(
                 uow=uow,
                 marriage=Marriage(
                     id=None,
-                    husband_id=husband_node.safe_id,
-                    wife_id=wife_node.safe_id,
+                    spouse_a_id=spouse_a_node.safe_id,
+                    spouse_b_id=spouse_b_node.safe_id,
                     married_at=marriage_item["married_at"],
                     divorced_at=None,
                 ),

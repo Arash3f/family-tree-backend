@@ -68,6 +68,10 @@ def _person_create_request(data: PersonCreateInput) -> PersonCreateRequest:
             "gender": to_domain_gender(data.gender),
             "birth_date": data.birth_date,
             "death_date": data.death_date,
+            "family_name": data.family_name,
+            "birth_place": data.birth_place,
+            "death_place": data.death_place,
+            "notes": data.notes,
             "parents": parents,
             "marriage_id": data.marriage_id,
             "photo_object_key": data.photo_object_key,
@@ -85,6 +89,14 @@ def _person_update_dto(data: PersonUpdateInput) -> PersonUpdateDTO:
         raw["birth_date"] = data.data.birth_date
     if data.data.death_date is not None:
         raw["death_date"] = data.data.death_date
+    if data.data.family_name is not strawberry.UNSET:
+        raw["family_name"] = data.data.family_name
+    if data.data.birth_place is not strawberry.UNSET:
+        raw["birth_place"] = data.data.birth_place
+    if data.data.death_place is not strawberry.UNSET:
+        raw["death_place"] = data.data.death_place
+    if data.data.notes is not strawberry.UNSET:
+        raw["notes"] = data.data.notes
     if data.data.parents is not strawberry.UNSET:
         raw["parents"] = [
             {

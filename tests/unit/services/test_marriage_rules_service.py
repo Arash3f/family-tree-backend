@@ -5,7 +5,6 @@ import pytest
 
 from app.domain.entities.person import Gender, Person
 from app.domain.exceptions.marriage_exceptions import (
-    InvalidMarriageGenderException,
     SelfMarriageException,
     UnderageMarriageException,
 )
@@ -22,26 +21,18 @@ def create_person(**overrides):
 
 
 def test_validate_marriage_success():
-    husband = create_person(
+    spouse_a = create_person(
         id=UUID(int=1), gender=Gender.MALE, birth_date=date(1995, 1, 1)
     )
-    wife = create_person(
+    spouse_b = create_person(
         id=UUID(int=2), name="Sara", gender=Gender.FEMALE, birth_date=date(1997, 1, 1)
     )
 
     marriage_date = date(2023, 1, 1)
 
-    MarriageRulesService.validate_marriage(husband, wife, marriage_date)
-
-
-def test_validate_marriage_invalid_gender():
-    husband = create_person(id=UUID(int=1), gender=Gender.FEMALE)
-    wife = create_person(id=UUID(int=2), gender=Gender.FEMALE)
-
-    marriage_date = date(2023, 1, 1)
-
-    with pytest.raises(InvalidMarriageGenderException):
-        MarriageRulesService.validate_marriage(husband, wife, marriage_date)
+    MarriageRulesService.validate_marriage(
+        spouse_a=spouse_a, spouse_b=spouse_b, marriage_date=marriage_date
+    )
 
 
 def test_validate_marriage_self_marriage():
@@ -52,16 +43,33 @@ def test_validate_marriage_self_marriage():
     marriage_date = date(2023, 1, 1)
 
     with pytest.raises(SelfMarriageException):
-        MarriageRulesService.validate_marriage(person, person2, marriage_date)
+        MarriageRulesService.validate_marriage(
+            spouse_a=person, spouse_b=person2, marriage_date=marriage_date
+        )
 
 
 def test_validate_marriage_underage():
-    husband = create_person(id=UUID(int=1), birth_date=date(2010, 1, 1))
-    wife = create_person(
+    spouse_a = create_person(id=UUID(int=1), birth_date=date(2010, 1, 1))
+    spouse_b = create_person(
         id=UUID(int=2), name="Sara", gender=Gender.FEMALE, birth_date=date(1997, 1, 1)
     )
 
     marriage_date = date(2023, 1, 1)
 
     with pytest.raises(UnderageMarriageException):
-        MarriageRulesService.validate_marriage(husband, wife, marriage_date)
+        MarriageRulesService.validate_marriage(
+            spouse_a=spouse_a, spouse_b=spouse_b, marriage_date=marriage_date
+        )
+
+
+def test_validate_marriage_same_gender_allowed():
+    spouse_a = create_person(
+        id=UUID(int=1), gender=Gender.MALE, birth_date=date(1995, 1, 1)
+    )
+    spouse_b = create_person(
+        id=UUID(int=2), name="Sam", gender=Gender.MALE, birth_date=date(1996, 1, 1)
+    )
+
+    MarriageRulesService.validate_marriage(
+        spouse_a=spouse_a, spouse_b=spouse_b, marriage_date=date(2023, 1, 1)
+    )

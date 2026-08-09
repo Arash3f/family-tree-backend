@@ -51,11 +51,11 @@ class SQLMarriageRepository(MarriageRepository):
         filters = query.filters
 
         if filters:
-            if filters.husband_id is not None:
-                stmt = stmt.where(MarriageModel.husband_id == filters.husband_id)
+            if filters.spouse_a_id is not None:
+                stmt = stmt.where(MarriageModel.spouse_a_id == filters.spouse_a_id)
 
-            if filters.wife_id is not None:
-                stmt = stmt.where(MarriageModel.wife_id == filters.wife_id)
+            if filters.spouse_b_id is not None:
+                stmt = stmt.where(MarriageModel.spouse_b_id == filters.spouse_b_id)
 
             if filters.id:
                 stmt = stmt.where(MarriageModel.id == filters.id)
@@ -102,12 +102,12 @@ class SQLMarriageRepository(MarriageRepository):
 
         return self._to_entity(model)
 
-    async def get_by_ids(self, husband_id: UUID, wife_id: UUID) -> Marriage | None:
+    async def get_by_ids(self, spouse_a_id: UUID, spouse_b_id: UUID) -> Marriage | None:
         stmt = (
             select(MarriageModel)
             .where(
-                MarriageModel.wife_id == wife_id,
-                MarriageModel.husband_id == husband_id,
+                MarriageModel.spouse_b_id == spouse_b_id,
+                MarriageModel.spouse_a_id == spouse_a_id,
             )
             .order_by(MarriageModel.married_at.desc())
             .limit(1)
@@ -128,8 +128,8 @@ class SQLMarriageRepository(MarriageRepository):
         stmt = select(MarriageModel.id).where(
             MarriageModel.divorced_at.is_(None),
             or_(
-                MarriageModel.husband_id == person_id,
-                MarriageModel.wife_id == person_id,
+                MarriageModel.spouse_a_id == person_id,
+                MarriageModel.spouse_b_id == person_id,
             ),
         )
         if exclude_marriage_id is not None:
@@ -141,8 +141,8 @@ class SQLMarriageRepository(MarriageRepository):
     async def exists_for_person(self, person_id: UUID) -> bool:
         stmt = select(MarriageModel.id).where(
             or_(
-                MarriageModel.husband_id == person_id,
-                MarriageModel.wife_id == person_id,
+                MarriageModel.spouse_a_id == person_id,
+                MarriageModel.spouse_b_id == person_id,
             )
         )
         result = await self.session.execute(stmt.limit(1))
@@ -160,8 +160,8 @@ class SQLMarriageRepository(MarriageRepository):
         if not model:
             raise MarriageNotFoundException(detail=[f"marriage id is {marriage.id}"])
 
-        model.husband_id = marriage.husband_id
-        model.wife_id = marriage.wife_id
+        model.spouse_a_id = marriage.spouse_a_id
+        model.spouse_b_id = marriage.spouse_b_id
         model.married_at = marriage.married_at
         model.divorced_at = marriage.divorced_at
 
@@ -173,8 +173,8 @@ class SQLMarriageRepository(MarriageRepository):
     def _to_entity(self, model: MarriageModel) -> Marriage:
         return Marriage(
             id=model.id,
-            husband_id=model.husband_id,
-            wife_id=model.wife_id,
+            spouse_a_id=model.spouse_a_id,
+            spouse_b_id=model.spouse_b_id,
             married_at=model.married_at,
             divorced_at=model.divorced_at,
         )
@@ -182,8 +182,8 @@ class SQLMarriageRepository(MarriageRepository):
     def _to_model(self, entity: Marriage) -> MarriageModel:
         return MarriageModel(
             id=entity.id,
-            husband_id=entity.husband_id,
-            wife_id=entity.wife_id,
+            spouse_a_id=entity.spouse_a_id,
+            spouse_b_id=entity.spouse_b_id,
             married_at=entity.married_at,
             divorced_at=entity.divorced_at,
         )

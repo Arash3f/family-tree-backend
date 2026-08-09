@@ -42,6 +42,10 @@ class PersonType:
     gender: GenderEnum
     birth_date: str | None = None
     death_date: str | None = None
+    family_name: str | None = None
+    birth_place: str | None = None
+    death_place: str | None = None
+    notes: str | None = None
     parents: list[ParentLinkType]
     marriage_id: UUID | None = None
     photo_object_key: str | None = None
@@ -80,6 +84,10 @@ class PersonCreateInput:
     gender: GenderEnum
     birth_date: str | None = None
     death_date: str | None = None
+    family_name: str | None = None
+    birth_place: str | None = None
+    death_place: str | None = None
+    notes: str | None = None
     parents: list[ParentLinkInput] | None = None
     marriage_id: UUID | None = None
     photo_object_key: str | None = None
@@ -91,6 +99,10 @@ class PersonUpdateDataInput:
     gender: GenderEnum | None = None
     birth_date: str | None = None
     death_date: str | None = None
+    family_name: str | None = strawberry.UNSET
+    birth_place: str | None = strawberry.UNSET
+    death_place: str | None = strawberry.UNSET
+    notes: str | None = strawberry.UNSET
     parents: list[ParentLinkInput] | None = strawberry.UNSET
     marriage_id: UUID | None = strawberry.UNSET
     photo_object_key: str | None = strawberry.UNSET
@@ -170,6 +182,10 @@ def person_from_mapping(data: dict) -> PersonType:
         gender=gender_enum,
         birth_date=birth,
         death_date=death,
+        family_name=data.get("family_name"),
+        birth_place=data.get("birth_place"),
+        death_place=data.get("death_place"),
+        notes=data.get("notes"),
         parents=parents,
         marriage_id=data.get("marriage_id"),
         photo_object_key=data.get("photo_object_key"),

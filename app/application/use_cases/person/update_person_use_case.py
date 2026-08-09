@@ -12,10 +12,7 @@ from app.application.interfaces.unit_of_work import UnitOfWork
 from app.application.services.family_tree_sync_service import FamilyTreeSyncService
 from app.application.services.person_photo_service import PersonPhotoService
 from app.domain.entities.person import ParentRelationshipType
-from app.domain.exceptions.person_exceptions import (
-    InvalidParentMarriageException,
-    InvalidPersonGenderException,
-)
+from app.domain.exceptions.person_exceptions import InvalidParentMarriageException
 
 
 class UpdatePersonUseCase:
@@ -42,18 +39,6 @@ class UpdatePersonUseCase:
                 PersonUpdateField(key): value for key, value in update_data.items()
             }
 
-            if PersonUpdateField.GENDER in update_data_enum:
-                new_gender = update_data_enum[PersonUpdateField.GENDER]
-                if (
-                    new_gender != person.gender
-                    and await self.uow.marriages.has_active_for_person(person.safe_id)
-                ):
-                    raise InvalidPersonGenderException(
-                        detail=[
-                            "cannot change gender while person has an active marriage"
-                        ]
-                    )
-
             if PersonUpdateField.PARENTS in update_data_enum:
                 parents_data = update_data_enum.pop(PersonUpdateField.PARENTS) or []
                 parents = PersonCreateMapper.to_domain_parents(
@@ -73,7 +58,7 @@ class UpdatePersonUseCase:
                 marriage = await self.uow.marriages.get_or_raise(
                     marriage_id=person.marriage_id
                 )
-                spouse_ids = {marriage.husband_id, marriage.wife_id}
+                spouse_ids = {marriage.spouse_a_id, marriage.spouse_b_id}
                 for link in person.parents:
                     if (
                         link.relationship_type is ParentRelationshipType.BIOLOGICAL

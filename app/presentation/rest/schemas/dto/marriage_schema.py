@@ -14,15 +14,15 @@ from app.presentation.rest.schemas.dto.common import (
 
 class MarriageModel(BaseModel):
     id: UUID | None
-    husband_id: UUID
-    wife_id: UUID
+    spouse_a_id: UUID
+    spouse_b_id: UUID
     married_at: date
     divorced_at: date | None = None
 
 
 class _MarriageUpdateDateRequest(BaseModel):
-    husband_id: UUID | None = None
-    wife_id: UUID | None = None
+    spouse_a_id: UUID | None = None
+    spouse_b_id: UUID | None = None
     married_at: date | None = None
     divorced_at: date | None = None
 
@@ -38,30 +38,30 @@ class MarriageUpdateRequest(BaseModel):
 
 class MarriageUpdateResponse(BaseModel):
     id: UUID
-    husband_id: UUID
-    wife_id: UUID
+    spouse_a_id: UUID
+    spouse_b_id: UUID
     married_at: date
     divorced_at: date | None
 
 
 class MarriageGetResponse(BaseModel):
     id: UUID
-    husband_id: UUID
-    wife_id: UUID
+    spouse_a_id: UUID
+    spouse_b_id: UUID
     married_at: date
     divorced_at: date | None
 
 
 class MarriageCreateRequest(BaseModel):
-    husband_id: UUID
-    wife_id: UUID
+    spouse_a_id: UUID
+    spouse_b_id: UUID
     married_at: date
 
 
 class MarriageCreateResponse(BaseModel):
     id: UUID
-    husband_id: UUID
-    wife_id: UUID
+    spouse_a_id: UUID
+    spouse_b_id: UUID
     married_at: date
     divorced_at: date | None
 
@@ -73,8 +73,8 @@ class DivorceRequest(BaseModel):
 
 class MarriageFilterRequestData(BaseModel):
     id: UUID | None = None
-    husband_id: UUID | None = None
-    wife_id: UUID | None = None
+    spouse_a_id: UUID | None = None
+    spouse_b_id: UUID | None = None
     married_at: RangeRequest[date] | None = None
     divorced_at: RangeRequest[date] | None = None
 

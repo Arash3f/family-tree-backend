@@ -19,8 +19,8 @@ class Marriage:
     """
 
     id: UUID | None
-    husband_id: UUID
-    wife_id: UUID
+    spouse_a_id: UUID
+    spouse_b_id: UUID
     married_at: date
     divorced_at: date | None = None
 
@@ -87,7 +87,7 @@ class Marriage:
 
     def _validate_spouses(self) -> None:
         """Ensure that a person cannot marry themselves."""
-        if self.husband_id == self.wife_id:
+        if self.spouse_a_id == self.spouse_b_id:
             raise SelfMarriageException()
 
     def _validate_dates(self) -> None:

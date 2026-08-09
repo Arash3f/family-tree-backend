@@ -45,7 +45,7 @@ BEGIN
   WHERE id = NEW.child_id;
 
   IF origin_marriage_id IS NOT NULL AND NEW.relationship_type = 'biological' THEN
-    SELECT husband_id, wife_id INTO spouse_a, spouse_b
+    SELECT spouse_a_id, spouse_b_id INTO spouse_a, spouse_b
     FROM marriages
     WHERE id = origin_marriage_id;
 
@@ -75,7 +75,7 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  SELECT husband_id, wife_id INTO spouse_a, spouse_b
+  SELECT spouse_a_id, spouse_b_id INTO spouse_a, spouse_b
   FROM marriages
   WHERE id = NEW.marriage_id;
 

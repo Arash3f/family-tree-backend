@@ -71,12 +71,23 @@ async def test_delete_person(uow: UnitOfWork):
         )
 
         created = await uow.persons.create(person)
+        person_id = created.safe_id
 
-        await uow.persons.delete(created.safe_id)
+        await uow.persons.delete(person_id)
 
-        result = await uow.persons.get(created.safe_id)
-
+        result = await uow.persons.get(person_id)
         assert result is None
+
+        from sqlalchemy import select
+
+        from app.infrastructure.database.models.person_model import PersonModel
+
+        row = (
+            await uow.session.execute(
+                select(PersonModel).where(PersonModel.id == person_id)
+            )
+        ).scalar_one()
+        assert row.deleted_at is not None
 
 
 @pytest.mark.asyncio

@@ -13,6 +13,10 @@ class PersonUpdateField(str, Enum):
     GENDER = "gender"
     BIRTH_DATE = "birth_date"
     DEATH_DATE = "death_date"
+    FAMILY_NAME = "family_name"
+    BIRTH_PLACE = "birth_place"
+    DEATH_PLACE = "death_place"
+    NOTES = "notes"
     PARENTS = "parents"
     MARRIAGE_ID = "marriage_id"
     PHOTO_OBJECT_KEY = "photo_object_key"
@@ -23,6 +27,10 @@ class _PersonUpdateDataDTO(BaseModel):
     gender: Gender | None = None
     birth_date: date | None = None
     death_date: date | None = None
+    family_name: str | None = None
+    birth_place: str | None = None
+    death_place: str | None = None
+    notes: str | None = None
     parents: list[ParentLinkDTO] | None = None
     marriage_id: UUID | None = None
     photo_object_key: str | None = None
@@ -43,6 +51,10 @@ class PersonUpdateResponseDTO(BaseModel):
     gender: Gender
     birth_date: date | None
     death_date: date | None = None
+    family_name: str | None = None
+    birth_place: str | None = None
+    death_place: str | None = None
+    notes: str | None = None
     parents: list[ParentLinkDTO] = Field(default_factory=list)
     marriage_id: UUID | None = None
     photo_object_key: str | None = None
@@ -60,6 +72,10 @@ class PersonUpdateMapper(BaseModel):
             gender=person.gender,
             birth_date=person.birth_date,
             death_date=person.death_date,
+            family_name=person.family_name,
+            birth_place=person.birth_place,
+            death_place=person.death_place,
+            notes=person.notes,
             parents=[
                 ParentLinkDTO(
                     parent_id=link.parent_id,

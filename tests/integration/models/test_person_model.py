@@ -14,8 +14,8 @@ async def test_unique_constraint_same_name_under_same_marriage(uow):
     await uow.session.flush()
 
     marriage = MarriageModel(
-        husband_id=husband.id,
-        wife_id=wife.id,
+        spouse_a_id=husband.id,
+        spouse_b_id=wife.id,
         married_at=date(2000, 1, 1),
     )
     uow.session.add(marriage)
@@ -154,4 +154,103 @@ async def test_adoptive_parent_beyond_two_biological_is_allowed(uow):
             ),
         ]
     )
+    await uow.session.flush()
+
+
+@pytest.mark.asyncio
+async def test_same_gender_marriage_is_allowed(uow):
+    spouse_a = PersonModel(name="Alex", gender="male")
+    spouse_b = PersonModel(name="Sam", gender="male")
+    uow.session.add_all([spouse_a, spouse_b])
+    await uow.session.flush()
+
+    uow.session.add(
+        MarriageModel(
+            spouse_a_id=spouse_a.id,
+            spouse_b_id=spouse_b.id,
+            married_at=date(2020, 1, 1),
+        )
+    )
+    await uow.session.flush()
+
+
+@pytest.mark.asyncio
+async def test_multiple_active_marriages_for_same_person_allowed(uow):
+    spouse_a = PersonModel(name="Ali", gender="male")
+    spouse_b = PersonModel(name="Sara", gender="female")
+    spouse_c = PersonModel(name="Maryam", gender="female")
+    uow.session.add_all([spouse_a, spouse_b, spouse_c])
+    await uow.session.flush()
+
+    uow.session.add_all(
+        [
+            MarriageModel(
+                spouse_a_id=spouse_a.id,
+                spouse_b_id=spouse_b.id,
+                married_at=date(2010, 1, 1),
+            ),
+            MarriageModel(
+                spouse_a_id=spouse_a.id,
+                spouse_b_id=spouse_c.id,
+                married_at=date(2015, 1, 1),
+            ),
+        ]
+    )
+    await uow.session.flush()
+
+
+@pytest.mark.asyncio
+async def test_divorce_before_marriage_rejected(uow):
+    spouse_a = PersonModel(name="Ali", gender="male")
+    spouse_b = PersonModel(name="Sara", gender="female")
+    uow.session.add_all([spouse_a, spouse_b])
+    await uow.session.flush()
+
+    uow.session.add(
+        MarriageModel(
+            spouse_a_id=spouse_a.id,
+            spouse_b_id=spouse_b.id,
+            married_at=date(2020, 1, 1),
+            divorced_at=date(2019, 1, 1),
+        )
+    )
+
+    with pytest.raises(IntegrityError):
+        await uow.session.flush()
+
+
+@pytest.mark.asyncio
+async def test_soft_deleted_person_frees_name_under_marriage(uow):
+    from datetime import datetime, timezone
+
+    spouse_a = PersonModel(name="Ali", gender="male")
+    spouse_b = PersonModel(name="Sara", gender="female")
+    uow.session.add_all([spouse_a, spouse_b])
+    await uow.session.flush()
+
+    marriage = MarriageModel(
+        spouse_a_id=spouse_a.id,
+        spouse_b_id=spouse_b.id,
+        married_at=date(2000, 1, 1),
+    )
+    uow.session.add(marriage)
+    await uow.session.flush()
+
+    child = PersonModel(
+        name="Reza",
+        gender="male",
+        marriage_id=marriage.id,
+    )
+    uow.session.add(child)
+    await uow.session.flush()
+
+    child.deleted_at = datetime.now(timezone.utc)
+    await uow.session.flush()
+
+    replacement = PersonModel(
+        name="Reza",
+        gender="male",
+        marriage_id=marriage.id,
+    )
+    uow.session.add(replacement)
     await uow.session.flush()

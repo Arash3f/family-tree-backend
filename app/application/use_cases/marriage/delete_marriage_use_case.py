@@ -15,13 +15,13 @@ class DeleteMarriageUseCase:
     async def execute(self, dto: IdDTO) -> ResultDTO:
         async with self.uow:
             marriage = await self.uow.marriages.get_or_raise(marriage_id=dto.id)
-            husband_id = marriage.husband_id
-            wife_id = marriage.wife_id
+            spouse_a_id = marriage.spouse_a_id
+            spouse_b_id = marriage.spouse_b_id
 
             await self.uow.marriages.delete(marriage_id=marriage.safe_id)
 
             await self.uow.commit()
 
-            self.sync_service.remove_spouse(husband_id, wife_id)
+            self.sync_service.remove_spouse(spouse_a_id, spouse_b_id)
 
             return ResultDTO(result="Marriage deleted successfully")

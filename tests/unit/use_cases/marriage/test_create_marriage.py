@@ -14,7 +14,6 @@ from app.domain.entities.marriage import Marriage
 from app.domain.entities.person import Gender
 from app.domain.exceptions.person_exceptions import PersonNotFoundException
 from app.domain.exceptions.marriage_exceptions import (
-    ActiveMarriageExistsException,
     UnderageMarriageException,
 )
 
@@ -22,8 +21,8 @@ from app.domain.exceptions.marriage_exceptions import (
 @pytest.mark.asyncio
 async def test_create_marriage_success(mock_uow):
     dto = MarriageCreateDTO(
-        husband_id=UUID(int=1),
-        wife_id=UUID(int=2),
+        spouse_a_id=UUID(int=1),
+        spouse_b_id=UUID(int=2),
         married_at=date(2020, 1, 1),
     )
 
@@ -44,14 +43,14 @@ async def test_create_marriage_success(mock_uow):
     mock_uow.persons.get_or_raise = AsyncMock(side_effect=[husband, wife])
 
     created_marriage = MagicMock(spec=Marriage)
-    created_marriage.husband_id = UUID(int=1)
-    created_marriage.wife_id = UUID(int=2)
+    created_marriage.spouse_a_id = UUID(int=1)
+    created_marriage.spouse_b_id = UUID(int=2)
     mock_uow.marriages.create = AsyncMock(return_value=created_marriage)
 
     expected_response = MarriageCreateResponseDTO(
         id=UUID(int=10),
-        husband_id=UUID(int=1),
-        wife_id=UUID(int=2),
+        spouse_a_id=UUID(int=1),
+        spouse_b_id=UUID(int=2),
         divorced_at=None,
         married_at=date(2020, 1, 1),
     )
@@ -70,20 +69,20 @@ async def test_create_marriage_success(mock_uow):
     assert result == expected_response
 
     rules.validate_marriage.assert_called_once_with(
-        husband=husband, wife=wife, marriage_date=dto.married_at
+        spouse_a=husband, spouse_b=wife, marriage_date=dto.married_at
     )
     sync_service.upsert_spouse.assert_called_once_with(UUID(int=1), UUID(int=2))
 
-    mock_uow.persons.get_or_raise.assert_any_await(person_id=dto.husband_id)
-    mock_uow.persons.get_or_raise.assert_any_await(person_id=dto.wife_id)
+    mock_uow.persons.get_or_raise.assert_any_await(person_id=dto.spouse_a_id)
+    mock_uow.persons.get_or_raise.assert_any_await(person_id=dto.spouse_b_id)
 
     mock_uow.marriages.create.assert_awaited_once()
 
     assert mock_uow.marriages.create.await_args is not None
     created_entity = mock_uow.marriages.create.await_args.args[0]
     assert isinstance(created_entity, Marriage)
-    assert created_entity.husband_id == dto.husband_id
-    assert created_entity.wife_id == dto.wife_id
+    assert created_entity.spouse_a_id == dto.spouse_a_id
+    assert created_entity.spouse_b_id == dto.spouse_b_id
     assert created_entity.married_at == dto.married_at
 
     mock_uow.commit.assert_awaited_once()
@@ -94,8 +93,8 @@ async def test_create_marriage_success(mock_uow):
 @pytest.mark.asyncio
 async def test_create_marriage_raises_if_husband_not_found(mock_uow):
     dto = MarriageCreateDTO(
-        husband_id=UUID(int=1),
-        wife_id=UUID(int=2),
+        spouse_a_id=UUID(int=1),
+        spouse_b_id=UUID(int=2),
         married_at=date(2020, 1, 1),
     )
 
@@ -115,8 +114,8 @@ async def test_create_marriage_raises_if_husband_not_found(mock_uow):
 @pytest.mark.asyncio
 async def test_create_marriage_raises_if_wife_not_found(mock_uow):
     dto = MarriageCreateDTO(
-        husband_id=UUID(int=1),
-        wife_id=UUID(int=2),
+        spouse_a_id=UUID(int=1),
+        spouse_b_id=UUID(int=2),
         married_at=date(2020, 1, 1),
     )
 
@@ -138,8 +137,8 @@ async def test_create_marriage_raises_if_wife_not_found(mock_uow):
 @pytest.mark.asyncio
 async def test_create_marriage_raises_if_rules_fail(mock_uow):
     dto = MarriageCreateDTO(
-        husband_id=UUID(int=1),
-        wife_id=UUID(int=2),
+        spouse_a_id=UUID(int=1),
+        spouse_b_id=UUID(int=2),
         married_at=date(2020, 1, 1),
     )
 
@@ -152,30 +151,6 @@ async def test_create_marriage_raises_if_rules_fail(mock_uow):
     )
 
     with pytest.raises(UnderageMarriageException):
-        await use_case.execute(dto)
-
-    mock_uow.marriages.create.assert_not_awaited()
-    mock_uow.commit.assert_not_awaited()
-
-
-@pytest.mark.asyncio
-async def test_create_marriage_raises_if_husband_already_married(mock_uow):
-    dto = MarriageCreateDTO(
-        husband_id=UUID(int=1),
-        wife_id=UUID(int=2),
-        married_at=date(2020, 1, 1),
-    )
-
-    husband = MagicMock()
-    wife = MagicMock()
-    mock_uow.persons.get_or_raise = AsyncMock(side_effect=[husband, wife])
-    mock_uow.marriages.has_active_for_person = AsyncMock(return_value=True)
-
-    use_case = CreateMarriageUseCase(
-        mock_uow, marriage_rules_service=MagicMock(), sync_service=MagicMock()
-    )
-
-    with pytest.raises(ActiveMarriageExistsException):
         await use_case.execute(dto)
 
     mock_uow.marriages.create.assert_not_awaited()

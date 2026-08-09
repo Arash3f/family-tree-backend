@@ -15,8 +15,8 @@ async def test_divorce_use_case_success(mock_uow):
     marriage = MagicMock()
     marriage.safe_id = UUID(int=10)
     marriage.safe_divorced_at = date(2025, 1, 1)
-    marriage.husband_id = UUID(int=1)
-    marriage.wife_id = UUID(int=2)
+    marriage.spouse_a_id = UUID(int=1)
+    marriage.spouse_b_id = UUID(int=2)
 
     mock_uow.marriages.get_or_raise = AsyncMock(return_value=marriage)
 

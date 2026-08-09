@@ -17,8 +17,8 @@ class MarriageSortField(str, Enum):
 
 class MarriageFilterDataDTO(BaseModel):
     id: UUID | None = None
-    husband_id: UUID | None = None
-    wife_id: UUID | None = None
+    spouse_a_id: UUID | None = None
+    spouse_b_id: UUID | None = None
     married_at: RangeDTO[date] | None = None
     divorced_at: RangeDTO[date] | None = None
 

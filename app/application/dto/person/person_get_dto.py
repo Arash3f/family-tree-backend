@@ -13,6 +13,10 @@ class PersonGetResponseDTO(BaseModel):
     gender: Gender
     birth_date: date | None
     death_date: date | None = None
+    family_name: str | None = None
+    birth_place: str | None = None
+    death_place: str | None = None
+    notes: str | None = None
     parents: list[ParentLinkDTO] = Field(default_factory=list)
     marriage_id: UUID | None = None
     photo_object_key: str | None = None
@@ -30,6 +34,10 @@ class PersonGetMapper(BaseModel):
             gender=person.gender,
             birth_date=person.birth_date,
             death_date=person.death_date,
+            family_name=person.family_name,
+            birth_place=person.birth_place,
+            death_place=person.death_place,
+            notes=person.notes,
             parents=[
                 ParentLinkDTO(
                     parent_id=link.parent_id,

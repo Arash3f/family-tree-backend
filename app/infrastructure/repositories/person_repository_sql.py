@@ -1,9 +1,10 @@
 from collections.abc import Mapping
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import delete, select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -26,6 +27,13 @@ class SQLPersonRepository(PersonRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
 
+    def _active_person_stmt(self):
+        return (
+            select(PersonModel)
+            .options(selectinload(PersonModel.parent_links))
+            .where(PersonModel.deleted_at.is_(None))
+        )
+
     async def create(self, person: Person) -> Person:
         model = self._to_model(person)
 
@@ -36,11 +44,7 @@ class SQLPersonRepository(PersonRepository):
         return self._to_entity(model)
 
     async def get(self, person_id: UUID) -> Person | None:
-        stmt = (
-            select(PersonModel)
-            .options(selectinload(PersonModel.parent_links))
-            .where(PersonModel.id == person_id)
-        )
+        stmt = self._active_person_stmt().where(PersonModel.id == person_id)
 
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
@@ -53,13 +57,9 @@ class SQLPersonRepository(PersonRepository):
     async def get_by_name(
         self, name: str, marriage_id: UUID | None
     ) -> Person | None:
-        stmt = (
-            select(PersonModel)
-            .options(selectinload(PersonModel.parent_links))
-            .where(
-                PersonModel.name == name,
-                PersonModel.marriage_id == marriage_id,
-            )
+        stmt = self._active_person_stmt().where(
+            PersonModel.name == name,
+            PersonModel.marriage_id == marriage_id,
         )
         result = await self.session.execute(stmt)
         model = result.unique().scalar_one_or_none()
@@ -72,7 +72,7 @@ class SQLPersonRepository(PersonRepository):
     async def get_list_by_filter(
         self, query: FilterPersonQuery
     ) -> PaginatedResult[Person]:
-        stmt = select(PersonModel).options(selectinload(PersonModel.parent_links))
+        stmt = self._active_person_stmt()
         filters = query.filters
 
         if filters:
@@ -133,11 +133,7 @@ class SQLPersonRepository(PersonRepository):
         child_ids = select(ParentLinkModel.child_id).where(
             ParentLinkModel.parent_id == parent_id
         )
-        stmt = (
-            select(PersonModel)
-            .options(selectinload(PersonModel.parent_links))
-            .where(PersonModel.id.in_(child_ids))
-        )
+        stmt = self._active_person_stmt().where(PersonModel.id.in_(child_ids))
 
         result = await self.session.execute(stmt)
         models = result.scalars().unique().all()
@@ -148,18 +144,23 @@ class SQLPersonRepository(PersonRepository):
         stmt = (
             select(PersonModel)
             .options(selectinload(PersonModel.parent_links))
-            .where(PersonModel.id == person.id)
+            .where(PersonModel.id == person.id, PersonModel.deleted_at.is_(None))
         )
 
         result = await self.session.execute(stmt)
         model = result.scalar_one()
 
         model.name = person.name
+        model.family_name = person.family_name
         model.gender = person.gender
         model.birth_date = person.birth_date
         model.death_date = person.death_date
+        model.birth_place = person.birth_place
+        model.death_place = person.death_place
+        model.notes = person.notes
         model.marriage_id = person.marriage_id
         model.photo_object_key = person.photo_object_key
+        model.deleted_at = person.deleted_at
 
         existing_by_parent = {link.parent_id: link for link in model.parent_links}
 
@@ -190,8 +191,11 @@ class SQLPersonRepository(PersonRepository):
         return self._to_entity(model)
 
     async def delete(self, person_id: UUID) -> None:
-        stmt = delete(PersonModel).where(PersonModel.id == person_id)
-
+        stmt = (
+            update(PersonModel)
+            .where(PersonModel.id == person_id, PersonModel.deleted_at.is_(None))
+            .values(deleted_at=datetime.now(timezone.utc))
+        )
         await self.session.execute(stmt)
 
     def _to_entity(self, model: PersonModel) -> Person:
@@ -209,18 +213,28 @@ class SQLPersonRepository(PersonRepository):
                 for link in model.parent_links
             ],
             marriage_id=model.marriage_id,
+            family_name=model.family_name,
+            birth_place=model.birth_place,
+            death_place=model.death_place,
+            notes=model.notes,
             photo_object_key=model.photo_object_key,
+            deleted_at=model.deleted_at,
         )
 
     def _to_model(self, entity: Person) -> PersonModel:
         model = PersonModel(
             id=entity.id,
             name=entity.name,
+            family_name=entity.family_name,
             gender=entity.gender,
             birth_date=entity.birth_date,
             death_date=entity.death_date,
+            birth_place=entity.birth_place,
+            death_place=entity.death_place,
+            notes=entity.notes,
             marriage_id=entity.marriage_id,
             photo_object_key=entity.photo_object_key,
+            deleted_at=entity.deleted_at,
         )
         model.parent_links = [
             ParentLinkModel(

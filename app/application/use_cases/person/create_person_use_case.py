@@ -32,7 +32,7 @@ class CreatePersonUseCase:
                 marriage = await self.uow.marriages.get_or_raise(
                     marriage_id=dto.marriage_id
                 )
-                spouse_ids = {marriage.husband_id, marriage.wife_id}
+                spouse_ids = {marriage.spouse_a_id, marriage.spouse_b_id}
                 for link in parents:
                     if (
                         link.relationship_type is ParentRelationshipType.BIOLOGICAL
@@ -49,6 +49,10 @@ class CreatePersonUseCase:
                 gender=dto.gender,
                 birth_date=dto.birth_date,
                 death_date=dto.death_date,
+                family_name=dto.family_name,
+                birth_place=dto.birth_place,
+                death_place=dto.death_place,
+                notes=dto.notes,
                 parents=parents,
                 marriage_id=dto.marriage_id,
                 photo_object_key=dto.photo_object_key,

@@ -17,8 +17,8 @@ params:path {
 assert {
   res.status: eq 200
   res.body.id: isString
-  res.body.husband_id: isString
-  res.body.wife_id: isString
+  res.body.spouse_a_id: isString
+  res.body.spouse_b_id: isString
 }
 
 docs {
@@ -33,8 +33,8 @@ docs {
   ```json
   {
     "id": "00000000-0000-0000-0000-000000000001",
-    "husband_id": "00000000-0000-0000-0000-000000000001",
-    "wife_id": "00000000-0000-0000-0000-000000000002",
+    "spouse_a_id": "00000000-0000-0000-0000-000000000001",
+    "spouse_b_id": "00000000-0000-0000-0000-000000000002",
     "married_at": "2020-01-15",
     "divorced_at": null
   }

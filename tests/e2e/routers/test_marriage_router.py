@@ -63,8 +63,8 @@ async def _create_spouses(uow: SQLAlchemyUnitOfWork, suffix: str = ""):
 @pytest.mark.asyncio
 async def test_create_marriage_permission_denied(client, member_headers):  # noqa: F811
     req = MarriageCreateRequest(
-        husband_id=UUID(int=1),
-        wife_id=UUID(int=2),
+        spouse_a_id=UUID(int=1),
+        spouse_b_id=UUID(int=2),
         married_at=date(2020, 1, 1),
     )
     resp = await client.post(
@@ -83,8 +83,8 @@ async def test_create_marriage_permission_denied(client, member_headers):  # noq
 @pytest.mark.asyncio
 async def test_create_marriage_unauthenticated(client):
     req = MarriageCreateRequest(
-        husband_id=UUID(int=1),
-        wife_id=UUID(int=2),
+        spouse_a_id=UUID(int=1),
+        spouse_b_id=UUID(int=2),
         married_at=date(2020, 1, 1),
     )
     resp = await client.post(
@@ -102,8 +102,8 @@ async def test_create_marriage_success(client, admin_headers, uow):  # noqa: F81
     await uow.commit()
 
     req = MarriageCreateRequest(
-        husband_id=husband.safe_id,
-        wife_id=wife.safe_id,
+        spouse_a_id=husband.safe_id,
+        spouse_b_id=wife.safe_id,
         married_at=date(2020, 1, 1),
     )
 
@@ -117,16 +117,16 @@ async def test_create_marriage_success(client, admin_headers, uow):  # noqa: F81
 
     marriage_data = TypeAdapter(MarriageCreateResponse).validate_python(resp.json())
     assert marriage_data.id is not None
-    assert marriage_data.husband_id == husband.safe_id
-    assert marriage_data.wife_id == wife.safe_id
+    assert marriage_data.spouse_a_id == husband.safe_id
+    assert marriage_data.spouse_b_id == wife.safe_id
     assert marriage_data.married_at == req.married_at
 
     async with uow:
         find_marriage = await uow.marriages.get_or_raise(marriage_id=marriage_data.id)
 
     assert find_marriage.id == marriage_data.id
-    assert find_marriage.husband_id == husband.safe_id
-    assert find_marriage.wife_id == wife.safe_id
+    assert find_marriage.spouse_a_id == husband.safe_id
+    assert find_marriage.spouse_b_id == wife.safe_id
 
 
 # ============================================================
@@ -161,8 +161,8 @@ async def test_get_marriage_success(client, admin_headers, uow: SQLAlchemyUnitOf
     marriage = await uow.marriages.create(
         Marriage(
             id=None,
-            husband_id=husband.safe_id,
-            wife_id=wife.safe_id,
+            spouse_a_id=husband.safe_id,
+            spouse_b_id=wife.safe_id,
             married_at=date(2020, 1, 1),
         )
     )
@@ -177,8 +177,8 @@ async def test_get_marriage_success(client, admin_headers, uow: SQLAlchemyUnitOf
 
     data = TypeAdapter(MarriageGetResponse).validate_python(resp.json())
     assert data.id == marriage.safe_id
-    assert data.husband_id == husband.safe_id
-    assert data.wife_id == wife.safe_id
+    assert data.spouse_a_id == husband.safe_id
+    assert data.spouse_b_id == wife.safe_id
 
 
 @pytest.mark.asyncio
@@ -205,8 +205,8 @@ async def test_update_marriage_permission_denied(client, member_headers):  # noq
     payload = MarriageUpdateRequest(
         where=_MarriageUpdateWhereRequest(marriage_id=UUID(int=1)),
         data=_MarriageUpdateDateRequest(
-            husband_id=None,
-            wife_id=None,
+            spouse_a_id=None,
+            spouse_b_id=None,
             married_at=date(2021, 1, 1),
             divorced_at=None,
         ),
@@ -230,8 +230,8 @@ async def test_update_marriage_unauthenticated(client):
     payload = MarriageUpdateRequest(
         where=_MarriageUpdateWhereRequest(marriage_id=UUID(int=1)),
         data=_MarriageUpdateDateRequest(
-            husband_id=None,
-            wife_id=None,
+            spouse_a_id=None,
+            spouse_b_id=None,
             married_at=date(2021, 1, 1),
             divorced_at=None,
         ),
@@ -256,8 +256,8 @@ async def test_update_marriage_success(
     marriage = await uow.marriages.create(
         Marriage(
             id=None,
-            husband_id=husband.safe_id,
-            wife_id=wife.safe_id,
+            spouse_a_id=husband.safe_id,
+            spouse_b_id=wife.safe_id,
             married_at=date(2020, 1, 1),
         )
     )
@@ -349,8 +349,8 @@ async def test_delete_marriage_success(
     marriage = await uow.marriages.create(
         Marriage(
             id=None,
-            husband_id=husband.safe_id,
-            wife_id=wife.safe_id,
+            spouse_a_id=husband.safe_id,
+            spouse_b_id=wife.safe_id,
             married_at=date(2020, 1, 1),
         )
     )
@@ -435,8 +435,8 @@ async def test_divorce_success(client, admin_headers, uow: SQLAlchemyUnitOfWork)
     marriage = await uow.marriages.create(
         Marriage(
             id=None,
-            husband_id=husband.safe_id,
-            wife_id=wife.safe_id,
+            spouse_a_id=husband.safe_id,
+            spouse_b_id=wife.safe_id,
             married_at=date(2020, 1, 1),
         )
     )
@@ -542,8 +542,8 @@ async def test_get_marriage_list_by_filter_success(
         marriage = await uow.marriages.create(
             Marriage(
                 id=None,
-                husband_id=husband.safe_id,
-                wife_id=wife.safe_id,
+                spouse_a_id=husband.safe_id,
+                spouse_b_id=wife.safe_id,
                 married_at=date(2020, 1, i + 1),
             )
         )

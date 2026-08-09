@@ -19,8 +19,8 @@ class DivorceUseCase:
                 marriage_id=dto.marriage_id
             )
 
-            husband_id = marriage.husband_id
-            wife_id = marriage.wife_id
+            spouse_a_id = marriage.spouse_a_id
+            spouse_b_id = marriage.spouse_b_id
 
             marriage.divorce(divorced_at=dto.divorced_at)
 
@@ -30,6 +30,6 @@ class DivorceUseCase:
 
             await self.uow.commit()
 
-            self.sync_service.remove_spouse(husband_id, wife_id)
+            self.sync_service.remove_spouse(spouse_a_id, spouse_b_id)
 
             return ResultDTO(result="Divorce recorded successfully")

@@ -14,8 +14,8 @@ from app.presentation.graphql.types.common import (
 @strawberry.type
 class MarriageType:
     id: UUID | None
-    husband_id: UUID
-    wife_id: UUID
+    spouse_a_id: UUID
+    spouse_b_id: UUID
     married_at: date
     divorced_at: date | None = None
 
@@ -30,15 +30,15 @@ class MarriagePage:
 
 @strawberry.input
 class MarriageCreateInput:
-    husband_id: UUID
-    wife_id: UUID
+    spouse_a_id: UUID
+    spouse_b_id: UUID
     married_at: date
 
 
 @strawberry.input
 class MarriageUpdateDataInput:
-    husband_id: UUID | None = None
-    wife_id: UUID | None = None
+    spouse_a_id: UUID | None = None
+    spouse_b_id: UUID | None = None
     married_at: date | None = None
     divorced_at: date | None = None
 
@@ -63,8 +63,8 @@ class DivorceInput:
 @strawberry.input
 class MarriageFilterInput:
     id: UUID | None = None
-    husband_id: UUID | None = None
-    wife_id: UUID | None = None
+    spouse_a_id: UUID | None = None
+    spouse_b_id: UUID | None = None
     married_at: DateRangeInput | None = None
     divorced_at: DateRangeInput | None = None
 
@@ -80,8 +80,8 @@ class MarriageListInput:
 def marriage_from_mapping(data: dict) -> MarriageType:
     return MarriageType(
         id=data.get("id"),
-        husband_id=data["husband_id"],
-        wife_id=data["wife_id"],
+        spouse_a_id=data["spouse_a_id"],
+        spouse_b_id=data["spouse_b_id"],
         married_at=data["married_at"],
         divorced_at=data.get("divorced_at"),
     )

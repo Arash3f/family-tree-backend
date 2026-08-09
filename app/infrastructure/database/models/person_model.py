@@ -1,10 +1,11 @@
-from datetime import date
+from datetime import date, datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import (
     CheckConstraint,
     Date,
+    DateTime,
     ForeignKey,
     Index,
     String,
@@ -23,15 +24,22 @@ class PersonModel(Base):
     __tablename__ = "persons"
 
     name: Mapped[str] = mapped_column(String, nullable=False)
+    family_name: Mapped[str | None] = mapped_column(String, nullable=True)
     gender: Mapped[str] = mapped_column(String, nullable=False)
     birth_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     death_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    birth_place: Mapped[str | None] = mapped_column(String, nullable=True)
+    death_place: Mapped[str | None] = mapped_column(String, nullable=True)
+    notes: Mapped[str | None] = mapped_column(String, nullable=True)
     marriage_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("marriages.id", ondelete="SET NULL", use_alter=True),
         nullable=True,
         index=True,
     )
     photo_object_key: Mapped[str | None] = mapped_column(String, nullable=True)
+    deleted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
 
     __table_args__ = (
         Index(
@@ -39,7 +47,7 @@ class PersonModel(Base):
             "name",
             "marriage_id",
             unique=True,
-            postgresql_where=text("marriage_id IS NOT NULL"),
+            postgresql_where=text("marriage_id IS NOT NULL AND deleted_at IS NULL"),
         ),
         CheckConstraint(
             "death_date IS NULL OR birth_date IS NULL OR death_date >= birth_date",
@@ -50,10 +58,6 @@ class PersonModel(Base):
             name="ck_person_gender",
         ),
     )
-
-    # -------------------------
-    # relationships
-    # -------------------------
 
     origin_marriage: Mapped["MarriageModel | None"] = relationship(
         "MarriageModel",
