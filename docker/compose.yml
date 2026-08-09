@@ -5,10 +5,13 @@
 
 name: family-tree
 
+# Defaults to the lean production image. Set APP_IMAGE_TARGET=ci to get the
+# variant that also carries pytest and the linters, which is what runs the test
+# suite in CI and locally.
 x-app-build: &app-build
   context: ..
   dockerfile: docker/Dockerfile
-  target: ci
+  target: ${APP_IMAGE_TARGET:-runtime}
 
 x-app-env: &app-env
   env_file:
@@ -21,7 +24,7 @@ services:
   api:
     <<: *app-env
     build: *app-build
-    image: family-tree-api:local
+    image: "family-tree-api:${APP_IMAGE_TARGET:-runtime}"
     container_name: family-tree-api
     entrypoint: ["/entrypoint.sh"]
     ports:
@@ -41,7 +44,7 @@ services:
   celery_worker:
     <<: *app-env
     build: *app-build
-    image: family-tree-api:local
+    image: "family-tree-api:${APP_IMAGE_TARGET:-runtime}"
     container_name: family-tree-celery-worker
     command: >
       celery -A app.celery.celery_app worker --loglevel=info
@@ -68,7 +71,7 @@ services:
   celery_beat:
     <<: *app-env
     build: *app-build
-    image: family-tree-api:local
+    image: "family-tree-api:${APP_IMAGE_TARGET:-runtime}"
     container_name: family-tree-celery-beat
     command: celery -A app.celery.celery_app beat --loglevel=info
     volumes:
@@ -93,7 +96,7 @@ services:
   flower:
     <<: *app-env
     build: *app-build
-    image: family-tree-api:local
+    image: "family-tree-api:${APP_IMAGE_TARGET:-runtime}"
     container_name: family-tree-flower
     command: >
       sh -c "celery -A app.celery.celery_app flower --port=5555

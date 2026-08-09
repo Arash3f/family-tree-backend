@@ -61,6 +61,18 @@ repos:
         stages: [pre-push]
   - repo: local
     hooks:
+      - id: env-example-sync
+        name: .env.example documents every setting
+        entry: poetry run python scripts/check_env_example_sync.py
+        language: system
+        pass_filenames: false
+        files: ^(\.env\.example|app/core/config\.py)$
+      - id: requirements-sync
+        name: requirements files match poetry.lock
+        entry: poetry run python scripts/check_requirements_sync.py
+        language: system
+        pass_filenames: false
+        files: ^(pyproject\.toml|poetry\.lock|requirements(-dev)?\.txt)$
       - id: pytest
         name: pytest
         entry: poetry run pytest

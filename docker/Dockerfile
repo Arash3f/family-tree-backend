@@ -52,26 +52,10 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001"]
 
 # ---------------------------------------------------------------------------
-# Local/CI image: runtime + pytest/tooling for in-container tests
-FROM base AS ci
+# Local/CI image: the runtime image plus pytest and the linters, so the suite
+# runs against the same layers that ship to production.
+FROM runtime AS ci
 
-RUN groupadd --system --gid 1000 app \
-    && useradd --system --uid 1000 --gid app --create-home --home-dir /home/app app
-
+USER root
 COPY --from=builder-ci /install /usr/local
-
-COPY --chown=app:app . .
-COPY --chown=app:app docker/entrypoint.sh /entrypoint.sh
-RUN sed -i 's/\r$//' /entrypoint.sh \
-    && chmod +x /entrypoint.sh \
-    && mkdir -p /mnt/backups /app/celerybeat \
-    && chown -R app:app /app /mnt/backups /app/celerybeat
-
 USER app
-
-EXPOSE 8001
-
-HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
-    CMD curl -fsS http://127.0.0.1:8001/health || exit 1
-
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001"]

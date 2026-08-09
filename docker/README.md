@@ -4,7 +4,7 @@ All container build and Compose definitions live in this folder.
 
 | File | Purpose |
 |------|---------|
-| `Dockerfile` | Multi-stage: `runtime` (prod) and `ci` (tests/tooling); Compose builds `ci` |
+| `Dockerfile` | Multi-stage: `runtime` (prod) and `ci` (= `runtime` + pytest/linters) |
 | `entrypoint.sh` | Wait for Postgres → migrate → start Uvicorn |
 | `compose.yml` | Full stack (app + Postgres + Redis + Neo4j + MinIO) |
 | `compose.host-ports.yml` | Optional publish of DB/Redis/Neo4j/MinIO ports to the host |
@@ -26,6 +26,19 @@ docker compose -f docker/compose.yml --env-file .env up --build
 ```
 
 Uses Docker DNS names from `.env.example` (`db`, `redis`, `neo4j`, `minio`).
+
+## Choosing the image
+
+Compose builds the `runtime` stage, which contains only production dependencies.
+Set `APP_IMAGE_TARGET=ci` (in `.env` or the shell) to build the `ci` stage instead —
+the same image plus pytest, Ruff, mypy, and Bandit — which is what you need to run
+the suite inside the container. Images are tagged per target
+(`family-tree-api:runtime`, `family-tree-api:ci`), so switching never reuses a stale
+image.
+
+```bash
+APP_IMAGE_TARGET=ci docker compose -f docker/compose.yml --env-file .env up -d --build
+```
 
 By default only **API** (`8001`) and **Flower** (`5555`) are published on the host.
 Postgres / Redis / Neo4j / MinIO stay on the Compose network. For host tools
@@ -57,6 +70,7 @@ docker compose -f docker/compose.yml --env-file .env logs -f api
 docker compose -f docker/compose.yml --env-file .env exec api sh
 
 # Create the test database (required once per Postgres volume), then run pytest
+# (needs APP_IMAGE_TARGET=ci)
 DB_USER="$(grep '^POSTGRES_USER=' .env | cut -d '=' -f2)"
 DB_TEST="$(grep '^POSTGRES_DB_TEST=' .env | cut -d '=' -f2)"
 docker compose -f docker/compose.yml --env-file .env exec -T db \
@@ -65,7 +79,7 @@ docker compose -f docker/compose.yml --env-file .env exec -T db \
       psql -U "$DB_USER" -c "CREATE DATABASE ${DB_TEST}"
 
 docker compose -f docker/compose.yml --env-file .env exec -T api \
-  pytest -v --cov=app --cov-fail-under=55
+  pytest -v --cov=app --cov-fail-under=90
 ```
 
 ## Published ports (defaults)

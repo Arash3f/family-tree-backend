@@ -407,13 +407,17 @@ Task routing uses dedicated queues; the worker command above must include them.
 # Full suite
 poetry run pytest .
 
-# With coverage (CI uses --cov-fail-under=55)
+# With coverage (CI uses --cov-fail-under=90)
 poetry run pytest -v --cov=app --cov-report=term-missing
 
 # Lint / types / security (as in CI)
 poetry run ruff check .
+poetry run ruff format --check .
 poetry run mypy .
-poetry run bandit -r app -ll
+poetry run bandit -r app -c pyproject.toml -ll
+
+# .env.example must document every AppSettings field
+poetry run python scripts/check_env_example_sync.py
 ```
 
 Test layout:
@@ -424,7 +428,7 @@ Test layout:
   - `tests/e2e/routers` — REST
   - `tests/e2e/graphql` — GraphQL (`POST /graphql`)
 
-Docker-based CI creates `POSTGRES_DB_TEST` inside the Compose Postgres service, then runs pytest in the `api` container with coverage gate `50`.
+Docker-based CI creates `POSTGRES_DB_TEST` inside the Compose Postgres service, then runs pytest in the `api` container with a coverage gate of 90%. Testing inside Docker needs the image that carries pytest, so set `APP_IMAGE_TARGET=ci` (Compose builds the lean production image by default).
 
 See [Pre-commit & Commitizen](#2-pre-commit--commitizen) for which checks run on commit vs push.
 
@@ -436,8 +440,8 @@ Workflow: [`ci.yml`](.github/workflows/ci.yml) on push / PR to `main`.
 
 | Job | What it does |
 |-----|--------------|
-| **quality** | Ruff, mypy, Bandit on the runner |
-| **stack** | Build `docker/compose.yml`, start `api` (+ Postgres / Redis / Neo4j / MinIO), create test DB, run pytest with coverage (≥55%) |
+| **quality** | Ruff (lint + format), mypy, Bandit, `.env.example` and `requirements*.txt` sync checks on the runner |
+| **stack** | Build `docker/compose.yml`, verify the production image imports and ships no test tooling, start `api` (+ Postgres / Redis / Neo4j / MinIO), create test DB, run pytest with coverage (≥90%) |
 
 Infra versions match Compose (`postgres:15.13`, `redis:8.2.1`, `neo4j:5.26.4`, pinned MinIO release tags).
 
@@ -445,10 +449,11 @@ Simulate locally:
 
 ```bash
 cp .env.example .env
+export APP_IMAGE_TARGET=ci    # image with pytest; default is the production image
 docker compose -f docker/compose.yml --env-file .env up --build -d
 docker compose -f docker/compose.yml --env-file .env exec -T db \
   psql -U postgres -c "CREATE DATABASE family_tree_test;" || true
-docker compose -f docker/compose.yml --env-file .env exec -T api pytest -v --cov=app --cov-fail-under=55
+docker compose -f docker/compose.yml --env-file .env exec -T api pytest -v --cov=app --cov-fail-under=90
 ```
 
 ---
