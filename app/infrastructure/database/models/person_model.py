@@ -64,6 +64,12 @@ class PersonModel(Base):
             "gender IN ('male', 'female')",
             name="ck_person_gender",
         ),
+        # Every person query filters out soft-deleted rows.
+        Index(
+            "ix_persons_active_not_deleted",
+            "id",
+            postgresql_where=text("deleted_at IS NULL"),
+        ),
     )
 
     family_tree: Mapped["FamilyTreeModel"] = relationship(

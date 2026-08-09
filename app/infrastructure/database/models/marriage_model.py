@@ -2,7 +2,14 @@ from datetime import date
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import CheckConstraint, Date, ForeignKey, Index, UniqueConstraint
+from sqlalchemy import (
+    CheckConstraint,
+    Date,
+    ForeignKey,
+    Index,
+    UniqueConstraint,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
@@ -62,4 +69,17 @@ class MarriageModel(Base):
             name="ck_marriage_divorce_after_married",
         ),
         Index("ix_marriage_spouses", "spouse_a_id", "spouse_b_id"),
+        # "Is this person currently married?" runs before every marriage
+        # create, update and person delete; one index per spouse column keeps
+        # that OR-predicate off a sequential scan.
+        Index(
+            "ix_marriage_active_spouse_a",
+            "spouse_a_id",
+            postgresql_where=text("divorced_at IS NULL"),
+        ),
+        Index(
+            "ix_marriage_active_spouse_b",
+            "spouse_b_id",
+            postgresql_where=text("divorced_at IS NULL"),
+        ),
     )

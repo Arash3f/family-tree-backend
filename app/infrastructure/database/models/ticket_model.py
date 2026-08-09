@@ -1,10 +1,13 @@
 from typing import TYPE_CHECKING, List
 from uuid import UUID
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import CheckConstraint, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.domain.shared.enums.ticket_status import TicketStatus
 from app.infrastructure.database.base import Base
+
+_TICKET_STATUSES = ", ".join(f"'{status.value}'" for status in TicketStatus)
 
 if TYPE_CHECKING:
     from .ticket_message_model import TicketMessageModel
@@ -21,6 +24,10 @@ class TicketModel(Base):
         ForeignKey("users.id", ondelete="RESTRICT"),
         nullable=False,
         index=True,
+    )
+
+    __table_args__ = (
+        CheckConstraint(f"status IN ({_TICKET_STATUSES})", name="ck_ticket_status"),
     )
 
     created_by: Mapped["UserModel"] = relationship(  # type: ignore

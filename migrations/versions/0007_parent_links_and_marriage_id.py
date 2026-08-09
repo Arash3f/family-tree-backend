@@ -24,6 +24,80 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+# Copied from revision 0005 rather than imported: a migration must keep working
+# even after the code it was written against has moved on.
+LEGACY_PARENT_RULES_FUNCTION = """
+CREATE OR REPLACE FUNCTION enforce_person_parent_rules()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  parent_gender text;
+BEGIN
+  IF NEW.father_id IS NOT NULL THEN
+    SELECT gender INTO parent_gender FROM persons WHERE id = NEW.father_id;
+    IF parent_gender IS DISTINCT FROM 'male' THEN
+      RAISE EXCEPTION 'father gender must be male'
+        USING ERRCODE = 'check_violation';
+    END IF;
+
+    IF EXISTS (
+      WITH RECURSIVE ancestors AS (
+        SELECT p.id, p.father_id, p.mother_id
+        FROM persons AS p
+        WHERE p.id = NEW.father_id
+        UNION ALL
+        SELECT p.id, p.father_id, p.mother_id
+        FROM persons AS p
+        INNER JOIN ancestors AS a
+          ON p.id = a.father_id OR p.id = a.mother_id
+      )
+      SELECT 1 FROM ancestors WHERE id = NEW.id
+    ) THEN
+      RAISE EXCEPTION 'father assignment creates a cycle'
+        USING ERRCODE = 'check_violation';
+    END IF;
+  END IF;
+
+  IF NEW.mother_id IS NOT NULL THEN
+    SELECT gender INTO parent_gender FROM persons WHERE id = NEW.mother_id;
+    IF parent_gender IS DISTINCT FROM 'female' THEN
+      RAISE EXCEPTION 'mother gender must be female'
+        USING ERRCODE = 'check_violation';
+    END IF;
+
+    IF EXISTS (
+      WITH RECURSIVE ancestors AS (
+        SELECT p.id, p.father_id, p.mother_id
+        FROM persons AS p
+        WHERE p.id = NEW.mother_id
+        UNION ALL
+        SELECT p.id, p.father_id, p.mother_id
+        FROM persons AS p
+        INNER JOIN ancestors AS a
+          ON p.id = a.father_id OR p.id = a.mother_id
+      )
+      SELECT 1 FROM ancestors WHERE id = NEW.id
+    ) THEN
+      RAISE EXCEPTION 'mother assignment creates a cycle'
+        USING ERRCODE = 'check_violation';
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+"""
+
+LEGACY_PERSON_PARENT_TRIGGER = """
+CREATE TRIGGER trg_person_parent_rules
+BEFORE INSERT OR UPDATE OF father_id, mother_id
+ON persons
+FOR EACH ROW
+EXECUTE FUNCTION enforce_person_parent_rules();
+"""
+
+
 def upgrade() -> None:
     op.create_table(
         "parent_links",
@@ -135,18 +209,39 @@ def downgrade() -> None:
         ondelete="SET NULL",
     )
 
+    # The two-column shape can only hold one parent of each gender, so the
+    # biological links are split by the parent's own gender rather than by
+    # insertion order.
     op.execute(
         """
         UPDATE persons AS p
         SET father_id = pl.parent_id
         FROM (
-            SELECT DISTINCT ON (child_id) child_id, parent_id
-            FROM parent_links
-            WHERE relationship_type = 'biological'
-            ORDER BY child_id, created_at
+            SELECT DISTINCT ON (l.child_id) l.child_id, l.parent_id
+            FROM parent_links AS l
+            INNER JOIN persons AS parent ON parent.id = l.parent_id
+            WHERE l.relationship_type = 'biological'
+              AND parent.gender = 'male'
+            ORDER BY l.child_id, l.created_at
         ) AS pl
         WHERE p.id = pl.child_id
           AND p.father_id IS NULL
+        """
+    )
+    op.execute(
+        """
+        UPDATE persons AS p
+        SET mother_id = pl.parent_id
+        FROM (
+            SELECT DISTINCT ON (l.child_id) l.child_id, l.parent_id
+            FROM parent_links AS l
+            INNER JOIN persons AS parent ON parent.id = l.parent_id
+            WHERE l.relationship_type = 'biological'
+              AND parent.gender = 'female'
+            ORDER BY l.child_id, l.created_at
+        ) AS pl
+        WHERE p.id = pl.child_id
+          AND p.mother_id IS NULL
         """
     )
 
@@ -171,6 +266,11 @@ def downgrade() -> None:
         "persons",
         "father_id IS NULL OR mother_id IS NULL OR father_id != mother_id",
     )
+
+    # Revision 0005 owns these rules; the upgrade dropped them along with the
+    # columns they guard, so stepping back has to put them in place again.
+    op.execute(LEGACY_PARENT_RULES_FUNCTION)
+    op.execute(LEGACY_PERSON_PARENT_TRIGGER)
 
     op.drop_index(op.f("ix_parent_links_parent_id"), table_name="parent_links")
     op.drop_index(op.f("ix_parent_links_id"), table_name="parent_links")

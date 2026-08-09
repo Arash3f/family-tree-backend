@@ -307,6 +307,20 @@ def downgrade() -> None:
         unique=True,
         postgresql_where=sa.text("divorced_at IS NULL"),
     )
+    op.create_index("ix_marriages_husband_id", "marriages", ["husband_id"])
+    op.create_index("ix_marriages_wife_id", "marriages", ["wife_id"])
+
+    # Rebuilt without the soft-delete predicate first: dropping deleted_at
+    # while the index still references it would take the uniqueness rule down
+    # with the column and leave the table without one.
+    op.drop_index("uq_person_name_marriage", table_name="persons")
+    op.create_index(
+        "uq_person_name_marriage",
+        "persons",
+        ["name", "marriage_id"],
+        unique=True,
+        postgresql_where=sa.text("marriage_id IS NOT NULL"),
+    )
 
     op.drop_index("ix_persons_active_not_deleted", table_name="persons")
     op.drop_index("ix_persons_deleted_at", table_name="persons")

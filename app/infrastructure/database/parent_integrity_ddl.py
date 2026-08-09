@@ -10,7 +10,17 @@ DECLARE
   origin_marriage_id uuid;
   spouse_a uuid;
   spouse_b uuid;
+  parent_tree uuid;
+  child_tree uuid;
 BEGIN
+  SELECT tree_id INTO parent_tree FROM persons WHERE id = NEW.parent_id;
+  SELECT tree_id INTO child_tree FROM persons WHERE id = NEW.child_id;
+
+  IF parent_tree IS DISTINCT FROM child_tree THEN
+    RAISE EXCEPTION 'parent and child must belong to the same family tree'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
   IF EXISTS (
     WITH RECURSIVE ancestors AS (
       SELECT pl.parent_id AS id

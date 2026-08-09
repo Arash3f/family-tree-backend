@@ -20,12 +20,20 @@ from app.core.config import settings
 from app.infrastructure.database.base import Base
 
 target_metadata = Base.metadata
-config.set_main_option("sqlalchemy.url", settings.database_url)
+
+# `alembic -x db_url=...` lets a throwaway database be migrated without
+# touching the configured one, which is how the schema-drift test runs.
+_x_args = context.get_x_argument(as_dictionary=True)
+config.set_main_option("sqlalchemy.url", _x_args.get("db_url") or settings.database_url)
 
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-if config.config_file_name is not None:
+# Callers that run migrations in-process (tests) opt out, because fileConfig
+# would otherwise disable every logger the host process already configured.
+if config.config_file_name is not None and config.attributes.get(
+    "configure_logger", True
+):
     fileConfig(config.config_file_name)
 
 
