@@ -1,9 +1,28 @@
+"""Optional family-tree sample data.
+
+Copy this file to ``seed_items.py`` (gitignored), then enable the call in
+``app/main.py`` lifespan:
+
+    from seed_items import seed_initial_items
+    await seed_initial_items(uow=uow)
+
+Seed order matches the current domain model:
+1. Root people (no parents / no origin marriage)
+2. Marriages between existing people
+3. Children with ``marriage_id`` = origin marriage and biological parents
+   matching that marriage's spouses
+"""
+
+from __future__ import annotations
+
 from datetime import date, datetime, timezone
 from typing import NotRequired, TypedDict
+from uuid import UUID
 
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.entities.marriage import Marriage
-from app.domain.entities.person import Gender, ParentLink, Person
+from app.domain.entities.person import Gender, ParentLink, ParentRelationshipType, Person
+from app.domain.exceptions.person_exceptions import InvalidParentMarriageException
 from app.domain.shared.dto.family_tree_dto import (
     ParentRelationshipDTO,
     PersonUpsertDTO,
@@ -14,18 +33,32 @@ from app.infrastructure.repositories.neo4j_family_tree_repository import (
 )
 
 
+class ParentSeedLink(TypedDict):
+    key: str
+    relationship_type: NotRequired[ParentRelationshipType]
+
+
 class PersonSeedData(TypedDict):
     key: str
     name: str
     gender: Gender
-    father: NotRequired[str]
-    mother: NotRequired[str]
+    family_name: NotRequired[str | None]
+    birth_date: NotRequired[date | None]
+    death_date: NotRequired[date | None]
+    birth_place: NotRequired[str | None]
+    death_place: NotRequired[str | None]
+    notes: NotRequired[str | None]
+    parents: NotRequired[list[ParentSeedLink]]
+    # Key from SEED_MARRIAGES — the marriage this person was born into.
+    origin_marriage: NotRequired[str]
 
 
 class MarriageSeedData(TypedDict):
+    key: str
     spouse_a: str
     spouse_b: str
     married_at: date
+    divorced_at: NotRequired[date | None]
 
 
 async def get_or_create_person(
@@ -34,7 +67,7 @@ async def get_or_create_person(
     neo_repo: Neo4jFamilyTreeRepository,
 ) -> Person:
     now_utc = datetime.now(timezone.utc)
-    created_at = None
+    created_at: datetime | None = None
 
     find_person = await uow.persons.get_by_name(
         name=person.name, marriage_id=person.marriage_id
@@ -43,26 +76,25 @@ async def get_or_create_person(
     if find_person:
         person.id = find_person.safe_id
         person = await uow.persons.update(person=person)
-        created_at = now_utc
-
     else:
         person = await uow.persons.create(person=person)
+        created_at = now_utc
 
-    data: PersonUpsertDTO = PersonUpsertDTO(
-        id=person.safe_id,
-        full_name=person.name,
-        gender=person.gender.name,
-        birth_date=person.birth_date,
-        death_date=None,
-        created_at=created_at,
-        updated_at=now_utc,
+    neo_repo.upsert_person(
+        PersonUpsertDTO(
+            id=person.safe_id,
+            full_name=person.name,
+            gender=person.gender.value.upper(),
+            birth_date=person.birth_date,
+            death_date=person.death_date,
+            created_at=created_at,
+            updated_at=now_utc,
+        )
     )
-
-    neo_repo.upsert_person(data)
 
     for parent_id in person.parent_ids:
         neo_repo.create_parent_relationship(
-            data=ParentRelationshipDTO(
+            ParentRelationshipDTO(
                 child_id=person.safe_id,
                 parent_id=parent_id,
             )
@@ -89,7 +121,7 @@ async def get_or_create_marriage(
         marriage = await uow.marriages.create(marriage=marriage)
 
     neo_repo.create_spouse_relationship(
-        data=SpouseRelationshipDTO(
+        SpouseRelationshipDTO(
             person_id_1=marriage.spouse_a_id,
             person_id_2=marriage.spouse_b_id,
         )
@@ -99,28 +131,176 @@ async def get_or_create_marriage(
     return marriage
 
 
+def _build_parents(
+    item: PersonSeedData, people_map: dict[str, Person]
+) -> list[ParentLink]:
+    parents: list[ParentLink] = []
+    for link in item.get("parents", []):
+        parents.append(
+            ParentLink(
+                parent_id=people_map[link["key"]].safe_id,
+                relationship_type=link.get(
+                    "relationship_type", ParentRelationshipType.BIOLOGICAL
+                ),
+            )
+        )
+    return parents
+
+
+def _validate_origin_marriage_parents(
+    *,
+    parents: list[ParentLink],
+    marriage: Marriage,
+) -> None:
+    spouse_ids = {marriage.spouse_a_id, marriage.spouse_b_id}
+    for link in parents:
+        if (
+            link.relationship_type is ParentRelationshipType.BIOLOGICAL
+            and link.parent_id not in spouse_ids
+        ):
+            raise InvalidParentMarriageException()
+
+
+# ---------------------------------------------------------------------------
+# Sample family (2 generations)
+#
+#   حسن الفونه ──spouse── مریم کریمی
+#           └── آرش الفونه
+#
+#   پرویز ابراهیمی ──spouse── ناهید رضایی
+#           └── رز ابراهیمی
+#
+#   آرش الفونه ──spouse── رز ابراهیمی
+#           ├── مانی الفونه   (biological)
+#           ├── سارا الفونه   (biological)
+#           └── کیان موسوی    (adoptive; same origin marriage)
+# ---------------------------------------------------------------------------
+
 SEED_PEOPLE: list[PersonSeedData] = [
+    # Generation 0 — roots
+    {
+        "key": "hasan_alfooneh",
+        "name": "حسن",
+        "family_name": "الفونه",
+        "gender": Gender.MALE,
+        "birth_date": date(1950, 3, 12),
+        "birth_place": "تهران",
+    },
+    {
+        "key": "maryam_karimi",
+        "name": "مریم",
+        "family_name": "کریمی",
+        "gender": Gender.FEMALE,
+        "birth_date": date(1952, 7, 21),
+        "birth_place": "اصفهان",
+    },
+    {
+        "key": "parviz_ebrahimi",
+        "name": "پرویز",
+        "family_name": "ابراهیمی",
+        "gender": Gender.MALE,
+        "birth_date": date(1948, 11, 5),
+        "birth_place": "شیراز",
+    },
+    {
+        "key": "nahid_rezaei",
+        "name": "ناهید",
+        "family_name": "رضایی",
+        "gender": Gender.FEMALE,
+        "birth_date": date(1951, 1, 30),
+        "birth_place": "تبریز",
+    },
+    # Generation 1 — children of root marriages
     {
         "key": "arash_alfooneh",
-        "name": "آرش الفونه",
+        "name": "آرش",
+        "family_name": "الفونه",
         "gender": Gender.MALE,
+        "birth_date": date(1978, 5, 14),
+        "birth_place": "تهران",
+        "origin_marriage": "hasan_maryam",
+        "parents": [
+            {"key": "hasan_alfooneh"},
+            {"key": "maryam_karimi"},
+        ],
     },
     {
         "key": "roz_ebrahimi",
-        "name": "رز ابراهیمی",
+        "name": "رز",
+        "family_name": "ابراهیمی",
         "gender": Gender.FEMALE,
+        "birth_date": date(1980, 9, 2),
+        "birth_place": "شیراز",
+        "origin_marriage": "parviz_nahid",
+        "parents": [
+            {"key": "parviz_ebrahimi"},
+            {"key": "nahid_rezaei"},
+        ],
     },
+    # Generation 2 — children of آرش + رز
     {
         "key": "mani_alfooneh",
-        "name": "مانی الفونه",
+        "name": "مانی",
+        "family_name": "الفونه",
         "gender": Gender.MALE,
-        "father": "arash_alfooneh",
-        "mother": "roz_ebrahimi",
+        "birth_date": date(2005, 4, 18),
+        "birth_place": "تهران",
+        "origin_marriage": "arash_roz",
+        "parents": [
+            {"key": "arash_alfooneh"},
+            {"key": "roz_ebrahimi"},
+        ],
+    },
+    {
+        "key": "sara_alfooneh",
+        "name": "سارا",
+        "family_name": "الفونه",
+        "gender": Gender.FEMALE,
+        "birth_date": date(2008, 12, 1),
+        "birth_place": "تهران",
+        "origin_marriage": "arash_roz",
+        "parents": [
+            {"key": "arash_alfooneh"},
+            {"key": "roz_ebrahimi"},
+        ],
+    },
+    {
+        "key": "kian_mousavi",
+        "name": "کیان",
+        "family_name": "موسوی",
+        "gender": Gender.MALE,
+        "birth_date": date(2010, 6, 9),
+        "birth_place": "کرج",
+        "notes": "فرزندخوانده خانواده آرش و رز",
+        "origin_marriage": "arash_roz",
+        "parents": [
+            {
+                "key": "arash_alfooneh",
+                "relationship_type": ParentRelationshipType.ADOPTIVE,
+            },
+            {
+                "key": "roz_ebrahimi",
+                "relationship_type": ParentRelationshipType.ADOPTIVE,
+            },
+        ],
     },
 ]
 
 SEED_MARRIAGES: list[MarriageSeedData] = [
     {
+        "key": "hasan_maryam",
+        "spouse_a": "hasan_alfooneh",
+        "spouse_b": "maryam_karimi",
+        "married_at": date(1975, 6, 1),
+    },
+    {
+        "key": "parviz_nahid",
+        "spouse_a": "parviz_ebrahimi",
+        "spouse_b": "nahid_rezaei",
+        "married_at": date(1976, 8, 20),
+    },
+    {
+        "key": "arash_roz",
         "spouse_a": "arash_alfooneh",
         "spouse_b": "roz_ebrahimi",
         "married_at": date(2000, 1, 1),
@@ -128,47 +308,107 @@ SEED_MARRIAGES: list[MarriageSeedData] = [
 ]
 
 
-async def seed_initial_items(uow: UnitOfWork):
+def _can_seed_person(
+    item: PersonSeedData,
+    people_map: dict[str, Person],
+    marriages_map: dict[str, Marriage],
+) -> bool:
+    if item["key"] in people_map:
+        return False
+
+    for link in item.get("parents", []):
+        if link["key"] not in people_map:
+            return False
+
+    origin_key = item.get("origin_marriage")
+    if origin_key is not None and origin_key not in marriages_map:
+        return False
+
+    return True
+
+
+def _can_seed_marriage(
+    item: MarriageSeedData,
+    people_map: dict[str, Person],
+    marriages_map: dict[str, Marriage],
+) -> bool:
+    if item["key"] in marriages_map:
+        return False
+    return item["spouse_a"] in people_map and item["spouse_b"] in people_map
+
+
+async def seed_initial_items(uow: UnitOfWork) -> None:
     people_map: dict[str, Person] = {}
+    marriages_map: dict[str, Marriage] = {}
     neo_repo = Neo4jFamilyTreeRepository()
 
     async with uow:
-        for item in SEED_PEOPLE:
-            father_key = item.get("father")
-            mother_key = item.get("mother")
+        # Multi-pass: roots → marriages → children → next-gen marriages → …
+        while True:
+            progressed = False
 
-            parents: list[ParentLink] = []
-            if father_key:
-                parents.append(ParentLink(parent_id=people_map[father_key].safe_id))
-            if mother_key:
-                parents.append(ParentLink(parent_id=people_map[mother_key].safe_id))
+            for marriage_item in SEED_MARRIAGES:
+                if not _can_seed_marriage(marriage_item, people_map, marriages_map):
+                    continue
 
-            person = await get_or_create_person(
-                uow=uow,
-                person=Person(
-                    id=None,
-                    name=item["name"],
-                    gender=item["gender"],
-                    birth_date=None,
-                    parents=parents,
-                ),
-                neo_repo=neo_repo,
-            )
+                marriage = await get_or_create_marriage(
+                    uow=uow,
+                    marriage=Marriage(
+                        id=None,
+                        spouse_a_id=people_map[marriage_item["spouse_a"]].safe_id,
+                        spouse_b_id=people_map[marriage_item["spouse_b"]].safe_id,
+                        married_at=marriage_item["married_at"],
+                        divorced_at=marriage_item.get("divorced_at"),
+                    ),
+                    neo_repo=neo_repo,
+                )
+                marriages_map[marriage_item["key"]] = marriage
+                progressed = True
 
-            people_map[item["key"]] = person
+            for person_item in SEED_PEOPLE:
+                if not _can_seed_person(person_item, people_map, marriages_map):
+                    continue
 
-        for marriage_item in SEED_MARRIAGES:
-            spouse_a_node = people_map[marriage_item["spouse_a"]]
-            spouse_b_node = people_map[marriage_item["spouse_b"]]
+                parents = _build_parents(person_item, people_map)
+                origin_key = person_item.get("origin_marriage")
+                marriage_id: UUID | None = None
 
-            await get_or_create_marriage(
-                uow=uow,
-                marriage=Marriage(
-                    id=None,
-                    spouse_a_id=spouse_a_node.safe_id,
-                    spouse_b_id=spouse_b_node.safe_id,
-                    married_at=marriage_item["married_at"],
-                    divorced_at=None,
-                ),
-                neo_repo=neo_repo,
+                if origin_key is not None:
+                    origin_marriage = marriages_map[origin_key]
+                    _validate_origin_marriage_parents(
+                        parents=parents, marriage=origin_marriage
+                    )
+                    marriage_id = origin_marriage.safe_id
+
+                person = await get_or_create_person(
+                    uow=uow,
+                    person=Person(
+                        id=None,
+                        name=person_item["name"],
+                        gender=person_item["gender"],
+                        family_name=person_item.get("family_name"),
+                        birth_date=person_item.get("birth_date"),
+                        death_date=person_item.get("death_date"),
+                        birth_place=person_item.get("birth_place"),
+                        death_place=person_item.get("death_place"),
+                        notes=person_item.get("notes"),
+                        parents=parents,
+                        marriage_id=marriage_id,
+                    ),
+                    neo_repo=neo_repo,
+                )
+                people_map[person_item["key"]] = person
+                progressed = True
+
+            if not progressed:
+                break
+
+        missing_people = [p["key"] for p in SEED_PEOPLE if p["key"] not in people_map]
+        missing_marriages = [
+            m["key"] for m in SEED_MARRIAGES if m["key"] not in marriages_map
+        ]
+        if missing_people or missing_marriages:
+            raise RuntimeError(
+                "Seed graph has unresolved dependencies: "
+                f"people={missing_people}, marriages={missing_marriages}"
             )
