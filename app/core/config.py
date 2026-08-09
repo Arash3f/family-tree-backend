@@ -1,4 +1,6 @@
-from pydantic import Field
+from typing import Self
+
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings as PydanticBaseSettings
 from pydantic_settings import SettingsConfigDict
 
@@ -25,11 +27,11 @@ class AppSettings(PydanticBaseSettings):
     POSTGRES_DB: str = "family_tree"
     POSTGRES_PORT: int = 5432
 
-    # Database Test:
+    # Database Test (must be a separate database — e2e drops/recreates schema):
     POSTGRES_HOST_TEST: str = "127.0.0.1"
     POSTGRES_USER_TEST: str = "postgres"
     POSTGRES_PASSWORD_TEST: str = "postgres"
-    POSTGRES_DB_TEST: str = "family_tree"
+    POSTGRES_DB_TEST: str = "family_tree_test"
     POSTGRES_PORT_TEST: int = 5432
 
     # Admin User:
@@ -48,6 +50,22 @@ class AppSettings(PydanticBaseSettings):
     )
     FLOWER_BASIC_AUTH: str = "admin:admin"
     AUTH_RATE_LIMIT_PER_MINUTE: int = 30
+
+    @model_validator(mode="after")
+    def ensure_test_database_is_separate(self) -> Self:
+        same_target = (
+            self.POSTGRES_HOST == self.POSTGRES_HOST_TEST
+            and self.POSTGRES_PORT == self.POSTGRES_PORT_TEST
+            and self.POSTGRES_DB == self.POSTGRES_DB_TEST
+        )
+        if same_target:
+            raise ValueError(
+                "POSTGRES_DB_TEST must target a different database than POSTGRES_DB "
+                "(same host/port/name would let tests wipe app data). "
+                f"Got {self.POSTGRES_DB!r} on "
+                f"{self.POSTGRES_HOST}:{self.POSTGRES_PORT}."
+            )
+        return self
 
     @property
     def database_url_asy(self):

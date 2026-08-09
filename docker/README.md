@@ -4,7 +4,7 @@ All container build and Compose definitions live in this folder.
 
 | File | Purpose |
 |------|---------|
-| `Dockerfile` | Multi-stage image for API / Celery / Flower |
+| `Dockerfile` | Multi-stage image for API / Celery / Flower (`postgresql-client` for backups) |
 | `entrypoint.sh` | Wait for Postgres → migrate → start Uvicorn |
 | `compose.yml` | Full stack (app + Postgres + Redis + Neo4j) |
 

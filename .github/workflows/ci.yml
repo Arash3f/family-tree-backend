@@ -36,6 +36,14 @@ jobs:
       - name: Bandit
         run: bandit -r app -ll
 
+      - name: Install Poetry + export plugin
+        run: |
+          python -m pip install "poetry>=2.0,<3.0"
+          poetry self add poetry-plugin-export
+
+      - name: Check requirements.txt sync
+        run: python scripts/check_requirements_sync.py
+
   stack:
     name: Docker stack & tests
     runs-on: ubuntu-latest
@@ -94,7 +102,7 @@ jobs:
         if: failure()
         run: |
           docker compose --env-file .env ps
-          docker compose --env-file .env logs --tail=100 api db redis neo4j
+          docker compose --env-file .env logs --tail=100 api db redis neo4j minio minio-init
 
       - name: Cleanup
         if: always()

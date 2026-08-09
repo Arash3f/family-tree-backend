@@ -143,7 +143,7 @@ docker compose -f docker/compose.yml --env-file .env exec api sh
 | ReDoc | http://localhost:8001/redoc |
 | OpenAPI JSON | http://localhost:8001/openapi.json |
 | GraphQL (GraphiQL) | http://localhost:8001/graphql |
-| Health | http://localhost:8001/health |
+| Health | http://localhost:8001/health (HTTP 200 when ok, 503 when degraded) |
 | Neo4j Browser | http://localhost:7474 |
 | Flower | http://localhost:5555 (basic auth from `FLOWER_BASIC_AUTH`, default `admin:admin`) |
 
@@ -172,11 +172,18 @@ Local development uses **Poetry** (hooks expect it). Requires Poetry 2+ and Pyth
 poetry install
 ```
 
-`requirements.txt` is the lock export used by **Docker** and **CI**. After changing deps with Poetry, re-export:
+`requirements.txt` is the lock export used by **Docker** and **CI**. Poetry 2 does
+not bundle `export` by default; this repo declares `poetry-plugin-export` under
+`[tool.poetry.requires-plugins]` (installed automatically on `poetry install`).
+
+After changing deps with Poetry, re-export and verify:
 
 ```bash
 poetry export -f requirements.txt --without-hashes -o requirements.txt
+python scripts/check_requirements_sync.py
 ```
+
+CI runs the same sync check on every push / PR.
 
 ### 2. Pre-commit & Commitizen
 
@@ -289,7 +296,7 @@ Interactive docs: [/api_docs](http://localhost:8001/api_docs).
 | `/permissions` | Permission listing |
 | `/persons` | Person CRUD, filtered list, closest relationship |
 | `/marriages` | Marriage CRUD, divorce, filtered list |
-| `/health` | Postgres + Neo4j status |
+| `/health` | Postgres + Neo4j status (`200` / `status:ok`, or `503` / `status:degraded`) |
 | `/health/neo4j` | Neo4j probe |
 
 Closest relationship:

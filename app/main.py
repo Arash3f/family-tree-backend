@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from swagger_ui_bundle import swagger_ui_path
@@ -135,6 +136,13 @@ def neo4j_health():
 
 @app.get("/health")
 async def health():
+    """
+    Liveness/readiness probe for Compose HEALTHCHECK and load balancers.
+
+    Returns HTTP 200 only when Postgres and Neo4j both respond.
+    Returns HTTP 503 with ``status: degraded`` when any dependency fails so
+    ``curl -fsS`` / orchestrators treat the instance as unhealthy.
+    """
     status: dict[str, str] = {}
     healthy = True
 
@@ -157,7 +165,10 @@ async def health():
         healthy = False
 
     status["status"] = "ok" if healthy else "degraded"
-    return status
+    return JSONResponse(
+        content=status,
+        status_code=200 if healthy else 503,
+    )
 
 
 # Middleware for request tracing
