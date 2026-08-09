@@ -27,6 +27,11 @@ class Permissions:
 
     MEDIA_UPLOAD = "media_upload"
 
+    TICKET_CREATE = "ticket_create"
+    TICKET_READ = "ticket_read"
+    TICKET_REPLY = "ticket_reply"
+    TICKET_MANAGE = "ticket_manage"
+
     @classmethod
     def get_all_permissions(cls) -> List[str]:
         return [

@@ -1,0 +1,17 @@
+meta {
+  name: Get Ticket
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/tickets/{{ticket_id}}
+  body: none
+  auth: inherit
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isString
+  res.body.messages: isArray
+}

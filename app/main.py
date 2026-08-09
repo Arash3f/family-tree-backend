@@ -24,6 +24,7 @@ from app.presentation.rest.routers.media_router import router as media_router
 from app.presentation.rest.routers.permission_router import router as permission_router
 from app.presentation.rest.routers.person_router import router as person_router
 from app.presentation.rest.routers.role_router import router as role_router
+from app.presentation.rest.routers.ticket_router import router as ticket_router
 from app.presentation.rest.routers.user_router import router as user_router
 from app.presentation.rest.utils.dependencies import get_uow
 from app.presentation.rest.utils.trace_id import TraceIDMiddleware
@@ -196,6 +197,7 @@ app.include_router(marriage_router)
 app.include_router(user_router)
 app.include_router(permission_router)
 app.include_router(role_router)
+app.include_router(ticket_router)
 app.include_router(auth_router)
 app.include_router(graphql_router)
 

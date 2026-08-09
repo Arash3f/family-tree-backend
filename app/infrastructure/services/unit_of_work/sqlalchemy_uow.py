@@ -7,6 +7,10 @@ from app.infrastructure.repositories.permission_repository_sql import (
 )
 from app.infrastructure.repositories.person_repository_sql import SQLPersonRepository
 from app.infrastructure.repositories.role_repository_sql import SQLRoleRepository
+from app.infrastructure.repositories.ticket_message_repository_sql import (
+    SQLTicketMessageRepository,
+)
+from app.infrastructure.repositories.ticket_repository_sql import SQLTicketRepository
 from app.infrastructure.repositories.user_repository_sql import SQLUserRepository
 from app.infrastructure.repositories.user_session_repository_sql import (
     SQLUserSessionRepository,
@@ -26,6 +30,8 @@ class SQLAlchemyUnitOfWork(UnitOfWork):
         self.permissions = SQLPermissionRepository(self.session)
         self.roles = SQLRoleRepository(self.session)
         self.sessions = SQLUserSessionRepository(self.session)
+        self.tickets = SQLTicketRepository(self.session)
+        self.ticket_messages = SQLTicketMessageRepository(self.session)
 
         return self
 

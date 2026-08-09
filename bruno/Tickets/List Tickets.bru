@@ -1,0 +1,32 @@
+meta {
+  name: List Tickets
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/tickets/list
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "pagination": {
+      "page": 1,
+      "page_size": 30,
+      "offset": 0
+    },
+    "filters": null,
+    "sort": {
+      "sort_order": "desc",
+      "sort_by": "created_at"
+    }
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.items: isArray
+  res.body.total: isNumber
+}

@@ -4,6 +4,8 @@ from app.infrastructure.database.models.parent_link_model import ParentLinkModel
 from app.infrastructure.database.models.permission_model import PermissionModel
 from app.infrastructure.database.models.person_model import PersonModel
 from app.infrastructure.database.models.role_model import RoleModel
+from app.infrastructure.database.models.ticket_message_model import TicketMessageModel
+from app.infrastructure.database.models.ticket_model import TicketModel
 from app.infrastructure.database.models.user_model import UserModel
 from app.infrastructure.database.models.user_session_model import UserSessionModel
 
@@ -14,6 +16,8 @@ __all__ = [
     "PermissionModel",
     "PersonModel",
     "RoleModel",
+    "TicketMessageModel",
+    "TicketModel",
     "UserModel",
     "UserSessionModel",
 ]

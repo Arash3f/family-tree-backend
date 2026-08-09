@@ -51,6 +51,12 @@ class ErrorCode(int, Enum):
     # -----------------------
     ROLE_NOT_FOUND = 1500
     ROLE_NAME_DUPLICATED = 1501
+    # -----------------------
+    # |    Domain Ticket    |
+    # -----------------------
+    TICKET_NOT_FOUND = 1600
+    TICKET_CLOSED = 1601
+    TICKET_ACCESS_DENIED = 1602
 
 
 ERROR_MESSAGES = {
@@ -92,6 +98,10 @@ ERROR_MESSAGES = {
         # Domain Role
         ErrorCode.ROLE_NOT_FOUND: "Role not found",
         ErrorCode.ROLE_NAME_DUPLICATED: "Role name duplicated",
+        # Domain Ticket
+        ErrorCode.TICKET_NOT_FOUND: "Ticket not found",
+        ErrorCode.TICKET_CLOSED: "Ticket is closed",
+        ErrorCode.TICKET_ACCESS_DENIED: "Ticket access denied",
     },
     "fa": {
         ErrorCode.UN_EXPECTED_ID: "شناسه غیرمنتظره",
@@ -131,5 +141,9 @@ ERROR_MESSAGES = {
         # Domain Role
         ErrorCode.ROLE_NOT_FOUND: "نقش پیدا نشد",
         ErrorCode.ROLE_NAME_DUPLICATED: "اسم نقش تکراری است",
+        # Domain Ticket
+        ErrorCode.TICKET_NOT_FOUND: "تیکت یافت نشد",
+        ErrorCode.TICKET_CLOSED: "تیکت بسته شده است",
+        ErrorCode.TICKET_ACCESS_DENIED: "دسترسی به تیکت مجاز نیست",
     },
 }

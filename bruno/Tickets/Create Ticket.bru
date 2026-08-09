@@ -1,0 +1,38 @@
+meta {
+  name: Create Ticket
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/tickets/
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "title": "Need help",
+    "body": "I cannot access my family tree"
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.id: isString
+  res.body.title: isString
+  res.body.status: eq open
+  res.body.messages: isArray
+}
+
+script:post-response {
+  if ((res.status === 200 || res.status === 201) && res.body.id) {
+    bru.setEnvVar("ticket_id", String(res.body.id));
+  }
+}
+
+docs {
+  # Create Ticket
+
+  Creates a support ticket with the first conversation message.
+}

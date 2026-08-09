@@ -10,6 +10,7 @@ from app.presentation.graphql.resolvers import marriage as marriage_resolvers
 from app.presentation.graphql.resolvers import permission as permission_resolvers
 from app.presentation.graphql.resolvers import person as person_resolvers
 from app.presentation.graphql.resolvers import role as role_resolvers
+from app.presentation.graphql.resolvers import ticket as ticket_resolvers
 from app.presentation.graphql.resolvers import user as user_resolvers
 from app.presentation.graphql.types.common import ResultType
 from app.presentation.graphql.types.marriage import (
@@ -38,6 +39,16 @@ from app.presentation.graphql.types.role import (
     RolePage,
     RoleType,
     RoleUpdateInput,
+)
+from app.presentation.graphql.types.ticket import (
+    TicketCreateInput,
+    TicketListInput,
+    TicketMessageCreateInput,
+    TicketMessageType,
+    TicketPage,
+    TicketSummaryType,
+    TicketType,
+    TicketUpdateStatusInput,
 )
 from app.presentation.graphql.types.user import (
     AuthTokensType,
@@ -125,6 +136,18 @@ class Query:
         data: MarriageListInput | None = None,
     ) -> MarriagePage:
         return await marriage_resolvers.resolve_marriages(info, data)
+
+    @strawberry.field(description="Get ticket by id (REST: GET /tickets/{id})")
+    async def ticket(self, info: strawberry.Info, ticket_id: UUID) -> TicketType:
+        return await ticket_resolvers.resolve_ticket(info, ticket_id)
+
+    @strawberry.field(description="Filtered ticket list (REST: POST /tickets/list)")
+    async def tickets(
+        self,
+        info: strawberry.Info,
+        data: TicketListInput | None = None,
+    ) -> TicketPage:
+        return await ticket_resolvers.resolve_tickets(info, data)
 
 
 @strawberry.type
@@ -259,6 +282,40 @@ class Mutation:
         data: DivorceInput,
     ) -> ResultType:
         return await marriage_resolvers.resolve_divorce(info, data)
+
+    @strawberry.mutation(description="Create ticket (REST: POST /tickets/)")
+    async def create_ticket(
+        self,
+        info: strawberry.Info,
+        data: TicketCreateInput,
+    ) -> TicketType:
+        return await ticket_resolvers.resolve_create_ticket(info, data)
+
+    @strawberry.mutation(
+        description="Add ticket message (REST: POST /tickets/{id}/messages)"
+    )
+    async def add_ticket_message(
+        self,
+        info: strawberry.Info,
+        ticket_id: UUID,
+        data: TicketMessageCreateInput,
+    ) -> TicketMessageType:
+        return await ticket_resolvers.resolve_add_ticket_message(
+            info, ticket_id, data
+        )
+
+    @strawberry.mutation(
+        description="Update ticket status (REST: PATCH /tickets/{id}/status)"
+    )
+    async def update_ticket_status(
+        self,
+        info: strawberry.Info,
+        ticket_id: UUID,
+        data: TicketUpdateStatusInput,
+    ) -> TicketSummaryType:
+        return await ticket_resolvers.resolve_update_ticket_status(
+            info, ticket_id, data
+        )
 
 
 schema = strawberry.Schema(
