@@ -69,10 +69,14 @@ DELETE r
 RETURN COUNT(r) > 0 AS deleted
 """
 
+# Every node on the path is checked, not just the endpoints: a person shared
+# between two trees would otherwise act as a bridge and expose relatives the
+# caller has no access to.
 SHORTEST_RELATIONSHIP_PATH: LiteralString = """
 MATCH (a:Person {id: $from_id}), (b:Person {id: $to_id})
 WHERE ($tree_id IS NULL OR (a.tree_id = $tree_id AND b.tree_id = $tree_id))
 OPTIONAL MATCH path = shortestPath((a)-[*..15]-(b))
+WHERE $tree_id IS NULL OR all(n IN nodes(path) WHERE n.tree_id = $tree_id)
 RETURN
   CASE WHEN path IS NULL THEN [] ELSE [n IN nodes(path) | n.id] END AS person_ids,
   CASE WHEN path IS NULL THEN [] ELSE [r IN relationships(path) | type(r)] END
