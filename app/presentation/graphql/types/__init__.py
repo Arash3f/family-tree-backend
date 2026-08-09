@@ -28,6 +28,9 @@ from app.presentation.graphql.types.permission import (
 )
 from app.presentation.graphql.types.person import (
     ClosestRelationshipType,
+    ParentLinkInput,
+    ParentLinkType,
+    ParentRelationshipTypeEnum,
     PersonCreateInput,
     PersonFilterInput,
     PersonListInput,
@@ -73,6 +76,9 @@ __all__ = [
     "PermissionPage",
     "PermissionSortByEnum",
     "PermissionType",
+    "ParentLinkInput",
+    "ParentLinkType",
+    "ParentRelationshipTypeEnum",
     "PersonCreateInput",
     "PersonFilterInput",
     "PersonListInput",

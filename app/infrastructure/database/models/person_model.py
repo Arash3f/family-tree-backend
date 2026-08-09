@@ -1,10 +1,15 @@
 from datetime import date
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import CheckConstraint, Date, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
+
+if TYPE_CHECKING:
+    from app.infrastructure.database.models.marriage_model import MarriageModel
+    from app.infrastructure.database.models.parent_link_model import ParentLinkModel
 
 
 class PersonModel(Base):
@@ -14,20 +19,16 @@ class PersonModel(Base):
     gender: Mapped[str] = mapped_column(String, nullable=False)
     birth_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     death_date: Mapped[date | None] = mapped_column(Date, nullable=True)
-
-    father_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("persons.id", ondelete="SET NULL"), nullable=True
+    marriage_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("marriages.id", ondelete="SET NULL"), nullable=True, index=True
     )
-    mother_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("persons.id", ondelete="SET NULL"), nullable=True
-    )
+    photo_object_key: Mapped[str | None] = mapped_column(String, nullable=True)
 
     __table_args__ = (
         UniqueConstraint(
             "name",
-            "father_id",
-            "mother_id",
-            name="uq_person_name_parents",
+            "marriage_id",
+            name="uq_person_name_marriage",
             postgresql_nulls_not_distinct=True,
         ),
         CheckConstraint(
@@ -44,28 +45,14 @@ class PersonModel(Base):
     # relationships
     # -------------------------
 
-    father: Mapped["PersonModel | None"] = relationship(
-        "PersonModel",
-        foreign_keys=[father_id],
-        remote_side="PersonModel.id",
-        back_populates="children_from_father",
+    origin_marriage: Mapped["MarriageModel | None"] = relationship(
+        "MarriageModel",
+        foreign_keys=[marriage_id],
     )
 
-    mother: Mapped["PersonModel | None"] = relationship(
-        "PersonModel",
-        foreign_keys=[mother_id],
-        remote_side="PersonModel.id",
-        back_populates="children_from_mother",
-    )
-
-    children_from_father: Mapped[list["PersonModel"]] = relationship(
-        "PersonModel",
-        foreign_keys=[father_id],
-        back_populates="father",
-    )
-
-    children_from_mother: Mapped[list["PersonModel"]] = relationship(
-        "PersonModel",
-        foreign_keys=[mother_id],
-        back_populates="mother",
+    parent_links: Mapped[list["ParentLinkModel"]] = relationship(
+        "ParentLinkModel",
+        foreign_keys="ParentLinkModel.child_id",
+        back_populates="child",
+        cascade="all, delete-orphan",
     )

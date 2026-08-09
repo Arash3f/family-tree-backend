@@ -20,6 +20,12 @@ class ErrorCode(int, Enum):
     SAME_PARENT = 1105
     INVALID_GENDER = 1106
     PERSON_HAS_MARRIAGES = 1107
+    INVALID_MEDIA_CONTENT_TYPE = 1108
+    MEDIA_TOO_LARGE = 1109
+    INVALID_MEDIA_OBJECT_KEY = 1110
+    MEDIA_OBJECT_NOT_FOUND = 1111
+    TOO_MANY_BIOLOGICAL_PARENTS = 1112
+    INVALID_PARENT_MARRIAGE = 1113
     # -----------------------
     # |    Domain Marriage    |
     # -----------------------
@@ -60,9 +66,15 @@ ERROR_MESSAGES = {
         ErrorCode.HUSBAND_NOT_FOUND: "Husband not found",
         ErrorCode.WIFE_NOT_FOUND: "Wife not found",
         ErrorCode.PERSON_NOT_FOUND: "Person not found",
-        ErrorCode.SAME_PARENT: "Person's father & mother can not be the same",
+        ErrorCode.SAME_PARENT: "Person cannot have the same parent more than once",
         ErrorCode.INVALID_GENDER: "Person's gender is invalid",
         ErrorCode.PERSON_HAS_MARRIAGES: "Person cannot be deleted while linked to marriages",
+        ErrorCode.INVALID_MEDIA_CONTENT_TYPE: "Unsupported media content type",
+        ErrorCode.MEDIA_TOO_LARGE: "Uploaded media exceeds size limit",
+        ErrorCode.INVALID_MEDIA_OBJECT_KEY: "Invalid media object key",
+        ErrorCode.MEDIA_OBJECT_NOT_FOUND: "Media object not found",
+        ErrorCode.TOO_MANY_BIOLOGICAL_PARENTS: "Child cannot have more than two biological parents",
+        ErrorCode.INVALID_PARENT_MARRIAGE: "Biological parents must match the origin marriage spouses",
         # Domain Marriage
         ErrorCode.SELF_MARRIAGE: "A person cannot marry themselves",
         ErrorCode.DIVORCED_BEFORE_MARRIAGE: "A divorced person cannot be married again without proper validation",
@@ -93,9 +105,15 @@ ERROR_MESSAGES = {
         ErrorCode.HUSBAND_NOT_FOUND: "شوهر یافت نشد",
         ErrorCode.WIFE_NOT_FOUND: "همسر یافت نشد",
         ErrorCode.PERSON_NOT_FOUND: "شخص مورد نظر یافت نشد",
-        ErrorCode.SAME_PARENT: "شخص نمیتواند پدر و مادر یکسان داشته باشد",
+        ErrorCode.SAME_PARENT: "شخص نمی‌تواند والد تکراری داشته باشد",
         ErrorCode.INVALID_GENDER: "جنسیت شخص نامعتبر است",
         ErrorCode.PERSON_HAS_MARRIAGES: "شخص دارای ازدواج قابل حذف نیست",
+        ErrorCode.INVALID_MEDIA_CONTENT_TYPE: "نوع رسانه پشتیبانی نمی‌شود",
+        ErrorCode.MEDIA_TOO_LARGE: "حجم رسانه از حد مجاز بیشتر است",
+        ErrorCode.INVALID_MEDIA_OBJECT_KEY: "کلید شیء رسانه نامعتبر است",
+        ErrorCode.MEDIA_OBJECT_NOT_FOUND: "شیء رسانه یافت نشد",
+        ErrorCode.TOO_MANY_BIOLOGICAL_PARENTS: "فرزند نمی‌تواند بیش از دو والد زیستی داشته باشد",
+        ErrorCode.INVALID_PARENT_MARRIAGE: "والدهای زیستی باید با همسران ازدواج مبدأ مطابقت داشته باشند",
         # Domain Marriage
         ErrorCode.SELF_MARRIAGE: "یک شخص نمی‌تواند با خودش ازدواج کند",
         ErrorCode.DIVORCED_BEFORE_MARRIAGE: "فردی که طلاق گرفته است بدون اعتبارسنجی مناسب نمی‌تواند دوباره ازدواج کند",

@@ -22,8 +22,9 @@ body:json {
       "name": null,
       "gender": null,
       "birth_date": null,
-      "father_id": null,
-      "mother_id": null
+      "parent_id": null,
+      "relationship_type": null,
+      "marriage_id": null
     },
     "sort": {
       "sort_order": "desc",
@@ -52,8 +53,9 @@ docs {
   | filters.name | string\|null | no | |
   | filters.gender | male\|female\|null | no | |
   | filters.birth_date | `{min,max}`\|null | no | date range |
-  | filters.father_id | uuid\|null | no | |
-  | filters.mother_id | uuid\|null | no | |
+  | filters.parent_id | uuid\|null | no | |
+  | filters.relationship_type | biological\|adoptive\|step\|null | no | |
+  | filters.marriage_id | uuid\|null | no | |
   | sort | object | no | default: `sort_order=desc`, `sort_by=id` |
   | sort.sort_order | string | no | `asc` \| `desc` |
   | sort.sort_by | string | no | `id` \| `name` \| `birth_date` \| `gender` |
@@ -67,8 +69,8 @@ docs {
         "name": "arash",
         "gender": "male",
         "birth_date": "1379/09/01",
-        "father_id": null,
-        "mother_id": null
+        "parents": [],
+        "marriage_id": null
       }
     ],
     "total": 1,

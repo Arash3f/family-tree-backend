@@ -1,0 +1,47 @@
+meta {
+  name: Upload Media
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/media/upload
+  body: multipartForm
+  auth: inherit
+}
+
+body:multipart-form {
+  file: @file(./sample.jpg)
+}
+
+assert {
+  res.status: eq 200
+  res.body.object_key: isString
+}
+
+script:post-response {
+  if (res.status === 200 && res.body.object_key) {
+    bru.setEnvVar("photo_object_key", String(res.body.object_key));
+  }
+}
+
+docs {
+  # Upload Media
+
+  Upload a person photo to private MinIO storage.
+
+  ## Input (`multipart/form-data`)
+  | Field | Type | Required | Notes |
+  |-------|------|----------|-------|
+  | file | file | yes | `image/jpeg`, `image/png`, or `image/webp` (max 5MB) |
+
+  ## Output `200`
+  ```json
+  {
+    "object_key": "persons/11111111-1111-1111-1111-111111111111.jpg"
+  }
+  ```
+
+  Pass `object_key` as `photo_object_key` on person create/update.
+  Requires permission `media_upload`.
+}

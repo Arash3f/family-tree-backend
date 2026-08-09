@@ -35,14 +35,9 @@ class FamilyTreeSyncService:
 
         tasks = [sync_person_upsert.si(payload)]
 
-        if person.father_id is not None:
+        for parent_id in person.parent_ids:
             tasks.append(
-                sync_parent_relationship.si(str(person.father_id), str(person.safe_id))
-            )
-
-        if person.mother_id is not None:
-            tasks.append(
-                sync_parent_relationship.si(str(person.mother_id), str(person.safe_id))
+                sync_parent_relationship.si(str(parent_id), str(person.safe_id))
             )
 
         self._enqueue(lambda: chain(*tasks).apply_async())
@@ -51,8 +46,7 @@ class FamilyTreeSyncService:
         self,
         person: Person,
         *,
-        old_father_id: UUID | None,
-        old_mother_id: UUID | None,
+        old_parent_ids: set[UUID],
     ) -> None:
         payload = {
             "id": str(person.safe_id),
@@ -63,30 +57,17 @@ class FamilyTreeSyncService:
         }
 
         tasks = [sync_person_upsert.si(payload)]
+        new_parent_ids = set(person.parent_ids)
 
-        if old_father_id != person.father_id:
-            if old_father_id is not None:
-                tasks.append(
-                    sync_parent_rel_delete.si(str(old_father_id), str(person.safe_id))
-                )
-            if person.father_id is not None:
-                tasks.append(
-                    sync_parent_relationship.si(
-                        str(person.father_id), str(person.safe_id)
-                    )
-                )
+        for parent_id in old_parent_ids - new_parent_ids:
+            tasks.append(
+                sync_parent_rel_delete.si(str(parent_id), str(person.safe_id))
+            )
 
-        if old_mother_id != person.mother_id:
-            if old_mother_id is not None:
-                tasks.append(
-                    sync_parent_rel_delete.si(str(old_mother_id), str(person.safe_id))
-                )
-            if person.mother_id is not None:
-                tasks.append(
-                    sync_parent_relationship.si(
-                        str(person.mother_id), str(person.safe_id)
-                    )
-                )
+        for parent_id in new_parent_ids - old_parent_ids:
+            tasks.append(
+                sync_parent_relationship.si(str(parent_id), str(person.safe_id))
+            )
 
         self._enqueue(lambda: chain(*tasks).apply_async())
 

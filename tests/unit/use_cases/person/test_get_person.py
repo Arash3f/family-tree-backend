@@ -8,18 +8,25 @@ from app.domain.exceptions.person_exceptions import PersonNotFoundException
 from app.domain.shared.dto.common_dto import IdDTO
 
 
+def _photo_service():
+    service = MagicMock()
+    service.presign = AsyncMock(return_value=None)
+    return service
+
+
 @pytest.mark.asyncio
 async def test_get_person_success(mock_uow):
     dto = IdDTO(id=UUID(int=1))
 
     person = MagicMock()
     person.id = UUID(int=1)
+    person.photo_object_key = None
 
     expected_response = MagicMock()
 
     mock_uow.persons.get_or_raise = AsyncMock(return_value=person)
 
-    use_case = GetPersonUseCase(mock_uow)
+    use_case = GetPersonUseCase(mock_uow, _photo_service())
 
     with patch.object(
         PersonGetMapper, "to_response", return_value=expected_response
@@ -29,7 +36,7 @@ async def test_get_person_success(mock_uow):
     assert result is expected_response
 
     mock_uow.persons.get_or_raise.assert_awaited_once_with(person_id=UUID(int=1))
-    mapper_mock.assert_called_once_with(person=person)
+    mapper_mock.assert_called_once_with(person=person, photo_url=None)
 
 
 @pytest.mark.asyncio
@@ -38,7 +45,7 @@ async def test_get_person_propagates_exception(mock_uow):
 
     mock_uow.persons.get_or_raise = AsyncMock(side_effect=PersonNotFoundException())
 
-    use_case = GetPersonUseCase(mock_uow)
+    use_case = GetPersonUseCase(mock_uow, _photo_service())
 
     with patch.object(PersonGetMapper, "to_response") as mapper_mock:
         with pytest.raises(PersonNotFoundException):

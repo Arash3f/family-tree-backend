@@ -2,6 +2,8 @@ from fastapi import Depends
 
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.application.services.authorization_service import AuthorizationService
+from app.application.services.person_photo_service import PersonPhotoService
+from app.domain.repositories.object_storage import ObjectStorage
 from app.domain.services.marriage_rules import MarriageRulesService
 from app.domain.services.password_hasher import PasswordHasher
 from app.infrastructure.database.session import async_session
@@ -13,6 +15,7 @@ from app.infrastructure.services.security.password_hasher_impl import (
 )
 from app.infrastructure.services.security.token_service_imp import JWTService
 from app.infrastructure.services.unit_of_work.sqlalchemy_uow import SQLAlchemyUnitOfWork
+from app.infrastructure.storage.minio_object_storage import MinioObjectStorage
 
 
 def get_uow():
@@ -23,14 +26,18 @@ def get_neo() -> Neo4jFamilyTreeRepository:
     return Neo4jFamilyTreeRepository()
 
 
+def get_object_storage() -> ObjectStorage:
+    return MinioObjectStorage()
+
+
+def get_person_photo_service(
+    storage: ObjectStorage = Depends(get_object_storage),
+) -> PersonPhotoService:
+    return PersonPhotoService(storage)
+
+
 def get_marriage_rules_service() -> MarriageRulesService:
     return MarriageRulesService()
-
-
-def get_marriage_rule_service(
-    rules_service: MarriageRulesService = Depends(get_marriage_rules_service),
-) -> MarriageRulesService:
-    return rules_service
 
 
 def get_password_hasher() -> PasswordHasher:

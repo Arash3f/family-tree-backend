@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, field_serializer, field_validator
 
-from app.domain.entities.person import Gender
+from app.domain.entities.person import Gender, ParentRelationshipType
 from app.domain.shared.dto.person_filter_dto import PersonSortField
 from app.domain.shared.dto.sorter_dto import SortOrderField
 from app.presentation.rest.schemas.dto.common import (
@@ -14,14 +14,21 @@ from app.presentation.rest.schemas.dto.common import (
 from app.presentation.utils.date_convert import gregorian_to_jalali, jalali_to_gregorian
 
 
+class ParentLinkRequest(BaseModel):
+    parent_id: UUID
+    relationship_type: ParentRelationshipType = ParentRelationshipType.BIOLOGICAL
+
+
 class PersonModel(BaseModel):
     id: UUID | None
     name: str
     gender: Gender
     birth_date: date | None = None
     death_date: date | None = None
-    father_id: UUID | None = None
-    mother_id: UUID | None = None
+    parents: list[ParentLinkRequest] = Field(default_factory=list)
+    marriage_id: UUID | None = None
+    photo_object_key: str | None = None
+    photo_url: str | None = None
 
     @field_serializer("birth_date", "death_date")
     def serialize_jalali(self, v):
@@ -35,8 +42,9 @@ class _PersonUpdateDateRequest(BaseModel):
     gender: Gender | None = None
     birth_date: date | None = None
     death_date: date | None = None
-    father_id: UUID | None = None
-    mother_id: UUID | None = None
+    parents: list[ParentLinkRequest] | None = None
+    marriage_id: UUID | None = None
+    photo_object_key: str | None = None
 
     @field_validator("birth_date", "death_date", mode="before")
     def parse_jalali(cls, v):
@@ -60,8 +68,10 @@ class PersonUpdateResponse(BaseModel):
     gender: Gender
     birth_date: date | None
     death_date: date | None = None
-    father_id: UUID | None
-    mother_id: UUID | None
+    parents: list[ParentLinkRequest] = Field(default_factory=list)
+    marriage_id: UUID | None = None
+    photo_object_key: str | None = None
+    photo_url: str | None = None
 
 
 class PersonGetResponse(BaseModel):
@@ -70,8 +80,10 @@ class PersonGetResponse(BaseModel):
     gender: Gender
     birth_date: date | None
     death_date: date | None = None
-    father_id: UUID | None
-    mother_id: UUID | None
+    parents: list[ParentLinkRequest] = Field(default_factory=list)
+    marriage_id: UUID | None = None
+    photo_object_key: str | None = None
+    photo_url: str | None = None
 
     model_config = {
         "json_schema_extra": {
@@ -95,8 +107,9 @@ class PersonCreateRequest(BaseModel):
     gender: Gender
     birth_date: date | None = None
     death_date: date | None = None
-    father_id: UUID | None = None
-    mother_id: UUID | None = None
+    parents: list[ParentLinkRequest] = Field(default_factory=list)
+    marriage_id: UUID | None = None
+    photo_object_key: str | None = None
 
     model_config = {
         "json_schema_extra": {
@@ -104,8 +117,16 @@ class PersonCreateRequest(BaseModel):
                 "name": "arash",
                 "gender": "male",
                 "birth_date": "1379/09/01",
-                "father_id": "00000000-0000-0000-0000-000000000001",
-                "mother_id": "00000000-0000-0000-0000-000000000002",
+                "parents": [
+                    {
+                        "parent_id": "00000000-0000-0000-0000-000000000001",
+                        "relationship_type": "biological",
+                    },
+                    {
+                        "parent_id": "00000000-0000-0000-0000-000000000002",
+                        "relationship_type": "biological",
+                    },
+                ],
             }
         }
     }
@@ -123,8 +144,10 @@ class PersonCreateResponse(BaseModel):
     gender: Gender
     birth_date: date | None
     death_date: date | None = None
-    father_id: UUID | None
-    mother_id: UUID | None
+    parents: list[ParentLinkRequest] = Field(default_factory=list)
+    marriage_id: UUID | None = None
+    photo_object_key: str | None = None
+    photo_url: str | None = None
 
     model_config = {
         "json_schema_extra": {
@@ -132,8 +155,12 @@ class PersonCreateResponse(BaseModel):
                 "name": "arash",
                 "gender": "male",
                 "birth_date": "1379/09/01",
-                "father_id": "00000000-0000-0000-0000-000000000001",
-                "mother_id": "00000000-0000-0000-0000-000000000002",
+                "parents": [
+                    {
+                        "parent_id": "00000000-0000-0000-0000-000000000001",
+                        "relationship_type": "biological",
+                    }
+                ],
             }
         }
     }
@@ -159,8 +186,9 @@ class PersonFilterRequestData(BaseModel):
     name: str | None = None
     gender: Gender | None = None
     birth_date: RangeRequest[date] | None = None
-    father_id: UUID | None = None
-    mother_id: UUID | None = None
+    parent_id: UUID | None = None
+    relationship_type: ParentRelationshipType | None = None
+    marriage_id: UUID | None = None
 
 
 class FilterPersonRequest(BaseModel):

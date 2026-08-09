@@ -25,6 +25,8 @@ class Permissions:
     PERSON_UPDATE = "person_update"
     PERSON_DELETE = "person_delete"
 
+    MEDIA_UPLOAD = "media_upload"
+
     @classmethod
     def get_all_permissions(cls) -> List[str]:
         return [

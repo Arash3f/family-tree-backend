@@ -11,6 +11,7 @@ from sqlalchemy.pool import NullPool
 from app.core.config import settings
 from app.domain.entities.user import User
 from app.infrastructure.database.base import Base
+from app.infrastructure.database.parent_integrity_ddl import install_parent_integrity_ddl
 from app.infrastructure.database.seed import seed_initial_permissions, seed_initial_user
 from app.infrastructure.services.security.password_hasher_impl import (
     Argon2PasswordHasher,
@@ -37,6 +38,7 @@ async def prepare_database(db_engine):
     async with db_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(install_parent_integrity_ddl)
 
         async_session = async_sessionmaker(
             conn, class_=AsyncSession, expire_on_commit=False

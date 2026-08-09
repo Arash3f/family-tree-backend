@@ -15,8 +15,9 @@ body:json {
     "name": "arash",
     "gender": "male",
     "birth_date": "1379/09/01",
-    "father_id": null,
-    "mother_id": null
+    "parents": [],
+    "marriage_id": null,
+    "photo_object_key": null
   }
 }
 
@@ -50,8 +51,9 @@ docs {
   | name | string | yes | |
   | gender | string | yes | `male` \| `female` |
   | birth_date | string\|null | no | Jalali `YYYY/MM/DD` or Gregorian `YYYY-MM-DD` |
-  | father_id | uuid\|null | no | |
-  | mother_id | uuid\|null | no | |
+  | parents | array | no | `{ parent_id, relationship_type }` |
+  | marriage_id | uuid\|null | no | Origin marriage |
+  | photo_object_key | string\|null | no | From `POST /media/upload` |
 
   ## Output `200`
   ```json
@@ -60,8 +62,10 @@ docs {
     "name": "arash",
     "gender": "male",
     "birth_date": "1379/09/01",
-    "father_id": null,
-    "mother_id": null
+    "parents": [],
+    "marriage_id": null,
+    "photo_object_key": null,
+    "photo_url": null
   }
   ```
 }

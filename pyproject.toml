@@ -40,7 +40,8 @@ dependencies = [
     "bandit (>=1.9.4,<2.0.0)",
     "mypy (>=2.0.0,<3.0.0)",
     "neo4j-backup (>=1.0.0,<2.0.0)",
-    "strawberry-graphql[fastapi] (>=0.323.0,<0.324.0)"
+    "strawberry-graphql[fastapi] (>=0.323.0,<0.324.0)",
+    "aioboto3 (>=15.5.0,<16.0.0)"
 ]
 
 
@@ -60,6 +61,10 @@ exclude = [
 plugins = ["strawberry.ext.mypy_plugin"]
 python_version = "3.11"
 ignore_missing_imports = true
+
+[tool.bandit]
+exclude_dirs = ["tests", "migrations", "bruno", "scripts"]
+skips = ["B101"]
 
 [dependency-groups]
 dev = [

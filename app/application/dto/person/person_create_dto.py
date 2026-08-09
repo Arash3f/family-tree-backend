@@ -1,9 +1,14 @@
 from datetime import date
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from app.domain.entities.person import Gender, Person
+from app.domain.entities.person import Gender, ParentLink, ParentRelationshipType, Person
+
+
+class ParentLinkDTO(BaseModel):
+    parent_id: UUID
+    relationship_type: ParentRelationshipType = ParentRelationshipType.BIOLOGICAL
 
 
 class PersonCreateDTO(BaseModel):
@@ -11,8 +16,9 @@ class PersonCreateDTO(BaseModel):
     gender: Gender
     birth_date: date | None
     death_date: date | None = None
-    father_id: UUID | None
-    mother_id: UUID | None
+    parents: list[ParentLinkDTO] = Field(default_factory=list)
+    marriage_id: UUID | None = None
+    photo_object_key: str | None = None
 
 
 class PersonCreateResponseDTO(BaseModel):
@@ -21,19 +27,41 @@ class PersonCreateResponseDTO(BaseModel):
     gender: Gender
     birth_date: date | None
     death_date: date | None = None
-    father_id: UUID | None
-    mother_id: UUID | None
+    parents: list[ParentLinkDTO] = Field(default_factory=list)
+    marriage_id: UUID | None = None
+    photo_object_key: str | None = None
+    photo_url: str | None = None
 
 
 class PersonCreateMapper(BaseModel):
     @staticmethod
-    def to_response(person: Person) -> PersonCreateResponseDTO:
+    def to_response(
+        person: Person, photo_url: str | None = None
+    ) -> PersonCreateResponseDTO:
         return PersonCreateResponseDTO(
             id=person.safe_id,
             name=person.name,
             gender=person.gender,
             birth_date=person.birth_date,
             death_date=person.death_date,
-            father_id=person.father_id,
-            mother_id=person.mother_id,
+            parents=[
+                ParentLinkDTO(
+                    parent_id=link.parent_id,
+                    relationship_type=link.relationship_type,
+                )
+                for link in person.parents
+            ],
+            marriage_id=person.marriage_id,
+            photo_object_key=person.photo_object_key,
+            photo_url=photo_url,
         )
+
+    @staticmethod
+    def to_domain_parents(parents: list[ParentLinkDTO]) -> list[ParentLink]:
+        return [
+            ParentLink(
+                parent_id=link.parent_id,
+                relationship_type=link.relationship_type,
+            )
+            for link in parents
+        ]

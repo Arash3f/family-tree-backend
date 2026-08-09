@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from enum import Enum
 from uuid import UUID
@@ -8,12 +8,25 @@ from app.domain.exceptions.person_exceptions import (
     InvalidBirthDateException,
     SameParentException,
     SelfParentException,
+    TooManyBiologicalParentsException,
 )
 
 
 class Gender(str, Enum):
     MALE = "male"
     FEMALE = "female"
+
+
+class ParentRelationshipType(str, Enum):
+    BIOLOGICAL = "biological"
+    ADOPTIVE = "adoptive"
+    STEP = "step"
+
+
+@dataclass(frozen=True)
+class ParentLink:
+    parent_id: UUID
+    relationship_type: ParentRelationshipType = ParentRelationshipType.BIOLOGICAL
 
 
 @dataclass
@@ -31,8 +44,9 @@ class Person:
     gender: Gender
     birth_date: date | None = None
     death_date: date | None = None
-    father_id: UUID | None = None
-    mother_id: UUID | None = None
+    parents: list[ParentLink] = field(default_factory=list)
+    marriage_id: UUID | None = None
+    photo_object_key: str | None = None
 
     def __post_init__(self) -> None:
         """
@@ -44,9 +58,14 @@ class Person:
 
             SelfParentException:
                 If a person is assigned as their own parent.
+
+            SameParentException:
+                If the same parent id appears more than once.
+
+            TooManyBiologicalParentsException:
+                If more than two biological parents are assigned.
         """
 
-        # Validate birth_date!
         if self.birth_date and self.birth_date > date.today():
             raise InvalidBirthDateException()
 
@@ -55,59 +74,35 @@ class Person:
                 detail=["death_date cannot be before birth_date"]
             )
 
-        # Validate self parent!
-        if self.id is not None:
-            if self.father_id == self.id or self.mother_id == self.id:
-                raise SelfParentException()
+        self._validate_parents(self.parents)
 
-        if (
-            self.father_id is not None
-            and self.mother_id is not None
-            and self.father_id == self.mother_id
-        ):
-            raise SameParentException()
+    def _validate_parents(self, parents: list[ParentLink]) -> None:
+        parent_ids = [link.parent_id for link in parents]
 
-    def set_father(self, father_id: UUID) -> None:
-        """
-        Assigns a father to the person.
-
-        Args:
-            father_id:
-                The ID of the father.
-
-        Raises:
-            SelfParentException:
-                If the person is assigned as their own father.
-        """
-
-        if self.id is not None and father_id == self.id:
+        if self.id is not None and self.id in parent_ids:
             raise SelfParentException()
 
-        if self.mother_id is not None and self.mother_id == father_id:
+        if len(parent_ids) != len(set(parent_ids)):
             raise SameParentException()
 
-        self.father_id = father_id
+        biological_count = sum(
+            1
+            for link in parents
+            if link.relationship_type is ParentRelationshipType.BIOLOGICAL
+        )
+        if biological_count > 2:
+            raise TooManyBiologicalParentsException()
 
-    def set_mother(self, mother_id: UUID) -> None:
-        """
-        Assigns a mother to the person.
+    def set_parents(self, parents: list[ParentLink]) -> None:
+        self._validate_parents(parents)
+        self.parents = list(parents)
 
-        Args:
-            mother_id:
-                The ID of the mother.
+    def add_parent(self, parent: ParentLink) -> None:
+        self.set_parents([*self.parents, parent])
 
-        Raises:
-            SelfParentException:
-                If the person is assigned as their own mother.
-        """
-
-        if self.id is not None and mother_id == self.id:
-            raise SelfParentException()
-
-        if self.father_id is not None and self.father_id == mother_id:
-            raise SameParentException()
-
-        self.mother_id = mother_id
+    @property
+    def parent_ids(self) -> list[UUID]:
+        return [link.parent_id for link in self.parents]
 
     def age(self, on: date | None = None) -> int | None:
         """
@@ -137,47 +132,26 @@ class Person:
     def is_parent_of(self, other: "Person") -> bool:
         """
         Determines whether this person is a parent of another person.
-
-        Args:
-            other:
-                The target person
-
-        Returns:
-            The calculated age in years, or None if birth_date is not set.
         """
 
-        return other.father_id == self.id or other.mother_id == self.id
+        return self.id is not None and self.id in other.parent_ids
 
     def is_child_of(self, other: "Person") -> bool:
         """
         Determines whether this person is a child of another person.
-
-        Args:
-            other:
-                The target person
-
-        Returns:
-            The calculated age in years, or None if birth_date is not set.
         """
-        return self.father_id == other.id or self.mother_id == other.id
+
+        return other.id is not None and other.id in self.parent_ids
 
     def is_sibling_of(self, other: "Person") -> bool:
         """
         Determines whether two persons share at least one parent.
-
-        Args:
-            other:
-                The target person
         """
 
         if self.id == other.id:
             return False
 
-        same_father = self.father_id is not None and self.father_id == other.father_id
-
-        same_mother = self.mother_id is not None and self.mother_id == other.mother_id
-
-        return same_father or same_mother
+        return bool(set(self.parent_ids) & set(other.parent_ids))
 
     @property
     def safe_id(self) -> UUID:

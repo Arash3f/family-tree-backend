@@ -35,7 +35,7 @@ from app.presentation.rest.schemas.dto.marriage_schema import (
 )
 from app.presentation.rest.schemas.mappers.common_mappers import CommonApiMapper
 from app.presentation.rest.schemas.mappers.marriage_mappers import MarriageApiMapper
-from app.presentation.rest.utils.dependencies import get_marriage_rule_service, get_uow
+from app.presentation.rest.utils.dependencies import get_marriage_rules_service, get_uow
 
 router = APIRouter(prefix="/marriages", tags=["Marriages"])
 
@@ -48,7 +48,7 @@ router = APIRouter(prefix="/marriages", tags=["Marriages"])
 async def create_marriage(
     data: MarriageCreateRequest,
     uow=Depends(get_uow),
-    marriage_rule_service=Depends(get_marriage_rule_service),
+    marriage_rule_service=Depends(get_marriage_rules_service),
 ) -> MarriageCreateResponse:
     usecase = CreateMarriageUseCase(uow, marriage_rule_service)
 
@@ -81,7 +81,7 @@ async def delete_marriage(
 async def update_marriage(
     data: MarriageUpdateRequest,
     uow=Depends(get_uow),
-    marriage_rule_service=Depends(get_marriage_rule_service),
+    marriage_rule_service=Depends(get_marriage_rules_service),
 ) -> MarriageUpdateResponse:
     usecase = UpdateMarriageUseCase(uow, marriage_rule_service)
 

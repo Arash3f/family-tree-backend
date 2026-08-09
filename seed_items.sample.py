@@ -3,7 +3,7 @@ from typing import NotRequired, TypedDict
 
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.entities.marriage import Marriage
-from app.domain.entities.person import Gender, Person
+from app.domain.entities.person import Gender, ParentLink, Person
 from app.domain.shared.dto.family_tree_dto import (
     ParentRelationshipDTO,
     PersonUpsertDTO,
@@ -37,7 +37,7 @@ async def get_or_create_person(
     created_at = None
 
     find_person = await uow.persons.get_by_name(
-        name=person.name, father_id=person.father_id, mother_id=person.mother_id
+        name=person.name, marriage_id=person.marriage_id
     )
 
     if find_person:
@@ -60,19 +60,11 @@ async def get_or_create_person(
 
     neo_repo.upsert_person(data)
 
-    if person.father_id:
+    for parent_id in person.parent_ids:
         neo_repo.create_parent_relationship(
             data=ParentRelationshipDTO(
                 child_id=person.safe_id,
-                parent_id=person.father_id,
-            )
-        )
-
-    if person.mother_id:
-        neo_repo.create_parent_relationship(
-            data=ParentRelationshipDTO(
-                child_id=person.safe_id,
-                parent_id=person.mother_id,
+                parent_id=parent_id,
             )
         )
 
@@ -145,8 +137,11 @@ async def seed_initial_items(uow: UnitOfWork):
             father_key = item.get("father")
             mother_key = item.get("mother")
 
-            father_id = people_map[father_key].safe_id if father_key else None
-            mother_id = people_map[mother_key].safe_id if mother_key else None
+            parents: list[ParentLink] = []
+            if father_key:
+                parents.append(ParentLink(parent_id=people_map[father_key].safe_id))
+            if mother_key:
+                parents.append(ParentLink(parent_id=people_map[mother_key].safe_id))
 
             person = await get_or_create_person(
                 uow=uow,
@@ -155,8 +150,7 @@ async def seed_initial_items(uow: UnitOfWork):
                     name=item["name"],
                     gender=item["gender"],
                     birth_date=None,
-                    father_id=father_id,
-                    mother_id=mother_id,
+                    parents=parents,
                 ),
                 neo_repo=neo_repo,
             )

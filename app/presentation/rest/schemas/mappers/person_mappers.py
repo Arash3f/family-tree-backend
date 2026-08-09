@@ -7,7 +7,6 @@ from app.application.dto.person.person_update_dto import (
     PersonUpdateDTO,
     PersonUpdateResponseDTO,
 )
-from app.domain.entities.person import Person
 from app.domain.shared.dto.pagination_dto import PaginatedResult
 from app.domain.shared.dto.person_filter_dto import FilterPersonQuery
 from app.presentation.rest.schemas.dto.common import PaginatedResponse
@@ -37,7 +36,7 @@ class PersonApiMapper:
 
     @staticmethod
     def to_update_person_dto(request: PersonUpdateRequest) -> PersonUpdateDTO:
-        request_data = request.model_dump()
+        request_data = request.model_dump(exclude_unset=True)
         return PersonUpdateDTO.model_validate(request_data)
 
     @staticmethod
@@ -66,11 +65,10 @@ class PersonApiMapper:
 
     @staticmethod
     def from_get_list_person_dto(
-        response: PaginatedResult[Person],
+        response: PaginatedResult[PersonGetResponseDTO],
     ) -> PaginatedResponse[PersonModel]:
         items = [
-            PersonModel.model_validate(item, from_attributes=True)
-            for item in response.items
+            PersonModel.model_validate(item.model_dump()) for item in response.items
         ]
 
         return PaginatedResponse[PersonModel](

@@ -24,6 +24,25 @@ class InvalidPersonGenderException(AppException):
         super().__init__(code=ErrorCode.INVALID_GENDER, status_code=423, detail=detail)
 
 
+class TooManyBiologicalParentsException(AppException):
+    def __init__(self, detail: list[str] | None = None):
+        super().__init__(
+            code=ErrorCode.TOO_MANY_BIOLOGICAL_PARENTS,
+            status_code=422,
+            detail=detail or ["child cannot have more than two biological parents"],
+        )
+
+
+class InvalidParentMarriageException(AppException):
+    def __init__(self, detail: list[str] | None = None):
+        super().__init__(
+            code=ErrorCode.INVALID_PARENT_MARRIAGE,
+            status_code=422,
+            detail=detail
+            or ["biological parents must match the origin marriage spouses"],
+        )
+
+
 class HusbandNotFoundException(AppException):
     def __init__(self, detail: list[str] = []):
         super().__init__(

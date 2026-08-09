@@ -5,11 +5,18 @@ from uuid import UUID
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from app.domain.entities.person import Gender, Person
+from app.domain.entities.person import (
+    Gender,
+    ParentLink,
+    ParentRelationshipType,
+    Person,
+)
 from app.domain.repositories.person_repository import PersonRepository
 from app.domain.shared.dto.pagination_dto import PaginatedResult
 from app.domain.shared.dto.person_filter_dto import FilterPersonQuery, PersonSortField
+from app.infrastructure.database.models.parent_link_model import ParentLinkModel
 from app.infrastructure.database.models.person_model import PersonModel
 from app.infrastructure.database.utils.pagination_and_sort import paginate_and_sort
 from app.infrastructure.database.utils.range_filter import apply_range_filter
@@ -24,12 +31,16 @@ class SQLPersonRepository(PersonRepository):
 
         self.session.add(model)
         await self.session.flush()
-        await self.session.refresh(model)
+        await self.session.refresh(model, attribute_names=["parent_links"])
 
         return self._to_entity(model)
 
     async def get(self, person_id: UUID) -> Person | None:
-        stmt = select(PersonModel).where(PersonModel.id == person_id)
+        stmt = (
+            select(PersonModel)
+            .options(selectinload(PersonModel.parent_links))
+            .where(PersonModel.id == person_id)
+        )
 
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
@@ -40,12 +51,15 @@ class SQLPersonRepository(PersonRepository):
         return self._to_entity(model)
 
     async def get_by_name(
-        self, name: str, father_id: UUID | None, mother_id: UUID | None
+        self, name: str, marriage_id: UUID | None
     ) -> Person | None:
-        stmt = select(PersonModel).where(
-            PersonModel.name == name,
-            PersonModel.father_id == father_id,
-            PersonModel.mother_id == mother_id,
+        stmt = (
+            select(PersonModel)
+            .options(selectinload(PersonModel.parent_links))
+            .where(
+                PersonModel.name == name,
+                PersonModel.marriage_id == marriage_id,
+            )
         )
         result = await self.session.execute(stmt)
         model = result.unique().scalar_one_or_none()
@@ -58,7 +72,7 @@ class SQLPersonRepository(PersonRepository):
     async def get_list_by_filter(
         self, query: FilterPersonQuery
     ) -> PaginatedResult[Person]:
-        stmt = select(PersonModel)
+        stmt = select(PersonModel).options(selectinload(PersonModel.parent_links))
         filters = query.filters
 
         if filters:
@@ -71,11 +85,19 @@ class SQLPersonRepository(PersonRepository):
             if filters.gender:
                 stmt = stmt.where(PersonModel.gender == filters.gender)
 
-            if filters.father_id:
-                stmt = stmt.where(PersonModel.father_id == filters.father_id)
+            if filters.marriage_id:
+                stmt = stmt.where(PersonModel.marriage_id == filters.marriage_id)
 
-            if filters.mother_id:
-                stmt = stmt.where(PersonModel.mother_id == filters.mother_id)
+            if filters.parent_id:
+                parent_stmt = select(ParentLinkModel.child_id).where(
+                    ParentLinkModel.parent_id == filters.parent_id
+                )
+                if filters.relationship_type:
+                    parent_stmt = parent_stmt.where(
+                        ParentLinkModel.relationship_type
+                        == filters.relationship_type.value
+                    )
+                stmt = stmt.where(PersonModel.id.in_(parent_stmt))
 
             stmt = apply_range_filter(stmt, PersonModel.birth_date, filters.birth_date)
 
@@ -108,17 +130,26 @@ class SQLPersonRepository(PersonRepository):
         )
 
     async def get_children(self, parent_id: UUID) -> list[Person]:
-        stmt = select(PersonModel).where(
-            (PersonModel.father_id == parent_id) | (PersonModel.mother_id == parent_id)
+        child_ids = select(ParentLinkModel.child_id).where(
+            ParentLinkModel.parent_id == parent_id
+        )
+        stmt = (
+            select(PersonModel)
+            .options(selectinload(PersonModel.parent_links))
+            .where(PersonModel.id.in_(child_ids))
         )
 
         result = await self.session.execute(stmt)
-        models = result.scalars().all()
+        models = result.scalars().unique().all()
 
         return [self._to_entity(m) for m in models]
 
     async def update(self, person: Person) -> Person:
-        stmt = select(PersonModel).where(PersonModel.id == person.id)
+        stmt = (
+            select(PersonModel)
+            .options(selectinload(PersonModel.parent_links))
+            .where(PersonModel.id == person.id)
+        )
 
         result = await self.session.execute(stmt)
         model = result.scalar_one()
@@ -127,11 +158,34 @@ class SQLPersonRepository(PersonRepository):
         model.gender = person.gender
         model.birth_date = person.birth_date
         model.death_date = person.death_date
-        model.father_id = person.father_id
-        model.mother_id = person.mother_id
+        model.marriage_id = person.marriage_id
+        model.photo_object_key = person.photo_object_key
+
+        existing_by_parent = {link.parent_id: link for link in model.parent_links}
+
+        for parent_id, existing in list(existing_by_parent.items()):
+            matching = next(
+                (link for link in person.parents if link.parent_id == parent_id),
+                None,
+            )
+            if matching is None:
+                model.parent_links.remove(existing)
+            elif existing.relationship_type != matching.relationship_type.value:
+                existing.relationship_type = matching.relationship_type.value
+
+        existing_parent_ids = {link.parent_id for link in model.parent_links}
+        for link in person.parents:
+            if link.parent_id not in existing_parent_ids:
+                model.parent_links.append(
+                    ParentLinkModel(
+                        child_id=person.safe_id,
+                        parent_id=link.parent_id,
+                        relationship_type=link.relationship_type.value,
+                    )
+                )
 
         await self.session.flush()
-        await self.session.refresh(model)
+        await self.session.refresh(model, attribute_names=["parent_links"])
 
         return self._to_entity(model)
 
@@ -147,8 +201,15 @@ class SQLPersonRepository(PersonRepository):
             gender=Gender(model.gender),
             birth_date=model.birth_date,
             death_date=model.death_date,
-            father_id=model.father_id,
-            mother_id=model.mother_id,
+            parents=[
+                ParentLink(
+                    parent_id=link.parent_id,
+                    relationship_type=ParentRelationshipType(link.relationship_type),
+                )
+                for link in model.parent_links
+            ],
+            marriage_id=model.marriage_id,
+            photo_object_key=model.photo_object_key,
         )
 
     def _to_model(self, entity: Person) -> PersonModel:
@@ -158,8 +219,14 @@ class SQLPersonRepository(PersonRepository):
             gender=entity.gender,
             birth_date=entity.birth_date,
             death_date=entity.death_date,
-            father_id=entity.father_id,
-            mother_id=entity.mother_id,
+            marriage_id=entity.marriage_id,
+            photo_object_key=entity.photo_object_key,
         )
-
+        model.parent_links = [
+            ParentLinkModel(
+                parent_id=link.parent_id,
+                relationship_type=link.relationship_type.value,
+            )
+            for link in entity.parents
+        ]
         return model

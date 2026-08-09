@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 from uuid import UUID
 
 from app.application.services.family_tree_sync_service import FamilyTreeSyncService
-from app.domain.entities.person import Gender, Person
+from app.domain.entities.person import Gender, ParentLink, Person
 
 
 def _person(**kwargs: object) -> Person:
@@ -13,8 +13,7 @@ def _person(**kwargs: object) -> Person:
         "gender": Gender.MALE,
         "birth_date": date(2000, 1, 1),
         "death_date": None,
-        "father_id": None,
-        "mother_id": None,
+        "parents": [],
     }
     defaults.update(kwargs)
     return Person(
@@ -23,14 +22,18 @@ def _person(**kwargs: object) -> Person:
         gender=defaults["gender"],  # type: ignore[arg-type]
         birth_date=defaults["birth_date"],  # type: ignore[arg-type]
         death_date=defaults["death_date"],  # type: ignore[arg-type]
-        father_id=defaults["father_id"],  # type: ignore[arg-type]
-        mother_id=defaults["mother_id"],  # type: ignore[arg-type]
+        parents=defaults["parents"],  # type: ignore[arg-type]
     )
 
 
 def test_upsert_person_with_parents_enqueues_chain():
     service = FamilyTreeSyncService()
-    person = _person(father_id=UUID(int=1), mother_id=UUID(int=2))
+    person = _person(
+        parents=[
+            ParentLink(parent_id=UUID(int=1)),
+            ParentLink(parent_id=UUID(int=2)),
+        ]
+    )
 
     with (
         patch(
@@ -53,7 +56,7 @@ def test_upsert_person_with_parents_enqueues_chain():
 
 def test_update_person_parent_change_deletes_and_creates():
     service = FamilyTreeSyncService()
-    person = _person(father_id=UUID(int=3), mother_id=None)
+    person = _person(parents=[ParentLink(parent_id=UUID(int=3))])
 
     with (
         patch(
@@ -72,7 +75,7 @@ def test_update_person_parent_change_deletes_and_creates():
         parent.si.return_value = "create"
         chain_mock.return_value.apply_async = MagicMock()
 
-        service.update_person(person, old_father_id=UUID(int=1), old_mother_id=None)
+        service.update_person(person, old_parent_ids={UUID(int=1)})
 
         chain_mock.assert_called_once_with("upsert", "del", "create")
 

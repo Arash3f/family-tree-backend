@@ -1,5 +1,6 @@
 from uuid import UUID
 
+import strawberry
 from strawberry.types import Info
 
 from app.application.dto.person.person_update_dto import PersonUpdateDTO
@@ -30,6 +31,7 @@ from app.presentation.graphql.types.person import (
     PersonType,
     PersonUpdateInput,
     person_from_mapping,
+    to_domain_relationship_type,
 )
 from app.presentation.rest.schemas.dto.common import (
     PaginationRequestParams,
@@ -53,15 +55,22 @@ def _optional_jalali(value: str | None):
 
 
 def _person_create_request(data: PersonCreateInput) -> PersonCreateRequest:
-    # model_validate keeps Jalali string date parsing aligned with REST.
+    parents = [
+        {
+            "parent_id": link.parent_id,
+            "relationship_type": to_domain_relationship_type(link.relationship_type),
+        }
+        for link in (data.parents or [])
+    ]
     return PersonCreateRequest.model_validate(
         {
             "name": data.name,
             "gender": to_domain_gender(data.gender),
             "birth_date": data.birth_date,
             "death_date": data.death_date,
-            "father_id": data.father_id,
-            "mother_id": data.mother_id,
+            "parents": parents,
+            "marriage_id": data.marriage_id,
+            "photo_object_key": data.photo_object_key,
         }
     )
 
@@ -76,10 +85,20 @@ def _person_update_dto(data: PersonUpdateInput) -> PersonUpdateDTO:
         raw["birth_date"] = data.data.birth_date
     if data.data.death_date is not None:
         raw["death_date"] = data.data.death_date
-    if data.data.father_id is not None:
-        raw["father_id"] = data.data.father_id
-    if data.data.mother_id is not None:
-        raw["mother_id"] = data.data.mother_id
+    if data.data.parents is not strawberry.UNSET:
+        raw["parents"] = [
+            {
+                "parent_id": link.parent_id,
+                "relationship_type": to_domain_relationship_type(
+                    link.relationship_type
+                ),
+            }
+            for link in (data.data.parents or [])
+        ]
+    if data.data.marriage_id is not strawberry.UNSET:
+        raw["marriage_id"] = data.data.marriage_id
+    if data.data.photo_object_key is not strawberry.UNSET:
+        raw["photo_object_key"] = data.data.photo_object_key
     return PersonUpdateDTO.model_validate(
         {"data": raw, "where": {"person_id": data.where.person_id}}
     )
@@ -101,8 +120,13 @@ def _person_list_request(data: PersonListInput | None) -> FilterPersonRequest:
             name=f.name,
             gender=to_domain_gender(f.gender) if f.gender is not None else None,
             birth_date=birth,
-            father_id=f.father_id,
-            mother_id=f.mother_id,
+            parent_id=f.parent_id,
+            relationship_type=(
+                to_domain_relationship_type(f.relationship_type)
+                if f.relationship_type is not None
+                else None
+            ),
+            marriage_id=f.marriage_id,
         )
     return FilterPersonRequest(
         pagination=PaginationRequestParams(**pagination_dict(payload.pagination)),
@@ -116,7 +140,7 @@ def _person_list_request(data: PersonListInput | None) -> FilterPersonRequest:
 
 async def resolve_create_person(info: Info, data: PersonCreateInput) -> PersonType:
     await require_permission(info, Permissions.PERSON_CREATE)
-    usecase = CreatePersonUseCase(info.context.uow)
+    usecase = CreatePersonUseCase(info.context.uow, info.context.photo_service)
     res = await usecase.execute(
         PersonApiMapper.to_create_person_dto(_person_create_request(data))
     )
@@ -126,7 +150,7 @@ async def resolve_create_person(info: Info, data: PersonCreateInput) -> PersonTy
 
 async def resolve_update_person(info: Info, data: PersonUpdateInput) -> PersonType:
     await require_permission(info, Permissions.PERSON_UPDATE)
-    usecase = UpdatePersonUseCase(info.context.uow)
+    usecase = UpdatePersonUseCase(info.context.uow, info.context.photo_service)
     res = await usecase.execute(_person_update_dto(data))
     mapped = PersonApiMapper.from_update_person_dto(res)
     return person_from_mapping(mapped.model_dump())
@@ -134,7 +158,7 @@ async def resolve_update_person(info: Info, data: PersonUpdateInput) -> PersonTy
 
 async def resolve_delete_person(info: Info, person_id: UUID) -> ResultType:
     await require_permission(info, Permissions.PERSON_DELETE)
-    usecase = DeletePersonUseCase(info.context.uow)
+    usecase = DeletePersonUseCase(info.context.uow, info.context.photo_service)
     res = await usecase.execute(CommonApiMapper.to_id_dto(person_id))
     mapped = CommonApiMapper.from_result_dto(res)
     return ResultType(result=mapped.result)
@@ -142,7 +166,7 @@ async def resolve_delete_person(info: Info, person_id: UUID) -> ResultType:
 
 async def resolve_person(info: Info, person_id: UUID) -> PersonType:
     await require_permission(info, Permissions.PERSON_READ)
-    usecase = GetPersonUseCase(info.context.uow)
+    usecase = GetPersonUseCase(info.context.uow, info.context.photo_service)
     res = await usecase.execute(CommonApiMapper.to_id_dto(person_id))
     mapped = PersonApiMapper.from_get_person_dto(res)
     return person_from_mapping(mapped.model_dump())
@@ -152,7 +176,9 @@ async def resolve_persons(
     info: Info, data: PersonListInput | None = None
 ) -> PersonPage:
     await require_permission(info, Permissions.PERSON_READ)
-    usecase = GetPersonListByFilterUseCase(info.context.uow)
+    usecase = GetPersonListByFilterUseCase(
+        info.context.uow, info.context.photo_service
+    )
     res = await usecase.execute(
         PersonApiMapper.to_get_list_person_dto(_person_list_request(data))
     )

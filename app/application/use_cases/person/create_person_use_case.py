@@ -5,34 +5,43 @@ from app.application.dto.person.person_create_dto import (
 )
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.application.services.family_tree_sync_service import FamilyTreeSyncService
-from app.domain.entities.person import Gender, Person
-from app.domain.exceptions.person_exceptions import InvalidPersonGenderException
+from app.application.services.person_photo_service import PersonPhotoService
+from app.domain.entities.person import ParentRelationshipType, Person
+from app.domain.exceptions.person_exceptions import InvalidParentMarriageException
 
 
 class CreatePersonUseCase:
     def __init__(
         self,
         uow: UnitOfWork,
+        photo_service: PersonPhotoService,
         sync_service: FamilyTreeSyncService | None = None,
     ):
         self.uow = uow
+        self.photo_service = photo_service
         self.sync_service = sync_service or FamilyTreeSyncService()
 
     async def execute(self, dto: PersonCreateDTO) -> PersonCreateResponseDTO:
         async with self.uow:
-            if dto.father_id is not None:
-                father = await self.uow.persons.get_or_raise(person_id=dto.father_id)
-                if father.gender is not Gender.MALE:
-                    raise InvalidPersonGenderException(
-                        detail=["father's gender must be male"]
-                    )
+            parents = PersonCreateMapper.to_domain_parents(dto.parents)
 
-            if dto.mother_id is not None:
-                mother = await self.uow.persons.get_or_raise(person_id=dto.mother_id)
-                if mother.gender is not Gender.FEMALE:
-                    raise InvalidPersonGenderException(
-                        detail=["mother's gender must be female"]
-                    )
+            for link in parents:
+                await self.uow.persons.get_or_raise(person_id=link.parent_id)
+
+            if dto.marriage_id is not None:
+                marriage = await self.uow.marriages.get_or_raise(
+                    marriage_id=dto.marriage_id
+                )
+                spouse_ids = {marriage.husband_id, marriage.wife_id}
+                for link in parents:
+                    if (
+                        link.relationship_type is ParentRelationshipType.BIOLOGICAL
+                        and link.parent_id not in spouse_ids
+                    ):
+                        raise InvalidParentMarriageException()
+
+            if dto.photo_object_key is not None:
+                await self.photo_service.ensure_object_exists(dto.photo_object_key)
 
             person = Person(
                 id=None,
@@ -40,8 +49,9 @@ class CreatePersonUseCase:
                 gender=dto.gender,
                 birth_date=dto.birth_date,
                 death_date=dto.death_date,
-                mother_id=dto.mother_id,
-                father_id=dto.father_id,
+                parents=parents,
+                marriage_id=dto.marriage_id,
+                photo_object_key=dto.photo_object_key,
             )
 
             person = await self.uow.persons.create(person)
@@ -50,4 +60,5 @@ class CreatePersonUseCase:
 
             self.sync_service.upsert_person(person)
 
-            return PersonCreateMapper.to_response(person)
+            photo_url = await self.photo_service.presign(person.photo_object_key)
+            return PersonCreateMapper.to_response(person, photo_url=photo_url)

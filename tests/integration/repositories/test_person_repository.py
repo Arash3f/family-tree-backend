@@ -2,7 +2,7 @@ from uuid import UUID
 
 import pytest
 
-from app.domain.entities.person import Gender, Person
+from app.domain.entities.person import Gender, ParentLink, Person
 from app.domain.exceptions.person_exceptions import PersonNotFoundException
 from app.domain.shared.dto.pagination_dto import PaginationParams
 from app.domain.shared.dto.person_filter_dto import (
@@ -22,8 +22,6 @@ async def test_create_and_get_person(uow: UnitOfWork):
             name="Ali",
             gender=Gender.MALE,
             birth_date=None,
-            father_id=None,
-            mother_id=None,
         )
 
         created = await uow.persons.create(person)
@@ -51,8 +49,6 @@ async def test_update_person(uow: UnitOfWork):
             name="Ali",
             gender=Gender.MALE,
             birth_date=None,
-            father_id=None,
-            mother_id=None,
         )
 
         created = await uow.persons.create(person)
@@ -72,8 +68,6 @@ async def test_delete_person(uow: UnitOfWork):
             name="Ali",
             gender=Gender.MALE,
             birth_date=None,
-            father_id=None,
-            mother_id=None,
         )
 
         created = await uow.persons.create(person)
@@ -94,8 +88,6 @@ async def test_get_children(uow: UnitOfWork):
                 name="Father",
                 gender=Gender.MALE,
                 birth_date=None,
-                father_id=None,
-                mother_id=None,
             )
         )
 
@@ -105,8 +97,7 @@ async def test_get_children(uow: UnitOfWork):
                 name="Child",
                 gender=Gender.MALE,
                 birth_date=None,
-                father_id=father.id,
-                mother_id=None,
+                parents=[ParentLink(parent_id=father.safe_id)],
             )
         )
 
@@ -125,8 +116,6 @@ async def test_get_by_name(uow: UnitOfWork):
                 name="user_1",
                 gender=Gender.MALE,
                 birth_date=None,
-                father_id=None,
-                mother_id=None,
             )
         )
 
@@ -136,8 +125,6 @@ async def test_get_by_name(uow: UnitOfWork):
                 name="user_2",
                 gender=Gender.FEMALE,
                 birth_date=None,
-                father_id=None,
-                mother_id=None,
             )
         )
 
@@ -147,13 +134,15 @@ async def test_get_by_name(uow: UnitOfWork):
                 name="user_3",
                 gender=Gender.MALE,
                 birth_date=None,
-                father_id=user_1.id,
-                mother_id=user_2.id,
+                parents=[
+                    ParentLink(parent_id=user_1.safe_id),
+                    ParentLink(parent_id=user_2.safe_id),
+                ],
             )
         )
 
         find = await uow.persons.get_by_name(
-            name=user_3.name, father_id=user_1.id, mother_id=user_2.id
+            name=user_3.name, marriage_id=None
         )
 
         assert find is not None
@@ -169,8 +158,6 @@ async def test_get_list_by_filter_name(uow: UnitOfWork):
                 name="Ali",
                 gender=Gender.MALE,
                 birth_date=None,
-                father_id=None,
-                mother_id=None,
             )
         )
         await uow.persons.create(
@@ -179,8 +166,6 @@ async def test_get_list_by_filter_name(uow: UnitOfWork):
                 name="Alireza",
                 gender=Gender.MALE,
                 birth_date=None,
-                father_id=None,
-                mother_id=None,
             )
         )
         await uow.persons.create(
@@ -189,8 +174,6 @@ async def test_get_list_by_filter_name(uow: UnitOfWork):
                 name="Sara",
                 gender=Gender.FEMALE,
                 birth_date=None,
-                father_id=None,
-                mother_id=None,
             )
         )
 
@@ -198,8 +181,6 @@ async def test_get_list_by_filter_name(uow: UnitOfWork):
             filters=PersonFilterDTO(
                 name="Ali",
                 gender=None,
-                father_id=None,
-                mother_id=None,
                 birth_date=None,
             ),
             pagination=PaginationParams(page=1, page_size=10, offset=0),
@@ -227,8 +208,6 @@ async def test_get_list_by_filter_gender(uow: UnitOfWork):
                 name="Ali",
                 gender=Gender.MALE,
                 birth_date=None,
-                father_id=None,
-                mother_id=None,
             )
         )
         await uow.persons.create(
@@ -237,8 +216,6 @@ async def test_get_list_by_filter_gender(uow: UnitOfWork):
                 name="Sara",
                 gender=Gender.FEMALE,
                 birth_date=None,
-                father_id=None,
-                mother_id=None,
             )
         )
 

@@ -2,6 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends
 
+from app.application.services.person_photo_service import PersonPhotoService
 from app.application.use_cases.person.create_person_use_case import CreatePersonUseCase
 from app.application.use_cases.person.delete_person_use_case import DeletePersonUseCase
 from app.application.use_cases.person.get_closest_relationship_use_case import (
@@ -27,7 +28,11 @@ from app.presentation.rest.schemas.dto.person_schema import (
 )
 from app.presentation.rest.schemas.mappers.common_mappers import CommonApiMapper
 from app.presentation.rest.schemas.mappers.person_mappers import PersonApiMapper
-from app.presentation.rest.utils.dependencies import get_neo, get_uow
+from app.presentation.rest.utils.dependencies import (
+    get_neo,
+    get_person_photo_service,
+    get_uow,
+)
 
 router = APIRouter(prefix="/persons", tags=["Persons"])
 
@@ -40,8 +45,9 @@ router = APIRouter(prefix="/persons", tags=["Persons"])
 async def create_person(
     data: PersonCreateRequest,
     uow=Depends(get_uow),
+    photo_service: PersonPhotoService = Depends(get_person_photo_service),
 ) -> PersonCreateResponse:
-    usecase = CreatePersonUseCase(uow)
+    usecase = CreatePersonUseCase(uow, photo_service)
 
     res = await usecase.execute(PersonApiMapper.to_create_person_dto(data))
 
@@ -56,8 +62,9 @@ async def create_person(
 async def delete_person(
     person_id: UUID,
     uow=Depends(get_uow),
+    photo_service: PersonPhotoService = Depends(get_person_photo_service),
 ) -> ResultResponse:
-    usecase = DeletePersonUseCase(uow)
+    usecase = DeletePersonUseCase(uow, photo_service)
 
     res = await usecase.execute(CommonApiMapper.to_id_dto(person_id))
 
@@ -72,8 +79,9 @@ async def delete_person(
 async def update_person(
     data: PersonUpdateRequest,
     uow=Depends(get_uow),
+    photo_service: PersonPhotoService = Depends(get_person_photo_service),
 ) -> PersonUpdateResponse:
-    usecase = UpdatePersonUseCase(uow)
+    usecase = UpdatePersonUseCase(uow, photo_service)
 
     res = await usecase.execute(PersonApiMapper.to_update_person_dto(data))
 
@@ -103,8 +111,9 @@ async def get_closest_relationship(
 async def get_person(
     person_id: UUID,
     uow=Depends(get_uow),
+    photo_service: PersonPhotoService = Depends(get_person_photo_service),
 ) -> PersonGetResponse:
-    usecase = GetPersonUseCase(uow)
+    usecase = GetPersonUseCase(uow, photo_service)
 
     res = await usecase.execute(CommonApiMapper.to_id_dto(person_id))
 
@@ -119,8 +128,9 @@ async def get_person(
 async def get_person_list_by_filter(
     data: FilterPersonRequest,
     uow=Depends(get_uow),
+    photo_service: PersonPhotoService = Depends(get_person_photo_service),
 ) -> PaginatedResponse[PersonModel]:
-    usecase = GetPersonListByFilterUseCase(uow)
+    usecase = GetPersonListByFilterUseCase(uow, photo_service)
 
     res = await usecase.execute(PersonApiMapper.to_get_list_person_dto(data))
 

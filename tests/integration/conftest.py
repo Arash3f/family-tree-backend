@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import (
 
 from app.core.config import settings
 from app.infrastructure.database.base import Base
+from app.infrastructure.database.parent_integrity_ddl import install_parent_integrity_ddl
 from app.infrastructure.services.unit_of_work.sqlalchemy_uow import SQLAlchemyUnitOfWork
 
 # ------------------------------------------------
@@ -35,6 +36,7 @@ async def prepare_database(db_engine):
     async with db_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(install_parent_integrity_ddl)
 
     yield
 

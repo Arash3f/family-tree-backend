@@ -22,18 +22,14 @@ async def test_create_and_get_marriage(uow: UnitOfWork):
     async with uow:
         new_husband = Person(
             id=None,
-            father_id=None,
             gender=Gender.MALE,
             name="husband",
-            mother_id=None,
             birth_date=date(2000, 1, 1),
         )
         new_wife = Person(
             id=None,
-            father_id=None,
             gender=Gender.FEMALE,
             name="wife",
-            mother_id=None,
             birth_date=date(2000, 1, 1),
         )
         husband = await uow.persons.create(new_husband)
@@ -61,18 +57,14 @@ async def test_get_or_raise_success(uow: UnitOfWork):
     async with uow:
         new_husband = Person(
             id=None,
-            father_id=None,
             gender=Gender.MALE,
             name="husband",
-            mother_id=None,
             birth_date=date(2000, 1, 1),
         )
         new_wife = Person(
             id=None,
-            father_id=None,
             gender=Gender.FEMALE,
             name="wife",
-            mother_id=None,
             birth_date=date(2000, 1, 1),
         )
         husband = await uow.persons.create(new_husband)
@@ -107,18 +99,14 @@ async def test_update_marriage(uow: UnitOfWork):
     async with uow:
         new_husband = Person(
             id=None,
-            father_id=None,
             gender=Gender.MALE,
             name="husband",
-            mother_id=None,
             birth_date=date(2000, 1, 1),
         )
         new_wife = Person(
             id=None,
-            father_id=None,
             gender=Gender.FEMALE,
             name="wife",
-            mother_id=None,
             birth_date=date(2000, 1, 1),
         )
         husband = await uow.persons.create(new_husband)
@@ -134,18 +122,14 @@ async def test_update_marriage(uow: UnitOfWork):
 
         new_husband_2 = Person(
             id=None,
-            father_id=None,
             gender=Gender.MALE,
             name="husband",
-            mother_id=None,
             birth_date=date(2000, 1, 1),
         )
         new_wife_2 = Person(
             id=None,
-            father_id=None,
             gender=Gender.FEMALE,
             name="wife",
-            mother_id=None,
             birth_date=date(2000, 1, 1),
         )
         husband_2 = await uow.persons.create(new_husband_2)
@@ -185,20 +169,16 @@ async def test_get_list_by_filter_with_husband_and_wife_id(uow: UnitOfWork):
         husband_1 = await uow.persons.create(
             Person(
                 id=None,
-                father_id=None,
                 gender=Gender.MALE,
                 name="husband_1",
-                mother_id=None,
                 birth_date=date(2000, 1, 1),
             )
         )
         wife_1 = await uow.persons.create(
             Person(
                 id=None,
-                father_id=None,
                 gender=Gender.FEMALE,
                 name="wife_1",
-                mother_id=None,
                 birth_date=date(2000, 1, 1),
             )
         )
@@ -207,20 +187,16 @@ async def test_get_list_by_filter_with_husband_and_wife_id(uow: UnitOfWork):
         husband_2 = await uow.persons.create(
             Person(
                 id=None,
-                father_id=None,
                 gender=Gender.MALE,
                 name="husband_2",
-                mother_id=None,
                 birth_date=date(2000, 1, 1),
             )
         )
         wife_2 = await uow.persons.create(
             Person(
                 id=None,
-                father_id=None,
                 gender=Gender.FEMALE,
                 name="wife_2",
-                mother_id=None,
                 birth_date=date(2000, 1, 1),
             )
         )
@@ -279,20 +255,16 @@ async def test_get_list_by_filter_with_married_and_divorced_at(uow: UnitOfWork):
         husband_1 = await uow.persons.create(
             Person(
                 id=None,
-                father_id=None,
                 gender=Gender.MALE,
                 name="husband_1",
-                mother_id=None,
                 birth_date=date(2000, 1, 1),
             )
         )
         wife_1 = await uow.persons.create(
             Person(
                 id=None,
-                father_id=None,
                 gender=Gender.FEMALE,
                 name="wife_1",
-                mother_id=None,
                 birth_date=date(2000, 1, 1),
             )
         )
@@ -301,20 +273,16 @@ async def test_get_list_by_filter_with_married_and_divorced_at(uow: UnitOfWork):
         husband_2 = await uow.persons.create(
             Person(
                 id=None,
-                father_id=None,
                 gender=Gender.MALE,
                 name="husband_2",
-                mother_id=None,
                 birth_date=date(2000, 1, 1),
             )
         )
         wife_2 = await uow.persons.create(
             Person(
                 id=None,
-                father_id=None,
                 gender=Gender.FEMALE,
                 name="wife_2",
-                mother_id=None,
                 birth_date=date(2000, 1, 1),
             )
         )
@@ -379,20 +347,16 @@ async def test_get_list_without_filter(uow: UnitOfWork):
         husband_1 = await uow.persons.create(
             Person(
                 id=None,
-                father_id=None,
                 gender=Gender.MALE,
                 name="husband_1",
-                mother_id=None,
                 birth_date=date(2000, 1, 1),
             )
         )
         wife_1 = await uow.persons.create(
             Person(
                 id=None,
-                father_id=None,
                 gender=Gender.FEMALE,
                 name="wife_1",
-                mother_id=None,
                 birth_date=date(2000, 1, 1),
             )
         )
@@ -401,20 +365,16 @@ async def test_get_list_without_filter(uow: UnitOfWork):
         husband_2 = await uow.persons.create(
             Person(
                 id=None,
-                father_id=None,
                 gender=Gender.MALE,
                 name="husband_2",
-                mother_id=None,
                 birth_date=date(2000, 1, 1),
             )
         )
         wife_2 = await uow.persons.create(
             Person(
                 id=None,
-                father_id=None,
                 gender=Gender.FEMALE,
                 name="wife_2",
-                mother_id=None,
                 birth_date=date(2000, 1, 1),
             )
         )
@@ -442,40 +402,32 @@ async def test_get_list_without_filter(uow: UnitOfWork):
         husband_3 = await uow.persons.create(
             Person(
                 id=None,
-                father_id=None,
                 gender=Gender.MALE,
                 name="husband_3",
-                mother_id=None,
                 birth_date=date(2000, 1, 1),
             )
         )
         wife_3 = await uow.persons.create(
             Person(
                 id=None,
-                father_id=None,
                 gender=Gender.FEMALE,
                 name="wife_3",
-                mother_id=None,
                 birth_date=date(2000, 1, 1),
             )
         )
         husband_4 = await uow.persons.create(
             Person(
                 id=None,
-                father_id=None,
                 gender=Gender.MALE,
                 name="husband_4",
-                mother_id=None,
                 birth_date=date(2000, 1, 1),
             )
         )
         wife_4 = await uow.persons.create(
             Person(
                 id=None,
-                father_id=None,
                 gender=Gender.FEMALE,
                 name="wife_4",
-                mother_id=None,
                 birth_date=date(2000, 1, 1),
             )
         )
@@ -539,20 +491,16 @@ async def test_get_list_by_filter_with_pagination(uow: UnitOfWork):
             husband = await uow.persons.create(
                 Person(
                     id=None,
-                    father_id=None,
                     gender=Gender.MALE,
                     name=f"husband_{i}",
-                    mother_id=None,
                     birth_date=date(2000, 1, 1),
                 )
             )
             wife = await uow.persons.create(
                 Person(
                     id=None,
-                    father_id=None,
                     gender=Gender.FEMALE,
                     name=f"wife_{i}",
-                    mother_id=None,
                     birth_date=date(2000, 1, 1),
                 )
             )
@@ -614,8 +562,6 @@ async def test_get_by_ids(uow: UnitOfWork):
                 name="user_1",
                 gender=Gender.MALE,
                 birth_date=None,
-                father_id=None,
-                mother_id=None,
             )
         )
 
@@ -625,8 +571,6 @@ async def test_get_by_ids(uow: UnitOfWork):
                 name="user_2",
                 gender=Gender.FEMALE,
                 birth_date=None,
-                father_id=None,
-                mother_id=None,
             )
         )
 
@@ -653,18 +597,14 @@ async def test_end_marriage(uow: UnitOfWork):
     async with uow:
         new_husband = Person(
             id=None,
-            father_id=None,
             gender=Gender.MALE,
             name="husband",
-            mother_id=None,
             birth_date=date(2000, 1, 1),
         )
         new_wife = Person(
             id=None,
-            father_id=None,
             gender=Gender.FEMALE,
             name="wife",
-            mother_id=None,
             birth_date=date(2000, 1, 1),
         )
         husband = await uow.persons.create(new_husband)
@@ -691,18 +631,14 @@ async def test_delete_marriage(uow: UnitOfWork):
     async with uow:
         new_husband = Person(
             id=None,
-            father_id=None,
             gender=Gender.MALE,
             name="husband",
-            mother_id=None,
             birth_date=date(2000, 1, 1),
         )
         new_wife = Person(
             id=None,
-            father_id=None,
             gender=Gender.FEMALE,
             name="wife",
-            mother_id=None,
             birth_date=date(2000, 1, 1),
         )
         husband = await uow.persons.create(new_husband)
@@ -728,20 +664,16 @@ async def test_has_active_for_person(uow: UnitOfWork):
         husband = await uow.persons.create(
             Person(
                 id=None,
-                father_id=None,
                 gender=Gender.MALE,
                 name="active_husband",
-                mother_id=None,
                 birth_date=date(2000, 1, 1),
             )
         )
         wife = await uow.persons.create(
             Person(
                 id=None,
-                father_id=None,
                 gender=Gender.FEMALE,
                 name="active_wife",
-                mother_id=None,
                 birth_date=date(2000, 1, 1),
             )
         )

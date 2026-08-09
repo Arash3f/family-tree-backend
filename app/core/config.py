@@ -51,6 +51,16 @@ class AppSettings(PydanticBaseSettings):
     FLOWER_BASIC_AUTH: str = "admin:admin"
     AUTH_RATE_LIMIT_PER_MINUTE: int = 30
 
+    # MinIO / S3-compatible object storage
+    MINIO_ENDPOINT: str = "localhost:9000"
+    MINIO_PUBLIC_ENDPOINT: str | None = None
+    MINIO_ACCESS_KEY: str = "minioadmin"
+    MINIO_SECRET_KEY: str = "minioadmin"
+    MINIO_BUCKET: str = "family-tree"
+    MINIO_REGION: str = "us-east-1"
+    MINIO_SECURE: bool = False
+    MINIO_PRESIGN_EXPIRE_SECONDS: int = 3600
+
     @model_validator(mode="after")
     def ensure_test_database_is_separate(self) -> Self:
         same_target = (
@@ -90,6 +100,10 @@ class AppSettings(PydanticBaseSettings):
             f"{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:"
             f"{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
+
+    @property
+    def minio_public_endpoint(self) -> str:
+        return self.MINIO_PUBLIC_ENDPOINT or self.MINIO_ENDPOINT
 
 
 settings = AppSettings()  # type: ignore

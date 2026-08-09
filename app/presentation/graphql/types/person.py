@@ -1,7 +1,9 @@
+from enum import Enum
 from uuid import UUID
 
 import strawberry
 
+from app.domain.entities.person import ParentRelationshipType
 from app.presentation.graphql.types.common import (
     GenderEnum,
     JalaliDateRangeInput,
@@ -12,6 +14,27 @@ from app.presentation.graphql.types.common import (
 )
 
 
+@strawberry.enum(name="ParentRelationshipType")
+class ParentRelationshipTypeEnum(Enum):
+    BIOLOGICAL = "biological"
+    ADOPTIVE = "adoptive"
+    STEP = "step"
+
+
+def to_domain_relationship_type(
+    value: ParentRelationshipTypeEnum | ParentRelationshipType,
+) -> ParentRelationshipType:
+    if isinstance(value, ParentRelationshipType):
+        return value
+    return ParentRelationshipType(value.value)
+
+
+@strawberry.type
+class ParentLinkType:
+    parent_id: UUID
+    relationship_type: ParentRelationshipTypeEnum
+
+
 @strawberry.type
 class PersonType:
     id: UUID | None
@@ -19,8 +42,10 @@ class PersonType:
     gender: GenderEnum
     birth_date: str | None = None
     death_date: str | None = None
-    father_id: UUID | None = None
-    mother_id: UUID | None = None
+    parents: list[ParentLinkType]
+    marriage_id: UUID | None = None
+    photo_object_key: str | None = None
+    photo_url: str | None = None
 
 
 @strawberry.type
@@ -42,13 +67,22 @@ class ClosestRelationshipType:
 
 
 @strawberry.input
+class ParentLinkInput:
+    parent_id: UUID
+    relationship_type: ParentRelationshipTypeEnum = (
+        ParentRelationshipTypeEnum.BIOLOGICAL
+    )
+
+
+@strawberry.input
 class PersonCreateInput:
     name: str
     gender: GenderEnum
     birth_date: str | None = None
     death_date: str | None = None
-    father_id: UUID | None = None
-    mother_id: UUID | None = None
+    parents: list[ParentLinkInput] | None = None
+    marriage_id: UUID | None = None
+    photo_object_key: str | None = None
 
 
 @strawberry.input
@@ -57,8 +91,9 @@ class PersonUpdateDataInput:
     gender: GenderEnum | None = None
     birth_date: str | None = None
     death_date: str | None = None
-    father_id: UUID | None = None
-    mother_id: UUID | None = None
+    parents: list[ParentLinkInput] | None = strawberry.UNSET
+    marriage_id: UUID | None = strawberry.UNSET
+    photo_object_key: str | None = strawberry.UNSET
 
 
 @strawberry.input
@@ -78,8 +113,9 @@ class PersonFilterInput:
     name: str | None = None
     gender: GenderEnum | None = None
     birth_date: JalaliDateRangeInput | None = None
-    father_id: UUID | None = None
-    mother_id: UUID | None = None
+    parent_id: UUID | None = None
+    relationship_type: ParentRelationshipTypeEnum | None = None
+    marriage_id: UUID | None = None
 
 
 @strawberry.input
@@ -104,12 +140,38 @@ def person_from_mapping(data: dict) -> PersonType:
     if death is not None and not isinstance(death, str):
         death = format_jalali_date(death)
 
+    parents_raw = data.get("parents") or []
+    parents: list[ParentLinkType] = []
+    for link in parents_raw:
+        if isinstance(link, dict):
+            rel = link.get("relationship_type", "biological")
+            if hasattr(rel, "value"):
+                rel = rel.value
+            parents.append(
+                ParentLinkType(
+                    parent_id=link["parent_id"],
+                    relationship_type=ParentRelationshipTypeEnum(rel),
+                )
+            )
+        else:
+            rel = link.relationship_type
+            if hasattr(rel, "value"):
+                rel = rel.value
+            parents.append(
+                ParentLinkType(
+                    parent_id=link.parent_id,
+                    relationship_type=ParentRelationshipTypeEnum(rel),
+                )
+            )
+
     return PersonType(
         id=data.get("id"),
         name=data["name"],
         gender=gender_enum,
         birth_date=birth,
         death_date=death,
-        father_id=data.get("father_id"),
-        mother_id=data.get("mother_id"),
+        parents=parents,
+        marriage_id=data.get("marriage_id"),
+        photo_object_key=data.get("photo_object_key"),
+        photo_url=data.get("photo_url"),
     )

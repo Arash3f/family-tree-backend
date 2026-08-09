@@ -1,5 +1,5 @@
-from uuid import UUID
 from datetime import date
+from uuid import UUID
 
 from app.application.dto.person.person_create_dto import PersonCreateMapper
 from app.application.dto.person.person_get_dto import PersonGetMapper
@@ -13,22 +13,25 @@ def create_person(**overrides):
         name=overrides.get("name", "Ali"),
         gender=overrides.get("gender", Gender.MALE),
         birth_date=overrides.get("birth_date", date(2000, 1, 1)),
-        father_id=overrides.get("father_id", UUID(int=10)),
-        mother_id=overrides.get("mother_id", UUID(int=20)),
+        parents=overrides.get("parents", []),
+        marriage_id=overrides.get("marriage_id", None),
+        photo_object_key=overrides.get("photo_object_key", None),
     )
 
 
 def test_person_create_mapper_to_response():
     person = create_person()
 
-    dto = PersonCreateMapper.to_response(person)
+    dto = PersonCreateMapper.to_response(person, photo_url="https://example/p")
 
     assert dto.id == person.id
     assert dto.name == person.name
     assert dto.gender == person.gender
     assert dto.birth_date == person.birth_date
-    assert dto.father_id == person.father_id
-    assert dto.mother_id == person.mother_id
+    assert dto.parents == []
+    assert dto.marriage_id is None
+    assert dto.photo_object_key is None
+    assert dto.photo_url == "https://example/p"
 
 
 def test_person_get_mapper_to_response():
@@ -40,8 +43,8 @@ def test_person_get_mapper_to_response():
     assert dto.name == person.name
     assert dto.gender == person.gender
     assert dto.birth_date == person.birth_date
-    assert dto.father_id == person.father_id
-    assert dto.mother_id == person.mother_id
+    assert dto.parents == []
+    assert dto.photo_url is None
 
 
 def test_person_update_mapper_to_response():
@@ -53,5 +56,5 @@ def test_person_update_mapper_to_response():
     assert dto.name == person.name
     assert dto.gender == person.gender
     assert dto.birth_date == person.birth_date
-    assert dto.father_id == person.father_id
-    assert dto.mother_id == person.mother_id
+    assert dto.parents == []
+    assert dto.photo_object_key is None

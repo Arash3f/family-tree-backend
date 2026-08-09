@@ -20,6 +20,7 @@ from app.presentation.graphql.schema import graphql_router
 from app.presentation.rest.errors.handlers import app_exception_handler
 from app.presentation.rest.routers.auth_router import router as auth_router
 from app.presentation.rest.routers.marriage_router import router as marriage_router
+from app.presentation.rest.routers.media_router import router as media_router
 from app.presentation.rest.routers.permission_router import router as permission_router
 from app.presentation.rest.routers.person_router import router as person_router
 from app.presentation.rest.routers.role_router import router as role_router
@@ -62,6 +63,7 @@ app = FastAPI(
     lifespan=lifespan,
     title="Family Tree API",
     version="0.1.0",
+    docs_url=None,
     redoc_url="/redoc",
     openapi_version="3.0.3",
     openapi_url="/openapi.json",
@@ -189,6 +191,7 @@ app.add_exception_handler(AppException, app_exception_handler)
 
 # Register API routers
 app.include_router(person_router)
+app.include_router(media_router)
 app.include_router(marriage_router)
 app.include_router(user_router)
 app.include_router(permission_router)

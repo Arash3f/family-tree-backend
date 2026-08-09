@@ -16,6 +16,7 @@ from app.presentation.rest.schemas.dto.common import (
 )
 from app.presentation.rest.schemas.dto.person_schema import (
     FilterPersonRequest,
+    ParentLinkRequest,
     PersonCreateRequest,
     PersonCreateResponse,
     PersonFilterRequestData,
@@ -94,8 +95,10 @@ async def test_create_person_success(client, admin_headers, uow):  # noqa: F811
     req = PersonCreateRequest(
         name="child",
         gender=Gender.MALE,
-        father_id=father.safe_id,
-        mother_id=mother.safe_id,
+        parents=[
+            ParentLinkRequest(parent_id=father.safe_id),
+            ParentLinkRequest(parent_id=mother.safe_id),
+        ],
     )
 
     resp = await client.post(
@@ -110,16 +113,17 @@ async def test_create_person_success(client, admin_headers, uow):  # noqa: F811
     assert person_data.id is not None
     assert person_data.name == req.name
     assert person_data.gender == req.gender
-    assert person_data.father_id == father.safe_id
-    assert person_data.mother_id == mother.safe_id
+    assert {p.parent_id for p in person_data.parents} == {
+        father.safe_id,
+        mother.safe_id,
+    }
 
     async with uow:
         find_person = await uow.persons.get_or_raise(person_id=person_data.id)
 
     assert find_person.id == person_data.id
     assert find_person.name == person_data.name
-    assert find_person.father_id == father.safe_id
-    assert find_person.mother_id == mother.safe_id
+    assert set(find_person.parent_ids) == {father.safe_id, mother.safe_id}
 
 
 # ============================================================
@@ -172,8 +176,8 @@ async def test_get_person_success(client, admin_headers, uow: SQLAlchemyUnitOfWo
     assert data["name"] == person.name
     assert data["gender"] == person.gender.value
     assert data["birth_date"] is not None
-    assert data["father_id"] is None
-    assert data["mother_id"] is None
+    assert data["parents"] == []
+    assert data.get("marriage_id") is None
 
 
 @pytest.mark.asyncio

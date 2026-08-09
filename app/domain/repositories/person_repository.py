@@ -24,7 +24,7 @@ class PersonRepository(ABC):
 
     @abstractmethod
     async def get_by_name(
-        self, name: str, father_id: UUID | None, mother_id: UUID | None
+        self, name: str, marriage_id: UUID | None
     ) -> Person | None: ...
 
     @abstractmethod

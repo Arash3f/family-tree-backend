@@ -18,8 +18,6 @@ def create_person(**overrides):
         name=overrides.get("name", "Ali"),
         gender=overrides.get("gender", Gender.MALE),
         birth_date=overrides.get("birth_date", date(2000, 1, 1)),
-        father_id=overrides.get("father_id"),
-        mother_id=overrides.get("mother_id"),
     )
 
 

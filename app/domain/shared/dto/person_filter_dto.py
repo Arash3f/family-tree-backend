@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from app.domain.entities.person import Gender
+from app.domain.entities.person import Gender, ParentRelationshipType
 from app.domain.shared.dto.pagination_dto import PaginationParams
 from app.domain.shared.dto.range_dto import RangeDTO
 from app.domain.shared.dto.sorter_dto import SortParams
@@ -22,8 +22,9 @@ class PersonFilterDTO(BaseModel):
     name: str | None = None
     gender: Gender | None = None
     birth_date: RangeDTO[date] | None = None
-    father_id: UUID | None = None
-    mother_id: UUID | None = None
+    parent_id: UUID | None = None
+    relationship_type: ParentRelationshipType | None = None
+    marriage_id: UUID | None = None
 
 
 class FilterPersonQuery(BaseModel):

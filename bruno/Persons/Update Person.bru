@@ -16,8 +16,8 @@ body:json {
       "name": "arash updated",
       "gender": "male",
       "birth_date": "1379/09/01",
-      "father_id": null,
-      "mother_id": null
+      "parents": [],
+      "marriage_id": null
     },
     "where": {
       "person_id": "{{person_id}}"
@@ -41,8 +41,8 @@ docs {
       "name": "string|null",
       "gender": "male|female|null",
       "birth_date": "Jalali/Gregorian|null",
-      "father_id": "uuid|null",
-      "mother_id": "uuid|null"
+      "parents": "[{parent_id, relationship_type}]|null",
+      "marriage_id": "uuid|null"
     },
     "where": {
       "person_id": "uuid (required)"
@@ -57,8 +57,8 @@ docs {
     "name": "arash updated",
     "gender": "male",
     "birth_date": "1379-09-01",
-    "father_id": null,
-    "mother_id": null
+    "parents": [],
+    "marriage_id": null
   }
   ```
 }

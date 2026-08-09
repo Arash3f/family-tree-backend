@@ -2,13 +2,13 @@
 
 Production-oriented backend for managing family trees: people, marriages, and graph relationships.
 
-Built with **FastAPI** and **Clean Architecture**. Exposes both **REST** and **GraphQL** APIs over the same use cases. **PostgreSQL** is the source of truth for transactional data; **Neo4j** stores parent/spouse edges for traversals such as shortest-path (closest relationship) queries. Background work runs on **Celery** + **Redis**.
+Built with **FastAPI** and **Clean Architecture**. Exposes both **REST** and **GraphQL** APIs over the same use cases. **PostgreSQL** is the source of truth for transactional data; **Neo4j** stores parent/spouse edges for traversals such as shortest-path (closest relationship) queries. Person photos are stored in **MinIO** (private bucket + presigned URLs). Background work runs on **Celery** + **Redis**.
 
 | | |
 |---|---|
 | **Version** | `0.1.0` |
 | **Python** | `3.11+` |
-| **License** | Educational / development use |
+| **License** | MIT |
 
 ---
 
@@ -117,7 +117,7 @@ cp .env.example .env
 
 ### Start the stack
 
-Starts API, Celery worker/beat, Flower, Postgres, Redis, and Neo4j.
+Starts API, Celery worker/beat, Flower, Postgres, Redis, Neo4j, and MinIO.
 
 ```bash
 docker compose -f docker/compose.yml --env-file .env up --build
@@ -145,9 +145,10 @@ docker compose -f docker/compose.yml --env-file .env exec api sh
 | GraphQL (GraphiQL) | http://localhost:8001/graphql |
 | Health | http://localhost:8001/health (HTTP 200 when ok, 503 when degraded) |
 | Neo4j Browser | http://localhost:7474 |
+| MinIO API / Console | http://localhost:9000 / http://localhost:9001 |
 | Flower | http://localhost:5555 (basic auth from `FLOWER_BASIC_AUTH`, default `admin:admin`) |
 
-Override published ports with `API_PORT`, `FLOWER_PORT`, `POSTGRES_PUBLISH_PORT`, `REDIS_PUBLISH_PORT`, `NEO4J_HTTP_PORT`, `NEO4J_BOLT_PORT`.
+Override published ports with `API_PORT`, `FLOWER_PORT`, `POSTGRES_PUBLISH_PORT`, `REDIS_PUBLISH_PORT`, `NEO4J_HTTP_PORT`, `NEO4J_BOLT_PORT`, `MINIO_API_PORT`, `MINIO_CONSOLE_PORT`.
 
 Default admin (from `.env` / seed on startup):
 
@@ -156,7 +157,7 @@ Default admin (from `.env` / seed on startup):
 
 Change these before any shared or production-like environment.
 
-> **Note:** The monorepo root may still contain an older `docker-compose.yml` that builds frontend + backend together. Prefer the stacks under `backend/docker/` for this API.
+Docker assets for this API live under [`docker/`](docker/README.md). Run Compose from the repository root.
 
 ---
 
@@ -184,7 +185,6 @@ python scripts/check_requirements_sync.py
 ```
 
 CI runs the same sync check on every push / PR.
-
 ### 2. Pre-commit & Commitizen
 
 ```bash
@@ -286,7 +286,7 @@ Managed via environment variables / `.env` (`app/core/config.py`). See `.env.exa
 
 ### REST
 
-Interactive docs: [/api_docs](http://localhost:8001/api_docs).
+Interactive docs: [/api_docs](http://localhost:8001/api_docs) (default `/docs` is disabled; local Swagger assets).
 
 | Prefix | Resources |
 |--------|-----------|
@@ -393,7 +393,7 @@ Task routing uses dedicated queues; the worker command above must include them.
 # Full suite
 poetry run pytest .
 
-# With coverage (CI uses --cov-fail-under=50)
+# With coverage (CI uses --cov-fail-under=55)
 poetry run pytest -v --cov=app --cov-report=term-missing
 
 # Lint / types / security (as in CI)
@@ -423,7 +423,7 @@ Workflow: [`ci.yml`](.github/workflows/ci.yml) on push / PR to `main`.
 | Job | What it does |
 |-----|--------------|
 | **quality** | Ruff, mypy, Bandit on the runner |
-| **stack** | Build `docker/compose.yml`, start `api` (+ Postgres / Redis / Neo4j), create test DB, run pytest with coverage (≥50%) |
+| **stack** | Build `docker/compose.yml`, start `api` (+ Postgres / Redis / Neo4j / MinIO), create test DB, run pytest with coverage (≥55%) |
 
 Infra versions match Compose (`postgres:15`, `redis:8`, `neo4j:5`).
 
@@ -434,7 +434,7 @@ cp .env.example .env
 docker compose -f docker/compose.yml --env-file .env up --build -d
 docker compose -f docker/compose.yml --env-file .env exec -T db \
   psql -U postgres -c "CREATE DATABASE family_tree_test;" || true
-docker compose -f docker/compose.yml --env-file .env exec -T api pytest -v --cov=app --cov-fail-under=50
+docker compose -f docker/compose.yml --env-file .env exec -T api pytest -v --cov=app --cov-fail-under=55
 ```
 
 ---
@@ -462,7 +462,7 @@ tests/             # unit / integration / e2e (REST + GraphQL)
 
 ## API client (Bruno)
 
-Open the `bruno/` collection in [Bruno](https://www.usebruno.com/). Use the `Local` environment (`base_url`, credentials, tokens). Requests cover auth, users, roles, permissions, persons (including closest relationship), and marriages.
+Open the `bruno/` collection in [Bruno](https://www.usebruno.com/). Use the `Local` environment (`base_url`, credentials, tokens). Requests cover auth, users, roles, permissions, persons (including closest relationship), marriages, and GraphQL counterparts under `bruno/GraphQL/`.
 
 ---
 
@@ -488,7 +488,6 @@ Optional family sample data:
 
 - Neo4j stays empty unless Celery workers are running and reachable.
 - Default admin password, JWT secret, and Flower basic auth in examples are for local use only.
-- The monorepo-root `docker-compose.yml` (if present) is legacy relative to `backend/docker/`.
 
 ---
 
@@ -497,14 +496,13 @@ Optional family sample data:
 - [ ] Redis caching for hot graph paths
 - [ ] Observability (structured metrics / OpenTelemetry)
 - [ ] Broader e2e coverage with live Neo4j assertions
-- [ ] Consolidate Compose file names and GitHub Actions workflows
 - [x] GraphQL API synced with REST
 
 ---
 
 ## License
 
-Intended for educational and development purposes.
+Released under the [MIT License](LICENSE).
 
 ---
 
