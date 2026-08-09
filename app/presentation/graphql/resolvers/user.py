@@ -95,8 +95,10 @@ async def resolve_create_user(info: Info, data: UserCreateInput) -> UserType:
 
 
 async def resolve_update_user(info: Info, data: UserUpdateInput) -> UserType:
-    await require_permission(info, Permissions.USER_UPDATE)
-    usecase = UpdateUserUseCase(info.context.uow, info.context.password_hasher)
+    current_user = await require_permission(info, Permissions.USER_UPDATE)
+    usecase = UpdateUserUseCase(
+        info.context.uow, info.context.password_hasher, current_user=current_user
+    )
     res = await usecase.execute(_user_update_dto(data))
     mapped = UserApiMapper.from_update_user_dto(res)
     return user_from_mapping(mapped.model_dump())

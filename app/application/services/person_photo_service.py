@@ -28,6 +28,22 @@ _PERSON_KEY_RE = re.compile(
 )
 
 
+def sniff_image_content_type(data: bytes) -> str | None:
+    """Identify an image from its leading bytes.
+
+    The Content-Type header is attacker-controlled, so it only says what the
+    client claims to be sending. Reading the signature is what stops an HTML or
+    script payload from being stored under an image key and later served back.
+    """
+    if data.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if len(data) >= 12 and data.startswith(b"RIFF") and data[8:12] == b"WEBP":
+        return "image/webp"
+    return None
+
+
 class PersonPhotoService:
     """Upload validation, key rules, and photo lifecycle helpers."""
 
@@ -84,7 +100,22 @@ class PersonPhotoService:
         except Exception:
             logger.exception("Best-effort delete failed for key=%s", key)
 
+    def validate_upload_bytes(self, data: bytes, content_type: str | None) -> str:
+        """Validate the declared type, the size, and the actual file signature."""
+        declared = self.validate_upload(content_type, len(data))
+        detected = sniff_image_content_type(data)
+
+        if detected is None:
+            raise InvalidMediaContentTypeException(
+                detail=["file content is not a supported image"]
+            )
+        if detected != declared:
+            raise InvalidMediaContentTypeException(
+                detail=[f"content type {declared!r} does not match file ({detected})"]
+            )
+        return detected
+
     async def upload_person_photo(self, data: bytes, content_type: str | None) -> str:
-        normalized = self.validate_upload(content_type, len(data))
+        normalized = self.validate_upload_bytes(data, content_type)
         key = self.build_object_key(normalized)
         return await self.storage.upload(data, normalized, key)

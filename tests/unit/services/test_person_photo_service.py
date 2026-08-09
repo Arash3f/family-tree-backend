@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, MagicMock
 from app.application.services.person_photo_service import (
     MAX_UPLOAD_BYTES,
     PersonPhotoService,
+    sniff_image_content_type,
 )
 from app.domain.exceptions.media_exceptions import (
     InvalidMediaContentTypeException,
@@ -13,6 +14,11 @@ from app.domain.exceptions.media_exceptions import (
     MediaObjectNotFoundException,
     MediaTooLargeException,
 )
+
+
+JPEG_BYTES = b"\xff\xd8\xff\xe0" + b"\x00" * 16
+PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"\x00" * 16
+WEBP_BYTES = b"RIFF\x00\x00\x00\x00WEBP" + b"\x00" * 16
 
 
 def _service(storage: MagicMock | None = None) -> PersonPhotoService:
@@ -70,8 +76,52 @@ async def test_upload_person_photo():
     storage.upload = AsyncMock(side_effect=lambda data, content_type, key: key)
     service = _service(storage)
 
-    key = await service.upload_person_photo(b"abc", "image/png")
+    key = await service.upload_person_photo(PNG_BYTES, "image/png")
 
     assert key.startswith("persons/")
     assert key.endswith(".png")
     storage.upload.assert_awaited_once()
+
+
+@pytest.mark.parametrize(
+    ("data", "expected"),
+    [
+        (JPEG_BYTES, "image/jpeg"),
+        (PNG_BYTES, "image/png"),
+        (WEBP_BYTES, "image/webp"),
+        (b"<html>not an image</html>", None),
+        (b"", None),
+    ],
+)
+def test_sniff_image_content_type(data: bytes, expected: str | None):
+    assert sniff_image_content_type(data) == expected
+
+
+def test_validate_upload_bytes_accepts_matching_signature():
+    service = _service()
+    assert service.validate_upload_bytes(JPEG_BYTES, "image/jpeg") == "image/jpeg"
+
+
+def test_validate_upload_bytes_rejects_non_image_payload():
+    service = _service()
+    with pytest.raises(InvalidMediaContentTypeException):
+        service.validate_upload_bytes(b"GIF89a still not allowed", "image/png")
+
+
+def test_validate_upload_bytes_rejects_mismatched_declaration():
+    """A PNG announced as JPEG is a client lying about what it uploads."""
+    service = _service()
+    with pytest.raises(InvalidMediaContentTypeException):
+        service.validate_upload_bytes(PNG_BYTES, "image/jpeg")
+
+
+@pytest.mark.asyncio
+async def test_upload_person_photo_rejects_disguised_payload():
+    storage = MagicMock()
+    storage.upload = AsyncMock()
+    service = _service(storage)
+
+    with pytest.raises(InvalidMediaContentTypeException):
+        await service.upload_person_photo(b"#!/bin/sh\nrm -rf /", "image/png")
+
+    storage.upload.assert_not_awaited()

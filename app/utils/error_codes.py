@@ -48,6 +48,9 @@ class ErrorCode(int, Enum):
     # -----------------------
     USER_NOT_FOUND = 1400
     USER_PASSWORD_INCORECT = 1401
+    PASSWORD_CONFIRMATION_MISMATCH = 1402
+    SELF_ROLE_CHANGE = 1403
+    PRIVILEGED_USER_MODIFICATION = 1404
     # -----------------------
     # |     Role Person     |
     # -----------------------
@@ -110,6 +113,9 @@ ERROR_MESSAGES = {
         # Domain User
         ErrorCode.USER_NOT_FOUND: "User not found",
         ErrorCode.USER_PASSWORD_INCORECT: "User password incorrect",
+        ErrorCode.PASSWORD_CONFIRMATION_MISMATCH: "Password and its confirmation do not match",
+        ErrorCode.SELF_ROLE_CHANGE: "You cannot change your own role",
+        ErrorCode.PRIVILEGED_USER_MODIFICATION: "Only an administrator can grant or modify the administrator role",
         # Domain Role
         ErrorCode.ROLE_NOT_FOUND: "Role not found",
         ErrorCode.ROLE_NAME_DUPLICATED: "Role name duplicated",
@@ -164,6 +170,9 @@ ERROR_MESSAGES = {
         # Domain User
         ErrorCode.USER_NOT_FOUND: "کاربر پیدا نشد",
         ErrorCode.USER_PASSWORD_INCORECT: "رمز کاربر اشتباه است",
+        ErrorCode.PASSWORD_CONFIRMATION_MISMATCH: "رمز عبور و تکرار آن یکسان نیستند",
+        ErrorCode.SELF_ROLE_CHANGE: "نمی‌توانید نقش خودتان را تغییر دهید",
+        ErrorCode.PRIVILEGED_USER_MODIFICATION: "فقط مدیر می‌تواند نقش مدیر را بدهد یا تغییر دهد",
         # Domain Role
         ErrorCode.ROLE_NOT_FOUND: "نقش پیدا نشد",
         ErrorCode.ROLE_NAME_DUPLICATED: "اسم نقش تکراری است",

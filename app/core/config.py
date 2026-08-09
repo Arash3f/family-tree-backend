@@ -54,6 +54,12 @@ class AppSettings(PydanticBaseSettings):
     FLOWER_BASIC_AUTH: str = "admin:admin"
     AUTH_RATE_LIMIT_PER_MINUTE: int = 30
 
+    # GraphQL hardening. A single query can fan out far more work than a REST
+    # call, so cap how large an incoming document may be.
+    GRAPHQL_MAX_DEPTH: int = 10
+    GRAPHQL_MAX_ALIASES: int = 15
+    GRAPHQL_MAX_TOKENS: int = 2000
+
     # MinIO / S3-compatible object storage
     MINIO_ENDPOINT: str = "localhost:9000"
     MINIO_PUBLIC_ENDPOINT: str | None = None
@@ -80,11 +86,20 @@ class AppSettings(PydanticBaseSettings):
             )
         return self
 
+    @property
+    def normalized_environment(self) -> str:
+        return (self.ENVIRONMENT or "local").strip().lower()
+
+    @property
+    def is_development_like(self) -> bool:
+        """Whether developer conveniences (GraphiQL, introspection) are safe here."""
+        return self.normalized_environment in {"local", "development", "dev", "test"}
+
     @model_validator(mode="after")
     def reject_weak_secrets_outside_local(self) -> Self:
         """Allow weak demo defaults only in local/development."""
-        env = (self.ENVIRONMENT or "local").strip().lower()
-        if env in {"local", "development", "dev", "test"}:
+        env = self.normalized_environment
+        if self.is_development_like:
             return self
 
         weak: list[str] = []

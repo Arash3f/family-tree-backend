@@ -9,6 +9,7 @@ from app.application.use_cases.user.get_user_list_by_filter_use_case import (
 )
 from app.application.use_cases.user.get_user_use_case import GetUserUseCase
 from app.application.use_cases.user.update_user_use_case import UpdateUserUseCase
+from app.domain.entities.user import User
 from app.domain.services.password_hasher import PasswordHasher
 from app.domain.shared.permissions import Permissions
 from app.presentation.rest.dependencies.permission_guard import RequirePermission
@@ -65,14 +66,14 @@ async def delete_user(
 @router.put(
     "/",
     response_model=UserUpdateResponse,
-    dependencies=[Depends(RequirePermission(Permissions.USER_UPDATE))],
 )
 async def update_user(
     data: UserUpdateRequest,
+    current_user: User = Depends(RequirePermission(Permissions.USER_UPDATE)),
     uow=Depends(get_uow),
     hasher: PasswordHasher = Depends(get_password_hasher),
 ) -> UserUpdateResponse:
-    usecase = UpdateUserUseCase(uow, hasher)
+    usecase = UpdateUserUseCase(uow, hasher, current_user=current_user)
 
     res = await usecase.execute(UserApiMapper.to_update_user_dto(data))
 

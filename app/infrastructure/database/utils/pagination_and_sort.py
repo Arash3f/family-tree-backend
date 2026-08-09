@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domain.shared.dto.pagination_dto import MAX_PAGE_SIZE
 from app.domain.shared.dto.sorter_dto import SortOrderField
 from app.utils.app_exception import AppException
 from app.utils.error_codes import ErrorCode
@@ -99,6 +100,20 @@ async def paginate_and_sort(
             code=ErrorCode.INVALID_PAGE_SIZE,
             status_code=422,
             detail=["Page size must be greater than or equal to 1."],
+        )
+
+    if page_size > MAX_PAGE_SIZE:
+        raise AppException(
+            code=ErrorCode.INVALID_PAGE_SIZE,
+            status_code=422,
+            detail=[f"Page size must not exceed {MAX_PAGE_SIZE}."],
+        )
+
+    if offset < 0:
+        raise AppException(
+            code=ErrorCode.INVALID_PAGE,
+            status_code=422,
+            detail=["Offset must be greater than or equal to 0."],
         )
 
     sort_column = sortable_columns.get(sort_by, model.id)

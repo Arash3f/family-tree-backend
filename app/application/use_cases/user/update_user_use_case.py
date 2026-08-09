@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from app.application.dto.user.user_update_dto import (
     UserUpdateDTO,
     UserUpdateField,
@@ -5,13 +7,26 @@ from app.application.dto.user.user_update_dto import (
     UserUpdateResponseDTO,
 )
 from app.application.interfaces.unit_of_work import UnitOfWork
+from app.core.config import settings
+from app.domain.entities.user import User
+from app.domain.exceptions.user_exceptions import (
+    PasswordConfirmationMismatchException,
+    PrivilegedUserModificationException,
+    SelfRoleChangeException,
+)
 from app.domain.services.password_hasher import PasswordHasher
 
 
 class UpdateUserUseCase:
-    def __init__(self, uow: UnitOfWork, password_hasher: PasswordHasher):
+    def __init__(
+        self,
+        uow: UnitOfWork,
+        password_hasher: PasswordHasher,
+        current_user: User | None = None,
+    ):
         self.uow = uow
         self.password_hasher = password_hasher
+        self.current_user = current_user
 
     async def execute(self, dto: UserUpdateDTO) -> UserUpdateResponseDTO:
         async with self.uow:
@@ -28,12 +43,14 @@ class UpdateUserUseCase:
             re_password = update_data_enum.pop(UserUpdateField.RE_PASSWORD, None)
 
             if role_id is not None:
+                await self._authorize_role_change(target=user, new_role_id=role_id)
                 role = await self.uow.roles.get_or_raise(role_id=role_id)
                 user.role_id = role.safe_id
 
-            if password is not None and re_password is not None:
-                hashed_password = self.password_hasher.hash(password)
-                user.password_hash = hashed_password
+            if password is not None:
+                if password != re_password:
+                    raise PasswordConfirmationMismatchException()
+                user.password_hash = self.password_hasher.hash(password)
 
             for field, value in update_data_enum.items():
                 setattr(user, field.value, value)
@@ -43,3 +60,36 @@ class UpdateUserUseCase:
             await self.uow.commit()
 
             return UserUpdateMapper.to_response(user=user)
+
+    async def _authorize_role_change(self, target: User, new_role_id: UUID) -> None:
+        """
+        Guard the two ways a role change can escalate privileges.
+
+        Without a caller the guards cannot be evaluated, which only happens in
+        code paths that construct the use case directly rather than serving a
+        request.
+        """
+        caller = self.current_user
+        if caller is None:
+            return
+
+        if target.safe_id == caller.safe_id:
+            raise SelfRoleChangeException()
+
+        caller_is_admin = await self._is_admin_role(caller.role_id)
+        if caller_is_admin:
+            return
+
+        # A non-admin may neither hand out the admin role nor take it away.
+        if await self._is_admin_role(new_role_id) or await self._is_admin_role(
+            target.role_id
+        ):
+            raise PrivilegedUserModificationException()
+
+    async def _is_admin_role(self, role_id: UUID | None) -> bool:
+        if role_id is None:
+            return False
+        role = await self.uow.roles.get(role_id=role_id)
+        if role is None:
+            return False
+        return role.name.strip().lower() == settings.ADMIN_ROLE_NAME.strip().lower()

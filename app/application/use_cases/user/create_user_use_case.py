@@ -5,6 +5,7 @@ from app.application.dto.user.user_create_dto import (
 )
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.entities.user import User
+from app.domain.exceptions.user_exceptions import PasswordConfirmationMismatchException
 from app.domain.services.password_hasher import PasswordHasher
 
 
@@ -14,6 +15,9 @@ class CreateUserUseCase:
         self.password_hasher = password_hasher
 
     async def execute(self, dto: UserCreateDTO) -> UserCreateResponseDTO:
+        if dto.password != dto.re_password:
+            raise PasswordConfirmationMismatchException()
+
         async with self.uow:
             role_id = None
             if dto.role_id:
