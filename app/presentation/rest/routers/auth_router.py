@@ -1,20 +1,35 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 
 from app.application.dto.auth_dto import LoginDTO
+from app.application.dto.session_dto import ChangePasswordDTO
+from app.application.use_cases.auth.me_and_password import (
+    ChangeOwnPasswordUseCase,
+    GetMeUseCase,
+)
 from app.application.use_cases.login_user import LoginUserUseCase
 from app.application.use_cases.logout_user import LogoutAllUseCase, LogoutUseCase
 from app.application.use_cases.refresh_token import RefreshTokenUseCase
+from app.application.use_cases.session.session_use_cases import (
+    ListUserSessionsUseCase,
+    RevokeUserSessionUseCase,
+)
 from app.domain.entities.user import User
 from app.presentation.rest.dependencies.auth_dependencies import (
     get_current_session_id,
     get_current_user,
 )
 from app.presentation.rest.dependencies.rate_limit import rate_limit_auth
-from app.presentation.rest.schemas.dto.auth_schema import LoginResponse
+from app.presentation.rest.schemas.dto.auth_schema import (
+    ChangePasswordRequest,
+    LoginResponse,
+    MeResponse,
+    SessionResponse,
+)
 from app.presentation.rest.schemas.dto.common import ResultResponse
-from app.presentation.rest.schemas.dto.user_schema import UserGetResponse
 from app.presentation.rest.schemas.mappers.auth_mappers import AuthApiMapper
 from app.presentation.rest.schemas.mappers.common_mappers import CommonApiMapper
 from app.presentation.rest.utils.dependencies import (
@@ -100,10 +115,70 @@ async def logout_all(
     return CommonApiMapper.from_result_dto(result)
 
 
-@router.get("/me", response_model=UserGetResponse)
-async def me(current_user: User = Depends(get_current_user)) -> UserGetResponse:
-    return UserGetResponse(
-        id=current_user.safe_id,
-        username=current_user.username,
-        role_id=current_user.role_id,
+@router.get("/me", response_model=MeResponse)
+async def me(
+    current_user: User = Depends(get_current_user),
+    session_id: UUID = Depends(get_current_session_id),
+    uow=Depends(get_uow),
+) -> MeResponse:
+    usecase = GetMeUseCase(uow)
+    data = await usecase.execute(current_user.safe_id, session_id)
+    return MeResponse(
+        id=data.id,
+        username=data.username,
+        role_id=data.role_id,
+        role_name=data.role_name,
+        permissions=data.permissions,
+        session_id=data.session_id,
     )
+
+
+@router.get("/sessions", response_model=list[SessionResponse])
+async def list_my_sessions(
+    current_user: User = Depends(get_current_user),
+    session_id: UUID = Depends(get_current_session_id),
+    uow=Depends(get_uow),
+) -> list[SessionResponse]:
+    usecase = ListUserSessionsUseCase(uow)
+    items = await usecase.execute(current_user.safe_id, current_session_id=session_id)
+    return [
+        SessionResponse(
+            id=item.id,
+            user_agent=item.user_agent,
+            ip_address=item.ip_address,
+            created_at=item.created_at,
+            expires_at=item.expires_at,
+            is_current=item.is_current,
+        )
+        for item in items
+    ]
+
+
+@router.delete("/sessions/{session_id}", response_model=ResultResponse)
+async def revoke_my_session(
+    session_id: UUID,
+    current_user: User = Depends(get_current_user),
+    uow=Depends(get_uow),
+) -> ResultResponse:
+    usecase = RevokeUserSessionUseCase(uow)
+    result = await usecase.execute(user_id=current_user.safe_id, session_id=session_id)
+    return CommonApiMapper.from_result_dto(result)
+
+
+@router.put("/password", response_model=ResultResponse)
+async def change_own_password(
+    data: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    uow=Depends(get_uow),
+    password_hasher=Depends(get_password_hasher),
+) -> ResultResponse:
+    usecase = ChangeOwnPasswordUseCase(uow, password_hasher)
+    result = await usecase.execute(
+        current_user.safe_id,
+        ChangePasswordDTO(
+            current_password=data.current_password,
+            new_password=data.new_password,
+            re_password=data.re_password,
+        ),
+    )
+    return CommonApiMapper.from_result_dto(result)

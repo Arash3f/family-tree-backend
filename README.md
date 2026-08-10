@@ -185,7 +185,7 @@ Local development uses **Poetry** (hooks expect it). Requires Poetry 2+ and Pyth
 poetry install --with dev
 ```
 
-`requirements.txt` is the **runtime** lock export used by Docker production/`runtime` image stages.  
+`requirements.txt` is the **runtime** lock export used by Docker production/`runtime` image stages.
 `requirements-dev.txt` is the **dev/test** group (pytest, ruff, mypy, …) used by the Compose/`ci` image and the CI quality job.
 
 Poetry 2 does not bundle `export` by default; this repo declares `poetry-plugin-export` under
@@ -285,8 +285,8 @@ Managed via environment variables / `.env` (`app/core/config.py`). See `.env.exa
 | `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD` | Graph database |
 | `JWT_SECRET` | **Required**, minimum **32** characters |
 | `JWT_ALGORITHM` | Default `HS256` |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Access token lifetime (default `15`) |
-| `REFRESH_TOKEN_EXPIRE_DAYS` | Refresh token lifetime (default `7`) |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Access token lifetime (default `5`) |
+| `REFRESH_TOKEN_EXPIRE_MINUTES` | Refresh token lifetime (default `60`) |
 | `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_ROLE_NAME` | Bootstrapped admin |
 | `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND` | Celery / Redis |
 | `BACKUP_DIR` | Backup output directory (Compose default `/mnt/backups`) |

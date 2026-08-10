@@ -20,8 +20,8 @@ class AppSettings(PydanticBaseSettings):
     JWT_SECRET: str = Field(min_length=32)
     JWT_ALGORITHM: str = "HS256"
 
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 5
+    REFRESH_TOKEN_EXPIRE_MINUTES: int = 60
 
     # Database:
     POSTGRES_HOST: str = "127.0.0.1"
@@ -49,7 +49,9 @@ class AppSettings(PydanticBaseSettings):
 
     CORS_ORIGINS: str = (
         "http://localhost:5173,http://127.0.0.1:5173,"
-        "http://localhost:3000,http://127.0.0.1:3000,http://localhost:8001"
+        "http://localhost:3000,http://127.0.0.1:3000,"
+        "http://localhost:8001,http://localhost,http://127.0.0.1,"
+        "http://localhost:80,http://127.0.0.1:80"
     )
     FLOWER_BASIC_AUTH: str = "admin:admin"
     AUTH_RATE_LIMIT_PER_MINUTE: int = 30
@@ -112,11 +114,11 @@ class AppSettings(PydanticBaseSettings):
         if self.FLOWER_BASIC_AUTH in {"admin:admin", "admin:password"}:
             weak.append("FLOWER_BASIC_AUTH")
         if (
-            self.MINIO_ACCESS_KEY == "minioadmin"
-            or self.MINIO_SECRET_KEY == "minioadmin"
+            self.MINIO_ACCESS_KEY == "minioadmin"  # pragma: allowlist secret
+            or self.MINIO_SECRET_KEY == "minioadmin"  # pragma: allowlist secret
         ):
             weak.append("MINIO_ACCESS_KEY/MINIO_SECRET_KEY")
-        if self.JWT_SECRET.startswith("local-dev-only"):
+        if self.JWT_SECRET.startswith("local-dev-only"):  # pragma: allowlist secret
             weak.append("JWT_SECRET")
 
         if weak:

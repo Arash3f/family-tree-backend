@@ -14,19 +14,24 @@ assert {
   res.status: eq 200
   res.body.id: isString
   res.body.username: isString
+  res.body.permissions: isArray
+  res.body.session_id: isString
 }
 
 docs {
   # Me
 
-  Returns the currently authenticated user from the Bearer token.
+  Returns the currently authenticated user, role name, permission list, and current session id.
 
   ## Output `200`
   ```json
   {
     "id": "00000000-0000-0000-0000-000000000001",
     "username": "admin",
-    "role_id": "00000000-0000-0000-0000-000000000001"
+    "role_id": "00000000-0000-0000-0000-000000000001",
+    "role_name": "Admin",
+    "permissions": ["user_read", "user_update"],
+    "session_id": "00000000-0000-0000-0000-000000000099"
   }
   ```
 

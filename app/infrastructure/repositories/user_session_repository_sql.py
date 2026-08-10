@@ -81,6 +81,18 @@ class SQLUserSessionRepository(UserSessionRepository):
         result = cast(CursorResult[Any], await self.session.execute(stmt))
         return result.rowcount or 0
 
+    async def list_active_by_user(self, user_id: UUID) -> list[UserSession]:
+        stmt = (
+            select(UserSessionModel)
+            .where(
+                UserSessionModel.user_id == user_id,
+                UserSessionModel.revoked_at.is_(None),
+            )
+            .order_by(UserSessionModel.created_at.desc())
+        )
+        result = await self.session.execute(stmt)
+        return [self._to_entity(model) for model in result.scalars().all()]
+
     def _to_entity(self, model: UserSessionModel) -> UserSession:
         return UserSession(
             id=model.id,
@@ -91,6 +103,7 @@ class SQLUserSessionRepository(UserSessionRepository):
             replaced_by_id=model.replaced_by_id,
             user_agent=model.user_agent,
             ip_address=model.ip_address,
+            created_at=model.created_at,
         )
 
     def _to_model(self, entity: UserSession) -> UserSessionModel:

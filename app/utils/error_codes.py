@@ -9,6 +9,7 @@ class ErrorCode(int, Enum):
     # |     Domain Auth     |
     # -----------------------
     InvalidCredentials = 900
+    SESSION_NOT_FOUND = 901
     # -----------------------
     # |    Domain Person    |
     # -----------------------
@@ -82,6 +83,7 @@ ERROR_MESSAGES = {
         ErrorCode.INVALID_PAGE: "Invalid page",
         # Domain Auth
         ErrorCode.InvalidCredentials: "Invalid credentials",
+        ErrorCode.SESSION_NOT_FOUND: "Session not found",
         # Domain Person
         ErrorCode.SELF_PARENT: "A person cannot be their own parent",
         ErrorCode.INVALID_BIRTH_DAY: "Invalid birth date",
@@ -139,6 +141,7 @@ ERROR_MESSAGES = {
         ErrorCode.INVALID_PAGE: "شماره صفحه اشتباه است",
         # Domain Auth
         ErrorCode.InvalidCredentials: "Invalid credentials",
+        ErrorCode.SESSION_NOT_FOUND: "نشست یافت نشد",
         # Domain Person
         ErrorCode.SELF_PARENT: "یک شخص نمی‌تواند والد خودش باشد",
         ErrorCode.INVALID_BIRTH_DAY: "تاریخ تولد نامعتبر است",

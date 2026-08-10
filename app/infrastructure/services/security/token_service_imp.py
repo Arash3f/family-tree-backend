@@ -32,7 +32,7 @@ class JWTService(TokenService):
             "jti": str(session_id),
             "type": "refresh",
             "iat": now - timedelta(seconds=5),
-            "exp": now + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+            "exp": now + timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES),
         }
 
         return jwt.encode(

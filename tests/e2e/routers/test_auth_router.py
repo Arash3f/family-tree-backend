@@ -37,6 +37,10 @@ async def test_me_requires_access_token(client, admin_headers):  # noqa: F811
     assert response.status_code == 200
     body = response.json()
     assert body["username"] == settings.ADMIN_USERNAME
+    assert "permissions" in body
+    assert isinstance(body["permissions"], list)
+    assert "session_id" in body
+    assert "user_read" in body["permissions"]
 
 
 @pytest.mark.asyncio

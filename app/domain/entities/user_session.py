@@ -17,6 +17,7 @@ class UserSession:
     replaced_by_id: UUID | None = None
     user_agent: str | None = None
     ip_address: str | None = None
+    created_at: datetime | None = None
 
     def is_active(self, now: datetime | None = None) -> bool:
         now = now or datetime.now(timezone.utc)

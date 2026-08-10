@@ -1,0 +1,21 @@
+meta {
+  name: My Sessions
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/auth/sessions
+  body: none
+  auth: inherit
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  # My Sessions
+
+  Lists active sessions for the current user.
+}

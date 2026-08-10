@@ -30,3 +30,8 @@ class UserSessionRepository(ABC):
     @abstractmethod
     async def revoke_all_for_user(self, user_id: UUID, revoked_at: datetime) -> int:
         pass
+
+    @abstractmethod
+    async def list_active_by_user(self, user_id: UUID) -> list[UserSession]:
+        """Return non-revoked sessions for a user, newest first."""
+        pass
