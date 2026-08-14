@@ -54,12 +54,13 @@ async def test_graphql_users_roles_permissions_flow(client, admin_headers):  # n
         client,
         """
         mutation ($data: UserCreateInput!) {
-          createUser(data: $data) { id username roleId }
+          createUser(data: $data) { id username fullname roleId }
         }
         """,
         {
             "data": {
                 "username": "gql_user",
+                "fullname": "GQL User",
                 "password": "Secret123!",
                 "rePassword": "Secret123!",
                 "roleId": role_id,

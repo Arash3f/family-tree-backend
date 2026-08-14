@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.role import Role
@@ -12,6 +12,7 @@ from app.domain.shared.dto.pagination_dto import PaginatedResult
 from app.domain.shared.dto.role_filter_dto import FilterRoleQuery, RoleSortField
 from app.infrastructure.database.models.permission_model import PermissionModel
 from app.infrastructure.database.models.role_model import RoleModel
+from app.infrastructure.database.models.user_model import UserModel
 from app.infrastructure.database.utils.pagination_and_sort import paginate_and_sort
 
 
@@ -93,6 +94,7 @@ class SQLRoleRepository(RoleRepository):
         )
 
         roles = [self._to_entity(m) for m in result.items]
+        await self._attach_user_counts(roles)
 
         return PaginatedResult[Role](
             items=roles,
@@ -141,6 +143,23 @@ class SQLRoleRepository(RoleRepository):
         result = await self.session.execute(stmt)
 
         return result.first() is not None
+
+    async def _attach_user_counts(self, roles: list[Role]) -> None:
+        role_ids = [role.safe_id for role in roles if role.id is not None]
+        if not role_ids:
+            return
+
+        stmt = (
+            select(UserModel.role_id, func.count())
+            .where(UserModel.role_id.in_(role_ids))
+            .group_by(UserModel.role_id)
+        )
+        result = await self.session.execute(stmt)
+        counts = {role_id: count for role_id, count in result.all()}
+
+        for role in roles:
+            if role.id is not None:
+                role.user_count = int(counts.get(role.id, 0))
 
     def _to_entity(self, model: RoleModel) -> Role:
         permission_ids = [p.id for p in model.permissions]

@@ -45,7 +45,7 @@ async def test_create_role_permission_denied(client, member_headers):  # noqa: F
         permission_ids=[],
     )
     resp = await client.post(
-        f"{BASE_URL}/",
+        BASE_URL,
         json=req.model_dump(mode="json"),
         headers=member_headers,
     )
@@ -66,7 +66,7 @@ async def test_create_role_unauthenticated(client):  # noqa: F811
     )
 
     resp = await client.post(
-        f"{BASE_URL}/",
+        BASE_URL,
         json=req.model_dump(mode="json"),
     )
 
@@ -87,7 +87,7 @@ async def test_create_role_success(client, admin_headers, uow):  # noqa: F811
     )
 
     resp = await client.post(
-        f"{BASE_URL}/",
+        BASE_URL,
         json=req.model_dump(mode="json"),
         headers=admin_headers,
     )
@@ -129,7 +129,7 @@ async def test_create_role_with_duplicate_name(
     )
 
     response = await client.post(
-        f"{BASE_URL}/",
+        BASE_URL,
         json=payload.model_dump(mode="json"),
         headers=admin_headers,
     )
@@ -226,7 +226,7 @@ async def test_update_role_permission_denied(client, member_headers):  # noqa: F
     )
 
     resp = await client.put(
-        f"{BASE_URL}/",
+        BASE_URL,
         json=payload.model_dump(mode="json"),
         headers=member_headers,
     )
@@ -247,7 +247,7 @@ async def test_update_role_unauthenticated(client):  # noqa: F811
     )
 
     resp = await client.put(
-        f"{BASE_URL}/",
+        BASE_URL,
         json=payload.model_dump(mode="json"),
     )
 
@@ -273,7 +273,7 @@ async def test_update_role_success(client, admin_headers, uow: SQLAlchemyUnitOfW
     )
 
     resp = await client.put(
-        f"{BASE_URL}/",
+        BASE_URL,
         json=payload.model_dump(mode="json"),
         headers=admin_headers,
     )
@@ -298,7 +298,7 @@ async def test_update_role_with_invalid_id(client, admin_headers):  # noqa: F811
     )
 
     resp = await client.put(
-        f"{BASE_URL}/",
+        BASE_URL,
         json=payload.model_dump(mode="json"),
         headers=admin_headers,
     )
@@ -331,7 +331,7 @@ async def test_update_role_with_duplicate_name(
     )
 
     response = await client.put(
-        f"{BASE_URL}/",
+        BASE_URL,
         json=payload.model_dump(mode="json"),
         headers=admin_headers,
     )

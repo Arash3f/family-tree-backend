@@ -12,3 +12,8 @@ class RoleNameDuplicatedException(AppException):
         super().__init__(
             code=ErrorCode.ROLE_NAME_DUPLICATED, status_code=409, detail=detail
         )
+
+
+class RoleProtectedException(AppException):
+    def __init__(self, detail: list[str] = []):
+        super().__init__(code=ErrorCode.ROLE_PROTECTED, status_code=403, detail=detail)

@@ -1,4 +1,3 @@
-from typing import List
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -14,12 +13,13 @@ from app.presentation.rest.schemas.dto.common import (
 class RoleModel(BaseModel):
     id: UUID
     name: str
-    permission_ids: List[UUID] = []
+    permission_ids: list[UUID] = []
+    user_count: int = 0
 
 
 class _RoleUpdateDateRequest(BaseModel):
-    name: str | None
-    permission_ids: List[UUID] | None
+    name: str | None = None
+    permission_ids: list[UUID] | None = None
 
 
 class _RoleUpdateWhereRequest(BaseModel):
@@ -34,24 +34,24 @@ class RoleUpdateRequest(BaseModel):
 class RoleUpdateResponse(BaseModel):
     id: UUID
     name: str
-    permission_ids: List[UUID] = []
+    permission_ids: list[UUID] = []
 
 
 class RoleGetResponse(BaseModel):
     id: UUID
     name: str
-    permission_ids: List[UUID] = []
+    permission_ids: list[UUID] = []
 
 
 class RoleCreateRequest(BaseModel):
     name: str | None
-    permission_ids: List[UUID] | None
+    permission_ids: list[UUID] | None
 
 
 class RoleCreateResponse(BaseModel):
     id: UUID
     name: str
-    permission_ids: List[UUID] = []
+    permission_ids: list[UUID] = []
 
 
 class RoleFilterRequestData(BaseModel):

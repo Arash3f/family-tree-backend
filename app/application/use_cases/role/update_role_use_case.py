@@ -1,6 +1,3 @@
-from typing import List
-from uuid import UUID
-
 from app.application.dto.role.role_update_dto import (
     RoleUpdateDTO,
     RoleUpdateField,
@@ -8,6 +5,9 @@ from app.application.dto.role.role_update_dto import (
     RoleUpdateResponseDTO,
 )
 from app.application.interfaces.unit_of_work import UnitOfWork
+from app.application.services.permission_bundle_service import (
+    resolve_permission_ids_with_bundles,
+)
 from app.domain.exceptions.role_exceptions import RoleNameDuplicatedException
 
 
@@ -35,13 +35,10 @@ class UpdateRoleUseCase:
             permission_ids = update_data_enum.pop(RoleUpdateField.PERMISSION_IDS, None)
 
             if permission_ids is not None:
-                permissions: List[UUID] = []
-                for perm_id in permission_ids:
-                    perm = await self.uow.permissions.get_or_raise(
-                        permission_id=perm_id
-                    )
-                    permissions.append(perm.safe_id)
-                role.permission_ids = permissions
+                role.permission_ids = await resolve_permission_ids_with_bundles(
+                    self.uow.permissions,
+                    permission_ids,
+                )
 
             for field, value in update_data_enum.items():
                 setattr(role, field.value, value)

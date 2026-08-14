@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import List
 from uuid import UUID
 
 from app.domain.exceptions.common_exceptions import UnExpectedIdException
@@ -14,8 +13,9 @@ class Role:
     """
 
     name: str
-    permission_ids: List[UUID]
+    permission_ids: list[UUID]
     id: UUID | None = None
+    user_count: int = 0
 
     def __post_init__(self) -> None:
         """

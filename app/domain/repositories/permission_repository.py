@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import List
 from uuid import UUID
 
 from app.domain.entities.permission import Permission
@@ -32,7 +31,7 @@ class PermissionRepository(ABC):
     ) -> PaginatedResult[Permission]: ...
 
     @abstractmethod
-    async def get_list(self) -> List[Permission]: ...
+    async def get_list(self) -> list[Permission]: ...
 
     @abstractmethod
     async def update(self, permission: Permission) -> Permission: ...

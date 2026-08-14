@@ -14,6 +14,7 @@ class RoleType:
     id: UUID
     name: str
     permission_ids: list[UUID]
+    user_count: int = 0
 
 
 @strawberry.type
@@ -67,4 +68,5 @@ def role_from_mapping(data: dict) -> RoleType:
         id=data["id"],
         name=data["name"],
         permission_ids=list(data.get("permission_ids") or []),
+        user_count=int(data.get("user_count") or 0),
     )

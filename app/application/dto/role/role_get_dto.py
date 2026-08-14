@@ -1,4 +1,3 @@
-from typing import List
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -9,7 +8,7 @@ from app.domain.entities.role import Role
 class RoleGetResponseDTO(BaseModel):
     id: UUID
     name: str
-    permission_ids: List[UUID]
+    permission_ids: list[UUID]
 
 
 class RoleGetMapper(BaseModel):

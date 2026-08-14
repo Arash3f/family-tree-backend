@@ -37,7 +37,7 @@ class RoleApiMapper:
 
     @staticmethod
     def to_update_role_dto(request: RoleUpdateRequest) -> RoleUpdateDTO:
-        request_data = request.model_dump()
+        request_data = request.model_dump(exclude_unset=True)
         return RoleUpdateDTO.model_validate(request_data)
 
     @staticmethod

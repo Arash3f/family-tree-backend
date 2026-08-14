@@ -10,6 +10,7 @@ from app.application.dto.role.role_update_dto import (
     _RoleUpdateWhereDTO,
 )
 from app.application.use_cases.role.update_role_use_case import UpdateRoleUseCase
+from app.domain.shared.permissions import Permissions
 
 
 @pytest.mark.asyncio
@@ -30,10 +31,12 @@ async def test_update_role_success(mock_uow):
     perm_10 = MagicMock()
     perm_10.id = UUID(int=10)
     perm_10.safe_id = UUID(int=10)
+    perm_10.name = Permissions.TICKET_READ
 
     perm_20 = MagicMock()
     perm_20.id = UUID(int=20)
     perm_20.safe_id = UUID(int=20)
+    perm_20.name = Permissions.USER_READ
 
     updated_role = MagicMock()
     updated_role.id = UUID(int=1)
@@ -42,6 +45,7 @@ async def test_update_role_success(mock_uow):
 
     mock_uow.roles.get_or_raise = AsyncMock(return_value=existing_role)
     mock_uow.permissions.get_or_raise = AsyncMock(side_effect=[perm_10, perm_20])
+    mock_uow.permissions.get_by_name = AsyncMock()
     mock_uow.roles.update = AsyncMock(return_value=updated_role)
     mock_uow.roles.is_role_name_duplicated = AsyncMock(return_value=False)
     mock_uow.commit = AsyncMock()
@@ -147,10 +151,12 @@ async def test_update_role_only_permission_ids(mock_uow):
     perm_10 = MagicMock(id=UUID(int=10))
     perm_10.id = UUID(int=10)
     perm_10.safe_id = UUID(int=10)
+    perm_10.name = Permissions.TICKET_READ
 
     perm_20 = MagicMock(id=UUID(int=20))
     perm_20.id = UUID(int=20)
     perm_20.safe_id = UUID(int=20)
+    perm_20.name = Permissions.USER_READ
 
     updated_role = MagicMock()
     updated_role.id = UUID(int=1)
@@ -159,6 +165,7 @@ async def test_update_role_only_permission_ids(mock_uow):
 
     mock_uow.roles.get_or_raise = AsyncMock(return_value=existing_role)
     mock_uow.permissions.get_or_raise = AsyncMock(side_effect=[perm_10, perm_20])
+    mock_uow.permissions.get_by_name = AsyncMock()
     mock_uow.roles.update = AsyncMock(return_value=updated_role)
     mock_uow.commit = AsyncMock()
 

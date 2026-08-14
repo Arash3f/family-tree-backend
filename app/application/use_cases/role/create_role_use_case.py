@@ -1,12 +1,12 @@
-from typing import List
-from uuid import UUID
-
 from app.application.dto.role.role_create_dto import (
     RoleCreateDTO,
     RoleCreateMapper,
     RoleCreateResponseDTO,
 )
 from app.application.interfaces.unit_of_work import UnitOfWork
+from app.application.services.permission_bundle_service import (
+    resolve_permission_ids_with_bundles,
+)
 from app.domain.entities.role import Role
 from app.domain.exceptions.role_exceptions import RoleNameDuplicatedException
 
@@ -24,13 +24,10 @@ class CreateRoleUseCase:
             if is_duplicated:
                 raise RoleNameDuplicatedException()
 
-            permission_ids: List[UUID] = []
-            if dto.permission_ids:
-                for perm_id in dto.permission_ids:
-                    perm = await self.uow.permissions.get_or_raise(
-                        permission_id=perm_id
-                    )
-                    permission_ids.append(perm.safe_id)
+            permission_ids = await resolve_permission_ids_with_bundles(
+                self.uow.permissions,
+                dto.permission_ids or [],
+            )
 
             role = Role(
                 name=dto.name,

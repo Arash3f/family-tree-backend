@@ -29,7 +29,7 @@ router = APIRouter(prefix="/roles", tags=["Roles"])
 
 
 @router.post(
-    "/",
+    "",
     response_model=RoleCreateResponse,
     dependencies=[Depends(RequirePermission(Permissions.ROLE_CREATE))],
     status_code=201,
@@ -62,7 +62,7 @@ async def delete_role(
 
 
 @router.put(
-    "/",
+    "",
     response_model=RoleUpdateResponse,
     dependencies=[Depends(RequirePermission(Permissions.ROLE_UPDATE))],
 )
