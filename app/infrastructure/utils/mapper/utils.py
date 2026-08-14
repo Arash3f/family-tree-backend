@@ -1,4 +1,4 @@
-from typing import Type, TypeVar
+from typing import TypeVar
 
 from neo4j.graph import Node
 
@@ -17,7 +17,7 @@ def node_to_dict(node: Node) -> dict:
     return {key: normalize_neo4j_value(value) for key, value in dict(node).items()}
 
 
-def node_to_dto(node: Node, dto_class: Type[T]) -> T:
+def node_to_dto(node: Node, dto_class: type[T]) -> T:
     """
     Convert a Neo4j node into a DTO instance.
 

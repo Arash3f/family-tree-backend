@@ -1,5 +1,4 @@
 from datetime import date, datetime
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -12,10 +11,10 @@ from pydantic import BaseModel, Field
 class PersonBaseDTO(BaseModel):
     full_name: str
     gender: str = Field(pattern="^(MALE|FEMALE)$")
-    birth_date: Optional[date] = None
-    death_date: Optional[date] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    birth_date: date | None = None
+    death_date: date | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
 
 class PersonCompleteBaseDTO(PersonBaseDTO):
