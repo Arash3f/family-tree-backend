@@ -14,6 +14,8 @@ class Permission:
 
     name: str
     id: UUID | None = None
+    description_en: str = ""
+    description_fa: str = ""
 
     @property
     def safe_id(self) -> UUID:

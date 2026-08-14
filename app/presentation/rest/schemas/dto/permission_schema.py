@@ -13,6 +13,8 @@ from app.presentation.rest.schemas.dto.common import (
 class PermissionModel(BaseModel):
     id: UUID
     name: str
+    description_en: str = ""
+    description_fa: str = ""
 
 
 class PermissionFilterRequestData(BaseModel):

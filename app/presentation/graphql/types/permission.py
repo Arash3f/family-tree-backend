@@ -13,6 +13,8 @@ from app.presentation.graphql.types.common import (
 class PermissionType:
     id: UUID
     name: str
+    description_en: str
+    description_fa: str
 
 
 @strawberry.type
@@ -38,4 +40,9 @@ class PermissionListInput:
 
 
 def permission_from_mapping(data: dict) -> PermissionType:
-    return PermissionType(id=data["id"], name=data["name"])
+    return PermissionType(
+        id=data["id"],
+        name=data["name"],
+        description_en=data.get("description_en", "") or "",
+        description_fa=data.get("description_fa", "") or "",
+    )

@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 from enum import Enum
-from typing import Any, List
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import delete, select
@@ -53,7 +53,7 @@ class SQLPermissionRepository(PermissionRepository):
 
         return self._to_entity(model)
 
-    async def get_list(self) -> List[Permission]:
+    async def get_list(self) -> list[Permission]:
         exec = await self.session.execute(select(PermissionModel))
         result = exec.scalars()
         permissions = [self._to_entity(m) for m in result]
@@ -110,6 +110,8 @@ class SQLPermissionRepository(PermissionRepository):
             )
 
         model.name = permission.name
+        model.description_en = permission.description_en
+        model.description_fa = permission.description_fa
 
         await self.session.flush()
         await self.session.refresh(model)
@@ -125,12 +127,16 @@ class SQLPermissionRepository(PermissionRepository):
         return Permission(
             id=model.id,
             name=model.name,
+            description_en=model.description_en,
+            description_fa=model.description_fa,
         )
 
     def _to_model(self, entity: Permission) -> PermissionModel:
         model = PermissionModel(
             id=entity.id,
             name=entity.name,
+            description_en=entity.description_en,
+            description_fa=entity.description_fa,
         )
 
         return model
