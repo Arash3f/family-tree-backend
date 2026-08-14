@@ -34,6 +34,7 @@ dependencies = [
     "strawberry-graphql[fastapi] (>=0.323.0,<0.324.0)",
     "aioboto3 (>=15.5.0,<16.0.0)",
     "redis (>=5.0.0,<7.0.0)",
+    "openpyxl (>=3.1.5,<4.0.0)",
 ]
 
 [build-system]
