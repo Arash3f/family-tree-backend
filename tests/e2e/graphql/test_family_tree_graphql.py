@@ -184,7 +184,7 @@ async def test_graphql_plain_member_cannot_add_members(client, tree_id, uow):
     resp = await gql(
         client,
         ADD_MEMBER,
-        {"treeId": str(tree_id), "data": {"userId": str(outsider.user.safe_id)}},
+        {"treeId": str(tree_id), "data": {"username": outsider.username}},
         headers=member.headers,
     )
 

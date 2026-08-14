@@ -8,6 +8,7 @@ from app.domain.repositories.tree_repository import (
     TreeMembershipRepository,
     TreeRepository,
 )
+from app.domain.shared.tree_access import TreeAccessPermissions
 from app.infrastructure.database.models.family_tree_model import FamilyTreeModel
 from app.infrastructure.database.models.tree_membership_model import TreeMembershipModel
 
@@ -76,6 +77,7 @@ class SQLTreeMembershipRepository(TreeMembershipRepository):
             tree_id=membership.tree_id,
             user_id=membership.user_id,
             role=membership.role.value,
+            permissions=TreeAccessPermissions.normalize(membership.permissions),
         )
         self.session.add(model)
         await self.session.flush()
@@ -112,6 +114,19 @@ class SQLTreeMembershipRepository(TreeMembershipRepository):
         result = await self.session.execute(stmt)
         return int(result.scalar_one())
 
+    async def update(self, membership: TreeMembership) -> TreeMembership:
+        stmt = select(TreeMembershipModel).where(
+            TreeMembershipModel.tree_id == membership.tree_id,
+            TreeMembershipModel.user_id == membership.user_id,
+        )
+        result = await self.session.execute(stmt)
+        model = result.scalar_one()
+        model.role = membership.role.value
+        model.permissions = TreeAccessPermissions.normalize(membership.permissions)
+        await self.session.flush()
+        await self.session.refresh(model)
+        return self._to_entity(model)
+
     async def delete(self, tree_id: UUID, user_id: UUID) -> None:
         stmt = delete(TreeMembershipModel).where(
             TreeMembershipModel.tree_id == tree_id,
@@ -120,9 +135,11 @@ class SQLTreeMembershipRepository(TreeMembershipRepository):
         await self.session.execute(stmt)
 
     def _to_entity(self, model: TreeMembershipModel) -> TreeMembership:
+        raw = model.permissions if isinstance(model.permissions, list) else []
         return TreeMembership(
             id=model.id,
             tree_id=model.tree_id,
             user_id=model.user_id,
             role=TreeMemberRole(model.role),
+            permissions=TreeAccessPermissions.normalize(raw),
         )

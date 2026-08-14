@@ -7,7 +7,7 @@ from tests.e2e.auth_headers import admin_headers as admin_headers
 from tests.helpers.auth import create_authenticated_user
 from tests.helpers.family_tree import add_tree_member, create_family_tree_with_owner
 
-TREES_URL = "/family-trees/"
+TREES_URL = "/family-trees"
 
 ALL_TREE_PERMISSIONS = [
     Permissions.TREE_CREATE,
@@ -184,14 +184,16 @@ async def test_owner_can_add_and_remove_a_member(client, tree_id, admin_headers,
 
     added = await client.post(
         f"/family-trees/{tree_id}/members",
-        json={"user_id": str(newcomer.user.safe_id)},
+        json={"username": newcomer.username},
         headers=admin_headers,
     )
     assert added.status_code == 201
     assert added.json()["role"] == TreeMemberRole.MEMBER.value
+    assert added.json()["permissions"] == ["view"]
 
     visible = await client.get(f"/family-trees/{tree_id}", headers=newcomer.headers)
     assert visible.status_code == 200
+    assert visible.json()["my_permissions"] == ["view"]
 
     removed = await client.delete(
         f"/family-trees/{tree_id}/members/{newcomer.user.safe_id}",
@@ -205,6 +207,92 @@ async def test_owner_can_add_and_remove_a_member(client, tree_id, admin_headers,
 
 
 @pytest.mark.asyncio
+async def test_owner_can_grant_edit_and_add_access(client, tree_id, admin_headers, uow):  # noqa: F811
+    from app.domain.shared.tree_access import TreeAccessPermissions
+
+    newcomer = await create_authenticated_user(
+        client,
+        uow,
+        permissions=[
+            Permissions.TREE_READ,
+            Permissions.PERSON_READ,
+            Permissions.PERSON_CREATE,
+            Permissions.PERSON_UPDATE,
+        ],
+    )
+
+    added = await client.post(
+        f"/family-trees/{tree_id}/members",
+        json={
+            "username": newcomer.username,
+            "permissions": [TreeAccessPermissions.EDIT],
+        },
+        headers=admin_headers,
+    )
+    assert added.status_code == 201
+    assert set(added.json()["permissions"]) == {
+        TreeAccessPermissions.VIEW,
+        TreeAccessPermissions.EDIT,
+    }
+
+    updated = await client.patch(
+        f"/family-trees/{tree_id}/members/{newcomer.user.safe_id}",
+        json={
+            "permissions": [
+                TreeAccessPermissions.EDIT,
+                TreeAccessPermissions.ADD_PERSONS,
+            ]
+        },
+        headers=admin_headers,
+    )
+    assert updated.status_code == 200
+    assert set(updated.json()["permissions"]) == {
+        TreeAccessPermissions.VIEW,
+        TreeAccessPermissions.EDIT,
+        TreeAccessPermissions.ADD_PERSONS,
+    }
+
+    me = await client.get(f"/family-trees/{tree_id}", headers=newcomer.headers)
+    assert me.status_code == 200
+    assert set(me.json()["my_permissions"]) == {
+        TreeAccessPermissions.VIEW,
+        TreeAccessPermissions.EDIT,
+        TreeAccessPermissions.ADD_PERSONS,
+    }
+
+
+@pytest.mark.asyncio
+async def test_member_without_add_access_cannot_create_person(
+    client,
+    tree_id,
+    admin_headers,
+    uow,  # noqa: F811
+):
+    from app.domain.shared.tree_access import TreeAccessPermissions
+
+    member = await create_authenticated_user(
+        client,
+        uow,
+        permissions=[Permissions.PERSON_CREATE, Permissions.PERSON_READ],
+    )
+    await add_tree_member(
+        uow,
+        tree_id=tree_id,
+        user_id=member.user.safe_id,
+        permissions=[TreeAccessPermissions.VIEW],
+    )
+    await uow.commit()
+
+    resp = await client.post(
+        f"/family-trees/{tree_id}/persons",
+        json={"name": "Blocked", "gender": "male"},
+        headers=member.headers,
+    )
+    assert resp.status_code == 403
+    assert _error_code(resp) == int(ErrorCode.TREE_ACCESS_DENIED)
+
+
+@pytest.mark.asyncio
 async def test_adding_the_same_member_twice_is_rejected(
     client,
     tree_id,
@@ -212,7 +300,7 @@ async def test_adding_the_same_member_twice_is_rejected(
     uow,
 ):
     newcomer = await create_authenticated_user(client, uow, permissions=[])
-    payload = {"user_id": str(newcomer.user.safe_id)}
+    payload = {"username": newcomer.username}
 
     first = await client.post(
         f"/family-trees/{tree_id}/members", json=payload, headers=admin_headers
@@ -238,7 +326,7 @@ async def test_plain_member_cannot_add_members(client, tree_id, uow):
 
     resp = await client.post(
         f"/family-trees/{tree_id}/members",
-        json={"user_id": str(outsider.user.safe_id)},
+        json={"username": outsider.username},
         headers=member.headers,
     )
 

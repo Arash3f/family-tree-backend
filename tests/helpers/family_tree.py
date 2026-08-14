@@ -4,6 +4,7 @@ from app.application.interfaces.unit_of_work import UnitOfWork
 from app.core.config import settings
 from app.domain.entities.family_tree import FamilyTree, TreeMemberRole, TreeMembership
 from app.domain.entities.user import User
+from app.domain.shared.tree_access import TreeAccessPermissions
 
 
 async def get_admin_user(uow: UnitOfWork) -> User:
@@ -38,6 +39,7 @@ async def create_family_tree_with_owner(
             tree_id=tree.safe_id,
             user_id=owner.safe_id,
             role=TreeMemberRole.OWNER,
+            permissions=list(TreeAccessPermissions.ALL),
         )
     )
     return tree
@@ -49,6 +51,7 @@ async def add_tree_member(
     tree_id: UUID,
     user_id: UUID,
     role: TreeMemberRole = TreeMemberRole.MEMBER,
+    permissions: list[str] | None = None,
 ) -> TreeMembership:
     membership = await uow.tree_memberships.create(
         TreeMembership(
@@ -56,6 +59,12 @@ async def add_tree_member(
             tree_id=tree_id,
             user_id=user_id,
             role=role,
+            permissions=permissions
+            or (
+                list(TreeAccessPermissions.ALL)
+                if role is TreeMemberRole.OWNER
+                else [TreeAccessPermissions.VIEW]
+            ),
         )
     )
     return membership

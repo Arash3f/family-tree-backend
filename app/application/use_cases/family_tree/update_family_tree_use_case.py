@@ -22,8 +22,16 @@ class UpdateFamilyTreeUseCase:
             tree = await self.uow.family_trees.get_or_raise(tree_id)
             tree.name = dto.name
             tree = await self.uow.family_trees.update(tree)
+            membership = await self.uow.tree_memberships.get(
+                tree_id=tree_id, user_id=user_id
+            )
             await self.uow.commit()
-            return FamilyTreeMapper.to_response(tree)
+            return FamilyTreeMapper.to_response(
+                tree,
+                my_permissions=(
+                    membership.effective_permissions() if membership else []
+                ),
+            )
 
 
 class DeleteFamilyTreeUseCase:

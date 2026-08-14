@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import CheckConstraint, ForeignKey, String, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
@@ -25,6 +26,12 @@ class TreeMembershipModel(Base):
         index=True,
     )
     role: Mapped[str] = mapped_column(String(20), nullable=False)
+    permissions: Mapped[list] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=lambda: ["view"],
+        server_default='["view"]',
+    )
 
     __table_args__ = (
         UniqueConstraint("tree_id", "user_id", name="uq_tree_membership_tree_user"),

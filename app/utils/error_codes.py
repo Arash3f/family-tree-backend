@@ -57,6 +57,7 @@ class ErrorCode(int, Enum):
     # -----------------------
     ROLE_NOT_FOUND = 1500
     ROLE_NAME_DUPLICATED = 1501
+    ROLE_PROTECTED = 1502
     # -----------------------
     # |    Domain Ticket    |
     # -----------------------
@@ -74,6 +75,9 @@ class ErrorCode(int, Enum):
     CANNOT_REMOVE_LAST_OWNER = 1705
     PERSON_TREE_MISMATCH = 1706
     MARRIAGE_TREE_MISMATCH = 1707
+    TREE_EXCEL_INVALID = 1708
+    TREE_EXCEL_EMPTY = 1709
+    TREE_ACCESS_DENIED = 1710
 
 
 ERROR_MESSAGES = {
@@ -121,6 +125,7 @@ ERROR_MESSAGES = {
         # Domain Role
         ErrorCode.ROLE_NOT_FOUND: "Role not found",
         ErrorCode.ROLE_NAME_DUPLICATED: "Role name duplicated",
+        ErrorCode.ROLE_PROTECTED: "This role cannot be deleted",
         # Domain Ticket
         ErrorCode.TICKET_NOT_FOUND: "Ticket not found",
         ErrorCode.TICKET_CLOSED: "Ticket is closed",
@@ -134,6 +139,9 @@ ERROR_MESSAGES = {
         ErrorCode.CANNOT_REMOVE_LAST_OWNER: "Cannot remove the last owner of a family tree",
         ErrorCode.PERSON_TREE_MISMATCH: "Person does not belong to this family tree",
         ErrorCode.MARRIAGE_TREE_MISMATCH: "Marriage or related persons are not in this family tree",
+        ErrorCode.TREE_EXCEL_INVALID: "Excel file is invalid or does not match the expected template",
+        ErrorCode.TREE_EXCEL_EMPTY: "Excel file has no people or marriages to import",
+        ErrorCode.TREE_ACCESS_DENIED: "You do not have this access on the family tree",
     },
     "fa": {
         ErrorCode.UN_EXPECTED_ID: "شناسه غیرمنتظره",
@@ -155,8 +163,8 @@ ERROR_MESSAGES = {
         ErrorCode.MEDIA_TOO_LARGE: "حجم رسانه از حد مجاز بیشتر است",
         ErrorCode.INVALID_MEDIA_OBJECT_KEY: "کلید شیء رسانه نامعتبر است",
         ErrorCode.MEDIA_OBJECT_NOT_FOUND: "شیء رسانه یافت نشد",
-        ErrorCode.TOO_MANY_BIOLOGICAL_PARENTS: "فرزند نمی‌تواند بیش از دو والد زیستی داشته باشد",
-        ErrorCode.INVALID_PARENT_MARRIAGE: "والدهای زیستی باید با همسران ازدواج مبدأ مطابقت داشته باشند",
+        ErrorCode.TOO_MANY_BIOLOGICAL_PARENTS: "فرزند نمی‌تواند بیش از دو والد تنی داشته باشد",
+        ErrorCode.INVALID_PARENT_MARRIAGE: "والدهای تنی باید با همسران ازدواج مبدأ مطابقت داشته باشند",
         ErrorCode.PERSON_HAS_CHILDREN: "شخص دارای فرزند قابل حذف نیست",
         # Domain Marriage
         ErrorCode.SELF_MARRIAGE: "یک شخص نمی‌تواند با خودش ازدواج کند",
@@ -171,7 +179,7 @@ ERROR_MESSAGES = {
         ErrorCode.PERMISSION_NOT_FOUND: "دسترسی پیدا نشد",
         ErrorCode.PERMISSION_DENIED: "عدم وجود دسترسی",
         # Domain User
-        ErrorCode.USER_NOT_FOUND: "کاربر پیدا نشد",
+        ErrorCode.USER_NOT_FOUND: "همچین فردی وجود ندارد",
         ErrorCode.USER_PASSWORD_INCORECT: "رمز کاربر اشتباه است",
         ErrorCode.PASSWORD_CONFIRMATION_MISMATCH: "رمز عبور و تکرار آن یکسان نیستند",
         ErrorCode.SELF_ROLE_CHANGE: "نمی‌توانید نقش خودتان را تغییر دهید",
@@ -179,6 +187,7 @@ ERROR_MESSAGES = {
         # Domain Role
         ErrorCode.ROLE_NOT_FOUND: "نقش پیدا نشد",
         ErrorCode.ROLE_NAME_DUPLICATED: "اسم نقش تکراری است",
+        ErrorCode.ROLE_PROTECTED: "این نقش قابل حذف نیست",
         # Domain Ticket
         ErrorCode.TICKET_NOT_FOUND: "تیکت یافت نشد",
         ErrorCode.TICKET_CLOSED: "تیکت بسته شده است",
@@ -192,5 +201,8 @@ ERROR_MESSAGES = {
         ErrorCode.CANNOT_REMOVE_LAST_OWNER: "نمی‌توان آخرین مالک شجره‌نامه را حذف کرد",
         ErrorCode.PERSON_TREE_MISMATCH: "شخص متعلق به این شجره‌نامه نیست",
         ErrorCode.MARRIAGE_TREE_MISMATCH: "ازدواج یا افراد مرتبط در این شجره‌نامه نیستند",
+        ErrorCode.TREE_EXCEL_INVALID: "فایل اکسل نامعتبر است یا با قالب مورد انتظار هم‌خوانی ندارد",
+        ErrorCode.TREE_EXCEL_EMPTY: "فایل اکسل هیچ شخص یا ازدواجی برای ورود ندارد",
+        ErrorCode.TREE_ACCESS_DENIED: "این دسترسی را روی شجره‌نامه ندارید",
     },
 }

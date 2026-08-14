@@ -7,6 +7,7 @@ from app.application.dto.family_tree.family_tree_dto import (
 )
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.entities.family_tree import FamilyTree, TreeMemberRole, TreeMembership
+from app.domain.shared.tree_access import TreeAccessPermissions
 
 
 class CreateFamilyTreeUseCase:
@@ -32,7 +33,10 @@ class CreateFamilyTreeUseCase:
                     tree_id=tree.safe_id,
                     user_id=owner_user_id,
                     role=TreeMemberRole.OWNER,
+                    permissions=list(TreeAccessPermissions.ALL),
                 )
             )
             await self.uow.commit()
-            return FamilyTreeMapper.to_response(tree)
+            return FamilyTreeMapper.to_response(
+                tree, my_permissions=sorted(TreeAccessPermissions.ALL)
+            )

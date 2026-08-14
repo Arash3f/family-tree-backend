@@ -25,12 +25,14 @@ from app.application.use_cases.family_tree.update_family_tree_use_case import (
     UpdateFamilyTreeUseCase,
 )
 from app.domain.entities.family_tree import FamilyTree, TreeMemberRole, TreeMembership
+from app.domain.entities.user import User
 from app.domain.exceptions.family_tree_exceptions import (
     CannotRemoveLastOwnerException,
     TreeMemberAlreadyExistsException,
     TreeMembershipDeniedException,
     TreeOwnerRequiredException,
 )
+from app.domain.exceptions.user_exceptions import UserNotFoundException
 
 TREE_ID = UUID(int=11)
 OWNER_ID = UUID(int=22)
@@ -42,8 +44,25 @@ def _tree(name: str = "Ancestors") -> FamilyTree:
     return FamilyTree(id=TREE_ID, name=name, owner_user_id=OWNER_ID)
 
 
-def _membership(user_id: UUID, role: TreeMemberRole) -> TreeMembership:
-    return TreeMembership(id=uuid4(), tree_id=TREE_ID, user_id=user_id, role=role)
+def _membership(
+    user_id: UUID,
+    role: TreeMemberRole,
+    permissions: list[str] | None = None,
+) -> TreeMembership:
+    from app.domain.shared.tree_access import TreeAccessPermissions
+
+    return TreeMembership(
+        id=uuid4(),
+        tree_id=TREE_ID,
+        user_id=user_id,
+        role=role,
+        permissions=permissions
+        or (
+            list(TreeAccessPermissions.ALL)
+            if role is TreeMemberRole.OWNER
+            else [TreeAccessPermissions.VIEW]
+        ),
+    )
 
 
 def _memberships(mock_uow, *, present: TreeMembership | None):
@@ -80,10 +99,14 @@ async def test_create_family_tree_registers_the_creator_as_owner(mock_uow):
 @pytest.mark.asyncio
 async def test_list_family_trees_asks_only_for_the_users_trees(mock_uow):
     mock_uow.family_trees.list_for_user = AsyncMock(return_value=[_tree()])
+    mock_uow.tree_memberships.get = AsyncMock(
+        return_value=_membership(OWNER_ID, TreeMemberRole.OWNER)
+    )
 
     result = await ListFamilyTreesUseCase(mock_uow).execute(user_id=OWNER_ID)
 
     assert [t.id for t in result] == [TREE_ID]
+    assert result[0].my_permissions == ["add_persons", "edit", "view"]
     mock_uow.family_trees.list_for_user.assert_awaited_once_with(OWNER_ID)
 
 
@@ -173,6 +196,13 @@ async def test_add_tree_member_joins_with_the_member_role(mock_uow):
     mock_uow.tree_memberships.get = AsyncMock(
         side_effect=[_membership(OWNER_ID, TreeMemberRole.OWNER), None]
     )
+    mock_uow.users.get_by_username = AsyncMock(
+        return_value=User(
+            id=MEMBER_ID,
+            username="member",
+            password_hash="x",
+        )
+    )
     mock_uow.tree_memberships.create = AsyncMock(
         return_value=_membership(MEMBER_ID, TreeMemberRole.MEMBER)
     )
@@ -180,12 +210,35 @@ async def test_add_tree_member_joins_with_the_member_role(mock_uow):
     result = await AddTreeMemberUseCase(mock_uow).execute(
         tree_id=TREE_ID,
         actor_user_id=OWNER_ID,
-        dto=TreeMemberAddDTO(user_id=MEMBER_ID),
+        dto=TreeMemberAddDTO(username="member"),
     )
 
     assert result.role is TreeMemberRole.MEMBER
+    assert result.username == "member"
+    assert result.permissions == ["view"]
     created = mock_uow.tree_memberships.create.await_args.args[0]
     assert created.role is TreeMemberRole.MEMBER
+    assert created.user_id == MEMBER_ID
+    assert created.permissions == ["view"]
+
+
+@pytest.mark.asyncio
+async def test_add_tree_member_rejects_unknown_username(mock_uow):
+    mock_uow.family_trees.get_or_raise = AsyncMock(return_value=_tree())
+    mock_uow.tree_memberships.get = AsyncMock(
+        return_value=_membership(OWNER_ID, TreeMemberRole.OWNER)
+    )
+    mock_uow.users.get_by_username = AsyncMock(return_value=None)
+    mock_uow.tree_memberships.create = AsyncMock()
+
+    with pytest.raises(UserNotFoundException):
+        await AddTreeMemberUseCase(mock_uow).execute(
+            tree_id=TREE_ID,
+            actor_user_id=OWNER_ID,
+            dto=TreeMemberAddDTO(username="missing"),
+        )
+
+    mock_uow.tree_memberships.create.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -197,13 +250,20 @@ async def test_add_tree_member_rejects_a_duplicate(mock_uow):
             _membership(MEMBER_ID, TreeMemberRole.MEMBER),
         ]
     )
+    mock_uow.users.get_by_username = AsyncMock(
+        return_value=User(
+            id=MEMBER_ID,
+            username="member",
+            password_hash="x",
+        )
+    )
     mock_uow.tree_memberships.create = AsyncMock()
 
     with pytest.raises(TreeMemberAlreadyExistsException):
         await AddTreeMemberUseCase(mock_uow).execute(
             tree_id=TREE_ID,
             actor_user_id=OWNER_ID,
-            dto=TreeMemberAddDTO(user_id=MEMBER_ID),
+            dto=TreeMemberAddDTO(username="member"),
         )
 
     mock_uow.tree_memberships.create.assert_not_awaited()
@@ -218,7 +278,7 @@ async def test_add_tree_member_rejects_a_plain_member_as_actor(mock_uow):
         await AddTreeMemberUseCase(mock_uow).execute(
             tree_id=TREE_ID,
             actor_user_id=MEMBER_ID,
-            dto=TreeMemberAddDTO(user_id=OUTSIDER_ID),
+            dto=TreeMemberAddDTO(username="outsider"),
         )
 
     mock_uow.tree_memberships.create.assert_not_awaited()
@@ -297,9 +357,16 @@ async def test_list_tree_members_returns_the_roster_for_a_member(mock_uow):
             _membership(MEMBER_ID, TreeMemberRole.MEMBER),
         ]
     )
+    mock_uow.users.get = AsyncMock(
+        side_effect=[
+            User(id=OWNER_ID, username="owner", password_hash="x"),
+            User(id=MEMBER_ID, username="member", password_hash="x"),
+        ]
+    )
 
     result = await ListTreeMembersUseCase(mock_uow).execute(
         tree_id=TREE_ID, user_id=MEMBER_ID
     )
 
     assert [m.role for m in result] == [TreeMemberRole.OWNER, TreeMemberRole.MEMBER]
+    assert [m.username for m in result] == ["owner", "member"]

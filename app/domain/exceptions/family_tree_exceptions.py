@@ -56,6 +56,15 @@ class CannotRemoveLastOwnerException(AppException):
         )
 
 
+class TreeAccessDeniedException(AppException):
+    def __init__(self, detail: list[str] | None = None):
+        super().__init__(
+            code=ErrorCode.TREE_ACCESS_DENIED,
+            status_code=403,
+            detail=detail or [],
+        )
+
+
 class PersonTreeMismatchException(AppException):
     def __init__(self, detail: list[str] | None = None):
         super().__init__(
@@ -69,6 +78,24 @@ class MarriageTreeMismatchException(AppException):
     def __init__(self, detail: list[str] | None = None):
         super().__init__(
             code=ErrorCode.MARRIAGE_TREE_MISMATCH,
+            status_code=422,
+            detail=detail or [],
+        )
+
+
+class TreeExcelInvalidException(AppException):
+    def __init__(self, detail: list[str] | None = None):
+        super().__init__(
+            code=ErrorCode.TREE_EXCEL_INVALID,
+            status_code=422,
+            detail=detail or [],
+        )
+
+
+class TreeExcelEmptyException(AppException):
+    def __init__(self, detail: list[str] | None = None):
+        super().__init__(
+            code=ErrorCode.TREE_EXCEL_EMPTY,
             status_code=422,
             detail=detail or [],
         )

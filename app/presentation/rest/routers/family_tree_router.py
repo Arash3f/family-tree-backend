@@ -6,6 +6,7 @@ from app.application.dto.family_tree.family_tree_dto import (
     FamilyTreeCreateDTO,
     FamilyTreeUpdateDTO,
     TreeMemberAddDTO,
+    TreeMemberUpdateDTO,
 )
 from app.application.use_cases.family_tree.create_family_tree_use_case import (
     CreateFamilyTreeUseCase,
@@ -18,6 +19,7 @@ from app.application.use_cases.family_tree.tree_member_use_cases import (
     AddTreeMemberUseCase,
     ListTreeMembersUseCase,
     RemoveTreeMemberUseCase,
+    UpdateTreeMemberUseCase,
 )
 from app.application.use_cases.family_tree.update_family_tree_use_case import (
     DeleteFamilyTreeUseCase,
@@ -33,6 +35,7 @@ from app.presentation.rest.schemas.dto.family_tree_schema import (
     FamilyTreeResponse,
     FamilyTreeUpdateRequest,
     TreeMemberAddRequest,
+    TreeMemberUpdateRequest,
     TreeMembershipResponse,
 )
 from app.presentation.rest.utils.dependencies import get_uow
@@ -41,7 +44,7 @@ router = APIRouter(prefix="/family-trees", tags=["Family Trees"])
 
 
 @router.post(
-    "/",
+    "",
     response_model=FamilyTreeResponse,
     dependencies=[Depends(RequirePermission(Permissions.TREE_CREATE))],
     status_code=201,
@@ -60,7 +63,7 @@ async def create_family_tree(
 
 
 @router.get(
-    "/",
+    "",
     response_model=list[FamilyTreeResponse],
     dependencies=[Depends(RequirePermission(Permissions.TREE_READ))],
 )
@@ -154,7 +157,32 @@ async def add_tree_member(
     res = await usecase.execute(
         tree_id=tree_id,
         actor_user_id=current_user.safe_id,
-        dto=TreeMemberAddDTO(user_id=data.user_id),
+        dto=TreeMemberAddDTO(
+            username=data.username,
+            permissions=data.permissions,
+        ),
+    )
+    return TreeMembershipResponse.model_validate(res.model_dump())
+
+
+@router.patch(
+    "/{tree_id}/members/{user_id}",
+    response_model=TreeMembershipResponse,
+    dependencies=[Depends(RequirePermission(Permissions.TREE_MEMBER_ADD))],
+)
+async def update_tree_member(
+    tree_id: UUID,
+    user_id: UUID,
+    data: TreeMemberUpdateRequest,
+    current_user: User = Depends(get_current_user),
+    uow=Depends(get_uow),
+) -> TreeMembershipResponse:
+    usecase = UpdateTreeMemberUseCase(uow)
+    res = await usecase.execute(
+        tree_id=tree_id,
+        actor_user_id=current_user.safe_id,
+        target_user_id=user_id,
+        dto=TreeMemberUpdateDTO(permissions=data.permissions),
     )
     return TreeMembershipResponse.model_validate(res.model_dump())
 

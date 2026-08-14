@@ -45,6 +45,9 @@ class TreeMembershipRepository(ABC):
     async def count_owners(self, tree_id: UUID) -> int: ...
 
     @abstractmethod
+    async def update(self, membership: TreeMembership) -> TreeMembership: ...
+
+    @abstractmethod
     async def delete(self, tree_id: UUID, user_id: UUID) -> None: ...
 
     async def get_or_raise(self, tree_id: UUID, user_id: UUID) -> TreeMembership:

@@ -6,6 +6,7 @@ from app.application.dto.family_tree.family_tree_dto import (
     FamilyTreeCreateDTO,
     FamilyTreeUpdateDTO,
     TreeMemberAddDTO,
+    TreeMemberUpdateDTO,
 )
 from app.application.use_cases.family_tree.create_family_tree_use_case import (
     CreateFamilyTreeUseCase,
@@ -18,12 +19,14 @@ from app.application.use_cases.family_tree.tree_member_use_cases import (
     AddTreeMemberUseCase,
     ListTreeMembersUseCase,
     RemoveTreeMemberUseCase,
+    UpdateTreeMemberUseCase,
 )
 from app.application.use_cases.family_tree.update_family_tree_use_case import (
     DeleteFamilyTreeUseCase,
     UpdateFamilyTreeUseCase,
 )
 from app.domain.shared.permissions import Permissions
+from app.domain.shared.tree_access import TreeAccessPermissions
 from app.presentation.graphql.auth import require_permission
 from app.presentation.graphql.types.common import ResultType
 from app.presentation.graphql.types.family_tree import (
@@ -31,6 +34,7 @@ from app.presentation.graphql.types.family_tree import (
     FamilyTreeType,
     FamilyTreeUpdateInput,
     TreeMemberAddInput,
+    TreeMemberUpdateInput,
     TreeMembershipType,
     family_tree_from_mapping,
     tree_membership_from_mapping,
@@ -98,7 +102,24 @@ async def resolve_add_tree_member(
     res = await usecase.execute(
         tree_id=tree_id,
         actor_user_id=user.safe_id,
-        dto=TreeMemberAddDTO(user_id=data.user_id),
+        dto=TreeMemberAddDTO(
+            username=data.username,
+            permissions=data.permissions or [TreeAccessPermissions.VIEW],
+        ),
+    )
+    return tree_membership_from_mapping(res.model_dump())
+
+
+async def resolve_update_tree_member(
+    info: Info, tree_id: UUID, user_id: UUID, data: TreeMemberUpdateInput
+) -> TreeMembershipType:
+    actor = await require_permission(info, Permissions.TREE_MEMBER_ADD)
+    usecase = UpdateTreeMemberUseCase(info.context.uow)
+    res = await usecase.execute(
+        tree_id=tree_id,
+        actor_user_id=actor.safe_id,
+        target_user_id=user_id,
+        dto=TreeMemberUpdateDTO(permissions=data.permissions),
     )
     return tree_membership_from_mapping(res.model_dump())
 
