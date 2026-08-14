@@ -46,6 +46,7 @@ from app.presentation.rest.schemas.mappers.user_mappers import UserApiMapper
 def _user_create_request(data: UserCreateInput) -> UserCreateRequest:
     return UserCreateRequest(
         username=data.username,
+        fullname=data.fullname,
         password=data.password,
         re_password=data.re_password,
         role_id=data.role_id,
@@ -56,6 +57,8 @@ def _user_update_dto(data: UserUpdateInput) -> UserUpdateDTO:
     raw: dict = {}
     if data.data.username is not None:
         raw["username"] = data.data.username
+    if data.data.fullname is not None:
+        raw["fullname"] = data.data.fullname
     if data.data.password is not None:
         raw["password"] = data.data.password
     if data.data.re_password is not None:

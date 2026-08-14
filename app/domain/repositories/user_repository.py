@@ -29,6 +29,11 @@ class UserRepository(ABC):
     ) -> UserGetWithDetailResponseDTO | None: ...
 
     @abstractmethod
+    async def ids_having_permission(
+        self, user_ids: list[UUID], permission_name: str
+    ) -> set[UUID]: ...
+
+    @abstractmethod
     async def get_by_username(self, username: str) -> User | None: ...
 
     @abstractmethod

@@ -38,7 +38,7 @@ router = APIRouter(prefix="/users", tags=["Users"])
 
 
 @router.post(
-    "/",
+    "",
     response_model=UserCreateResponse,
     dependencies=[Depends(RequirePermission(Permissions.USER_CREATE))],
 )
@@ -71,7 +71,7 @@ async def delete_user(
 
 
 @router.put(
-    "/",
+    "",
     response_model=UserUpdateResponse,
 )
 async def update_user(

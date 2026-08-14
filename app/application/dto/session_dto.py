@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class SessionListItemDTO(BaseModel):
@@ -13,12 +13,20 @@ class SessionListItemDTO(BaseModel):
     is_current: bool
 
 
+class MePermissionDTO(BaseModel):
+    name: str
+    description_en: str = ""
+    description_fa: str = ""
+
+
 class MeResponseDTO(BaseModel):
     id: UUID
     username: str
+    fullname: str = ""
     role_id: UUID | None
     role_name: str | None
     permissions: list[str]
+    permission_details: list[MePermissionDTO] = Field(default_factory=list)
     session_id: UUID
 
 

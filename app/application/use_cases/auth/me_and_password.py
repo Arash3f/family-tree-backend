@@ -1,6 +1,10 @@
 from uuid import UUID
 
-from app.application.dto.session_dto import ChangePasswordDTO, MeResponseDTO
+from app.application.dto.session_dto import (
+    ChangePasswordDTO,
+    MePermissionDTO,
+    MeResponseDTO,
+)
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.exceptions.user_exceptions import (
     PasswordConfirmationMismatchException,
@@ -23,24 +27,41 @@ class GetMeUseCase:
                 return MeResponseDTO(
                     id=user.safe_id,
                     username=user.username,
+                    fullname=user.fullname,
                     role_id=user.role_id,
                     role_name=None,
                     permissions=[],
+                    permission_details=[],
                     session_id=session_id,
                 )
 
             permissions: list[str] = []
+            permission_details: list[MePermissionDTO] = []
             role_name = None
             if details.role is not None:
                 role_name = details.role.name
-                permissions = sorted(p.name for p in details.role.permissions)
+                sorted_perms = sorted(
+                    details.role.permissions,
+                    key=lambda p: p.name,
+                )
+                permissions = [p.name for p in sorted_perms]
+                permission_details = [
+                    MePermissionDTO(
+                        name=p.name,
+                        description_en=p.description_en,
+                        description_fa=p.description_fa,
+                    )
+                    for p in sorted_perms
+                ]
 
             return MeResponseDTO(
                 id=details.id,
                 username=details.username,
+                fullname=details.fullname,
                 role_id=details.role_id,
                 role_name=role_name,
                 permissions=permissions,
+                permission_details=permission_details,
                 session_id=session_id,
             )
 

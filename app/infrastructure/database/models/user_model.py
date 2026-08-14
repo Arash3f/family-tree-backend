@@ -14,6 +14,7 @@ class UserModel(Base):
     __tablename__ = "users"
 
     username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    fullname: Mapped[str] = mapped_column(String(100), nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
 
     role_id: Mapped[UUID | None] = mapped_column(

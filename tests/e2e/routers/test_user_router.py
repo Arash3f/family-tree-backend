@@ -45,11 +45,12 @@ BASE_URL = "/users"
 async def test_create_user_permission_denied(client, member_headers):  # noqa: F811
     req = UserCreateRequest(
         username="limited-user",
+        fullname="limited-user",
         password="secret",
         re_password="secret",
     )
     resp = await client.post(
-        f"{BASE_URL}/",
+        BASE_URL,
         json=req.model_dump(mode="json"),
         headers=member_headers,
     )
@@ -65,11 +66,12 @@ async def test_create_user_permission_denied(client, member_headers):  # noqa: F
 async def test_create_user_unauthenticated(client):
     req = UserCreateRequest(
         username="limited-user",
+        fullname="limited-user",
         password="secret",
         re_password="secret",
     )
     resp = await client.post(
-        f"{BASE_URL}/",
+        BASE_URL,
         json=req.model_dump(mode="json"),
     )
 
@@ -84,13 +86,14 @@ async def test_create_user_success(client, admin_headers, uow):  # noqa: F811
 
     req = UserCreateRequest(
         username="new-user",
+        fullname="New User",
         password="secret",
         re_password="secret",
         role_id=role.safe_id,
     )
 
     resp = await client.post(
-        f"{BASE_URL}/",
+        BASE_URL,
         json=req.model_dump(mode="json"),
         headers=admin_headers,
     )
@@ -100,6 +103,7 @@ async def test_create_user_success(client, admin_headers, uow):  # noqa: F811
     user_data = TypeAdapter(UserCreateResponse).validate_python(resp.json())
     assert user_data.id is not None
     assert user_data.username == req.username
+    assert user_data.fullname == req.fullname
     assert user_data.role_id == role.safe_id
 
     async with uow:
@@ -107,6 +111,7 @@ async def test_create_user_success(client, admin_headers, uow):  # noqa: F811
 
     assert find_user.id == user_data.id
     assert find_user.username == user_data.username
+    assert find_user.fullname == user_data.fullname
     assert find_user.role_id == role.safe_id
 
 
@@ -186,7 +191,7 @@ async def test_update_user_permission_denied(client, member_headers):  # noqa: F
     )
 
     resp = await client.put(
-        f"{BASE_URL}/",
+        BASE_URL,
         json=payload.model_dump(mode="json"),
         headers=member_headers,
     )
@@ -206,7 +211,7 @@ async def test_update_user_unauthenticated(client):
     )
 
     resp = await client.put(
-        f"{BASE_URL}/",
+        BASE_URL,
         json=payload.model_dump(mode="json"),
     )
 
@@ -235,7 +240,7 @@ async def test_update_user_success(client, admin_headers, uow: SQLAlchemyUnitOfW
     )
 
     resp = await client.put(
-        f"{BASE_URL}/",
+        BASE_URL,
         json=payload.model_dump(mode="json"),
         headers=admin_headers,
     )
@@ -258,7 +263,7 @@ async def test_update_user_with_invalid_id(client, admin_headers):  # noqa: F811
     )
 
     resp = await client.put(
-        f"{BASE_URL}/",
+        BASE_URL,
         json=payload.model_dump(mode="json"),
         headers=admin_headers,
     )

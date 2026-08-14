@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from uuid import UUID
 
 from app.domain.exceptions.common_exceptions import UnExpectedIdException
@@ -15,8 +16,15 @@ class User:
 
     username: str
     password_hash: str
+    fullname: str = ""
     id: UUID | None = None
     role_id: UUID | None = None
+    # Populated only on list queries (max session created_at); not persisted on User.
+    last_session_at: datetime | None = None
+
+    def __post_init__(self) -> None:
+        if not self.fullname:
+            self.fullname = self.username
 
     def verify_password(self, plain_password: str, hasher: PasswordHasher) -> bool:
         """

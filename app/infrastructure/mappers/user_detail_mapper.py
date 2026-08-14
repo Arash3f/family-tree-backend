@@ -13,13 +13,20 @@ def user_model_to_detail_dto(model: UserModel) -> UserGetWithDetailResponseDTO:
             id=model.role.id,
             name=model.role.name,
             permissions=[
-                _Permission(id=p.id, name=p.name) for p in model.role.permissions
+                _Permission(
+                    id=p.id,
+                    name=p.name,
+                    description_en=getattr(p, "description_en", "") or "",
+                    description_fa=getattr(p, "description_fa", "") or "",
+                )
+                for p in model.role.permissions
             ],
         )
 
     return UserGetWithDetailResponseDTO(
         id=model.id,
         username=model.username,
+        fullname=model.fullname,
         role_id=model.role_id,
         role=role,
     )

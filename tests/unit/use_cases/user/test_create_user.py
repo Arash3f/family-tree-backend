@@ -12,6 +12,7 @@ from uuid import UUID
 async def test_create_user_with_role(mock_uow):
     dto = UserCreateDTO(
         username="arash",
+        fullname="Arash Alf",
         password="secret",
         re_password="secret",
         role_id=UUID(int=1),
@@ -54,6 +55,7 @@ async def test_create_user_with_role(mock_uow):
     user_arg = args.args[0]
 
     assert user_arg.username == "arash"
+    assert user_arg.fullname == "Arash Alf"
     assert user_arg.role_id == UUID(int=1)
     assert user_arg.password_hash == "hashed_password"
 
@@ -66,6 +68,7 @@ async def test_create_user_with_role(mock_uow):
 async def test_create_user_without_role(mock_uow):
     dto = UserCreateDTO(
         username="arash",
+        fullname="Arash",
         password="secret",
         re_password="secret",
         role_id=None,
@@ -108,6 +111,7 @@ async def test_create_user_without_role(mock_uow):
     user_arg = args.args[0]
 
     assert user_arg.username == "arash"
+    assert user_arg.fullname == "Arash"
     assert user_arg.role_id is None
     assert user_arg.password_hash == "hashed_password"
 

@@ -268,3 +268,40 @@ async def test_delete_user(uow: UnitOfWork):
 
         fetched = await uow.users.get(user_id=created.safe_id)
         assert fetched is None
+
+
+@pytest.mark.asyncio
+async def test_ids_having_permission(uow: UnitOfWork):
+    from app.domain.entities.permission import Permission
+
+    async with uow:
+        manage = await uow.permissions.create(Permission(id=None, name="ticket_manage"))
+        other = await uow.permissions.create(Permission(id=None, name="ticket_read"))
+        staff_role = await uow.roles.create(
+            Role(id=None, name="staff_role", permission_ids=[manage.safe_id])
+        )
+        user_role = await uow.roles.create(
+            Role(id=None, name="user_role", permission_ids=[other.safe_id])
+        )
+        staff = await uow.users.create(
+            User(
+                username="staff_user",
+                password_hash="hash",
+                role_id=staff_role.safe_id,
+            )
+        )
+        member = await uow.users.create(
+            User(
+                username="member_user",
+                password_hash="hash",
+                role_id=user_role.safe_id,
+            )
+        )
+
+        found = await uow.users.ids_having_permission(
+            [staff.safe_id, member.safe_id], "ticket_manage"
+        )
+        assert found == {staff.safe_id}
+
+        empty = await uow.users.ids_having_permission([], "ticket_manage")
+        assert empty == set()

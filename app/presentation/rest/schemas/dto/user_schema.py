@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -13,11 +14,14 @@ from app.presentation.rest.schemas.dto.common import (
 class UserModel(BaseModel):
     id: UUID
     username: str
+    fullname: str
     role_id: UUID | None = None
+    last_session_at: datetime | None = None
 
 
 class _UserUpdateDateRequest(BaseModel):
     username: str | None = None
+    fullname: str | None = None
     password: str | None = None
     re_password: str | None = None
     role_id: UUID | None = None
@@ -35,17 +39,20 @@ class UserUpdateRequest(BaseModel):
 class UserUpdateResponse(BaseModel):
     id: UUID
     username: str
+    fullname: str
     role_id: UUID | None
 
 
 class UserGetResponse(BaseModel):
     id: UUID
     username: str
+    fullname: str
     role_id: UUID | None
 
 
 class UserCreateRequest(BaseModel):
     username: str
+    fullname: str
     password: str
     re_password: str
     role_id: UUID | None = None
@@ -54,6 +61,7 @@ class UserCreateRequest(BaseModel):
 class UserCreateResponse(BaseModel):
     id: UUID
     username: str
+    fullname: str
     role_id: UUID | None
 
 

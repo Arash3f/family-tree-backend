@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 import strawberry
@@ -13,7 +14,9 @@ from app.presentation.graphql.types.common import (
 class UserType:
     id: UUID
     username: str
+    fullname: str
     role_id: UUID | None = None
+    last_session_at: datetime | None = None
 
 
 @strawberry.type
@@ -34,6 +37,7 @@ class AuthTokensType:
 @strawberry.input
 class UserCreateInput:
     username: str
+    fullname: str
     password: str
     re_password: str
     role_id: UUID | None = None
@@ -42,6 +46,7 @@ class UserCreateInput:
 @strawberry.input
 class UserUpdateDataInput:
     username: str | None = None
+    fullname: str | None = None
     password: str | None = None
     re_password: str | None = None
     role_id: UUID | None = None
@@ -77,5 +82,7 @@ def user_from_mapping(data: dict) -> UserType:
     return UserType(
         id=data["id"],
         username=data["username"],
+        fullname=data["fullname"],
         role_id=data.get("role_id"),
+        last_session_at=data.get("last_session_at"),
     )

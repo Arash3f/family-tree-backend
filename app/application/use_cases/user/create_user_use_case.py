@@ -27,7 +27,10 @@ class CreateUserUseCase:
             hashed_password = self.password_hasher.hash(dto.password)
 
             user = User(
-                username=dto.username, role_id=role_id, password_hash=hashed_password
+                username=dto.username,
+                fullname=dto.fullname,
+                role_id=role_id,
+                password_hash=hashed_password,
             )
 
             user = await self.uow.users.create(user)

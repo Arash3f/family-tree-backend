@@ -7,6 +7,7 @@ from app.domain.entities.user import User
 
 class UserCreateDTO(BaseModel):
     username: str
+    fullname: str
     password: str
     re_password: str
     role_id: UUID | None
@@ -15,6 +16,7 @@ class UserCreateDTO(BaseModel):
 class UserCreateResponseDTO(BaseModel):
     id: UUID
     username: str
+    fullname: str
     role_id: UUID | None
 
 
@@ -24,5 +26,6 @@ class UserCreateMapper(BaseModel):
         return UserCreateResponseDTO(
             id=user.safe_id,
             username=user.username,
+            fullname=user.fullname,
             role_id=user.role_id,
         )

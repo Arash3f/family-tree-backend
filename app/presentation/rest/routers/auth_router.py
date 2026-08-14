@@ -123,14 +123,7 @@ async def me(
 ) -> MeResponse:
     usecase = GetMeUseCase(uow)
     data = await usecase.execute(current_user.safe_id, session_id)
-    return MeResponse(
-        id=data.id,
-        username=data.username,
-        role_id=data.role_id,
-        role_name=data.role_name,
-        permissions=data.permissions,
-        session_id=data.session_id,
-    )
+    return MeResponse.model_validate(data.model_dump())
 
 
 @router.get("/sessions", response_model=list[SessionResponse])

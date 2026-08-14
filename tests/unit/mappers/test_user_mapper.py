@@ -9,6 +9,7 @@ def create_user(**overrides):
     return User(
         id=overrides.get("id", UUID(int=1)),
         username=overrides.get("username", "arash"),
+        fullname=overrides.get("fullname", "Arash"),
         password_hash=overrides.get("password_hash", "pass"),
         role_id=overrides.get("role_id"),
     )
@@ -21,6 +22,7 @@ def test_user_create_mapper_to_response():
 
     assert dto.id == user.id
     assert dto.username == user.username
+    assert dto.fullname == user.fullname
     assert dto.role_id == user.role_id
 
 
@@ -31,6 +33,7 @@ def test_user_get_mapper_to_response():
 
     assert dto.id == user.id
     assert dto.username == user.username
+    assert dto.fullname == user.fullname
     assert dto.role_id == user.role_id
 
 
@@ -41,4 +44,5 @@ def test_user_update_mapper_to_response():
 
     assert dto.id == user.id
     assert dto.username == user.username
+    assert dto.fullname == user.fullname
     assert dto.role_id == user.role_id

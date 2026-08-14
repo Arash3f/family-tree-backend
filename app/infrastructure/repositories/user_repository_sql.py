@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -13,8 +13,11 @@ from app.domain.repositories.user_repository import UserRepository
 from app.domain.shared.dto.pagination_dto import PaginatedResult
 from app.domain.shared.dto.user_filter_dto import FilterUserQuery, UserSortField
 from app.domain.shared.dto.user_with_detail_dto import UserGetWithDetailResponseDTO
+from app.infrastructure.database.models.associations import role_permissions
+from app.infrastructure.database.models.permission_model import PermissionModel
 from app.infrastructure.database.models.role_model import RoleModel
 from app.infrastructure.database.models.user_model import UserModel
+from app.infrastructure.database.models.user_session_model import UserSessionModel
 from app.infrastructure.database.utils.pagination_and_sort import paginate_and_sort
 from app.infrastructure.mappers.user_detail_mapper import user_model_to_detail_dto
 
@@ -61,6 +64,26 @@ class SQLUserRepository(UserRepository):
 
         return user_model_to_detail_dto(model)
 
+    async def ids_having_permission(
+        self, user_ids: list[UUID], permission_name: str
+    ) -> set[UUID]:
+        if not user_ids:
+            return set()
+
+        stmt = (
+            select(UserModel.id)
+            .join(RoleModel, UserModel.role_id == RoleModel.id)
+            .join(role_permissions, role_permissions.c.role_id == RoleModel.id)
+            .join(
+                PermissionModel,
+                PermissionModel.id == role_permissions.c.permission_id,
+            )
+            .where(UserModel.id.in_(user_ids))
+            .where(PermissionModel.name == permission_name)
+        )
+        result = await self.session.execute(stmt)
+        return set(result.scalars().all())
+
     async def get_by_username(self, username: str) -> User | None:
         stmt = select(UserModel).where(UserModel.username == username)
 
@@ -105,6 +128,7 @@ class SQLUserRepository(UserRepository):
         )
 
         users = [self._to_entity(m) for m in result.items]
+        await self._attach_last_session_at(users)
 
         return PaginatedResult[User](
             items=users,
@@ -112,6 +136,26 @@ class SQLUserRepository(UserRepository):
             page=result.page,
             page_size=result.page_size,
         )
+
+    async def _attach_last_session_at(self, users: list[User]) -> None:
+        user_ids = [user.safe_id for user in users if user.id is not None]
+        if not user_ids:
+            return
+
+        stmt = (
+            select(
+                UserSessionModel.user_id,
+                func.max(UserSessionModel.created_at),
+            )
+            .where(UserSessionModel.user_id.in_(user_ids))
+            .group_by(UserSessionModel.user_id)
+        )
+        rows = await self.session.execute(stmt)
+        last_by_user = {user_id: created_at for user_id, created_at in rows.all()}
+
+        for user in users:
+            if user.id is not None:
+                user.last_session_at = last_by_user.get(user.id)
 
     async def update(self, user: User) -> User:
         stmt = select(UserModel).where(UserModel.id == user.id)
@@ -123,6 +167,7 @@ class SQLUserRepository(UserRepository):
             raise UserNotFoundException(detail=[f"user id is {user.id}"])
 
         model.username = user.username
+        model.fullname = user.fullname
         model.role_id = user.role_id
         model.password_hash = user.password_hash
 
@@ -140,6 +185,7 @@ class SQLUserRepository(UserRepository):
         return User(
             id=model.id,
             username=model.username,
+            fullname=model.fullname,
             password_hash=model.password_hash,
             role_id=model.role_id,
         )
@@ -148,6 +194,7 @@ class SQLUserRepository(UserRepository):
         model = UserModel(
             id=entity.id,
             username=entity.username,
+            fullname=entity.fullname,
             password_hash=entity.password_hash,
             role_id=entity.role_id,
         )
