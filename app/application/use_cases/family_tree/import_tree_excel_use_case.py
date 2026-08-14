@@ -102,22 +102,23 @@ class ImportTreeExcelUseCase:
 
             _fill_duplicate_refs(person_ref_to_id, match.person_duplicate_of)
 
-            for row in parsed.marriages:
+            for marriage_row in parsed.marriages:
                 if not _should_create(
-                    row.ref,
-                    already_exists=match.marriage_already_in_tree(row.ref),
+                    marriage_row.ref,
+                    already_exists=match.marriage_already_in_tree(marriage_row.ref),
                     duplicate_of=match.marriage_duplicate_of,
                     selected=selected_marriages,
                 ):
                     continue
-                spouse_a_id = person_ref_to_id.get(row.spouse_a_ref)
-                spouse_b_id = person_ref_to_id.get(row.spouse_b_ref)
+                spouse_a_id = person_ref_to_id.get(marriage_row.spouse_a_ref)
+                spouse_b_id = person_ref_to_id.get(marriage_row.spouse_b_ref)
                 if spouse_a_id is None or spouse_b_id is None:
                     raise TreeExcelInvalidException(
                         detail=[
-                            f"Marriages row {row.row_number}: unknown spouse ref "
-                            f"('{row.spouse_a_ref}' / '{row.spouse_b_ref}'). "
-                            "Select those people or make sure they already exist."
+                            f"Marriages row {marriage_row.row_number}: unknown "
+                            f"spouse ref ('{marriage_row.spouse_a_ref}' / "
+                            f"'{marriage_row.spouse_b_ref}'). Select those people "
+                            "or make sure they already exist."
                         ]
                     )
 
@@ -130,14 +131,14 @@ class ImportTreeExcelUseCase:
                 self.marriage_rules_service.validate_marriage(
                     spouse_a=spouse_a,
                     spouse_b=spouse_b,
-                    marriage_date=row.married_at,
+                    marriage_date=marriage_row.married_at,
                 )
 
                 for spouse in (spouse_a, spouse_b):
                     if await self.uow.marriages.has_active_for_person(spouse.safe_id):
                         raise ActiveMarriageExistsException(
                             detail=[
-                                f"Marriages row {row.row_number}: person "
+                                f"Marriages row {marriage_row.row_number}: person "
                                 f"{spouse.safe_id} already has an active marriage"
                             ]
                         )
@@ -147,11 +148,11 @@ class ImportTreeExcelUseCase:
                     tree_id=tree_id,
                     spouse_a_id=spouse_a_id,
                     spouse_b_id=spouse_b_id,
-                    married_at=row.married_at,
-                    divorced_at=row.divorced_at,
+                    married_at=marriage_row.married_at,
+                    divorced_at=marriage_row.divorced_at,
                 )
                 marriage = await self.uow.marriages.create(marriage)
-                marriage_ref_to_id[row.ref] = marriage.safe_id
+                marriage_ref_to_id[marriage_row.ref] = marriage.safe_id
                 created_marriages.append(marriage)
 
             _fill_duplicate_refs(marriage_ref_to_id, match.marriage_duplicate_of)

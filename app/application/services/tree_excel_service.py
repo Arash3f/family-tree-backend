@@ -733,28 +733,33 @@ def match_tree_excel(
 
     existing_marriage_by_key: dict[MarriageExistingKey, Marriage] = {}
     for marriage in existing_marriages:
-        key = (
+        marriage_key = (
             frozenset({marriage.spouse_a_id, marriage.spouse_b_id}),
             marriage.married_at,
         )
-        existing_marriage_by_key.setdefault(key, marriage)
+        existing_marriage_by_key.setdefault(marriage_key, marriage)
 
     file_marriage_key_to_ref: dict[MarriageFileKey, str] = {}
-    for row in parsed.marriages:
-        file_key = (frozenset({row.spouse_a_ref, row.spouse_b_ref}), row.married_at)
+    for marriage_row in parsed.marriages:
+        file_key = (
+            frozenset({marriage_row.spouse_a_ref, marriage_row.spouse_b_ref}),
+            marriage_row.married_at,
+        )
         if file_key in file_marriage_key_to_ref:
-            match.marriage_duplicate_of[row.ref] = file_marriage_key_to_ref[file_key]
+            match.marriage_duplicate_of[marriage_row.ref] = file_marriage_key_to_ref[
+                file_key
+            ]
         else:
-            file_marriage_key_to_ref[file_key] = row.ref
+            file_marriage_key_to_ref[file_key] = marriage_row.ref
 
-        id_a = match.person_existing_id.get(row.spouse_a_ref)
-        id_b = match.person_existing_id.get(row.spouse_b_ref)
+        id_a = match.person_existing_id.get(marriage_row.spouse_a_ref)
+        id_b = match.person_existing_id.get(marriage_row.spouse_b_ref)
         if id_a is None or id_b is None:
             continue
         existing_marriage = existing_marriage_by_key.get(
-            (frozenset({id_a, id_b}), row.married_at)
+            (frozenset({id_a, id_b}), marriage_row.married_at)
         )
         if existing_marriage is not None:
-            match.marriage_existing_id[row.ref] = existing_marriage.safe_id
+            match.marriage_existing_id[marriage_row.ref] = existing_marriage.safe_id
 
     return match

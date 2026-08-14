@@ -24,10 +24,10 @@ async def resolve_permission_ids_with_bundles(
 
     id_by_name = {name: permission_id for permission_id, name in selected}
     for name in missing_names:
-        permission = await permissions.get_by_name(name)
-        if permission is None:
+        companion = await permissions.get_by_name(name)
+        if companion is None:
             raise PermissionNotFoundException(detail=[f"permission name is {name}"])
-        id_by_name[name] = permission.safe_id
+        id_by_name[name] = companion.safe_id
 
     ordered: list[UUID] = []
     seen: set[UUID] = set()

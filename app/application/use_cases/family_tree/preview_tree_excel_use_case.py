@@ -150,14 +150,24 @@ class PreviewTreeExcelUseCase:
             for spouse_id in (marriage.spouse_a_id, marriage.spouse_b_id)
         }
 
-        for person in persons_out:
-            person.already_exists = match.person_already_in_tree(person.ref)
-            person.existing_label = match.person_existing_label.get(person.ref)
-            person.duplicate_of_ref = match.person_duplicate_of.get(person.ref)
+        for preview_person in persons_out:
+            preview_person.already_exists = match.person_already_in_tree(
+                preview_person.ref
+            )
+            preview_person.existing_label = match.person_existing_label.get(
+                preview_person.ref
+            )
+            preview_person.duplicate_of_ref = match.person_duplicate_of.get(
+                preview_person.ref
+            )
 
-        for marriage in marriages_out:
-            marriage.already_exists = match.marriage_already_in_tree(marriage.ref)
-            marriage.duplicate_of_ref = match.marriage_duplicate_of.get(marriage.ref)
+        for preview_marriage_item in marriages_out:
+            preview_marriage_item.already_exists = match.marriage_already_in_tree(
+                preview_marriage_item.ref
+            )
+            preview_marriage_item.duplicate_of_ref = match.marriage_duplicate_of.get(
+                preview_marriage_item.ref
+            )
 
         person_ids: dict[str, UUID] = {}
         person_by_ref: dict[str, Person] = {}
@@ -196,20 +206,23 @@ class PreviewTreeExcelUseCase:
         active_spouse_refs: set[str] = set()
 
         preview_marriage_by_ref = {item.ref: item for item in marriages_out}
-        for row in parsed.marriages:
-            marriage_by_ref[row.ref] = row
-            preview_marriage = preview_marriage_by_ref[row.ref]
-            if match.marriage_already_in_tree(row.ref):
-                marriage_ids[row.ref] = match.marriage_existing_id[row.ref]
+        for marriage_row in parsed.marriages:
+            marriage_by_ref[marriage_row.ref] = marriage_row
+            preview_marriage = preview_marriage_by_ref[marriage_row.ref]
+            if match.marriage_already_in_tree(marriage_row.ref):
+                marriage_ids[marriage_row.ref] = match.marriage_existing_id[
+                    marriage_row.ref
+                ]
                 continue
 
-            spouse_a = person_by_ref.get(row.spouse_a_ref)
-            spouse_b = person_by_ref.get(row.spouse_b_ref)
+            spouse_a = person_by_ref.get(marriage_row.spouse_a_ref)
+            spouse_b = person_by_ref.get(marriage_row.spouse_b_ref)
 
             if spouse_a is None or spouse_b is None:
                 errors.append(
-                    f"Marriages row {row.row_number}: unknown spouse ref "
-                    f"('{row.spouse_a_ref}' / '{row.spouse_b_ref}')"
+                    f"Marriages row {marriage_row.row_number}: unknown spouse ref "
+                    f"('{marriage_row.spouse_a_ref}' / "
+                    f"'{marriage_row.spouse_b_ref}')"
                 )
                 continue
 
@@ -217,28 +230,28 @@ class PreviewTreeExcelUseCase:
                 self.marriage_rules_service.validate_marriage(
                     spouse_a=spouse_a,
                     spouse_b=spouse_b,
-                    marriage_date=row.married_at,
+                    marriage_date=marriage_row.married_at,
                 )
             except AppException as exc:
                 for message in _exc_messages(exc):
-                    errors.append(f"Marriages row {row.row_number}: {message}")
+                    errors.append(f"Marriages row {marriage_row.row_number}: {message}")
 
-            if row.divorced_at is None:
+            if marriage_row.divorced_at is None:
                 tree_conflict_refs: list[str] = []
                 for ref, spouse in (
-                    (row.spouse_a_ref, spouse_a),
-                    (row.spouse_b_ref, spouse_b),
+                    (marriage_row.spouse_a_ref, spouse_a),
+                    (marriage_row.spouse_b_ref, spouse_b),
                 ):
                     if ref in active_spouse_refs:
                         errors.append(
-                            f"Marriages row {row.row_number}: '{ref}' already has "
-                            "an active marriage in this file"
+                            f"Marriages row {marriage_row.row_number}: '{ref}' "
+                            "already has an active marriage in this file"
                         )
                     existing_id = spouse.id
                     if existing_id is not None and existing_id in active_spouse_ids:
                         tree_conflict_refs.append(ref)
-                active_spouse_refs.add(row.spouse_a_ref)
-                active_spouse_refs.add(row.spouse_b_ref)
+                active_spouse_refs.add(marriage_row.spouse_a_ref)
+                active_spouse_refs.add(marriage_row.spouse_b_ref)
                 if tree_conflict_refs:
                     preview_marriage.warning = (
                         "Already has an active marriage in this tree: "
@@ -252,19 +265,19 @@ class PreviewTreeExcelUseCase:
                     tree_id=tree_id,
                     spouse_a_id=spouse_a.safe_id,
                     spouse_b_id=spouse_b.safe_id,
-                    married_at=row.married_at,
-                    divorced_at=row.divorced_at,
+                    married_at=marriage_row.married_at,
+                    divorced_at=marriage_row.divorced_at,
                 )
-                marriage_ids[row.ref] = marriage_id
+                marriage_ids[marriage_row.ref] = marriage_id
             except AppException as exc:
                 for message in _exc_messages(exc):
-                    errors.append(f"Marriages row {row.row_number}: {message}")
+                    errors.append(f"Marriages row {marriage_row.row_number}: {message}")
 
         for row in parsed.persons:
             if match.person_already_in_tree(row.ref):
                 continue
-            person = person_by_ref.get(row.ref)
-            if person is None:
+            target_person = person_by_ref.get(row.ref)
+            if target_person is None:
                 continue
 
             parents: list[ParentLink] = []
@@ -285,34 +298,37 @@ class PreviewTreeExcelUseCase:
                     ParentLink(parent_id=parent_id, relationship_type=rel_type)
                 )
 
-            marriage_id = None
-            marriage_row = None
+            linked_marriage_id: UUID | None = None
+            linked_marriage_row: ExcelMarriageRow | None = None
             if row.marriage_ref:
-                marriage_row = marriage_by_ref.get(row.marriage_ref)
-                marriage_id = marriage_ids.get(row.marriage_ref)
-                if marriage_row is None or marriage_id is None:
+                linked_marriage_row = marriage_by_ref.get(row.marriage_ref)
+                linked_marriage_id = marriage_ids.get(row.marriage_ref)
+                if linked_marriage_row is None or linked_marriage_id is None:
                     errors.append(
                         f"Persons row {row.row_number}: unknown marriage_ref "
                         f"'{row.marriage_ref}'"
                     )
 
-            if not parents and marriage_id is None:
+            if not parents and linked_marriage_id is None:
                 continue
 
             try:
-                person.set_parents(parents)
-                person.marriage_id = marriage_id
+                target_person.set_parents(parents)
+                target_person.marriage_id = linked_marriage_id
             except AppException as exc:
                 for message in _exc_messages(exc):
                     errors.append(f"Persons row {row.row_number}: {message}")
                 continue
 
-            if marriage_row is not None:
-                spouse_refs = {marriage_row.spouse_a_ref, marriage_row.spouse_b_ref}
+            if linked_marriage_row is not None:
+                spouse_refs = {
+                    linked_marriage_row.spouse_a_ref,
+                    linked_marriage_row.spouse_b_ref,
+                }
                 spouse_ids = {
                     person_ids[ref] for ref in spouse_refs if ref in person_ids
                 }
-                for link in person.parents:
+                for link in target_person.parents:
                     if (
                         link.relationship_type is ParentRelationshipType.BIOLOGICAL
                         and link.parent_id not in spouse_ids
@@ -324,7 +340,7 @@ class PreviewTreeExcelUseCase:
                         break
 
             try:
-                person.validate()
+                target_person.validate()
             except AppException as exc:
                 for message in _exc_messages(exc):
                     errors.append(f"Persons row {row.row_number}: {message}")
