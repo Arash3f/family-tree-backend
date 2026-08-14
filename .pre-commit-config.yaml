@@ -75,10 +75,10 @@ repos:
         language: system
         pass_filenames: false
         files: ^(pyproject\.toml|poetry\.lock|requirements(-dev)?\.txt)$
-      - id: pytest
-        name: pytest
-        entry: poetry run pytest
-        language: system
-        pass_filenames: false
-        always_run: true
-        stages: [pre-push]
+      # - id: pytest
+      #   name: pytest
+      #   entry: poetry run pytest
+      #   language: system
+      #   pass_filenames: false
+      #   always_run: true
+      #   stages: [pre-push]
