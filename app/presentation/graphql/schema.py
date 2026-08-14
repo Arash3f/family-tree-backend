@@ -47,6 +47,7 @@ from app.presentation.graphql.types.family_tree import (
     FamilyTreeType,
     FamilyTreeUpdateInput,
     TreeMemberAddInput,
+    TreeMemberUpdateInput,
     TreeMembershipType,
 )
 
@@ -321,6 +322,21 @@ class Mutation:
         return await family_tree_resolvers.resolve_add_tree_member(info, tree_id, data)
 
     @strawberry.mutation(
+        description="Update tree member access (REST: PATCH /family-trees/{id}/members/{user_id})"
+    )
+    async def update_tree_member(
+        self,
+        info: strawberry.Info,
+        tree_id: UUID,
+        user_id: UUID,
+        data: TreeMemberUpdateInput,
+    ) -> TreeMembershipType:
+
+        return await family_tree_resolvers.resolve_update_tree_member(
+            info, tree_id, user_id, data
+        )
+
+    @strawberry.mutation(
         description="Remove tree member (REST: DELETE /family-trees/{id}/members/{user_id})"
     )
     async def remove_tree_member(
@@ -332,7 +348,7 @@ class Mutation:
         )
 
     @strawberry.mutation(
-        description="Create person (REST: POST /family-trees/{tree_id}/persons/)"
+        description="Create person (REST: POST /family-trees/{tree_id}/persons)"
     )
     async def create_person(
         self,
@@ -367,7 +383,7 @@ class Mutation:
 
         return await person_resolvers.resolve_delete_person(info, tree_id, person_id)
 
-    @strawberry.mutation(description="Create user (REST: POST /users/)")
+    @strawberry.mutation(description="Create user (REST: POST /users)")
     async def create_user(
         self,
         info: strawberry.Info,
@@ -376,7 +392,7 @@ class Mutation:
 
         return await user_resolvers.resolve_create_user(info, data)
 
-    @strawberry.mutation(description="Update user (REST: PUT /users/)")
+    @strawberry.mutation(description="Update user (REST: PUT /users)")
     async def update_user(
         self,
         info: strawberry.Info,
@@ -394,7 +410,7 @@ class Mutation:
 
         return await user_resolvers.resolve_delete_user(info, user_id)
 
-    @strawberry.mutation(description="Create role (REST: POST /roles/)")
+    @strawberry.mutation(description="Create role (REST: POST /roles)")
     async def create_role(
         self,
         info: strawberry.Info,
@@ -403,7 +419,7 @@ class Mutation:
 
         return await role_resolvers.resolve_create_role(info, data)
 
-    @strawberry.mutation(description="Update role (REST: PUT /roles/)")
+    @strawberry.mutation(description="Update role (REST: PUT /roles)")
     async def update_role(
         self,
         info: strawberry.Info,
@@ -422,7 +438,7 @@ class Mutation:
         return await role_resolvers.resolve_delete_role(info, role_id)
 
     @strawberry.mutation(
-        description="Create marriage (REST: POST /family-trees/{tree_id}/marriages/)"
+        description="Create marriage (REST: POST /family-trees/{tree_id}/marriages)"
     )
     async def create_marriage(
         self,
@@ -471,7 +487,7 @@ class Mutation:
 
         return await marriage_resolvers.resolve_divorce(info, tree_id, data)
 
-    @strawberry.mutation(description="Create ticket (REST: POST /tickets/)")
+    @strawberry.mutation(description="Create ticket (REST: POST /tickets)")
     async def create_ticket(
         self,
         info: strawberry.Info,

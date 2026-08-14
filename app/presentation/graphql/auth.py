@@ -94,6 +94,18 @@ async def require_permission(info: Info, permission: str) -> User:
     return user
 
 
+async def require_any_permission(info: Info, *permissions: str) -> User:
+    ctx = _context(info)
+    user = await get_current_user(info)
+    has_permission = await ctx.authorization_service.user_has_any_permission(
+        user.safe_id,
+        list(permissions),
+    )
+    if not has_permission:
+        raise PermissionDeniedException()
+    return user
+
+
 async def enforce_auth_rate_limit(info: Info) -> None:
     await rate_limit_auth(_request(info))
 

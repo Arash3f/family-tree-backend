@@ -1,7 +1,6 @@
 from app.presentation.graphql.types.common import (
     DateRangeInput,
     GenderEnum,
-    JalaliDateRangeInput,
     MarriageSortByEnum,
     PaginationInput,
     PermissionSortByEnum,
@@ -62,7 +61,6 @@ __all__ = [
     "DateRangeInput",
     "DivorceInput",
     "GenderEnum",
-    "JalaliDateRangeInput",
     "MarriageCreateInput",
     "MarriageFilterInput",
     "MarriageListInput",

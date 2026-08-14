@@ -10,7 +10,6 @@ from app.domain.shared.dto.person_filter_dto import PersonSortField
 from app.domain.shared.dto.role_filter_dto import RoleSortField
 from app.domain.shared.dto.sorter_dto import SortOrderField
 from app.domain.shared.dto.user_filter_dto import UserSortField
-from app.presentation.utils.date_convert import gregorian_to_jalali
 
 
 @strawberry.enum(name="Gender")
@@ -76,12 +75,6 @@ def to_sort_order(value: SortOrderEnum | None) -> SortOrderField:
     return SortOrderField(value.value)
 
 
-def format_jalali_date(value: date | None) -> str | None:
-    if value is None:
-        return None
-    return gregorian_to_jalali(value)
-
-
 @strawberry.type
 class ResultType:
     result: str
@@ -98,14 +91,6 @@ class PaginationInput:
 class DateRangeInput:
     min: date | None = None
     max: date | None = None
-
-
-@strawberry.input
-class JalaliDateRangeInput:
-    """Date range using Jalali strings (YYYY/MM/DD), matching REST person filters."""
-
-    min: str | None = None
-    max: str | None = None
 
 
 def person_sort_field(value: PersonSortByEnum | None) -> PersonSortField:

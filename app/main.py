@@ -12,6 +12,7 @@ from swagger_ui_bundle import swagger_ui_path
 from app.core.config import settings
 from app.infrastructure.database.neo4j.neo4j import neo4j_client
 from app.infrastructure.database.seed import seed_initial_permissions, seed_initial_user
+from app.infrastructure.storage.minio_bootstrap import ensure_minio_buckets
 from app.infrastructure.services.security.password_hasher_impl import (
     Argon2PasswordHasher,
 )
@@ -28,6 +29,7 @@ from app.presentation.rest.routers.permission_router import router as permission
 from app.presentation.rest.routers.person_router import router as person_router
 from app.presentation.rest.routers.role_router import router as role_router
 from app.presentation.rest.routers.ticket_router import router as ticket_router
+from app.presentation.rest.routers.tree_excel_router import router as tree_excel_router
 from app.presentation.rest.routers.user_router import router as user_router
 from app.presentation.rest.utils.dependencies import get_uow
 from app.presentation.rest.utils.trace_id import TraceIDMiddleware
@@ -43,9 +45,12 @@ async def lifespan(app: FastAPI):
     It is used to initialize required resources and perform startup tasks.
 
     Startup tasks:
+        - Ensure configured MinIO buckets exist.
         - Seed default permissions into the database if they do not exist.
         - Seed the initial administrative user.
     """
+    await ensure_minio_buckets()
+
     uow = get_uow()
     password_hasher = Argon2PasswordHasher()
 
@@ -56,6 +61,7 @@ async def lifespan(app: FastAPI):
     await seed_initial_user(uow=uow, password_hasher=password_hasher)
 
     # ? Initial person & marriage data
+    # from seed_items import seed_initial_items
     # await seed_initial_items(uow=uow)
 
     yield
@@ -71,6 +77,9 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_version="3.0.3",
     openapi_url="/openapi.json",
+    # Avoid 307 /tickets → /tickets/ with an absolute upstream Location
+    # (Next.js /backend proxy strips trailing slashes; browsers then drop Authorization).
+    redirect_slashes=False,
 )
 
 # Serve Swagger UI static assets locally instead of using CDN
@@ -198,6 +207,7 @@ app.include_router(family_tree_router)
 app.include_router(person_router, prefix="/family-trees/{tree_id}")
 app.include_router(media_router)
 app.include_router(marriage_router, prefix="/family-trees/{tree_id}")
+app.include_router(tree_excel_router, prefix="/family-trees/{tree_id}")
 app.include_router(user_router)
 app.include_router(permission_router)
 app.include_router(role_router)
