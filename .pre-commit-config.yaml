@@ -8,6 +8,8 @@ repos:
         args: [--unsafe]
       - id: name-tests-test
         args: [--pytest-test-first]
+        # Shared fixtures/utilities are not test modules (hook matches all tests/**/*.py).
+        exclude: ^(tests/helpers/|tests/e2e/auth_headers\.py$)
       - id: check-ast
       - id: check-case-conflict
       - id: check-merge-conflict
