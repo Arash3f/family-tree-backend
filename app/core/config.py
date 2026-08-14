@@ -68,6 +68,8 @@ class AppSettings(PydanticBaseSettings):
     MINIO_ACCESS_KEY: str = "minioadmin"
     MINIO_SECRET_KEY: str = "minioadmin"
     MINIO_BUCKET: str = "family-tree"
+    # Comma-separated bucket names ensured on startup. Defaults to MINIO_BUCKET.
+    MINIO_BUCKETS: str | None = None
     MINIO_REGION: str = "us-east-1"
     MINIO_SECURE: bool = False
     MINIO_PRESIGN_EXPIRE_SECONDS: int = 3600
@@ -155,6 +157,26 @@ class AppSettings(PydanticBaseSettings):
     @property
     def minio_public_endpoint(self) -> str:
         return self.MINIO_PUBLIC_ENDPOINT or self.MINIO_ENDPOINT
+
+    @property
+    def minio_buckets(self) -> list[str]:
+        source = (
+            self.MINIO_BUCKETS if self.MINIO_BUCKETS is not None else self.MINIO_BUCKET
+        )
+        buckets = [name.strip() for name in source.split(",") if name.strip()]
+        if not buckets:
+            raise ValueError(
+                "At least one MinIO bucket name is required (MINIO_BUCKETS)."
+            )
+        return buckets
+
+    @model_validator(mode="after")
+    def ensure_minio_bucket_is_listed(self) -> Self:
+        if self.MINIO_BUCKET not in self.minio_buckets:
+            raise ValueError(
+                f"MINIO_BUCKET {self.MINIO_BUCKET!r} must appear in MINIO_BUCKETS."
+            )
+        return self
 
 
 settings = AppSettings()  # type: ignore

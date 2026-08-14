@@ -48,9 +48,11 @@ Postgres / Redis / Neo4j / MinIO stay on the Compose network. For host tools
 docker compose -f docker/compose.yml -f docker/compose.host-ports.yml --env-file .env up -d
 ```
 
-MinIO starts with a private bucket (`MINIO_BUCKET`, default `family-tree`). The API
-uses `MINIO_ENDPOINT` inside Docker and signs download URLs with
-`MINIO_PUBLIC_ENDPOINT` (host-reachable, e.g. `localhost:9000` — requires host ports).
+MinIO buckets listed in `MINIO_BUCKETS` (comma-separated; default follows `MINIO_BUCKET`,
+usually `family-tree`) are created on API startup if missing. `MINIO_BUCKET` is the
+primary bucket for person photos. The API talks to MinIO on the Compose network
+(`MINIO_ENDPOINT`). Person photos are served through `GET /media/{object_key}` so the
+browser never needs MinIO host ports.
 
 Celery worker/beat run as the image `app` user (uid 1000) and wait until `api` is
 healthy (so Alembic migrations finish first). If an old `backup_data` /

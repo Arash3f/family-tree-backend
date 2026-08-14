@@ -156,7 +156,7 @@ jobs:
         if: failure()
         run: |
           docker compose --env-file .env ps
-          docker compose --env-file .env logs --tail=100 api db redis neo4j minio minio-init
+          docker compose --env-file .env logs --tail=100 api db redis neo4j minio
 
       - name: Cleanup
         if: always()

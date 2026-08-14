@@ -12,6 +12,11 @@ from app.domain.repositories.tree_repository import (
     TreeRepository,
 )
 from app.domain.repositories.user_repository import UserRepository
+from app.domain.shared.dto.pagination_dto import PaginatedResult
+
+
+def _empty_page():
+    return PaginatedResult(items=[], total=0, page=1, page_size=100)
 
 
 @pytest.fixture
@@ -26,12 +31,14 @@ def mock_uow():
     users_repo = MagicMock(spec_set=UserRepository)
     users_repo.create = AsyncMock()
     users_repo.get_or_raise = AsyncMock()
+    users_repo.ids_having_permission = AsyncMock(return_value=set())
 
     persons_repo = MagicMock(spec_set=PersonRepository)
     persons_repo.create = AsyncMock()
     persons_repo.delete = AsyncMock()
     persons_repo.get_in_tree_or_raise = AsyncMock()
     persons_repo.get_children = AsyncMock(return_value=[])
+    persons_repo.get_list_by_filter = AsyncMock(return_value=_empty_page())
 
     marriages_repo = MagicMock(spec_set=MarriageRepository)
     marriages_repo.create = AsyncMock()
@@ -40,6 +47,7 @@ def mock_uow():
     marriages_repo.get_or_raise = AsyncMock()
     marriages_repo.has_active_for_person = AsyncMock(return_value=False)
     marriages_repo.exists_for_person = AsyncMock(return_value=False)
+    marriages_repo.get_list_by_filter = AsyncMock(return_value=_empty_page())
 
     sessions_repo = MagicMock()
     sessions_repo.create = AsyncMock()

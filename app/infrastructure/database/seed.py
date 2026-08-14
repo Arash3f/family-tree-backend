@@ -48,10 +48,28 @@ async def seed_initial_user(uow: UnitOfWork, password_hasher: Argon2PasswordHash
 
 async def seed_initial_permissions(uow: UnitOfWork):
     async with uow:
-        for perm_name in Permissions.get_all_permissions():
+        catalog = set(Permissions.get_all_permissions())
+        for perm_name in catalog:
+            description_en, description_fa = Permissions.get_descriptions(perm_name)
             permission = await uow.permissions.get_by_name(perm_name)
             if not permission:
-                perm = Permission(name=perm_name)
-                await uow.permissions.create(perm)
+                await uow.permissions.create(
+                    Permission(
+                        name=perm_name,
+                        description_en=description_en,
+                        description_fa=description_fa,
+                    )
+                )
+            elif (
+                permission.description_en != description_en
+                or permission.description_fa != description_fa
+            ):
+                permission.description_en = description_en
+                permission.description_fa = description_fa
+                await uow.permissions.update(permission)
+
+        for permission in await uow.permissions.get_list():
+            if permission.name not in catalog:
+                await uow.permissions.delete(permission.safe_id)
 
         await uow.commit()

@@ -295,7 +295,7 @@ Managed via environment variables / `.env` (`app/core/config.py`). See `.env.exa
 | `AUTH_RATE_LIMIT_PER_MINUTE` | Auth endpoint rate limit (default `30`); outside development the limiter refuses logins when Redis is unreachable |
 | `ENVIRONMENT` | `local` / `development` / `staging` / `production`; anything but the first two rejects demo secrets, disables GraphiQL, and blocks introspection |
 | `GRAPHQL_MAX_DEPTH`, `GRAPHQL_MAX_ALIASES`, `GRAPHQL_MAX_TOKENS` | Per-document GraphQL limits (defaults `10` / `15` / `2000`) |
-| `MINIO_*` | S3-compatible photo storage (endpoint, credentials, bucket, presign lifetime) |
+| `MINIO_*` | S3-compatible photo storage (endpoint, credentials, `MINIO_BUCKETS` comma-separated list ensured on startup, `MINIO_BUCKET` primary bucket, presign lifetime) |
 | `API_PORT`, `FLOWER_PORT`, `POSTGRES_PUBLISH_PORT`, `REDIS_PUBLISH_PORT`, `NEO4J_HTTP_PORT`, `NEO4J_BOLT_PORT` | Optional published ports for Compose |
 | `APP_IMAGE_TARGET` | Compose build stage: `runtime` (default) or `ci` (adds pytest and linters) |
 
@@ -319,7 +319,7 @@ Interactive docs: [/api_docs](http://localhost:8001/api_docs) (default `/docs` i
 | `/family-trees/{tree_id}/persons` | Person CRUD, filtered list, closest relationship |
 | `/family-trees/{tree_id}/marriages` | Marriage CRUD, divorce, filtered list |
 | `/tickets` | Ticket CRUD, replies (`POST /{id}/messages`), status (`PATCH /{id}/status`) |
-| `/media` | `POST /upload` — returns the object key referenced by `photo_object_key` |
+| `/media` | `POST /upload` (returns `photo_object_key`); `GET /{object_key}` streams the photo for `<img>` tags |
 | `/health` | Postgres + Neo4j status (`200` / `status:ok`, or `503` / `status:degraded`) |
 | `/health/neo4j` | Neo4j probe |
 
@@ -414,7 +414,7 @@ Refresh tokens are tracked in `user_sessions`:
 
 Permissions are attached to roles (e.g. `person_create`, `marriage_divorce`). REST uses `RequirePermission(...)`; GraphQL uses the same permission strings via resolver guards.
 
-On startup the app seeds permissions and ensures the configured admin user/role exist.
+On startup the app ensures configured MinIO buckets exist, seeds permissions, and ensures the configured admin user/role exist.
 
 ---
 

@@ -241,7 +241,7 @@ SEED_PEOPLE: list[PersonSeedData] = [
         "name": "حسن",
         "family_name": "الفونه",
         "gender": Gender.MALE,
-        "birth_date": date(1950, 3, 12),
+        "birth_date": date(1932, 3, 12),
         "birth_place": "تهران",
     },
     {
@@ -249,7 +249,7 @@ SEED_PEOPLE: list[PersonSeedData] = [
         "name": "مریم",
         "family_name": "کریمی",
         "gender": Gender.FEMALE,
-        "birth_date": date(1952, 7, 21),
+        "birth_date": date(1938, 7, 21),
         "birth_place": "اصفهان",
     },
     {
@@ -257,7 +257,7 @@ SEED_PEOPLE: list[PersonSeedData] = [
         "name": "پرویز",
         "family_name": "ابراهیمی",
         "gender": Gender.MALE,
-        "birth_date": date(1948, 11, 5),
+        "birth_date": date(1928, 11, 5),
         "birth_place": "شیراز",
     },
     {
@@ -265,7 +265,7 @@ SEED_PEOPLE: list[PersonSeedData] = [
         "name": "ناهید",
         "family_name": "رضایی",
         "gender": Gender.FEMALE,
-        "birth_date": date(1951, 1, 30),
+        "birth_date": date(1935, 1, 30),
         "birth_place": "تبریز",
     },
     # Generation 1 — children of root marriages
@@ -274,7 +274,7 @@ SEED_PEOPLE: list[PersonSeedData] = [
         "name": "آرش",
         "family_name": "الفونه",
         "gender": Gender.MALE,
-        "birth_date": date(1978, 5, 14),
+        "birth_date": date(1964, 5, 14),
         "birth_place": "تهران",
         "origin_marriage": "hasan_maryam",
         "parents": [
@@ -287,7 +287,7 @@ SEED_PEOPLE: list[PersonSeedData] = [
         "name": "رز",
         "family_name": "ابراهیمی",
         "gender": Gender.FEMALE,
-        "birth_date": date(1980, 9, 2),
+        "birth_date": date(1971, 9, 2),
         "birth_place": "شیراز",
         "origin_marriage": "parviz_nahid",
         "parents": [
@@ -301,7 +301,7 @@ SEED_PEOPLE: list[PersonSeedData] = [
         "name": "مانی",
         "family_name": "الفونه",
         "gender": Gender.MALE,
-        "birth_date": date(2005, 4, 18),
+        "birth_date": date(1996, 4, 18),
         "birth_place": "تهران",
         "origin_marriage": "arash_roz",
         "parents": [
@@ -314,7 +314,7 @@ SEED_PEOPLE: list[PersonSeedData] = [
         "name": "سارا",
         "family_name": "الفونه",
         "gender": Gender.FEMALE,
-        "birth_date": date(2008, 12, 1),
+        "birth_date": date(2004, 12, 1),
         "birth_place": "تهران",
         "origin_marriage": "arash_roz",
         "parents": [
@@ -327,7 +327,7 @@ SEED_PEOPLE: list[PersonSeedData] = [
         "name": "کیان",
         "family_name": "موسوی",
         "gender": Gender.MALE,
-        "birth_date": date(2010, 6, 9),
+        "birth_date": date(2013, 6, 9),
         "birth_place": "کرج",
         "notes": "فرزندخوانده خانواده آرش و رز",
         "origin_marriage": "arash_roz",
@@ -349,19 +349,19 @@ SEED_MARRIAGES: list[MarriageSeedData] = [
         "key": "hasan_maryam",
         "spouse_a": "hasan_alfooneh",
         "spouse_b": "maryam_karimi",
-        "married_at": date(1975, 6, 1),
+        "married_at": date(1960, 6, 1),
     },
     {
         "key": "parviz_nahid",
         "spouse_a": "parviz_ebrahimi",
         "spouse_b": "nahid_rezaei",
-        "married_at": date(1976, 8, 20),
+        "married_at": date(1962, 8, 20),
     },
     {
         "key": "arash_roz",
         "spouse_a": "arash_alfooneh",
         "spouse_b": "roz_ebrahimi",
-        "married_at": date(2000, 1, 1),
+        "married_at": date(1994, 1, 1),
     },
 ]
 
