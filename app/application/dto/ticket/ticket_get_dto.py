@@ -19,6 +19,8 @@ class TicketGetDTO(BaseModel):
 class TicketGetMapper(BaseModel):
     @staticmethod
     def to_response(
-        ticket: Ticket, messages: list[TicketMessage]
+        ticket: Ticket,
+        messages: list[TicketMessage],
+        created_by_can_manage: bool = False,
     ) -> TicketDetailResponseDTO:
-        return ticket_to_detail_dto(ticket, messages)
+        return ticket_to_detail_dto(ticket, messages, created_by_can_manage)

@@ -18,6 +18,7 @@ async def test_ticket_and_message_persist(uow):
     ticket = TicketModel(
         title="Need help",
         status="open",
+        category="general",
         created_by_user_id=user.safe_id,
     )
     uow.session.add(ticket)

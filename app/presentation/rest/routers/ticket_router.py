@@ -16,7 +16,10 @@ from app.application.use_cases.ticket.update_ticket_status_use_case import (
 )
 from app.domain.shared.permissions import Permissions
 from app.presentation.rest.dependencies.auth_dependencies import get_current_user
-from app.presentation.rest.dependencies.permission_guard import RequirePermission
+from app.presentation.rest.dependencies.permission_guard import (
+    RequireAnyPermission,
+    RequirePermission,
+)
 from app.presentation.rest.schemas.dto.common import PaginatedResponse
 from app.presentation.rest.schemas.dto.ticket_schema import (
     FilterTicketRequest,
@@ -39,11 +42,11 @@ router = APIRouter(prefix="/tickets", tags=["Tickets"])
 
 
 async def _user_can_manage(user_id: UUID, auth_service: AuthorizationService) -> bool:
-    return await auth_service.user_has_permission(user_id, Permissions.TICKET_MANAGE)
+    return await auth_service.user_has_permission(user_id, Permissions.TICKET_REPLY)
 
 
 @router.post(
-    "/",
+    "",
     response_model=TicketCreateResponse,
     dependencies=[Depends(RequirePermission(Permissions.TICKET_CREATE))],
     status_code=201,
@@ -101,7 +104,14 @@ async def get_ticket(
 @router.post(
     "/{ticket_id}/messages",
     response_model=TicketMessageCreateResponse,
-    dependencies=[Depends(RequirePermission(Permissions.TICKET_REPLY))],
+    dependencies=[
+        Depends(
+            RequireAnyPermission(
+                Permissions.TICKET_REPLY,
+                Permissions.TICKET_CREATE,
+            )
+        )
+    ],
     status_code=201,
 )
 async def add_ticket_message(
@@ -124,7 +134,7 @@ async def add_ticket_message(
 @router.patch(
     "/{ticket_id}/status",
     response_model=TicketUpdateStatusResponse,
-    dependencies=[Depends(RequirePermission(Permissions.TICKET_MANAGE))],
+    dependencies=[Depends(RequirePermission(Permissions.TICKET_REPLY))],
 )
 async def update_ticket_status(
     ticket_id: UUID,

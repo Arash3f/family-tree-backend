@@ -3,6 +3,7 @@ from datetime import datetime
 from uuid import UUID
 
 from app.domain.exceptions.common_exceptions import UnExpectedIdException
+from app.domain.shared.enums.ticket_category import TicketCategory
 from app.domain.shared.enums.ticket_status import TicketStatus
 
 
@@ -14,7 +15,10 @@ class Ticket:
 
     title: str
     status: TicketStatus
+    category: TicketCategory
     created_by_user_id: UUID
+    family_tree_id: UUID | None = None
+    family_tree_name: str | None = None
     id: UUID | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None

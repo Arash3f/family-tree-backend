@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 from app.domain.shared.dto.sorter_dto import SortOrderField
 from app.domain.shared.dto.ticket_filter_dto import TicketSortField
+from app.domain.shared.enums.ticket_category import TicketCategory
 from app.domain.shared.enums.ticket_status import TicketStatus
 from app.presentation.rest.schemas.dto.common import (
     PaginationRequestParams,
@@ -25,7 +26,11 @@ class TicketSummaryModel(BaseModel):
     id: UUID
     title: str
     status: TicketStatus
+    category: TicketCategory
     created_by_user_id: UUID
+    created_by_can_manage: bool = False
+    family_tree_id: UUID | None = None
+    family_tree_name: str | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
@@ -34,7 +39,11 @@ class TicketDetailModel(BaseModel):
     id: UUID
     title: str
     status: TicketStatus
+    category: TicketCategory
     created_by_user_id: UUID
+    created_by_can_manage: bool = False
+    family_tree_id: UUID | None = None
+    family_tree_name: str | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
     messages: list[TicketMessageModel] = Field(default_factory=list)
@@ -43,6 +52,8 @@ class TicketDetailModel(BaseModel):
 class TicketCreateRequest(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     body: str = Field(min_length=1)
+    category: TicketCategory
+    family_tree_id: UUID | None = None
 
 
 class TicketCreateResponse(TicketDetailModel):
@@ -73,6 +84,8 @@ class TicketFilterRequestData(BaseModel):
     id: UUID | None = None
     title: str | None = None
     status: TicketStatus | None = None
+    category: TicketCategory | None = None
+    family_tree_id: UUID | None = None
     created_by_user_id: UUID | None = None
 
 

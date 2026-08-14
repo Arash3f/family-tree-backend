@@ -1,6 +1,7 @@
 from app.application.dto.ticket.ticket_get_dto import TicketGetDTO, TicketGetMapper
 from app.application.dto.ticket.ticket_response_dto import TicketDetailResponseDTO
 from app.application.interfaces.unit_of_work import UnitOfWork
+from app.application.services.ticket_support_queue import users_can_manage_tickets
 from app.domain.exceptions.ticket_exceptions import TicketAccessDeniedException
 
 
@@ -20,5 +21,12 @@ class GetTicketUseCase:
             messages = await self.uow.ticket_messages.get_by_ticket_id(
                 ticket_id=ticket.safe_id
             )
+            flags = await users_can_manage_tickets(
+                self.uow, [ticket.created_by_user_id]
+            )
 
-            return TicketGetMapper.to_response(ticket, messages)
+            return TicketGetMapper.to_response(
+                ticket,
+                messages,
+                flags.get(ticket.created_by_user_id, False),
+            )

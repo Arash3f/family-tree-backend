@@ -14,7 +14,7 @@ from app.application.use_cases.ticket.update_ticket_status_use_case import (
     UpdateTicketStatusUseCase,
 )
 from app.domain.shared.permissions import Permissions
-from app.presentation.graphql.auth import require_permission
+from app.presentation.graphql.auth import require_any_permission, require_permission
 from app.presentation.graphql.types.common import pagination_dict, to_sort_order
 from app.presentation.graphql.types.ticket import (
     TicketCreateInput,
@@ -29,6 +29,7 @@ from app.presentation.graphql.types.ticket import (
     ticket_message_from_mapping,
     ticket_sort_field,
     ticket_summary_from_mapping,
+    to_domain_ticket_category,
     to_domain_ticket_status,
 )
 from app.presentation.rest.schemas.dto.common import (
@@ -47,7 +48,7 @@ from app.presentation.rest.schemas.mappers.ticket_mappers import TicketApiMapper
 
 async def _can_manage(info: Info, user_id: UUID) -> bool:
     return await info.context.authorization_service.user_has_permission(
-        user_id, Permissions.TICKET_MANAGE
+        user_id, Permissions.TICKET_REPLY
     )
 
 
@@ -60,6 +61,8 @@ def _ticket_list_request(data: TicketListInput | None) -> FilterTicketRequest:
             id=f.id,
             title=f.title,
             status=to_domain_ticket_status(f.status) if f.status else None,
+            category=to_domain_ticket_category(f.category) if f.category else None,
+            family_tree_id=f.family_tree_id,
             created_by_user_id=f.created_by_user_id,
         )
     return FilterTicketRequest(
@@ -77,7 +80,12 @@ async def resolve_create_ticket(info: Info, data: TicketCreateInput) -> TicketTy
     usecase = CreateTicketUseCase(info.context.uow)
     res = await usecase.execute(
         TicketApiMapper.to_create_ticket_dto(
-            TicketCreateRequest(title=data.title, body=data.body),
+            TicketCreateRequest(
+                title=data.title,
+                body=data.body,
+                category=to_domain_ticket_category(data.category),
+                family_tree_id=data.family_tree_id,
+            ),
             user.safe_id,
         )
     )
@@ -119,7 +127,11 @@ async def resolve_tickets(
 async def resolve_add_ticket_message(
     info: Info, ticket_id: UUID, data: TicketMessageCreateInput
 ) -> TicketMessageType:
-    user = await require_permission(info, Permissions.TICKET_REPLY)
+    user = await require_any_permission(
+        info,
+        Permissions.TICKET_REPLY,
+        Permissions.TICKET_CREATE,
+    )
     can_manage = await _can_manage(info, user.safe_id)
     usecase = AddTicketMessageUseCase(info.context.uow)
     res = await usecase.execute(
@@ -137,7 +149,7 @@ async def resolve_add_ticket_message(
 async def resolve_update_ticket_status(
     info: Info, ticket_id: UUID, data: TicketUpdateStatusInput
 ) -> TicketSummaryType:
-    await require_permission(info, Permissions.TICKET_MANAGE)
+    await require_permission(info, Permissions.TICKET_REPLY)
     usecase = UpdateTicketStatusUseCase(info.context.uow)
     res = await usecase.execute(
         TicketApiMapper.to_update_status_dto(

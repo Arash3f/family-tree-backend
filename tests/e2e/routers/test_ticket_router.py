@@ -4,6 +4,7 @@ from pydantic import TypeAdapter
 from app.domain.entities.permission import Permission
 from app.domain.entities.role import Role
 from app.domain.entities.user import User
+from app.domain.shared.enums.ticket_category import TicketCategory
 from app.domain.shared.enums.ticket_status import TicketStatus
 from app.domain.shared.permissions import Permissions
 from app.infrastructure.services.security.password_hasher_impl import (
@@ -63,9 +64,11 @@ async def _create_user_with_ticket_perms(
 
 @pytest.mark.asyncio
 async def test_create_ticket_permission_denied(client, member_headers):  # noqa: F811
-    req = TicketCreateRequest(title="Help", body="Need support")
+    req = TicketCreateRequest(
+        title="Help", body="Need support", category=TicketCategory.GENERAL
+    )
     resp = await client.post(
-        f"{BASE_URL}/",
+        BASE_URL,
         json=req.model_dump(mode="json"),
         headers=member_headers,
     )
@@ -82,7 +85,6 @@ async def test_ticket_flow_owner_and_admin(client, admin_headers, uow):  # noqa:
         permission_names=[
             Permissions.TICKET_CREATE,
             Permissions.TICKET_READ,
-            Permissions.TICKET_REPLY,
         ],
     )
     other = await _create_user_with_ticket_perms(
@@ -92,16 +94,17 @@ async def test_ticket_flow_owner_and_admin(client, admin_headers, uow):  # noqa:
         permission_names=[
             Permissions.TICKET_CREATE,
             Permissions.TICKET_READ,
-            Permissions.TICKET_REPLY,
         ],
     )
     owner_headers = await _login(client, "ticket_owner", "ticket_owner")
     other_headers = await _login(client, "ticket_other", "ticket_other")
 
     create_resp = await client.post(
-        f"{BASE_URL}/",
+        BASE_URL,
         json=TicketCreateRequest(
-            title="Cannot login", body="I cannot login to the app"
+            title="Cannot login",
+            body="I cannot login to the app",
+            category=TicketCategory.ACCOUNT,
         ).model_dump(mode="json"),
         headers=owner_headers,
     )
@@ -110,6 +113,7 @@ async def test_ticket_flow_owner_and_admin(client, admin_headers, uow):  # noqa:
     assert created.title == "Cannot login"
     assert created.status == TicketStatus.OPEN
     assert created.created_by_user_id == owner.safe_id
+    assert created.created_by_can_manage is False
     assert len(created.messages) == 1
 
     ticket_id = created.id
@@ -202,3 +206,44 @@ async def test_ticket_flow_owner_and_admin(client, admin_headers, uow):  # noqa:
 
     # silence unused variable warning for other user creation side-effect
     assert other.username == "ticket_other"
+
+
+@pytest.mark.asyncio
+async def test_admin_created_ticket_is_not_a_support_request(
+    client, admin_headers, uow
+):  # noqa: F811
+    manager = await _create_user_with_ticket_perms(
+        uow,
+        username="ticket_manager",
+        password="ticket_manager",
+        permission_names=[
+            Permissions.TICKET_REPLY,
+            Permissions.TICKET_READ,
+            Permissions.TICKET_CREATE,
+        ],
+    )
+    manager_headers = await _login(client, "ticket_manager", "ticket_manager")
+
+    create_resp = await client.post(
+        BASE_URL,
+        json=TicketCreateRequest(
+            title="Internal note",
+            body="Opened by support",
+            category=TicketCategory.GENERAL,
+        ).model_dump(mode="json"),
+        headers=admin_headers,
+    )
+    assert create_resp.status_code == 201, create_resp.text
+    created = TypeAdapter(TicketCreateResponse).validate_python(create_resp.json())
+    assert created.created_by_can_manage is True
+
+    listed = await client.post(
+        f"{BASE_URL}/list",
+        json=FilterTicketRequest().model_dump(mode="json"),
+        headers=manager_headers,
+    )
+    assert listed.status_code == 200
+    items = listed.json()["items"]
+    match = next(item for item in items if item["id"] == str(created.id))
+    assert match["created_by_can_manage"] is True
+    assert manager.username == "ticket_manager"

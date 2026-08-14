@@ -36,6 +36,8 @@ class TicketApiMapper:
         return TicketCreateDTO(
             title=request.title,
             body=request.body,
+            category=request.category,
+            family_tree_id=request.family_tree_id,
             created_by_user_id=created_by_user_id,
         )
 

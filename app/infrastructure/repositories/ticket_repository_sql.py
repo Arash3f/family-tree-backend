@@ -5,11 +5,13 @@ from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.domain.entities.ticket import Ticket
 from app.domain.repositories.ticket_repository import TicketRepository
 from app.domain.shared.dto.pagination_dto import PaginatedResult
 from app.domain.shared.dto.ticket_filter_dto import FilterTicketQuery, TicketSortField
+from app.domain.shared.enums.ticket_category import TicketCategory
 from app.domain.shared.enums.ticket_status import TicketStatus
 from app.infrastructure.database.models.ticket_model import TicketModel
 from app.infrastructure.database.utils.pagination_and_sort import paginate_and_sort
@@ -23,15 +25,23 @@ class SQLTicketRepository(TicketRepository):
         model = TicketModel(
             title=ticket.title,
             status=ticket.status.value,
+            category=ticket.category.value,
             created_by_user_id=ticket.created_by_user_id,
+            family_tree_id=ticket.family_tree_id,
         )
         self.session.add(model)
         await self.session.flush()
-        await self.session.refresh(model)
-        return self._to_entity(model)
+        created = await self.get(model.id)
+        if created is None:
+            raise RuntimeError("ticket missing after create")
+        return created
 
     async def get(self, ticket_id: UUID) -> Ticket | None:
-        stmt = select(TicketModel).where(TicketModel.id == ticket_id)
+        stmt = (
+            select(TicketModel)
+            .options(selectinload(TicketModel.family_tree))
+            .where(TicketModel.id == ticket_id)
+        )
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
         if not model:
@@ -41,7 +51,7 @@ class SQLTicketRepository(TicketRepository):
     async def get_list_by_filter(
         self, query: FilterTicketQuery
     ) -> PaginatedResult[Ticket]:
-        stmt = select(TicketModel)
+        stmt = select(TicketModel).options(selectinload(TicketModel.family_tree))
         filters = query.filters
 
         if filters:
@@ -51,6 +61,10 @@ class SQLTicketRepository(TicketRepository):
                 stmt = stmt.where(TicketModel.title.ilike(f"%{filters.title}%"))
             if filters.status is not None:
                 stmt = stmt.where(TicketModel.status == filters.status.value)
+            if filters.category is not None:
+                stmt = stmt.where(TicketModel.category == filters.category.value)
+            if filters.family_tree_id is not None:
+                stmt = stmt.where(TicketModel.family_tree_id == filters.family_tree_id)
             if filters.created_by_user_id is not None:
                 stmt = stmt.where(
                     TicketModel.created_by_user_id == filters.created_by_user_id
@@ -60,6 +74,7 @@ class SQLTicketRepository(TicketRepository):
             TicketSortField.ID: TicketModel.id,
             TicketSortField.TITLE: TicketModel.title,
             TicketSortField.STATUS: TicketModel.status,
+            TicketSortField.CATEGORY: TicketModel.category,
             TicketSortField.CREATED_AT: TicketModel.created_at,
             TicketSortField.UPDATED_AT: TicketModel.updated_at,
         }
@@ -85,24 +100,36 @@ class SQLTicketRepository(TicketRepository):
         )
 
     async def update(self, ticket: Ticket) -> Ticket:
-        stmt = select(TicketModel).where(TicketModel.id == ticket.id)
+        stmt = (
+            select(TicketModel)
+            .options(selectinload(TicketModel.family_tree))
+            .where(TicketModel.id == ticket.id)
+        )
         result = await self.session.execute(stmt)
         model = result.scalar_one()
 
         model.title = ticket.title
         model.status = ticket.status.value
+        model.category = ticket.category.value
         model.created_by_user_id = ticket.created_by_user_id
+        model.family_tree_id = ticket.family_tree_id
 
         await self.session.flush()
-        await self.session.refresh(model)
+        await self.session.refresh(model, attribute_names=["family_tree"])
         return self._to_entity(model)
 
     def _to_entity(self, model: TicketModel) -> Ticket:
+        tree_name = None
+        if model.family_tree is not None:
+            tree_name = model.family_tree.name
         return Ticket(
             id=model.id,
             title=model.title,
             status=TicketStatus(model.status),
+            category=TicketCategory(model.category),
             created_by_user_id=model.created_by_user_id,
+            family_tree_id=model.family_tree_id,
+            family_tree_name=tree_name,
             created_at=model.created_at,
             updated_at=model.updated_at,
         )

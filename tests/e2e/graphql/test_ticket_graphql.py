@@ -63,7 +63,6 @@ async def test_graphql_ticket_flow(client, admin_headers, uow):  # noqa: F811
         permission_names=[
             Permissions.TICKET_CREATE,
             Permissions.TICKET_READ,
-            Permissions.TICKET_REPLY,
         ],
     )
     owner_headers = await _login(client, "gql_ticket_owner", "gql_ticket_owner")
@@ -80,7 +79,13 @@ async def test_graphql_ticket_flow(client, admin_headers, uow):  # noqa: F811
           }
         }
         """,
-        {"data": {"title": "GraphQL help", "body": "First body"}},
+        {
+            "data": {
+                "title": "GraphQL help",
+                "body": "First body",
+                "category": "GENERAL",
+            }
+        },
         headers=owner_headers,
     )
     assert "errors" not in create.json(), create.json()

@@ -17,5 +17,7 @@ class TicketUpdateStatusDTO(BaseModel):
 
 class TicketUpdateStatusMapper(BaseModel):
     @staticmethod
-    def to_response(ticket: Ticket) -> TicketSummaryResponseDTO:
-        return ticket_to_summary_dto(ticket)
+    def to_response(
+        ticket: Ticket, created_by_can_manage: bool = False
+    ) -> TicketSummaryResponseDTO:
+        return ticket_to_summary_dto(ticket, created_by_can_manage)

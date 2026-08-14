@@ -5,6 +5,9 @@ from uuid import UUID
 import strawberry
 
 from app.domain.shared.dto.ticket_filter_dto import TicketSortField
+from app.domain.shared.enums.ticket_category import (
+    TicketCategory as DomainTicketCategory,
+)
 from app.domain.shared.enums.ticket_status import TicketStatus as DomainTicketStatus
 from app.presentation.graphql.types.common import PaginationInput, SortOrderEnum
 
@@ -16,11 +19,22 @@ class TicketStatusEnum(Enum):
     CLOSED = "closed"
 
 
+@strawberry.enum(name="TicketCategory")
+class TicketCategoryEnum(Enum):
+    GENERAL = "general"
+    ACCOUNT = "account"
+    TECHNICAL = "technical"
+    BUG = "bug"
+    FEATURE_REQUEST = "feature_request"
+    OTHER = "other"
+
+
 @strawberry.enum(name="TicketSortBy")
 class TicketSortByEnum(Enum):
     ID = "id"
     TITLE = "title"
     STATUS = "status"
+    CATEGORY = "category"
     CREATED_AT = "created_at"
     UPDATED_AT = "updated_at"
 
@@ -40,7 +54,11 @@ class TicketType:
     id: UUID
     title: str
     status: TicketStatusEnum
+    category: TicketCategoryEnum
     created_by_user_id: UUID
+    created_by_can_manage: bool
+    family_tree_id: UUID | None = None
+    family_tree_name: str | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
     messages: list[TicketMessageType]
@@ -51,7 +69,11 @@ class TicketSummaryType:
     id: UUID
     title: str
     status: TicketStatusEnum
+    category: TicketCategoryEnum
     created_by_user_id: UUID
+    created_by_can_manage: bool
+    family_tree_id: UUID | None = None
+    family_tree_name: str | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
@@ -68,6 +90,8 @@ class TicketPage:
 class TicketCreateInput:
     title: str
     body: str
+    category: TicketCategoryEnum
+    family_tree_id: UUID | None = None
 
 
 @strawberry.input
@@ -85,6 +109,8 @@ class TicketFilterInput:
     id: UUID | None = None
     title: str | None = None
     status: TicketStatusEnum | None = None
+    category: TicketCategoryEnum | None = None
+    family_tree_id: UUID | None = None
     created_by_user_id: UUID | None = None
 
 
@@ -101,12 +127,27 @@ def to_ticket_status_enum(value: DomainTicketStatus | str) -> TicketStatusEnum:
     return TicketStatusEnum(raw)
 
 
+def to_ticket_category_enum(
+    value: DomainTicketCategory | str,
+) -> TicketCategoryEnum:
+    raw = value.value if isinstance(value, DomainTicketCategory) else value
+    return TicketCategoryEnum(raw)
+
+
 def to_domain_ticket_status(
     value: TicketStatusEnum | DomainTicketStatus,
 ) -> DomainTicketStatus:
     if isinstance(value, DomainTicketStatus):
         return value
     return DomainTicketStatus(value.value)
+
+
+def to_domain_ticket_category(
+    value: TicketCategoryEnum | DomainTicketCategory,
+) -> DomainTicketCategory:
+    if isinstance(value, DomainTicketCategory):
+        return value
+    return DomainTicketCategory(value.value)
 
 
 def ticket_sort_field(value: TicketSortByEnum | None) -> TicketSortField:
@@ -130,7 +171,11 @@ def ticket_from_mapping(data: dict) -> TicketType:
         id=data["id"],
         title=data["title"],
         status=to_ticket_status_enum(data["status"]),
+        category=to_ticket_category_enum(data["category"]),
         created_by_user_id=data["created_by_user_id"],
+        created_by_can_manage=bool(data.get("created_by_can_manage", False)),
+        family_tree_id=data.get("family_tree_id"),
+        family_tree_name=data.get("family_tree_name"),
         created_at=data.get("created_at"),
         updated_at=data.get("updated_at"),
         messages=messages,
@@ -142,7 +187,11 @@ def ticket_summary_from_mapping(data: dict) -> TicketSummaryType:
         id=data["id"],
         title=data["title"],
         status=to_ticket_status_enum(data["status"]),
+        category=to_ticket_category_enum(data["category"]),
         created_by_user_id=data["created_by_user_id"],
+        created_by_can_manage=bool(data.get("created_by_can_manage", False)),
+        family_tree_id=data.get("family_tree_id"),
+        family_tree_name=data.get("family_tree_name"),
         created_at=data.get("created_at"),
         updated_at=data.get("updated_at"),
     )
