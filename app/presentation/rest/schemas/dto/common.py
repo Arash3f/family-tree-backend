@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import date, datetime
 from typing import Generic, TypeVar
 from uuid import UUID
 
@@ -6,7 +7,6 @@ from pydantic import BaseModel, field_validator, model_validator
 
 from app.domain.shared.dto.pagination_dto import MAX_PAGE_SIZE
 from app.domain.shared.dto.sorter_dto import SortOrderField
-from app.presentation.utils.date_convert import jalali_to_gregorian
 from app.utils.app_exception import AppException
 from app.utils.error_codes import ErrorCode
 
@@ -22,6 +22,14 @@ class ResultResponse:
 
 
 T = TypeVar("T")
+
+
+def _coerce_iso_date(value):
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, str):
+        return date.fromisoformat(value[:10])
+    return value
 
 
 class PaginatedResponse(BaseModel, Generic[T]):
@@ -86,13 +94,9 @@ class RangeRequest(Generic[T]):
     max: T | None = None
 
     @field_validator("min", mode="before")
-    def parse_jalali_min(cls, v):
-        if isinstance(v, str):
-            return jalali_to_gregorian(v)
-        return v
+    def parse_iso_min(cls, v):
+        return _coerce_iso_date(v)
 
     @field_validator("max", mode="before")
-    def parse_jalali_max(cls, v):
-        if isinstance(v, str):
-            return jalali_to_gregorian(v)
-        return v
+    def parse_iso_max(cls, v):
+        return _coerce_iso_date(v)

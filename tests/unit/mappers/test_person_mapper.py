@@ -62,3 +62,24 @@ def test_person_update_mapper_to_response():
     assert dto.birth_date == person.birth_date
     assert dto.parents == []
     assert dto.photo_object_key is None
+
+
+def test_person_api_response_uses_iso_gregorian_dates():
+    from app.presentation.rest.schemas.dto.person_schema import (
+        PersonCreateRequest,
+        PersonGetResponse,
+    )
+
+    created = PersonCreateRequest.model_validate(
+        {"name": "Ali", "gender": "male", "birth_date": "2000-11-21"}
+    )
+    assert created.birth_date == date(2000, 11, 21)
+
+    response = PersonGetResponse(
+        id=UUID(int=1),
+        name="Ali",
+        gender=Gender.MALE,
+        birth_date=date(2000, 11, 21),
+        parents=[],
+    )
+    assert response.model_dump(mode="json")["birth_date"] == "2000-11-21"

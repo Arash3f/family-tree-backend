@@ -15,7 +15,11 @@ from app.application.use_cases.person.get_person_use_case import GetPersonUseCas
 from app.application.use_cases.person.update_person_use_case import UpdatePersonUseCase
 from app.domain.shared.permissions import Permissions
 from app.presentation.rest.dependencies.permission_guard import RequirePermission
-from app.presentation.rest.dependencies.tree_guard import require_tree_member
+from app.presentation.rest.dependencies.tree_guard import (
+    require_tree_add_persons,
+    require_tree_edit,
+    require_tree_view,
+)
 from app.presentation.rest.schemas.dto.common import PaginatedResponse, ResultResponse
 from app.presentation.rest.schemas.dto.person_schema import (
     ClosestRelationshipResponse,
@@ -39,11 +43,11 @@ router = APIRouter(prefix="/persons", tags=["Persons"])
 
 
 @router.post(
-    "/",
+    "",
     response_model=PersonCreateResponse,
     dependencies=[
         Depends(RequirePermission(Permissions.PERSON_CREATE)),
-        Depends(require_tree_member),
+        Depends(require_tree_add_persons),
     ],
 )
 async def create_person(
@@ -64,7 +68,7 @@ async def create_person(
     response_model=ResultResponse,
     dependencies=[
         Depends(RequirePermission(Permissions.PERSON_DELETE)),
-        Depends(require_tree_member),
+        Depends(require_tree_edit),
     ],
 )
 async def delete_person(
@@ -79,11 +83,11 @@ async def delete_person(
 
 
 @router.put(
-    "/",
+    "",
     response_model=PersonUpdateResponse,
     dependencies=[
         Depends(RequirePermission(Permissions.PERSON_UPDATE)),
-        Depends(require_tree_member),
+        Depends(require_tree_edit),
     ],
 )
 async def update_person(
@@ -104,7 +108,7 @@ async def update_person(
     response_model=ClosestRelationshipResponse,
     dependencies=[
         Depends(RequirePermission(Permissions.PERSON_READ)),
-        Depends(require_tree_member),
+        Depends(require_tree_view),
     ],
 )
 async def get_closest_relationship(
@@ -124,7 +128,7 @@ async def get_closest_relationship(
     response_model=PersonGetResponse,
     dependencies=[
         Depends(RequirePermission(Permissions.PERSON_READ)),
-        Depends(require_tree_member),
+        Depends(require_tree_view),
     ],
 )
 async def get_person(
@@ -143,7 +147,7 @@ async def get_person(
     response_model=PaginatedResponse[PersonModel],
     dependencies=[
         Depends(RequirePermission(Permissions.PERSON_READ)),
-        Depends(require_tree_member),
+        Depends(require_tree_view),
     ],
 )
 async def get_person_list_by_filter(

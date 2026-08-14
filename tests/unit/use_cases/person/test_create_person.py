@@ -14,7 +14,9 @@ from app.domain.entities.person import Gender, ParentRelationshipType
 def _photo_service():
     service = MagicMock()
     service.ensure_object_exists = AsyncMock()
-    service.presign = AsyncMock(return_value=None)
+    service.public_url = MagicMock(
+        side_effect=lambda key: f"/media/{key}" if key else None
+    )
     return service
 
 
@@ -172,7 +174,6 @@ async def test_create_person_with_photo(mock_uow):
     mock_uow.family_trees.get_or_raise = AsyncMock()
     mock_uow.persons.create = AsyncMock(return_value=created_person)
     photo_service = _photo_service()
-    photo_service.presign = AsyncMock(return_value="https://example/presigned")
 
     with patch.object(
         PersonCreateMapper, "to_response", return_value=MagicMock()
@@ -183,8 +184,6 @@ async def test_create_person_with_photo(mock_uow):
         await use_case.execute(dto, tree_id=UUID(int=7))
 
     photo_service.ensure_object_exists.assert_awaited_once_with(key)
-    mapper_mock.assert_called_once_with(
-        created_person, photo_url="https://example/presigned"
-    )
+    mapper_mock.assert_called_once_with(created_person, photo_url=f"/media/{key}")
     created_entity = mock_uow.persons.create.await_args.args[0]
     assert created_entity.photo_object_key == key

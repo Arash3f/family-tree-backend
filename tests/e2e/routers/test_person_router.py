@@ -47,7 +47,7 @@ async def test_create_person_permission_denied(client, tree_id, member_headers):
         gender=Gender.MALE,
     )
     resp = await client.post(
-        persons_url(tree_id, "/"),
+        persons_url(tree_id),
         json=req.model_dump(mode="json"),
         headers=member_headers,
     )
@@ -66,7 +66,7 @@ async def test_create_person_unauthenticated(client, tree_id):
         gender=Gender.MALE,
     )
     resp = await client.post(
-        persons_url(tree_id, "/"),
+        persons_url(tree_id),
         json=req.model_dump(mode="json"),
     )
 
@@ -106,7 +106,7 @@ async def test_create_person_success(client, tree_id, admin_headers, uow):  # no
     )
 
     resp = await client.post(
-        persons_url(tree_id, "/"),
+        persons_url(tree_id),
         json=req.model_dump(mode="json"),
         headers=admin_headers,
     )
@@ -180,7 +180,7 @@ async def test_get_person_success(client, tree_id, admin_headers, uow: TreeUnitO
     assert data["id"] == str(person.safe_id)
     assert data["name"] == person.name
     assert data["gender"] == person.gender.value
-    assert data["birth_date"] is not None
+    assert data["birth_date"] == "1990-01-01"
     assert data["parents"] == []
     assert data.get("marriage_id") is None
 
@@ -212,7 +212,7 @@ async def test_update_person_permission_denied(client, tree_id, member_headers):
     )
 
     resp = await client.put(
-        persons_url(tree_id, "/"),
+        persons_url(tree_id),
         json=payload.model_dump(mode="json"),
         headers=member_headers,
     )
@@ -232,7 +232,7 @@ async def test_update_person_unauthenticated(client, tree_id):
     )
 
     resp = await client.put(
-        persons_url(tree_id, "/"),
+        persons_url(tree_id),
         json=payload.model_dump(mode="json"),
     )
 
@@ -261,7 +261,7 @@ async def test_update_person_success(
     )
 
     resp = await client.put(
-        persons_url(tree_id, "/"),
+        persons_url(tree_id),
         json=payload.model_dump(mode="json"),
         headers=admin_headers,
     )
@@ -284,7 +284,7 @@ async def test_update_person_with_invalid_id(client, tree_id, admin_headers):  #
     )
 
     resp = await client.put(
-        persons_url(tree_id, "/"),
+        persons_url(tree_id),
         json=payload.model_dump(mode="json"),
         headers=admin_headers,
     )

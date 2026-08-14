@@ -4,7 +4,6 @@ import strawberry
 from strawberry.types import Info
 
 from app.application.dto.person.person_update_dto import PersonUpdateDTO
-from app.application.services.tree_access_service import TreeAccessService
 from app.application.use_cases.person.create_person_use_case import CreatePersonUseCase
 from app.application.use_cases.person.delete_person_use_case import DeletePersonUseCase
 from app.application.use_cases.person.get_closest_relationship_use_case import (
@@ -15,9 +14,8 @@ from app.application.use_cases.person.get_person_list_by_filter_use_case import 
 )
 from app.application.use_cases.person.get_person_use_case import GetPersonUseCase
 from app.application.use_cases.person.update_person_use_case import UpdatePersonUseCase
-from app.domain.entities.user import User
 from app.domain.shared.permissions import Permissions
-from app.presentation.graphql.auth import require_permission
+from app.presentation.graphql.tree_access import require_tree_member_with_access
 from app.presentation.graphql.types.common import (
     ResultType,
     pagination_dict,
@@ -47,22 +45,10 @@ from app.presentation.rest.schemas.dto.person_schema import (
 )
 from app.presentation.rest.schemas.mappers.common_mappers import CommonApiMapper
 from app.presentation.rest.schemas.mappers.person_mappers import PersonApiMapper
-from app.presentation.utils.date_convert import jalali_to_gregorian
 
 
-def _optional_jalali(value: str | None):
-    if value is None:
-        return None
-    return jalali_to_gregorian(value)
-
-
-async def _require_tree_member(info: Info, tree_id: UUID, permission: str) -> User:
-    user = await require_permission(info, permission)
-    async with info.context.uow:
-        await TreeAccessService(info.context.uow).require_member(
-            tree_id=tree_id, user_id=user.safe_id
-        )
-    return user
+async def _require_tree_member(info: Info, tree_id: UUID, permission: str):
+    return await require_tree_member_with_access(info, tree_id, permission)
 
 
 def _person_create_request(data: PersonCreateInput) -> PersonCreateRequest:
@@ -135,8 +121,8 @@ def _person_list_request(data: PersonListInput | None) -> FilterPersonRequest:
         birth = None
         if f.birth_date is not None:
             birth = RangeRequest(
-                min=_optional_jalali(f.birth_date.min),
-                max=_optional_jalali(f.birth_date.max),
+                min=f.birth_date.min,
+                max=f.birth_date.max,
             )
         filters = PersonFilterRequestData(
             id=f.id,

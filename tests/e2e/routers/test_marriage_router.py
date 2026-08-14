@@ -72,7 +72,7 @@ async def test_create_marriage_permission_denied(client, tree_id, member_headers
         married_at=date(2020, 1, 1),
     )
     resp = await client.post(
-        marriages_url(tree_id, "/"),
+        marriages_url(tree_id),
         json=req.model_dump(mode="json"),
         headers=member_headers,
     )
@@ -92,7 +92,7 @@ async def test_create_marriage_unauthenticated(client, tree_id):
         married_at=date(2020, 1, 1),
     )
     resp = await client.post(
-        marriages_url(tree_id, "/"),
+        marriages_url(tree_id),
         json=req.model_dump(mode="json"),
     )
 
@@ -112,7 +112,7 @@ async def test_create_marriage_success(client, tree_id, admin_headers, uow):  # 
     )
 
     resp = await client.post(
-        marriages_url(tree_id, "/"),
+        marriages_url(tree_id),
         json=req.model_dump(mode="json"),
         headers=admin_headers,
     )
@@ -220,7 +220,7 @@ async def test_update_marriage_permission_denied(client, tree_id, member_headers
     )
 
     resp = await client.put(
-        marriages_url(tree_id, "/"),
+        marriages_url(tree_id),
         json=payload.model_dump(mode="json"),
         headers=member_headers,
     )
@@ -245,7 +245,7 @@ async def test_update_marriage_unauthenticated(client, tree_id):
     )
 
     resp = await client.put(
-        marriages_url(tree_id, "/"),
+        marriages_url(tree_id),
         json=payload.model_dump(mode="json"),
     )
 
@@ -280,7 +280,7 @@ async def test_update_marriage_success(
     )
 
     resp = await client.put(
-        marriages_url(tree_id, "/"),
+        marriages_url(tree_id),
         json=payload.model_dump(mode="json", exclude_unset=True),
         headers=admin_headers,
     )
@@ -304,7 +304,7 @@ async def test_update_marriage_with_invalid_id(client, tree_id, admin_headers): 
     )
 
     resp = await client.put(
-        marriages_url(tree_id, "/"),
+        marriages_url(tree_id),
         json=payload.model_dump(mode="json", exclude_unset=True),
         headers=admin_headers,
     )
@@ -325,7 +325,7 @@ async def test_update_marriage_with_invalid_id(client, tree_id, admin_headers): 
 async def test_delete_marriage_permission_denied(client, tree_id, member_headers):  # noqa: F811
     resp = await client.request(
         "DELETE",
-        marriages_url(tree_id, "/"),
+        marriages_url(tree_id),
         json={"id": str(UUID(int=1))},
         headers=member_headers,
     )
@@ -340,7 +340,7 @@ async def test_delete_marriage_permission_denied(client, tree_id, member_headers
 async def test_delete_marriage_unauthenticated(client, tree_id):
     resp = await client.request(
         "DELETE",
-        marriages_url(tree_id, "/"),
+        marriages_url(tree_id),
         json={"id": str(UUID(int=1))},
     )
 
@@ -369,7 +369,7 @@ async def test_delete_marriage_success(
 
     resp = await client.request(
         "DELETE",
-        marriages_url(tree_id, "/"),
+        marriages_url(tree_id),
         json={"id": str(marriage.safe_id)},
         headers=admin_headers,
     )
@@ -388,7 +388,7 @@ async def test_delete_marriage_success(
 async def test_delete_marriage_with_invalid_id(client, tree_id, admin_headers):  # noqa: F811
     resp = await client.request(
         "DELETE",
-        marriages_url(tree_id, "/"),
+        marriages_url(tree_id),
         json={"id": str(UUID(int=999999))},
         headers=admin_headers,
     )

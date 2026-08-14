@@ -15,7 +15,9 @@ from app.domain.exceptions.person_exceptions import InvalidBirthDateException
 def _photo_service():
     service = MagicMock()
     service.ensure_object_exists = AsyncMock()
-    service.presign = AsyncMock(return_value=None)
+    service.public_url = MagicMock(
+        side_effect=lambda key: f"/media/{key}" if key else None
+    )
     service.delete_quiet = AsyncMock()
     return service
 
@@ -107,7 +109,6 @@ async def test_update_person_replaces_photo(mock_uow):
     mock_uow.persons.update = AsyncMock(return_value=person)
 
     photo_service = _photo_service()
-    photo_service.presign = AsyncMock(return_value="https://example/new")
 
     with patch.object(PersonUpdateMapper, "to_response", return_value=MagicMock()):
         use_case = UpdatePersonUseCase(

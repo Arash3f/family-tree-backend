@@ -3,7 +3,6 @@ from uuid import UUID
 from strawberry.types import Info
 
 from app.application.dto.marriage.marriage_update_dto import MarriageUpdateDTO
-from app.application.services.tree_access_service import TreeAccessService
 from app.application.use_cases.marriage.create_marriage_use_case import (
     CreateMarriageUseCase,
 )
@@ -18,9 +17,8 @@ from app.application.use_cases.marriage.get_marriage_use_case import GetMarriage
 from app.application.use_cases.marriage.update_marriage_use_case import (
     UpdateMarriageUseCase,
 )
-from app.domain.entities.user import User
 from app.domain.shared.permissions import Permissions
-from app.presentation.graphql.auth import require_permission
+from app.presentation.graphql.tree_access import require_tree_member_with_access
 from app.presentation.graphql.types.common import (
     ResultType,
     marriage_sort_field,
@@ -51,13 +49,8 @@ from app.presentation.rest.schemas.mappers.common_mappers import CommonApiMapper
 from app.presentation.rest.schemas.mappers.marriage_mappers import MarriageApiMapper
 
 
-async def _require_tree_member(info: Info, tree_id: UUID, permission: str) -> User:
-    user = await require_permission(info, permission)
-    async with info.context.uow:
-        await TreeAccessService(info.context.uow).require_member(
-            tree_id=tree_id, user_id=user.safe_id
-        )
-    return user
+async def _require_tree_member(info: Info, tree_id: UUID, permission: str):
+    return await require_tree_member_with_access(info, tree_id, permission)
 
 
 def _marriage_create_request(data: MarriageCreateInput) -> MarriageCreateRequest:

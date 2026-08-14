@@ -27,7 +27,7 @@ class GetPersonListByFilterUseCase:
 
             items: list[PersonGetResponseDTO] = []
             for person in person_list.items:
-                photo_url = await self.photo_service.presign(person.photo_object_key)
+                photo_url = self.photo_service.public_url(person.photo_object_key)
                 items.append(PersonGetMapper.to_response(person, photo_url=photo_url))
 
             return PaginatedResult(

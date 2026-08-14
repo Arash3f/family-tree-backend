@@ -1,3 +1,4 @@
+from datetime import date
 from enum import Enum
 from uuid import UUID
 
@@ -5,12 +6,11 @@ import strawberry
 
 from app.domain.entities.person import ParentRelationshipType
 from app.presentation.graphql.types.common import (
+    DateRangeInput,
     GenderEnum,
-    JalaliDateRangeInput,
     PaginationInput,
     PersonSortByEnum,
     SortOrderEnum,
-    format_jalali_date,
 )
 
 
@@ -40,8 +40,8 @@ class PersonType:
     id: UUID | None
     name: str
     gender: GenderEnum
-    birth_date: str | None = None
-    death_date: str | None = None
+    birth_date: date | None = None
+    death_date: date | None = None
     family_name: str | None = None
     birth_place: str | None = None
     death_place: str | None = None
@@ -82,8 +82,8 @@ class ParentLinkInput:
 class PersonCreateInput:
     name: str
     gender: GenderEnum
-    birth_date: str | None = None
-    death_date: str | None = None
+    birth_date: date | None = None
+    death_date: date | None = None
     family_name: str | None = None
     birth_place: str | None = None
     death_place: str | None = None
@@ -97,8 +97,8 @@ class PersonCreateInput:
 class PersonUpdateDataInput:
     name: str | None = None
     gender: GenderEnum | None = None
-    birth_date: str | None = None
-    death_date: str | None = None
+    birth_date: date | None = None
+    death_date: date | None = None
     family_name: str | None = strawberry.UNSET
     birth_place: str | None = strawberry.UNSET
     death_place: str | None = strawberry.UNSET
@@ -124,7 +124,7 @@ class PersonFilterInput:
     id: UUID | None = None
     name: str | None = None
     gender: GenderEnum | None = None
-    birth_date: JalaliDateRangeInput | None = None
+    birth_date: DateRangeInput | None = None
     parent_id: UUID | None = None
     relationship_type: ParentRelationshipTypeEnum | None = None
     marriage_id: UUID | None = None
@@ -147,10 +147,10 @@ def person_from_mapping(data: dict) -> PersonType:
 
     birth = data.get("birth_date")
     death = data.get("death_date")
-    if birth is not None and not isinstance(birth, str):
-        birth = format_jalali_date(birth)
-    if death is not None and not isinstance(death, str):
-        death = format_jalali_date(death)
+    if isinstance(birth, str):
+        birth = date.fromisoformat(birth[:10])
+    if isinstance(death, str):
+        death = date.fromisoformat(death[:10])
 
     parents_raw = data.get("parents") or []
     parents: list[ParentLinkType] = []

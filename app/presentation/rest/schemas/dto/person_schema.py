@@ -1,7 +1,7 @@
 from datetime import date
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_serializer, field_validator
+from pydantic import BaseModel, Field
 
 from app.domain.entities.person import Gender, ParentRelationshipType
 from app.domain.shared.dto.person_filter_dto import PersonSortField
@@ -11,7 +11,6 @@ from app.presentation.rest.schemas.dto.common import (
     RangeRequest,
     SortRequestParams,
 )
-from app.presentation.utils.date_convert import gregorian_to_jalali, jalali_to_gregorian
 
 
 class ParentLinkRequest(BaseModel):
@@ -34,12 +33,6 @@ class PersonModel(BaseModel):
     photo_object_key: str | None = None
     photo_url: str | None = None
 
-    @field_serializer("birth_date", "death_date")
-    def serialize_jalali(self, v):
-        if v is None:
-            return None
-        return gregorian_to_jalali(v)
-
 
 class _PersonUpdateDateRequest(BaseModel):
     name: str | None = None
@@ -53,12 +46,6 @@ class _PersonUpdateDateRequest(BaseModel):
     parents: list[ParentLinkRequest] | None = None
     marriage_id: UUID | None = None
     photo_object_key: str | None = None
-
-    @field_validator("birth_date", "death_date", mode="before")
-    def parse_jalali(cls, v):
-        if isinstance(v, str):
-            return jalali_to_gregorian(v)
-        return v
 
 
 class _PersonUpdateWhereRequest(BaseModel):
@@ -106,16 +93,10 @@ class PersonGetResponse(BaseModel):
             "example": {
                 "name": "Ali",
                 "gender": "male",
-                "birth_date": "1375-05-10",
+                "birth_date": "1996-07-31",
             }
         }
     }
-
-    @field_serializer("birth_date", "death_date")
-    def serialize_jalali(self, v):
-        if v is None:
-            return None
-        return gregorian_to_jalali(v)
 
 
 class PersonCreateRequest(BaseModel):
@@ -136,7 +117,7 @@ class PersonCreateRequest(BaseModel):
             "example": {
                 "name": "arash",
                 "gender": "male",
-                "birth_date": "1379/09/01",
+                "birth_date": "2000-11-21",
                 "parents": [
                     {
                         "parent_id": "00000000-0000-0000-0000-000000000001",
@@ -150,12 +131,6 @@ class PersonCreateRequest(BaseModel):
             }
         }
     }
-
-    @field_validator("birth_date", "death_date", mode="before")
-    def parse_jalali(cls, v):
-        if isinstance(v, str):
-            return jalali_to_gregorian(v)
-        return v
 
 
 class PersonCreateResponse(BaseModel):
@@ -178,7 +153,7 @@ class PersonCreateResponse(BaseModel):
             "example": {
                 "name": "arash",
                 "gender": "male",
-                "birth_date": "1379/09/01",
+                "birth_date": "2000-11-21",
                 "parents": [
                     {
                         "parent_id": "00000000-0000-0000-0000-000000000001",
@@ -188,12 +163,6 @@ class PersonCreateResponse(BaseModel):
             }
         }
     }
-
-    @field_serializer("birth_date", "death_date")
-    def serialize_jalali(self, v):
-        if v is None:
-            return None
-        return gregorian_to_jalali(v)
 
 
 class ClosestRelationshipResponse(BaseModel):

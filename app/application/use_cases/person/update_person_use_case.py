@@ -100,5 +100,5 @@ class UpdatePersonUseCase:
 
             await self.photo_service.delete_quiet(photo_key_to_delete)
 
-            photo_url = await self.photo_service.presign(person.photo_object_key)
+            photo_url = self.photo_service.public_url(person.photo_object_key)
             return PersonUpdateMapper.to_response(person=person, photo_url=photo_url)

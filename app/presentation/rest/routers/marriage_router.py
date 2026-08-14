@@ -18,7 +18,11 @@ from app.application.use_cases.marriage.update_marriage_use_case import (
 )
 from app.domain.shared.permissions import Permissions
 from app.presentation.rest.dependencies.permission_guard import RequirePermission
-from app.presentation.rest.dependencies.tree_guard import require_tree_member
+from app.presentation.rest.dependencies.tree_guard import (
+    require_tree_add_persons,
+    require_tree_edit,
+    require_tree_view,
+)
 from app.presentation.rest.schemas.dto.common import (
     IdRequest,
     PaginatedResponse,
@@ -42,11 +46,11 @@ router = APIRouter(prefix="/marriages", tags=["Marriages"])
 
 
 @router.post(
-    "/",
+    "",
     response_model=MarriageCreateResponse,
     dependencies=[
         Depends(RequirePermission(Permissions.MARRIAGE_CREATE)),
-        Depends(require_tree_member),
+        Depends(require_tree_add_persons),
     ],
 )
 async def create_marriage(
@@ -63,11 +67,11 @@ async def create_marriage(
 
 
 @router.delete(
-    "/",
+    "",
     response_model=ResultResponse,
     dependencies=[
         Depends(RequirePermission(Permissions.MARRIAGE_DELETE)),
-        Depends(require_tree_member),
+        Depends(require_tree_edit),
     ],
 )
 async def delete_marriage(
@@ -81,11 +85,11 @@ async def delete_marriage(
 
 
 @router.put(
-    "/",
+    "",
     response_model=MarriageUpdateResponse,
     dependencies=[
         Depends(RequirePermission(Permissions.MARRIAGE_UPDATE)),
-        Depends(require_tree_member),
+        Depends(require_tree_edit),
     ],
 )
 async def update_marriage(
@@ -106,7 +110,7 @@ async def update_marriage(
     response_model=PaginatedResponse[MarriageModel],
     dependencies=[
         Depends(RequirePermission(Permissions.MARRIAGE_READ)),
-        Depends(require_tree_member),
+        Depends(require_tree_view),
     ],
 )
 async def get_marriage_list_by_filter(
@@ -126,7 +130,7 @@ async def get_marriage_list_by_filter(
     response_model=ResultResponse,
     dependencies=[
         Depends(RequirePermission(Permissions.MARRIAGE_DIVORCE)),
-        Depends(require_tree_member),
+        Depends(require_tree_edit),
     ],
 )
 async def divorce(
@@ -146,7 +150,7 @@ async def divorce(
     response_model=MarriageGetResponse,
     dependencies=[
         Depends(RequirePermission(Permissions.MARRIAGE_READ)),
-        Depends(require_tree_member),
+        Depends(require_tree_view),
     ],
 )
 async def get_marriage(

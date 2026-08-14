@@ -72,5 +72,5 @@ class CreatePersonUseCase:
 
             self.sync_service.upsert_person(person)
 
-            photo_url = await self.photo_service.presign(person.photo_object_key)
+            photo_url = self.photo_service.public_url(person.photo_object_key)
             return PersonCreateMapper.to_response(person, photo_url=photo_url)

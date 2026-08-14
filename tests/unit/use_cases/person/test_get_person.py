@@ -11,6 +11,9 @@ from app.domain.shared.dto.common_dto import IdDTO
 def _photo_service():
     service = MagicMock()
     service.presign = AsyncMock(return_value=None)
+    service.public_url = MagicMock(
+        side_effect=lambda key: f"/media/{key}" if key else None
+    )
     return service
 
 
