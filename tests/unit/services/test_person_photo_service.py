@@ -125,3 +125,43 @@ async def test_upload_person_photo_rejects_disguised_payload():
         await service.upload_person_photo(b"#!/bin/sh\nrm -rf /", "image/png")
 
     storage.upload.assert_not_awaited()
+
+
+def test_public_url_builds_api_path():
+    service = _service()
+    key = f"persons/{uuid4()}.jpg"
+    assert service.public_url(key) == f"/media/{key}"
+    assert service.public_url(None) is None
+
+
+@pytest.mark.asyncio
+async def test_get_person_photo_returns_bytes():
+    storage = MagicMock()
+    storage.get = AsyncMock(return_value=(JPEG_BYTES, "image/jpeg"))
+    service = _service(storage)
+    key = f"persons/{uuid4()}.jpg"
+
+    body, content_type = await service.get_person_photo(key)
+
+    assert body == JPEG_BYTES
+    assert content_type == "image/jpeg"
+    storage.get.assert_awaited_once_with(key)
+
+
+@pytest.mark.asyncio
+async def test_get_person_photo_rejects_invalid_key():
+    storage = MagicMock()
+    storage.get = AsyncMock()
+    service = _service(storage)
+    with pytest.raises(InvalidMediaObjectKeyException):
+        await service.get_person_photo("../secret.jpg")
+    storage.get.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_get_person_photo_raises_when_missing():
+    storage = MagicMock()
+    storage.get = AsyncMock(return_value=None)
+    service = _service(storage)
+    with pytest.raises(MediaObjectNotFoundException):
+        await service.get_person_photo(f"persons/{uuid4()}.png")

@@ -53,6 +53,18 @@ class MinioObjectStorage(ObjectStorage):
             "config": Config(signature_version="s3v4", s3={"addressing_style": "path"}),
         }
 
+    async def ensure_buckets(self, bucket_names: list[str]) -> None:
+        async with self._session.client(**self._client_kwargs()) as client:
+            response = await client.list_buckets()
+            existing = {bucket["Name"] for bucket in response.get("Buckets", [])}
+
+            for name in bucket_names:
+                if name in existing:
+                    logger.debug("MinIO bucket already exists: %s", name)
+                    continue
+                await client.create_bucket(Bucket=name)
+                logger.info("Created MinIO bucket: %s", name)
+
     async def upload(self, data: bytes, content_type: str, key: str) -> str:
         async with self._session.client(**self._client_kwargs()) as client:
             await client.put_object(
@@ -79,6 +91,19 @@ class MinioObjectStorage(ObjectStorage):
                 code = exc.response.get("Error", {}).get("Code")
                 if code in {"404", "NoSuchKey", "NotFound"}:
                     return False
+                raise
+
+    async def get(self, key: str) -> tuple[bytes, str] | None:
+        async with self._session.client(**self._client_kwargs()) as client:
+            try:
+                response = await client.get_object(Bucket=self._bucket, Key=key)
+                body = await response["Body"].read()
+                content_type = response.get("ContentType") or "application/octet-stream"
+                return body, content_type
+            except ClientError as exc:
+                code = str(exc.response.get("Error", {}).get("Code", ""))
+                if code in {"404", "NoSuchKey", "NotFound"}:
+                    return None
                 raise
 
     async def presign_get(self, key: str, expires_seconds: int) -> str:

@@ -17,5 +17,9 @@ class ObjectStorage(ABC):
         """Return True if the object exists."""
 
     @abstractmethod
+    async def get(self, key: str) -> tuple[bytes, str] | None:
+        """Return (body, content_type), or None if the object is missing."""
+
+    @abstractmethod
     async def presign_get(self, key: str, expires_seconds: int) -> str:
         """Return a temporary GET URL for a private object."""

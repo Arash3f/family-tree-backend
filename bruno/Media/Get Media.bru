@@ -1,0 +1,20 @@
+meta {
+  name: Get Media
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/media/{{photo_object_key}}
+  auth: none
+}
+
+docs {
+  # Get Media
+
+  Stream a person photo by object key. Used as `photo_url` on person responses
+  (`/media/persons/{uuid}.jpg`). No auth — keys are unguessable UUIDs so `<img>`
+  tags can load them.
+
+  Upload first with `POST /media/upload`.
+}
