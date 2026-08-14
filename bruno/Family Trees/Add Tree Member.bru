@@ -16,7 +16,8 @@ params:path {
 
 body:json {
   {
-    "user_id": "{{user_id}}"
+    "username": "new_user",
+    "permissions": ["view"]
   }
 }
 
@@ -31,17 +32,22 @@ assert {
 docs {
   # Add Tree Member
 
-  Owner only. The new member joins with the `member` role, which grants read
-  and write access to the tree's persons and marriages but not to tree
-  settings or membership. Adding the same user twice returns `409`.
+  Requires permission `tree_member_add`. The new member joins with the `member`
+  role, and `permissions` decides what they can actually do inside the tree.
+  Adding the same user twice returns `409`.
 
-  Run Users / Create User first so `{{user_id}}` points at a real account.
+  Run Users / Create User first so the username points at a real account.
 
   ## Input (path + `application/json`)
-  | Field | Type | Required |
-  |-------|------|----------|
-  | tree_id | uuid | yes (path) |
-  | user_id | uuid | yes |
+  | Field | Type | Required | Notes |
+  |-------|------|----------|-------|
+  | tree_id | uuid | yes (path) | |
+  | username | string | yes | 1-100 chars |
+  | permissions | string[] | no | `view`, `edit`, `add_persons`; defaults to `view` |
+
+  Permissions cascade, so asking for `edit` or `add_persons` also grants
+  `view`. An unknown name returns `422`. Use Update Tree Member to change
+  access later.
 
   ## Output `201`
   ```json
@@ -49,7 +55,9 @@ docs {
     "id": "00000000-0000-0000-0000-000000000003",
     "tree_id": "00000000-0000-0000-0000-000000000001",
     "user_id": "00000000-0000-0000-0000-000000000002",
-    "role": "member"
+    "role": "member",
+    "permissions": ["view"],
+    "username": "new_user"
   }
   ```
 }

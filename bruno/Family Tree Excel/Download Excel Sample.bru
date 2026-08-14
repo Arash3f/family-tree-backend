@@ -1,0 +1,41 @@
+meta {
+  name: Download Excel Sample
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/family-trees/{{tree_id}}/excel/sample
+  body: none
+  auth: inherit
+}
+
+params:path {
+  tree_id: {{tree_id}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  # Download Excel Sample
+
+  Downloads a filled-in `.xlsx` template that shows the Persons and Marriages
+  sheets the importer expects. Start here before building a real import file.
+
+  Requires permission `person_read` plus `view` access to the tree.
+
+  The `Accept-Language` header picks the sheet header language, so send
+  `fa` for Persian column titles.
+
+  ## Input (path)
+  | Param | Type | Required |
+  |-------|------|----------|
+  | tree_id | uuid | yes |
+
+  ## Output `200`
+  A binary
+  `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` body with
+  a `Content-Disposition: attachment` header.
+}

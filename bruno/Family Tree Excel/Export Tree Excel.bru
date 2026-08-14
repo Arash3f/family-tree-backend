@@ -1,0 +1,40 @@
+meta {
+  name: Export Tree Excel
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/family-trees/{{tree_id}}/excel/export
+  body: none
+  auth: inherit
+}
+
+params:path {
+  tree_id: {{tree_id}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  # Export Tree Excel
+
+  Exports every person and marriage in the tree as an `.xlsx` workbook. The
+  output uses the same shape the importer accepts, so an export can be edited
+  and imported back.
+
+  Requires permissions `person_read` and `marriage_read`, plus `view` access to
+  the tree.
+
+  ## Input (path)
+  | Param | Type | Required |
+  |-------|------|----------|
+  | tree_id | uuid | yes |
+
+  ## Output `200`
+  A binary
+  `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` body with
+  a `Content-Disposition: attachment` header.
+}

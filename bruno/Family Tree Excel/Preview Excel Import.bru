@@ -1,0 +1,77 @@
+meta {
+  name: Preview Excel Import
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/family-trees/{{tree_id}}/excel/import/preview
+  body: multipartForm
+  auth: inherit
+}
+
+params:path {
+  tree_id: {{tree_id}}
+}
+
+body:multipart-form {
+  file: @file(./sample.xlsx)
+}
+
+assert {
+  res.status: eq 200
+  res.body.valid: isBoolean
+}
+
+docs {
+  # Preview Excel Import
+
+  Dry run. Parses the workbook, matches every row against the tree, and reports
+  what an import would do without writing anything. Always run this before
+  Import Tree Excel.
+
+  Requires permissions `person_create` and `marriage_create`, plus
+  `add_persons` access to the tree.
+
+  ## Input (path + `multipart/form-data`)
+  | Field | Type | Required | Notes |
+  |-------|------|----------|-------|
+  | tree_id | uuid | yes (path) | |
+  | file | file | yes | `.xlsx` only, non-empty |
+
+  ## Output `200`
+  ```json
+  {
+    "valid": true,
+    "persons": [
+      {
+        "ref": "p1",
+        "name": "Ali",
+        "gender": "MALE",
+        "row_number": 2,
+        "already_exists": false,
+        "existing_label": null,
+        "duplicate_of_ref": null
+      }
+    ],
+    "marriages": [
+      {
+        "ref": "m1",
+        "spouse_a_ref": "p1",
+        "spouse_b_ref": "p2",
+        "married_at": "2000-01-01",
+        "row_number": 2,
+        "already_exists": false,
+        "warning": null
+      }
+    ],
+    "errors": []
+  }
+  ```
+
+  `valid` is false when `errors` is non-empty. `already_exists` marks rows the
+  tree already holds, `duplicate_of_ref` marks rows repeated inside the file
+  itself, and `warning` flags a spouse who already has an active marriage.
+
+  A non-`.xlsx` or empty upload returns `422`.
+}

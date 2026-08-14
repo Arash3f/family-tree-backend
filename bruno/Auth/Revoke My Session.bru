@@ -1,0 +1,43 @@
+meta {
+  name: Revoke My Session
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{base_url}}/auth/sessions/{{session_id}}
+  body: none
+  auth: inherit
+}
+
+params:path {
+  session_id: {{session_id}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.result: isDefined
+}
+
+docs {
+  # Revoke My Session
+
+  Revokes one of the current user's own sessions. Run My Sessions first and copy
+  an `id` into the `session_id` environment variable.
+
+  Revoking the session the request itself authenticates with also works: the
+  refresh token dies immediately and the access token stops working once it
+  expires.
+
+  ## Input (path)
+  | Param | Type | Required |
+  |-------|------|----------|
+  | session_id | uuid | yes |
+
+  ## Output `200`
+  ```json
+  { "result": "ok" }
+  ```
+
+  A session id that belongs to another user returns `404`.
+}

@@ -1,0 +1,57 @@
+meta {
+  name: Update Tree Member
+  type: http
+  seq: 9
+}
+
+patch {
+  url: {{base_url}}/family-trees/{{tree_id}}/members/{{user_id}}
+  body: json
+  auth: inherit
+}
+
+params:path {
+  tree_id: {{tree_id}}
+  user_id: {{user_id}}
+}
+
+body:json {
+  {
+    "permissions": ["view", "edit"]
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isString
+  res.body.user_id: isString
+}
+
+docs {
+  # Update Tree Member
+
+  Replaces a member's per-tree access. Requires permission `tree_member_add`.
+
+  ## Input (path + `application/json`)
+  | Field | Type | Required | Notes |
+  |-------|------|----------|-------|
+  | tree_id | uuid | yes (path) | |
+  | user_id | uuid | yes (path) | |
+  | permissions | string[] | yes | `view`, `edit`, `add_persons` |
+
+  Permissions cascade, so the server normalizes the list: asking for `edit`
+  or `add_persons` also grants `view`. An empty list or an unknown name
+  returns `422`.
+
+  ## Output `200`
+  ```json
+  {
+    "id": "00000000-0000-0000-0000-000000000003",
+    "tree_id": "00000000-0000-0000-0000-000000000001",
+    "user_id": "00000000-0000-0000-0000-000000000002",
+    "role": "member",
+    "permissions": ["view", "edit"],
+    "username": "new_user"
+  }
+  ```
+}

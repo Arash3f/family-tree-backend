@@ -1,0 +1,44 @@
+meta {
+  name: Revoke User Session
+  type: http
+  seq: 7
+}
+
+delete {
+  url: {{base_url}}/users/{{user_id}}/sessions/{{session_id}}
+  body: none
+  auth: inherit
+}
+
+params:path {
+  user_id: {{user_id}}
+  session_id: {{session_id}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.result: isDefined
+}
+
+docs {
+  # Revoke User Session
+
+  Signs one device out of another user's account. Requires permission
+  `user_update`.
+
+  Run List User Sessions first and copy an `id` into the `session_id`
+  environment variable.
+
+  ## Input (path)
+  | Param | Type | Required |
+  |-------|------|----------|
+  | user_id | uuid | yes |
+  | session_id | uuid | yes |
+
+  ## Output `200`
+  ```json
+  { "result": "ok" }
+  ```
+
+  A session that does not belong to `user_id` returns `404`.
+}

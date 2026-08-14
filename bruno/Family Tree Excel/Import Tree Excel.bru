@@ -1,0 +1,64 @@
+meta {
+  name: Import Tree Excel
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/family-trees/{{tree_id}}/excel/import
+  body: multipartForm
+  auth: inherit
+}
+
+params:path {
+  tree_id: {{tree_id}}
+}
+
+body:multipart-form {
+  file: @file(./sample.xlsx)
+  include: {"person_refs": [], "marriage_refs": []}
+}
+
+assert {
+  res.status: eq 200
+  res.body.persons_created: isNumber
+  res.body.marriages_created: isNumber
+}
+
+docs {
+  # Import Tree Excel
+
+  Creates the persons and marriages described by the workbook. Run
+  Preview Excel Import first and fix every reported error.
+
+  Requires permissions `person_create` and `marriage_create`, plus
+  `add_persons` access to the tree.
+
+  ## Input (path + `multipart/form-data`)
+  | Field | Type | Required | Notes |
+  |-------|------|----------|-------|
+  | tree_id | uuid | yes (path) | |
+  | file | file | yes | `.xlsx` only, non-empty |
+  | include | string | no | JSON object selecting which rows to create |
+
+  `include` narrows the import to the refs the preview reported, which is how a
+  UI lets someone skip duplicates:
+
+  ```json
+  { "person_refs": ["p1", "p2"], "marriage_refs": ["m1"] }
+  ```
+
+  Leave `include` out to import every row the tree does not already have. Both
+  lists empty means the same thing as omitting it. Malformed JSON returns `422`.
+
+  ## Output `200`
+  ```json
+  {
+    "persons_created": 2,
+    "marriages_created": 1
+  }
+  ```
+
+  The whole import runs in one transaction, so a row that fails validation
+  rolls the rest back.
+}
