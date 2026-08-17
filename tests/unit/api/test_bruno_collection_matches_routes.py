@@ -86,6 +86,8 @@ def _app_routes() -> set[tuple[str, str]]:
     for route in app.routes:
         if not isinstance(route, APIRoute):
             continue
+        if route.methods is None:
+            continue
         template = PATH_PARAM.sub("{}", route.path)
         for method in route.methods:
             if method in {"HEAD", "OPTIONS"}:
