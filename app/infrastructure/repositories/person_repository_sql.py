@@ -81,7 +81,7 @@ class SQLPersonRepository(PersonRepository):
                 stmt = stmt.where(PersonModel.tree_id == filters.tree_id)
 
             if filters.name:
-                stmt = stmt.where(PersonModel.name.ilike(f"%{filters.name}%"))
+                stmt = stmt.where(PersonModel.name.contains(filters.name, autoescape=True))
 
             if filters.id:
                 stmt = stmt.where(PersonModel.id == filters.id)

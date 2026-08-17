@@ -66,7 +66,7 @@ class SQLRoleRepository(RoleRepository):
 
         if filters:
             if filters.name:
-                stmt = stmt.where(RoleModel.name.ilike(f"%{filters.name}%"))
+                stmt = stmt.where(RoleModel.name.contains(filters.name, autoescape=True))
 
             if filters.id:
                 stmt = stmt.where(RoleModel.id == filters.id)

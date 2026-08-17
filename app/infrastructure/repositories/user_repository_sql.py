@@ -107,7 +107,7 @@ class SQLUserRepository(UserRepository):
 
         if filters:
             if filters.username:
-                stmt = stmt.where(UserModel.username.ilike(f"%{filters.username}%"))
+                stmt = stmt.where(UserModel.username.contains(filters.username, autoescape=True))
 
             if filters.id:
                 stmt = stmt.where(UserModel.id == filters.id)

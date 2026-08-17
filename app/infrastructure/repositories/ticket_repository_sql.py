@@ -58,7 +58,7 @@ class SQLTicketRepository(TicketRepository):
             if filters.id:
                 stmt = stmt.where(TicketModel.id == filters.id)
             if filters.title:
-                stmt = stmt.where(TicketModel.title.ilike(f"%{filters.title}%"))
+                stmt = stmt.where(TicketModel.title.contains(filters.title, autoescape=True))
             if filters.status is not None:
                 stmt = stmt.where(TicketModel.status == filters.status.value)
             if filters.category is not None:

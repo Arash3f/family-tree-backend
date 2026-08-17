@@ -67,7 +67,7 @@ class SQLPermissionRepository(PermissionRepository):
 
         if filters:
             if filters.name:
-                stmt = stmt.where(PermissionModel.name.ilike(f"%{filters.name}%"))
+                stmt = stmt.where(PermissionModel.name.contains(filters.name, autoescape=True))
 
             if filters.id:
                 stmt = stmt.where(PermissionModel.id == filters.id)
