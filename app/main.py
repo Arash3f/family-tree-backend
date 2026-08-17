@@ -152,7 +152,7 @@ def neo4j_health():
         neo4j_client.execute_read("RETURN 1 AS ok", params={})
         return {"status": "ok"}
     except Exception:
-        return JSONResponse({"status": "error"}, status_code=503)
+        return JSONResponse({"status": "error"}, status_code=503, headers={"Content-Type": "application/json"})
 
 
 @app.get("/health")

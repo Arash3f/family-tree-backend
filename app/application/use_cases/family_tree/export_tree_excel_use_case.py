@@ -31,9 +31,9 @@ class ExportTreeExcelUseCase:
             or "family-tree"
         )
 
-        loop = asyncio.get_event_loop()
-        excel_content = await loop.run_in_executor(
-            None,
+        executor = asyncio.get_event_loop().get_executor()
+        excel_content = await asyncio.get_event_loop().run_in_executor(
+            executor,
             build_export_workbook,
             persons,
             marriages,

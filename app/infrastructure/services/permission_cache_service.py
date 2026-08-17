@@ -1,51 +1,40 @@
 from datetime import datetime, timedelta, timezone
+from typing import NamedTuple
 from uuid import UUID
 
 from app.application.interfaces.unit_of_work import UnitOfWork
 
 
+class _CachedPermissions(NamedTuple):
+    permissions: set[str]
+    expires_at: datetime
+
+
 class PermissionCacheService:
-    """Cache user permissions in memory with TTL to reduce DB queries."""
+    """In-memory permission caching with TTL expiration."""
 
     def __init__(self, ttl_seconds: int = 3600):
-        self._cache: dict[UUID, tuple[set[str], datetime]] = {}
-        self.ttl = timedelta(seconds=ttl_seconds)
+        self._cache: dict[UUID, _CachedPermissions] = {}
+        self._ttl_seconds = ttl_seconds
 
-    async def get_permissions(
-        self, user_id: UUID, uow: UnitOfWork
-    ) -> set[str]:
-        """Get user permissions with cache, TTL 1 hour by default."""
+    async def get_permissions(self, user_id: UUID, uow: UnitOfWork) -> set[str]:
         now = datetime.now(timezone.utc)
-
-        if user_id in self._cache:
-            permissions, expiry = self._cache[user_id]
-            if now < expiry:
-                return permissions
+        cached = self._cache.get(user_id)
+        if cached and cached.expires_at > now:
+            return cached.permissions
 
         async with uow:
-            user = await uow.users.get(user_id)
-            if not user or not user.role_id:
-                self._cache[user_id] = (set(), now + self.ttl)
-                return set()
+            user = await uow.users.get_with_details(user_id)
+            permissions = set()
+            if user and user.role:
+                permissions = {p.name for p in user.role.permissions}
 
-            role = await uow.roles.get(user.role_id)
-            if not role:
-                self._cache[user_id] = (set(), now + self.ttl)
-                return set()
-
-            permissions = await uow.permissions.get_list()
-            role_permission_ids = set(role.permission_ids)
-            permission_names = {
-                p.name for p in permissions if p.id in role_permission_ids
-            }
-
-            self._cache[user_id] = (permission_names, now + self.ttl)
-            return permission_names
+        expires_at = now + timedelta(seconds=self._ttl_seconds)
+        self._cache[user_id] = _CachedPermissions(permissions, expires_at)
+        return permissions
 
     def invalidate(self, user_id: UUID) -> None:
-        """Clear cache for a specific user."""
         self._cache.pop(user_id, None)
 
     def clear(self) -> None:
-        """Clear all cached permissions."""
         self._cache.clear()

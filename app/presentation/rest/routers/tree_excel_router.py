@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import Response
 from pydantic import BaseModel, ValidationError
 from uuid import UUID
+import asyncio
 
 from app.application.use_cases.family_tree.export_tree_excel_use_case import (
     ExportTreeExcelUseCase,
@@ -134,9 +136,19 @@ async def export_excel(
     tree_id: UUID,
     uow=Depends(get_uow),
 ) -> Response:
-    usecase = ExportTreeExcelUseCase(uow)
-    result = await usecase.execute(tree_id=tree_id, lang=detect_language(request))
-    return _xlsx_response(filename=result.filename, content=result.content)
+    try:
+        usecase = ExportTreeExcelUseCase(uow)
+        result = await asyncio.wait_for(
+            usecase.execute(tree_id=tree_id, lang=detect_language(request)),
+            timeout=300.0,
+        )
+        return _xlsx_response(filename=result.filename, content=result.content)
+    except asyncio.TimeoutError:
+        return Response(
+            content='{"detail": "Excel export timed out after 5 minutes"}',
+            status_code=504,
+            media_type="application/json",
+        )
 
 
 @router.post(
@@ -161,19 +173,30 @@ async def preview_excel_import(
     if not content:
         raise TreeExcelInvalidException(detail=["Uploaded file is empty"])
 
-    usecase = PreviewTreeExcelUseCase(uow, marriage_rule_service)
-    result = await usecase.execute(tree_id=tree_id, content=content)
-    return TreeExcelPreviewResponse(
-        valid=result.valid,
-        persons=[
-            TreeExcelPreviewPerson(**person.__dict__) for person in result.persons
-        ],
-        marriages=[
-            TreeExcelPreviewMarriage(**marriage.__dict__)
-            for marriage in result.marriages
-        ],
-        errors=result.errors,
-    )
+    try:
+        usecase = PreviewTreeExcelUseCase(uow, marriage_rule_service)
+        result = await asyncio.wait_for(
+            usecase.execute(tree_id=tree_id, content=content),
+            timeout=60.0,
+        )
+        return TreeExcelPreviewResponse(
+            valid=result.valid,
+            persons=[
+                TreeExcelPreviewPerson(**person.__dict__) for person in result.persons
+            ],
+            marriages=[
+                TreeExcelPreviewMarriage(**marriage.__dict__)
+                for marriage in result.marriages
+            ],
+            errors=result.errors,
+        )
+    except asyncio.TimeoutError:
+        return TreeExcelPreviewResponse(
+            valid=False,
+            persons=[],
+            marriages=[],
+            errors=["Excel preview timed out after 60 seconds"],
+        )
 
 
 @router.post(
@@ -200,14 +223,24 @@ async def import_excel(
         raise TreeExcelInvalidException(detail=["Uploaded file is empty"])
 
     selection = _parse_include(include)
-    usecase = ImportTreeExcelUseCase(uow, marriage_rule_service)
-    result = await usecase.execute(
-        tree_id=tree_id,
-        content=content,
-        person_refs=set(selection.person_refs) if selection else None,
-        marriage_refs=set(selection.marriage_refs) if selection else None,
-    )
-    return TreeExcelImportResponse(
-        persons_created=result.persons_created,
-        marriages_created=result.marriages_created,
-    )
+    try:
+        usecase = ImportTreeExcelUseCase(uow, marriage_rule_service)
+        result = await asyncio.wait_for(
+            usecase.execute(
+                tree_id=tree_id,
+                content=content,
+                person_refs=set(selection.person_refs) if selection else None,
+                marriage_refs=set(selection.marriage_refs) if selection else None,
+            ),
+            timeout=300.0,
+        )
+        return TreeExcelImportResponse(
+            persons_created=result.persons_created,
+            marriages_created=result.marriages_created,
+        )
+    except asyncio.TimeoutError:
+        return Response(
+            content='{"detail": "Excel import timed out after 5 minutes"}',
+            status_code=504,
+            media_type="application/json",
+        )

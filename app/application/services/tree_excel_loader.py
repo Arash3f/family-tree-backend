@@ -68,6 +68,8 @@ async def load_all_tree_persons(uow: UnitOfWork, tree_id: UUID) -> list[Person]:
             break
         page += 1
     items.sort(key=_name_sort_key)
+    for person in items:
+        _ = person.parents
     return items
 
 

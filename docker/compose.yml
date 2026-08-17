@@ -114,6 +114,8 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
+    expose:
+      - "5555"
 
   db:
     image: postgres:15.13

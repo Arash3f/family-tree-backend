@@ -1,5 +1,8 @@
 from uuid import UUID
 
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.exceptions.family_tree_exceptions import FreeAccountLimitException
 from app.domain.shared.account_type import (
@@ -7,6 +10,10 @@ from app.domain.shared.account_type import (
     FREE_MAX_OWNED_TREES,
     FREE_MAX_PERSONS_PER_TREE,
 )
+from app.infrastructure.database.models.family_tree_model import FamilyTreeModel
+from app.infrastructure.database.models.marriage_model import MarriageModel
+from app.infrastructure.database.models.person_model import PersonModel
+from app.infrastructure.database.models.user_model import UserModel
 
 
 class AccountLimitService:
@@ -37,7 +44,7 @@ class AccountLimitService:
         owner = await self._lock_tree_owner(uow, tree_id)
         if owner is None or not owner.is_free:
             return
-        current = await uow.persons.count_in_tree(tree_id)
+        current = await self._count_persons_locked(uow.session, tree_id)
         if current + additional > FREE_MAX_PERSONS_PER_TREE:
             raise FreeAccountLimitException(
                 detail=[
@@ -58,7 +65,7 @@ class AccountLimitService:
         owner = await self._lock_tree_owner(uow, tree_id)
         if owner is None or not owner.is_free:
             return
-        current = await uow.marriages.count_in_tree(tree_id)
+        current = await self._count_marriages_locked(uow.session, tree_id)
         if current + additional > FREE_MAX_MARRIAGES_PER_TREE:
             raise FreeAccountLimitException(
                 detail=[
@@ -70,3 +77,19 @@ class AccountLimitService:
     async def _lock_tree_owner(self, uow: UnitOfWork, tree_id: UUID):
         tree = await uow.family_trees.get_or_raise(tree_id)
         return await uow.users.get_for_update(tree.owner_user_id)
+
+    @staticmethod
+    async def _count_persons_locked(session: AsyncSession, tree_id: UUID) -> int:
+        stmt = select(func.count(PersonModel.id)).where(
+            PersonModel.tree_id == tree_id
+        )
+        result = await session.execute(stmt)
+        return result.scalar() or 0
+
+    @staticmethod
+    async def _count_marriages_locked(session: AsyncSession, tree_id: UUID) -> int:
+        stmt = select(func.count(MarriageModel.id)).where(
+            MarriageModel.tree_id == tree_id
+        )
+        result = await session.execute(stmt)
+        return result.scalar() or 0
