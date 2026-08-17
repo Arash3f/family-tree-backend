@@ -18,6 +18,7 @@ class AccountLimitService:
         owner = await uow.users.get_for_update(owner_user_id)
         if owner is None or not owner.is_free:
             return
+
         owned = await uow.family_trees.count_owned_by_user(owner_user_id)
         if owned >= FREE_MAX_OWNED_TREES:
             raise FreeAccountLimitException(

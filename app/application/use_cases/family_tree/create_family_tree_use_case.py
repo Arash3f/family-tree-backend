@@ -24,7 +24,8 @@ class CreateFamilyTreeUseCase:
         self, dto: FamilyTreeCreateDTO, *, owner_user_id: UUID
     ) -> FamilyTreeResponseDTO:
         async with self.uow:
-            await self.uow.users.get_or_raise(user_id=owner_user_id)
+            owner = await self.uow.users.get_or_raise(user_id=owner_user_id)
+
             await self.account_limit_service.assert_can_create_tree(
                 self.uow, owner_user_id=owner_user_id
             )
