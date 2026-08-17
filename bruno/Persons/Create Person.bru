@@ -63,7 +63,7 @@ docs {
   | notes | string\|null | no | Free-form notes |
   | parents | array | no | `{ parent_id, relationship_type }` |
   | marriage_id | uuid\|null | no | Origin marriage |
-  | photo_object_key | string\|null | no | From `POST /media/upload` |
+  | photo_object_key | string\|null | no | From `POST /family-trees/{tree_id}/media/upload` |
 
   ## Output `200`
   ```json

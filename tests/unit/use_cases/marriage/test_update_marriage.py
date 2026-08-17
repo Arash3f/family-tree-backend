@@ -9,15 +9,14 @@ from app.application.dto.marriage.marriage_update_dto import (
     MarriageUpdateDTOMapper,
     MarriageUpdateResponseDTO,
 )
-from app.domain.exceptions.marriage_exceptions import (
-    ActiveMarriageExistsException,
-    MarriageNotFoundException,
-)
+from app.domain.exceptions.marriage_exceptions import MarriageNotFoundException
 
 
 @pytest.mark.asyncio
-async def test_update_marriage_rejects_reactivating_onto_a_busy_spouse(mock_uow):
-    """Clearing divorced_at must not give someone two active marriages."""
+async def test_update_marriage_allows_reactivating_beside_another_active(
+    mock_uow,
+):
+    """Clearing divorced_at is fine even when the spouse has another marriage."""
     dto = MagicMock()
     dto.where.marriage_id = UUID(int=1)
     dto.data.model_dump.return_value = {"divorced_at": None}
@@ -33,16 +32,27 @@ async def test_update_marriage_rejects_reactivating_onto_a_busy_spouse(mock_uow)
 
     mock_uow.marriages.get_in_tree_or_raise = AsyncMock(return_value=marriage)
     mock_uow.marriages.has_active_for_person = AsyncMock(return_value=True)
+    mock_uow.marriages.update = AsyncMock(return_value=marriage)
 
     use_case = UpdateMarriageUseCase(
         mock_uow, marriage_rules_service=MagicMock(), sync_service=MagicMock()
     )
 
-    with pytest.raises(ActiveMarriageExistsException):
+    with patch.object(
+        MarriageUpdateDTOMapper,
+        "to_response",
+        return_value=MarriageUpdateResponseDTO(
+            id=UUID(int=1),
+            spouse_a_id=UUID(int=1),
+            spouse_b_id=UUID(int=2),
+            married_at=date(2020, 1, 1),
+            divorced_at=None,
+        ),
+    ):
         await use_case.execute(dto, tree_id=UUID(int=7))
 
-    mock_uow.marriages.update.assert_not_awaited()
-    mock_uow.commit.assert_not_awaited()
+    mock_uow.marriages.update.assert_awaited_once()
+    mock_uow.commit.assert_awaited_once()
 
 
 @pytest.mark.asyncio

@@ -119,3 +119,35 @@ async def test_update_person_replaces_photo(mock_uow):
     photo_service.ensure_object_exists.assert_awaited_once_with(new_key)
     assert person.photo_object_key == new_key
     photo_service.delete_quiet.assert_awaited_once_with(old_key)
+
+
+@pytest.mark.asyncio
+async def test_update_person_clears_photo(mock_uow):
+    old_key = "persons/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.jpg"
+
+    dto = MagicMock()
+    dto.where.person_id = UUID(int=1)
+    dto.data.model_dump.return_value = {"photo_object_key": None}
+
+    person = MagicMock()
+    person.safe_id = UUID(int=1)
+    person.parent_ids = []
+    person.parents = []
+    person.marriage_id = None
+    person.gender = Gender.MALE
+    person.photo_object_key = old_key
+
+    mock_uow.persons.get_in_tree_or_raise = AsyncMock(return_value=person)
+    mock_uow.persons.update = AsyncMock(return_value=person)
+
+    photo_service = _photo_service()
+
+    with patch.object(PersonUpdateMapper, "to_response", return_value=MagicMock()):
+        use_case = UpdatePersonUseCase(
+            mock_uow, photo_service, sync_service=MagicMock()
+        )
+        await use_case.execute(dto, tree_id=UUID(int=7))
+
+    photo_service.ensure_object_exists.assert_not_awaited()
+    assert person.photo_object_key is None
+    photo_service.delete_quiet.assert_awaited_once_with(old_key)

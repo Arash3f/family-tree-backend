@@ -8,7 +8,9 @@ from app.application.services.tree_excel_service import (
     ExcelMarriageRow,
     ExcelPersonRow,
     MARRIAGE_HEADERS,
+    MARRIAGE_HEADERS_FA,
     PERSON_HEADERS,
+    PERSON_HEADERS_FA,
     ParsedTreeExcel,
     build_export_workbook,
     build_sample_workbook,
@@ -17,11 +19,14 @@ from app.application.services.tree_excel_service import (
 )
 from app.domain.entities.marriage import Marriage
 from app.domain.entities.person import Gender, Person
+from app.presentation.utils.date_convert import gregorian_to_jalali
 
 
 def test_excel_headers_do_not_include_id():
     assert "id" not in PERSON_HEADERS
     assert "id" not in MARRIAGE_HEADERS
+    assert "id" not in PERSON_HEADERS_FA
+    assert "id" not in MARRIAGE_HEADERS_FA
 
 
 def test_sample_workbook_has_no_id_column():
@@ -36,13 +41,25 @@ def test_sample_workbook_has_no_id_column():
     assert marriage_headers == MARRIAGE_HEADERS
 
 
-def test_sample_workbook_fa_has_persian_instructions_and_data():
+def test_sample_workbook_fa_has_persian_sheets_headers_and_data():
     workbook = load_workbook(BytesIO(build_sample_workbook(lang="fa")), data_only=True)
-    assert workbook["Instructions"]["A1"].value == "قالب اکسل شجره‌نامه"
-    assert workbook["Persons"]["B2"].value == "علی"
-    assert workbook["Persons"]["C2"].value == "کریمی"
+    assert workbook["راهنما"]["A1"].value == "قالب اکسل شجره‌نامه"
+    assert workbook["افراد"]["B2"].value == "علی"
+    assert workbook["افراد"]["C2"].value == "کریمی"
+    assert workbook["افراد"]["D2"].value == "مرد"
+    person_headers = [
+        cell.value for cell in workbook["افراد"][1] if cell.value is not None
+    ]
+    marriage_headers = [
+        cell.value for cell in workbook["ازدواج‌ها"][1] if cell.value is not None
+    ]
+    assert person_headers == PERSON_HEADERS_FA
+    assert marriage_headers == MARRIAGE_HEADERS_FA
+    assert workbook["ازدواج‌ها"]["D2"].value == "1334/03/10"
     parsed = parse_tree_excel(build_sample_workbook(lang="fa"))
     assert [person.ref for person in parsed.persons] == ["P1", "P2", "P3", "P4", "P5"]
+    assert parsed.persons[0].gender == Gender.MALE
+    assert parsed.persons[0].birth_date == date(1951, 3, 22)
 
 
 def test_sample_workbook_en_has_english_instructions_and_data():
@@ -74,6 +91,27 @@ def test_export_workbook_has_no_id_column():
     assert "id" not in headers
     assert headers == PERSON_HEADERS
     assert workbook["Persons"]["E2"].value == "1951-03-22"
+
+
+def test_export_workbook_fa_uses_persian_headers_and_jalali_dates():
+    tree_id = uuid4()
+    person = Person(
+        id=uuid4(),
+        name="علی",
+        family_name="کریمی",
+        gender=Gender.MALE,
+        tree_id=tree_id,
+        birth_date=date(1951, 3, 22),
+    )
+    content = build_export_workbook(persons=[person], marriages=[], lang="fa")
+    workbook = load_workbook(BytesIO(content), data_only=True)
+    headers = [cell.value for cell in workbook["افراد"][1] if cell.value is not None]
+    assert headers == PERSON_HEADERS_FA
+    assert workbook["افراد"]["D2"].value == "مرد"
+    assert workbook["افراد"]["E2"].value == gregorian_to_jalali(date(1951, 3, 22))
+    parsed = parse_tree_excel(content)
+    assert parsed.persons[0].birth_date == date(1951, 3, 22)
+    assert parsed.persons[0].gender == Gender.MALE
 
 
 def test_match_tree_excel_detects_existing_and_in_file_duplicates():

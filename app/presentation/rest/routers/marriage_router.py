@@ -16,11 +16,13 @@ from app.application.use_cases.marriage.get_marriage_use_case import GetMarriage
 from app.application.use_cases.marriage.update_marriage_use_case import (
     UpdateMarriageUseCase,
 )
-from app.domain.shared.permissions import Permissions
-from app.presentation.rest.dependencies.permission_guard import RequirePermission
+from app.domain.entities.family_tree import TreeMembership
+from app.presentation.tree_data_access import redact_marriage_data
 from app.presentation.rest.dependencies.tree_guard import (
-    require_tree_add_persons,
-    require_tree_edit,
+    require_tree_marriage_create,
+    require_tree_marriage_delete,
+    require_tree_marriage_divorce,
+    require_tree_marriage_update,
     require_tree_view,
 )
 from app.presentation.rest.schemas.dto.common import (
@@ -48,14 +50,11 @@ router = APIRouter(prefix="/marriages", tags=["Marriages"])
 @router.post(
     "",
     response_model=MarriageCreateResponse,
-    dependencies=[
-        Depends(RequirePermission(Permissions.MARRIAGE_CREATE)),
-        Depends(require_tree_add_persons),
-    ],
 )
 async def create_marriage(
     tree_id: UUID,
     data: MarriageCreateRequest,
+    membership: TreeMembership = Depends(require_tree_marriage_create),
     uow=Depends(get_uow),
     marriage_rule_service=Depends(get_marriage_rules_service),
 ) -> MarriageCreateResponse:
@@ -63,16 +62,16 @@ async def create_marriage(
     res = await usecase.execute(
         MarriageApiMapper.to_create_marriage_dto(data), tree_id=tree_id
     )
-    return MarriageApiMapper.from_create_marriage_dto(res)
+    response = MarriageApiMapper.from_create_marriage_dto(res)
+    return MarriageCreateResponse.model_validate(
+        redact_marriage_data(response.model_dump(), membership)
+    )
 
 
 @router.delete(
     "",
     response_model=ResultResponse,
-    dependencies=[
-        Depends(RequirePermission(Permissions.MARRIAGE_DELETE)),
-        Depends(require_tree_edit),
-    ],
+    dependencies=[Depends(require_tree_marriage_delete)],
 )
 async def delete_marriage(
     tree_id: UUID,
@@ -87,14 +86,11 @@ async def delete_marriage(
 @router.put(
     "",
     response_model=MarriageUpdateResponse,
-    dependencies=[
-        Depends(RequirePermission(Permissions.MARRIAGE_UPDATE)),
-        Depends(require_tree_edit),
-    ],
 )
 async def update_marriage(
     tree_id: UUID,
     data: MarriageUpdateRequest,
+    membership: TreeMembership = Depends(require_tree_marriage_update),
     uow=Depends(get_uow),
     marriage_rule_service=Depends(get_marriage_rules_service),
 ) -> MarriageUpdateResponse:
@@ -102,36 +98,43 @@ async def update_marriage(
     res = await usecase.execute(
         MarriageApiMapper.to_update_marriage_dto(data), tree_id=tree_id
     )
-    return MarriageApiMapper.from_update_marriage_dto(res)
+    response = MarriageApiMapper.from_update_marriage_dto(res)
+    return MarriageUpdateResponse.model_validate(
+        redact_marriage_data(response.model_dump(), membership)
+    )
 
 
 @router.post(
     "/list",
     response_model=PaginatedResponse[MarriageModel],
-    dependencies=[
-        Depends(RequirePermission(Permissions.MARRIAGE_READ)),
-        Depends(require_tree_view),
-    ],
 )
 async def get_marriage_list_by_filter(
     tree_id: UUID,
     data: FilterMarriageRequest,
+    membership: TreeMembership = Depends(require_tree_view),
     uow=Depends(get_uow),
 ) -> PaginatedResponse[MarriageModel]:
     usecase = GetMarriageListByFilterUseCase(uow)
     res = await usecase.execute(
         MarriageApiMapper.to_get_list_marriage_dto(data), tree_id=tree_id
     )
-    return MarriageApiMapper.from_get_list_marriage_dto(res)
+    response = MarriageApiMapper.from_get_list_marriage_dto(res)
+    return response.model_copy(
+        update={
+            "items": [
+                MarriageModel.model_validate(
+                    redact_marriage_data(item.model_dump(), membership)
+                )
+                for item in response.items
+            ]
+        }
+    )
 
 
 @router.post(
     "/divorce",
     response_model=ResultResponse,
-    dependencies=[
-        Depends(RequirePermission(Permissions.MARRIAGE_DIVORCE)),
-        Depends(require_tree_edit),
-    ],
+    dependencies=[Depends(require_tree_marriage_divorce)],
 )
 async def divorce(
     tree_id: UUID,
@@ -148,18 +151,18 @@ async def divorce(
 @router.get(
     "/{marriage_id}",
     response_model=MarriageGetResponse,
-    dependencies=[
-        Depends(RequirePermission(Permissions.MARRIAGE_READ)),
-        Depends(require_tree_view),
-    ],
 )
 async def get_marriage(
     tree_id: UUID,
     marriage_id: UUID,
+    membership: TreeMembership = Depends(require_tree_view),
     uow=Depends(get_uow),
 ) -> MarriageGetResponse:
     usecase = GetMarriageUseCase(uow)
     res = await usecase.execute(
         CommonApiMapper.to_id_dto(id=marriage_id), tree_id=tree_id
     )
-    return MarriageApiMapper.from_get_marriage_dto(res)
+    response = MarriageApiMapper.from_get_marriage_dto(res)
+    return MarriageGetResponse.model_validate(
+        redact_marriage_data(response.model_dump(), membership)
+    )

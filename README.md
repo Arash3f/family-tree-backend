@@ -357,7 +357,7 @@ GraphQL mirrors REST: same use cases, JWT auth (`Authorization: Bearer <access_t
 | `ticket` / `tickets` / `createTicket` / `addTicketMessage` / `updateTicketStatus` | `/tickets/*` |
 
 Tree-scoped fields take a `treeId` argument that mirrors the REST path segment.
-File upload has no GraphQL counterpart; use `POST /media/upload`.
+File upload has no GraphQL counterpart; use `POST /family-trees/{tree_id}/media/upload`.
 
 Example login + create person:
 

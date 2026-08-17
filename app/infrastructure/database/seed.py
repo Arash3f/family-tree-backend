@@ -3,6 +3,7 @@ from app.core.config import settings
 from app.domain.entities.permission import Permission
 from app.domain.entities.role import Role
 from app.domain.entities.user import User
+from app.domain.shared.account_type import AccountType
 from app.infrastructure.services.security.password_hasher_impl import (
     Argon2PasswordHasher,
 )
@@ -32,16 +33,24 @@ async def seed_initial_user(uow: UnitOfWork, password_hasher: Argon2PasswordHash
                 username=settings.ADMIN_USERNAME,
                 role_id=role.safe_id,
                 password_hash=hashed_password,
+                account_type=AccountType.PAID,
             )
             await uow.users.create(user)
-        elif admin.role_id:
-            admin_role = await uow.roles.get_or_raise(role_id=admin.role_id)
-            if admin_role.name != settings.ADMIN_ROLE_NAME:
-                admin.role_id = role.safe_id
-                await uow.users.update(admin)
         else:
-            admin.role_id = role.safe_id
-            await uow.users.update(admin)
+            changed = False
+            if admin.role_id:
+                admin_role = await uow.roles.get_or_raise(role_id=admin.role_id)
+                if admin_role.name != settings.ADMIN_ROLE_NAME:
+                    admin.role_id = role.safe_id
+                    changed = True
+            else:
+                admin.role_id = role.safe_id
+                changed = True
+            if admin.account_type is not AccountType.PAID:
+                admin.account_type = AccountType.PAID
+                changed = True
+            if changed:
+                await uow.users.update(admin)
 
         await uow.commit()
 

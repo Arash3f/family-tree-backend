@@ -6,6 +6,7 @@ from app.application.dto.person.person_create_dto import (
     PersonCreateResponseDTO,
 )
 from app.application.interfaces.unit_of_work import UnitOfWork
+from app.application.services.account_limit_service import AccountLimitService
 from app.application.services.family_tree_sync_service import FamilyTreeSyncService
 from app.application.services.person_photo_service import PersonPhotoService
 from app.domain.entities.person import ParentRelationshipType, Person
@@ -18,16 +19,21 @@ class CreatePersonUseCase:
         uow: UnitOfWork,
         photo_service: PersonPhotoService,
         sync_service: FamilyTreeSyncService | None = None,
+        account_limit_service: AccountLimitService | None = None,
     ):
         self.uow = uow
         self.photo_service = photo_service
         self.sync_service = sync_service or FamilyTreeSyncService()
+        self.account_limit_service = account_limit_service or AccountLimitService()
 
     async def execute(
         self, dto: PersonCreateDTO, *, tree_id: UUID
     ) -> PersonCreateResponseDTO:
         async with self.uow:
             await self.uow.family_trees.get_or_raise(tree_id)
+            await self.account_limit_service.assert_can_create_persons(
+                self.uow, tree_id=tree_id, additional=1
+            )
             parents = PersonCreateMapper.to_domain_parents(dto.parents)
 
             for link in parents:

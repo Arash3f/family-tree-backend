@@ -14,8 +14,6 @@ ALL_TREE_PERMISSIONS = [
     Permissions.TREE_READ,
     Permissions.TREE_UPDATE,
     Permissions.TREE_DELETE,
-    Permissions.TREE_MEMBER_ADD,
-    Permissions.TREE_MEMBER_REMOVE,
 ]
 
 
@@ -207,40 +205,37 @@ async def test_owner_can_add_and_remove_a_member(client, tree_id, admin_headers,
 
 
 @pytest.mark.asyncio
-async def test_owner_can_grant_edit_and_add_access(client, tree_id, admin_headers, uow):  # noqa: F811
+async def test_owner_can_grant_operation_access(client, tree_id, admin_headers, uow):  # noqa: F811
     from app.domain.shared.tree_access import TreeAccessPermissions
 
     newcomer = await create_authenticated_user(
         client,
         uow,
-        permissions=[
-            Permissions.TREE_READ,
-            Permissions.PERSON_READ,
-            Permissions.PERSON_CREATE,
-            Permissions.PERSON_UPDATE,
-        ],
+        permissions=[Permissions.TREE_READ],
     )
 
     added = await client.post(
         f"/family-trees/{tree_id}/members",
         json={
             "username": newcomer.username,
-            "permissions": [TreeAccessPermissions.EDIT],
+            "permissions": [TreeAccessPermissions.PERSON_UPDATE],
         },
         headers=admin_headers,
     )
     assert added.status_code == 201
     assert set(added.json()["permissions"]) == {
         TreeAccessPermissions.VIEW,
-        TreeAccessPermissions.EDIT,
+        TreeAccessPermissions.PERSON_UPDATE,
+        TreeAccessPermissions.VIEW_BIRTH_DATE,
+        TreeAccessPermissions.VIEW_PHOTO,
     }
 
     updated = await client.patch(
         f"/family-trees/{tree_id}/members/{newcomer.user.safe_id}",
         json={
             "permissions": [
-                TreeAccessPermissions.EDIT,
-                TreeAccessPermissions.ADD_PERSONS,
+                TreeAccessPermissions.PERSON_UPDATE,
+                TreeAccessPermissions.PERSON_CREATE,
             ]
         },
         headers=admin_headers,
@@ -248,16 +243,20 @@ async def test_owner_can_grant_edit_and_add_access(client, tree_id, admin_header
     assert updated.status_code == 200
     assert set(updated.json()["permissions"]) == {
         TreeAccessPermissions.VIEW,
-        TreeAccessPermissions.EDIT,
-        TreeAccessPermissions.ADD_PERSONS,
+        TreeAccessPermissions.PERSON_UPDATE,
+        TreeAccessPermissions.PERSON_CREATE,
+        TreeAccessPermissions.VIEW_BIRTH_DATE,
+        TreeAccessPermissions.VIEW_PHOTO,
     }
 
     me = await client.get(f"/family-trees/{tree_id}", headers=newcomer.headers)
     assert me.status_code == 200
     assert set(me.json()["my_permissions"]) == {
         TreeAccessPermissions.VIEW,
-        TreeAccessPermissions.EDIT,
-        TreeAccessPermissions.ADD_PERSONS,
+        TreeAccessPermissions.PERSON_UPDATE,
+        TreeAccessPermissions.PERSON_CREATE,
+        TreeAccessPermissions.VIEW_BIRTH_DATE,
+        TreeAccessPermissions.VIEW_PHOTO,
     }
 
 
@@ -273,7 +272,7 @@ async def test_member_without_add_access_cannot_create_person(
     member = await create_authenticated_user(
         client,
         uow,
-        permissions=[Permissions.PERSON_CREATE, Permissions.PERSON_READ],
+        permissions=[],
     )
     await add_tree_member(
         uow,
@@ -317,9 +316,7 @@ async def test_adding_the_same_member_twice_is_rejected(
 
 @pytest.mark.asyncio
 async def test_plain_member_cannot_add_members(client, tree_id, uow):
-    member = await create_authenticated_user(
-        client, uow, permissions=[Permissions.TREE_MEMBER_ADD]
-    )
+    member = await create_authenticated_user(client, uow, permissions=[])
     await add_tree_member(uow, tree_id=tree_id, user_id=member.user.safe_id)
     outsider = await create_authenticated_user(client, uow, permissions=[])
     await uow.commit()
@@ -331,12 +328,12 @@ async def test_plain_member_cannot_add_members(client, tree_id, uow):
     )
 
     assert resp.status_code == 403
-    assert _error_code(resp) == int(ErrorCode.TREE_OWNER_REQUIRED)
+    assert _error_code(resp) == int(ErrorCode.TREE_ACCESS_DENIED)
 
 
 @pytest.mark.asyncio
-async def test_removing_the_last_owner_is_rejected(client, tree_id, admin_headers, uow):  # noqa: F811
-    """A tree without an owner could never be administered again."""
+async def test_removing_an_owner_is_rejected(client, tree_id, admin_headers, uow):  # noqa: F811
+    """Owners cannot be removed through membership management."""
     from tests.helpers.family_tree import get_admin_user
 
     admin = await get_admin_user(uow)
@@ -345,8 +342,8 @@ async def test_removing_the_last_owner_is_rejected(client, tree_id, admin_header
         f"/family-trees/{tree_id}/members/{admin.safe_id}", headers=admin_headers
     )
 
-    assert resp.status_code == 422
-    assert _error_code(resp) == int(ErrorCode.CANNOT_REMOVE_LAST_OWNER)
+    assert resp.status_code == 403
+    assert _error_code(resp) == int(ErrorCode.TREE_ACCESS_DENIED)
 
 
 @pytest.mark.asyncio

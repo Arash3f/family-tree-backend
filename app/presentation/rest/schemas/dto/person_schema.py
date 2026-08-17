@@ -7,6 +7,7 @@ from app.domain.entities.person import Gender, ParentRelationshipType
 from app.domain.shared.dto.person_filter_dto import PersonSortField
 from app.domain.shared.dto.sorter_dto import SortOrderField
 from app.presentation.rest.schemas.dto.common import (
+    IsoDate,
     PaginationRequestParams,
     RangeRequest,
     SortRequestParams,
@@ -22,8 +23,8 @@ class PersonModel(BaseModel):
     id: UUID | None
     name: str
     gender: Gender
-    birth_date: date | None = None
-    death_date: date | None = None
+    birth_date: IsoDate | None = None
+    death_date: IsoDate | None = None
     family_name: str | None = None
     birth_place: str | None = None
     death_place: str | None = None
@@ -37,8 +38,8 @@ class PersonModel(BaseModel):
 class _PersonUpdateDateRequest(BaseModel):
     name: str | None = None
     gender: Gender | None = None
-    birth_date: date | None = None
-    death_date: date | None = None
+    birth_date: IsoDate | None = None
+    death_date: IsoDate | None = None
     family_name: str | None = None
     birth_place: str | None = None
     death_place: str | None = None
@@ -102,8 +103,8 @@ class PersonGetResponse(BaseModel):
 class PersonCreateRequest(BaseModel):
     name: str = Field(description="Person full name")
     gender: Gender
-    birth_date: date | None = None
-    death_date: date | None = None
+    birth_date: IsoDate | None = None
+    death_date: IsoDate | None = None
     family_name: str | None = None
     birth_place: str | None = None
     death_place: str | None = None

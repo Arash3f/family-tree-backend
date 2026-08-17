@@ -13,11 +13,12 @@ from app.application.use_cases.person.get_person_list_by_filter_use_case import 
 )
 from app.application.use_cases.person.get_person_use_case import GetPersonUseCase
 from app.application.use_cases.person.update_person_use_case import UpdatePersonUseCase
-from app.domain.shared.permissions import Permissions
-from app.presentation.rest.dependencies.permission_guard import RequirePermission
+from app.domain.entities.family_tree import TreeMembership
+from app.presentation.tree_data_access import redact_person_data
 from app.presentation.rest.dependencies.tree_guard import (
-    require_tree_add_persons,
-    require_tree_edit,
+    require_tree_person_create,
+    require_tree_person_delete,
+    require_tree_person_update,
     require_tree_view,
 )
 from app.presentation.rest.schemas.dto.common import PaginatedResponse, ResultResponse
@@ -45,14 +46,11 @@ router = APIRouter(prefix="/persons", tags=["Persons"])
 @router.post(
     "",
     response_model=PersonCreateResponse,
-    dependencies=[
-        Depends(RequirePermission(Permissions.PERSON_CREATE)),
-        Depends(require_tree_add_persons),
-    ],
 )
 async def create_person(
     tree_id: UUID,
     data: PersonCreateRequest,
+    membership: TreeMembership = Depends(require_tree_person_create),
     uow=Depends(get_uow),
     photo_service: PersonPhotoService = Depends(get_person_photo_service),
 ) -> PersonCreateResponse:
@@ -60,16 +58,16 @@ async def create_person(
     res = await usecase.execute(
         PersonApiMapper.to_create_person_dto(data), tree_id=tree_id
     )
-    return PersonApiMapper.from_create_person_dto(res)
+    response = PersonApiMapper.from_create_person_dto(res)
+    return PersonCreateResponse.model_validate(
+        redact_person_data(response.model_dump(), membership)
+    )
 
 
 @router.delete(
     "/{person_id}",
     response_model=ResultResponse,
-    dependencies=[
-        Depends(RequirePermission(Permissions.PERSON_DELETE)),
-        Depends(require_tree_edit),
-    ],
+    dependencies=[Depends(require_tree_person_delete)],
 )
 async def delete_person(
     tree_id: UUID,
@@ -85,14 +83,11 @@ async def delete_person(
 @router.put(
     "",
     response_model=PersonUpdateResponse,
-    dependencies=[
-        Depends(RequirePermission(Permissions.PERSON_UPDATE)),
-        Depends(require_tree_edit),
-    ],
 )
 async def update_person(
     tree_id: UUID,
     data: PersonUpdateRequest,
+    membership: TreeMembership = Depends(require_tree_person_update),
     uow=Depends(get_uow),
     photo_service: PersonPhotoService = Depends(get_person_photo_service),
 ) -> PersonUpdateResponse:
@@ -100,16 +95,16 @@ async def update_person(
     res = await usecase.execute(
         PersonApiMapper.to_update_person_dto(data), tree_id=tree_id
     )
-    return PersonApiMapper.from_update_person_dto(res)
+    response = PersonApiMapper.from_update_person_dto(res)
+    return PersonUpdateResponse.model_validate(
+        redact_person_data(response.model_dump(), membership)
+    )
 
 
 @router.get(
     "/{from_person_id}/relation/{to_person_id}",
     response_model=ClosestRelationshipResponse,
-    dependencies=[
-        Depends(RequirePermission(Permissions.PERSON_READ)),
-        Depends(require_tree_view),
-    ],
+    dependencies=[Depends(require_tree_view)],
 )
 async def get_closest_relationship(
     tree_id: UUID,
@@ -126,33 +121,30 @@ async def get_closest_relationship(
 @router.get(
     "/{person_id}",
     response_model=PersonGetResponse,
-    dependencies=[
-        Depends(RequirePermission(Permissions.PERSON_READ)),
-        Depends(require_tree_view),
-    ],
 )
 async def get_person(
     tree_id: UUID,
     person_id: UUID,
+    membership: TreeMembership = Depends(require_tree_view),
     uow=Depends(get_uow),
     photo_service: PersonPhotoService = Depends(get_person_photo_service),
 ) -> PersonGetResponse:
     usecase = GetPersonUseCase(uow, photo_service)
     res = await usecase.execute(CommonApiMapper.to_id_dto(person_id), tree_id=tree_id)
-    return PersonApiMapper.from_get_person_dto(res)
+    response = PersonApiMapper.from_get_person_dto(res)
+    return PersonGetResponse.model_validate(
+        redact_person_data(response.model_dump(), membership)
+    )
 
 
 @router.post(
     "/list",
     response_model=PaginatedResponse[PersonModel],
-    dependencies=[
-        Depends(RequirePermission(Permissions.PERSON_READ)),
-        Depends(require_tree_view),
-    ],
 )
 async def get_person_list_by_filter(
     tree_id: UUID,
     data: FilterPersonRequest,
+    membership: TreeMembership = Depends(require_tree_view),
     uow=Depends(get_uow),
     photo_service: PersonPhotoService = Depends(get_person_photo_service),
 ) -> PaginatedResponse[PersonModel]:
@@ -160,4 +152,14 @@ async def get_person_list_by_filter(
     res = await usecase.execute(
         PersonApiMapper.to_get_list_person_dto(data), tree_id=tree_id
     )
-    return PersonApiMapper.from_get_list_person_dto(res)
+    response = PersonApiMapper.from_get_list_person_dto(res)
+    return response.model_copy(
+        update={
+            "items": [
+                PersonModel.model_validate(
+                    redact_person_data(item.model_dump(), membership)
+                )
+                for item in response.items
+            ]
+        }
+    )

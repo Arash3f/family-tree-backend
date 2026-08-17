@@ -27,7 +27,7 @@ from app.application.use_cases.family_tree.update_family_tree_use_case import (
 )
 from app.domain.shared.permissions import Permissions
 from app.domain.shared.tree_access import TreeAccessPermissions
-from app.presentation.graphql.auth import require_permission
+from app.presentation.graphql.auth import get_current_user, require_permission
 from app.presentation.graphql.types.common import ResultType
 from app.presentation.graphql.types.family_tree import (
     FamilyTreeCreateInput,
@@ -97,7 +97,7 @@ async def resolve_delete_family_tree(info: Info, tree_id: UUID) -> ResultType:
 async def resolve_add_tree_member(
     info: Info, tree_id: UUID, data: TreeMemberAddInput
 ) -> TreeMembershipType:
-    user = await require_permission(info, Permissions.TREE_MEMBER_ADD)
+    user = await get_current_user(info)
     usecase = AddTreeMemberUseCase(info.context.uow)
     res = await usecase.execute(
         tree_id=tree_id,
@@ -113,7 +113,7 @@ async def resolve_add_tree_member(
 async def resolve_update_tree_member(
     info: Info, tree_id: UUID, user_id: UUID, data: TreeMemberUpdateInput
 ) -> TreeMembershipType:
-    actor = await require_permission(info, Permissions.TREE_MEMBER_ADD)
+    actor = await get_current_user(info)
     usecase = UpdateTreeMemberUseCase(info.context.uow)
     res = await usecase.execute(
         tree_id=tree_id,
@@ -127,7 +127,7 @@ async def resolve_update_tree_member(
 async def resolve_remove_tree_member(
     info: Info, tree_id: UUID, user_id: UUID
 ) -> ResultType:
-    actor = await require_permission(info, Permissions.TREE_MEMBER_REMOVE)
+    actor = await get_current_user(info)
     usecase = RemoveTreeMemberUseCase(info.context.uow)
     await usecase.execute(
         tree_id=tree_id,

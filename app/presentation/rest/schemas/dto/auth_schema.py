@@ -30,6 +30,7 @@ class MeResponse(BaseModel):
     permissions: list[str] = []
     permission_details: list[MePermissionItem] = Field(default_factory=list)
     session_id: UUID
+    account_type: str = "free"
 
 
 class SessionResponse(BaseModel):

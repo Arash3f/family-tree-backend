@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import delete, or_, select, update
+from sqlalchemy import delete, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.marriage import Marriage
@@ -150,6 +150,15 @@ class SQLMarriageRepository(MarriageRepository):
         )
         result = await self.session.execute(stmt.limit(1))
         return result.scalar_one_or_none() is not None
+
+    async def count_in_tree(self, tree_id: UUID) -> int:
+        stmt = (
+            select(func.count())
+            .select_from(MarriageModel)
+            .where(MarriageModel.tree_id == tree_id)
+        )
+        result = await self.session.execute(stmt)
+        return int(result.scalar_one())
 
     async def delete(self, marriage_id: UUID) -> None:
         stmt = delete(MarriageModel).where(MarriageModel.id == marriage_id)

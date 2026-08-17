@@ -22,7 +22,7 @@ async def test_require_member_allows_owner(uow):
         tree_id=tree.safe_id, user_id=tree.owner_user_id
     )
     assert membership.is_owner()
-    assert membership.has_access(TreeAccessPermissions.EDIT)
+    assert membership.has_access(TreeAccessPermissions.PERSON_UPDATE)
 
 
 @pytest.mark.asyncio
@@ -90,7 +90,7 @@ async def test_require_access_denies_edit_without_grant(uow):
         await access.require_access(
             tree_id=tree.safe_id,
             user_id=member_user_id,
-            permission=TreeAccessPermissions.EDIT,
+            permission=TreeAccessPermissions.PERSON_UPDATE,
         )
 
 
@@ -104,7 +104,7 @@ async def test_edit_access_implies_view(uow):
         tree_id=tree.safe_id,
         user_id=member_user_id,
         role=TreeMemberRole.MEMBER,
-        permissions=[TreeAccessPermissions.EDIT],
+        permissions=[TreeAccessPermissions.PERSON_UPDATE],
     )
     access = TreeAccessService(uow)
     membership = await access.require_access(
@@ -114,5 +114,7 @@ async def test_edit_access_implies_view(uow):
     )
     assert set(membership.effective_permissions()) == {
         TreeAccessPermissions.VIEW,
-        TreeAccessPermissions.EDIT,
+        TreeAccessPermissions.PERSON_UPDATE,
+        TreeAccessPermissions.VIEW_BIRTH_DATE,
+        TreeAccessPermissions.VIEW_PHOTO,
     }

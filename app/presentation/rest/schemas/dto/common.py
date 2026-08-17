@@ -1,12 +1,13 @@
 from dataclasses import dataclass
-from datetime import date, datetime
-from typing import Generic, TypeVar
+from datetime import date
+from typing import Annotated, Generic, TypeVar
 from uuid import UUID
 
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, BeforeValidator, field_validator, model_validator
 
 from app.domain.shared.dto.pagination_dto import MAX_PAGE_SIZE
 from app.domain.shared.dto.sorter_dto import SortOrderField
+from app.presentation.utils.date_convert import parse_user_date
 from app.utils.app_exception import AppException
 from app.utils.error_codes import ErrorCode
 
@@ -25,11 +26,10 @@ T = TypeVar("T")
 
 
 def _coerce_iso_date(value):
-    if isinstance(value, datetime):
-        return value.date()
-    if isinstance(value, str):
-        return date.fromisoformat(value[:10])
-    return value
+    return parse_user_date(value)
+
+
+IsoDate = Annotated[date, BeforeValidator(_coerce_iso_date)]
 
 
 class PaginatedResponse(BaseModel, Generic[T]):

@@ -6,9 +6,9 @@ from app.application.dto.marriage.marriage_create_dto import (
     MarriageCreateResponseDTO,
 )
 from app.application.interfaces.unit_of_work import UnitOfWork
+from app.application.services.account_limit_service import AccountLimitService
 from app.application.services.family_tree_sync_service import FamilyTreeSyncService
 from app.domain.entities.marriage import Marriage
-from app.domain.exceptions.marriage_exceptions import ActiveMarriageExistsException
 from app.domain.services.marriage_rules import MarriageRulesService
 
 
@@ -18,15 +18,20 @@ class CreateMarriageUseCase:
         uow: UnitOfWork,
         marriage_rules_service: MarriageRulesService,
         sync_service: FamilyTreeSyncService | None = None,
+        account_limit_service: AccountLimitService | None = None,
     ):
         self.uow = uow
         self.marriage_rules_service = marriage_rules_service
         self.sync_service = sync_service or FamilyTreeSyncService()
+        self.account_limit_service = account_limit_service or AccountLimitService()
 
     async def execute(
         self, dto: MarriageCreateDTO, *, tree_id: UUID
     ) -> MarriageCreateResponseDTO:
         async with self.uow:
+            await self.account_limit_service.assert_can_create_marriages(
+                self.uow, tree_id=tree_id, additional=1
+            )
             spouse_a = await self.uow.persons.get_in_tree_or_raise(
                 person_id=dto.spouse_a_id, tree_id=tree_id
             )
@@ -39,14 +44,6 @@ class CreateMarriageUseCase:
                 spouse_b=spouse_b,
                 marriage_date=dto.married_at,
             )
-
-            for spouse in (spouse_a, spouse_b):
-                if await self.uow.marriages.has_active_for_person(spouse.safe_id):
-                    raise ActiveMarriageExistsException(
-                        detail=[
-                            f"person {spouse.safe_id} already has an active marriage"
-                        ]
-                    )
 
             marriage = Marriage(
                 id=None,

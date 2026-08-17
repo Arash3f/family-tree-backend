@@ -14,19 +14,6 @@ class Permissions:
 
     PERMISSION_READ = "permission_read"
 
-    MARRIAGE_CREATE = "marriage_create"
-    MARRIAGE_READ = "marriage_read"
-    MARRIAGE_UPDATE = "marriage_update"
-    MARRIAGE_DELETE = "marriage_delete"
-    MARRIAGE_DIVORCE = "marriage_divorce"
-
-    PERSON_CREATE = "person_create"
-    PERSON_READ = "person_read"
-    PERSON_UPDATE = "person_update"
-    PERSON_DELETE = "person_delete"
-
-    MEDIA_UPLOAD = "media_upload"
-
     TICKET_CREATE = "ticket_create"
     TICKET_READ = "ticket_read"
     TICKET_REPLY = "ticket_reply"
@@ -35,8 +22,6 @@ class Permissions:
     TREE_READ = "tree_read"
     TREE_UPDATE = "tree_update"
     TREE_DELETE = "tree_delete"
-    TREE_MEMBER_ADD = "tree_member_add"
-    TREE_MEMBER_REMOVE = "tree_member_remove"
 
     # Selecting a permission also requires these (UI-coupled capabilities).
     PERMISSION_REQUIREMENTS: dict[str, tuple[str, ...]] = {
@@ -46,23 +31,11 @@ class Permissions:
         ROLE_CREATE: (ROLE_READ, PERMISSION_READ),
         ROLE_UPDATE: (ROLE_READ, PERMISSION_READ),
         ROLE_DELETE: (ROLE_READ,),
-        PERSON_READ: (TREE_READ,),
-        PERSON_CREATE: (PERSON_READ,),
-        PERSON_UPDATE: (PERSON_READ,),
-        PERSON_DELETE: (PERSON_READ,),
-        MARRIAGE_READ: (TREE_READ, PERSON_READ),
-        MARRIAGE_CREATE: (MARRIAGE_READ,),
-        MARRIAGE_UPDATE: (MARRIAGE_READ,),
-        MARRIAGE_DELETE: (MARRIAGE_READ,),
-        MARRIAGE_DIVORCE: (MARRIAGE_READ,),
-        MEDIA_UPLOAD: (PERSON_READ, TREE_READ),
         TICKET_CREATE: (TICKET_READ,),
         TICKET_REPLY: (TICKET_READ,),
         TREE_CREATE: (TREE_READ,),
         TREE_UPDATE: (TREE_READ,),
         TREE_DELETE: (TREE_READ,),
-        TREE_MEMBER_ADD: (TREE_READ, USER_READ),
-        TREE_MEMBER_REMOVE: (TREE_READ,),
     }
 
     # (description_en, description_fa)
@@ -103,46 +76,6 @@ class Permissions:
             "View the catalog of permissions that can be assigned to roles.",
             "مشاهده فهرست دسترسی‌هایی که می‌توان به نقش‌ها اختصاص داد.",
         ),
-        MARRIAGE_CREATE: (
-            "Record a new marriage between two people in a family tree.",
-            "ثبت ازدواج جدید بین دو نفر در شجره‌نامه.",
-        ),
-        MARRIAGE_READ: (
-            "View marriage records linked to people in a family tree.",
-            "مشاهده سوابق ازدواج مرتبط با افراد در شجره‌نامه.",
-        ),
-        MARRIAGE_UPDATE: (
-            "Edit existing marriage details such as spouses or dates.",
-            "ویرایش جزئیات ازدواج موجود مانند همسران یا تاریخ‌ها.",
-        ),
-        MARRIAGE_DELETE: (
-            "Remove a marriage record from a family tree.",
-            "حذف سابقه ازدواج از شجره‌نامه.",
-        ),
-        MARRIAGE_DIVORCE: (
-            "Mark a marriage as divorced and set the divorce date.",
-            "ثبت طلاق برای یک ازدواج و تعیین تاریخ آن.",
-        ),
-        PERSON_CREATE: (
-            "Add a new person to a family tree.",
-            "افزودن فرد جدید به شجره‌نامه.",
-        ),
-        PERSON_READ: (
-            "View people and their details within accessible family trees.",
-            "مشاهده افراد و جزئیات آن‌ها در شجره‌نامه‌های قابل دسترس.",
-        ),
-        PERSON_UPDATE: (
-            "Edit a person's biographical and relationship details.",
-            "ویرایش اطلاعات زندگی‌نامه‌ای و روابط یک فرد.",
-        ),
-        PERSON_DELETE: (
-            "Remove a person from a family tree.",
-            "حذف یک فرد از شجره‌نامه.",
-        ),
-        MEDIA_UPLOAD: (
-            "Upload photos and other media attached to people.",
-            "آپلود عکس و سایر رسانه‌های متصل به افراد.",
-        ),
         TICKET_CREATE: (
             "Open a new support ticket and reply on tickets you created.",
             "ایجاد تیکت پشتیبانی جدید و پاسخ روی تیکت‌های خودتان.",
@@ -170,14 +103,6 @@ class Permissions:
         TREE_DELETE: (
             "Permanently delete a family tree.",
             "حذف دائمی یک شجره‌نامه.",
-        ),
-        TREE_MEMBER_ADD: (
-            "Invite or add other users as members of a family tree.",
-            "دعوت یا افزودن کاربران دیگر به‌عنوان عضو شجره‌نامه.",
-        ),
-        TREE_MEMBER_REMOVE: (
-            "Remove members from a family tree.",
-            "حذف اعضا از یک شجره‌نامه.",
         ),
     }
 

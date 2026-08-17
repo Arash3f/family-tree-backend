@@ -4,6 +4,7 @@ from uuid import UUID
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.domain.shared.account_type import AccountType
 from app.infrastructure.database.base import Base
 
 if TYPE_CHECKING:
@@ -16,6 +17,9 @@ class UserModel(Base):
     username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     fullname: Mapped[str] = mapped_column(String(100), nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    account_type: Mapped[str] = mapped_column(
+        String(20), nullable=False, default=AccountType.FREE.value
+    )
 
     role_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("roles.id", ondelete="SET NULL"), nullable=True

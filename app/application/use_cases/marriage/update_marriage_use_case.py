@@ -8,7 +8,6 @@ from app.application.dto.marriage.marriage_update_dto import (
 )
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.application.services.family_tree_sync_service import FamilyTreeSyncService
-from app.domain.exceptions.marriage_exceptions import ActiveMarriageExistsException
 from app.domain.services.marriage_rules import MarriageRulesService
 
 
@@ -93,21 +92,6 @@ class UpdateMarriageUseCase:
                     spouse_b=spouse_b,
                     marriage_date=marriage.married_at,
                 )
-
-            # Reactivating a marriage, or moving it onto a new spouse, must not
-            # leave anyone with two active marriages at once.
-            if marriage.is_active() and (
-                needs_validation or old_divorced_at is not None
-            ):
-                for spouse_id in (marriage.spouse_a_id, marriage.spouse_b_id):
-                    if await self.uow.marriages.has_active_for_person(
-                        spouse_id, exclude_marriage_id=marriage.safe_id
-                    ):
-                        raise ActiveMarriageExistsException(
-                            detail=[
-                                f"person {spouse_id} already has an active marriage"
-                            ]
-                        )
 
             for field, value in update_data_enum.items():
                 setattr(marriage, field.value, value)

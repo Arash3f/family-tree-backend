@@ -50,6 +50,9 @@ def _user_create_request(data: UserCreateInput) -> UserCreateRequest:
         password=data.password,
         re_password=data.re_password,
         role_id=data.role_id,
+        account_type=(
+            data.account_type.value if data.account_type is not None else "free"
+        ),
     )
 
 
@@ -65,6 +68,8 @@ def _user_update_dto(data: UserUpdateInput) -> UserUpdateDTO:
         raw["re_password"] = data.data.re_password
     if data.data.role_id is not None:
         raw["role_id"] = data.data.role_id
+    if data.data.account_type is not None:
+        raw["account_type"] = data.data.account_type.value
     return UserUpdateDTO(
         data=_UserUpdateDataDTO.model_construct(**raw),
         where=_UserUpdateWhereDTO(user_id=data.where.user_id),

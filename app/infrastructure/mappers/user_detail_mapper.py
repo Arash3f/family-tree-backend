@@ -1,3 +1,4 @@
+from app.domain.shared.account_type import AccountType
 from app.domain.shared.dto.user_with_detail_dto import (
     UserGetWithDetailResponseDTO,
     _Permission,
@@ -28,5 +29,6 @@ def user_model_to_detail_dto(model: UserModel) -> UserGetWithDetailResponseDTO:
         username=model.username,
         fullname=model.fullname,
         role_id=model.role_id,
+        account_type=AccountType(model.account_type),
         role=role,
     )

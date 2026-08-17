@@ -7,7 +7,6 @@ from app.domain.entities.marriage import Marriage
 from app.domain.entities.person import Gender, Person
 from app.domain.shared.dto.person_filter_dto import PersonSortField
 from app.domain.shared.dto.sorter_dto import SortOrderField
-from app.domain.shared.permissions import Permissions
 from app.presentation.rest.schemas.dto.common import (
     PaginationRequestParams,
     SortRequestParams,
@@ -25,20 +24,6 @@ from tests.e2e.auth_headers import admin_headers as admin_headers
 from tests.helpers.auth import AuthenticatedUser, create_authenticated_user
 from tests.helpers.family_tree import add_tree_member, create_family_tree_with_owner
 from tests.helpers.uow import TreeUnitOfWork
-
-PERSON_PERMISSIONS = [
-    Permissions.PERSON_CREATE,
-    Permissions.PERSON_READ,
-    Permissions.PERSON_UPDATE,
-    Permissions.PERSON_DELETE,
-]
-MARRIAGE_PERMISSIONS = [
-    Permissions.MARRIAGE_CREATE,
-    Permissions.MARRIAGE_READ,
-    Permissions.MARRIAGE_UPDATE,
-    Permissions.MARRIAGE_DELETE,
-    Permissions.MARRIAGE_DIVORCE,
-]
 
 
 def persons_url(tree_id: UUID, suffix: str = "") -> str:
@@ -68,9 +53,9 @@ async def _person_in(uow: TreeUnitOfWork, tree_id: UUID, name: str) -> Person:
     return person
 
 
-async def _outsider(client, uow, permissions: list[str]) -> AuthenticatedUser:
-    """A fully permissioned user who belongs to no tree at all."""
-    return await create_authenticated_user(client, uow, permissions=permissions)
+async def _outsider(client, uow) -> AuthenticatedUser:
+    """An authenticated user who belongs to no tree at all."""
+    return await create_authenticated_user(client, uow, permissions=[])
 
 
 # ============================================================
@@ -80,7 +65,7 @@ async def _outsider(client, uow, permissions: list[str]) -> AuthenticatedUser:
 
 @pytest.mark.asyncio
 async def test_non_member_cannot_read_persons_of_a_tree(client, tree_id, uow):
-    outsider = await _outsider(client, uow, PERSON_PERMISSIONS)
+    outsider = await _outsider(client, uow)
     person = await _person_in(uow, tree_id, "hidden")
 
     responses = {
@@ -102,18 +87,18 @@ async def test_non_member_cannot_read_persons_of_a_tree(client, tree_id, uow):
 @pytest.mark.asyncio
 async def test_non_member_cannot_write_persons_of_a_tree(client, tree_id, uow):
     """Read denial is worth little if the write paths stay open."""
-    outsider = await _outsider(client, uow, PERSON_PERMISSIONS)
+    outsider = await _outsider(client, uow)
     person = await _person_in(uow, tree_id, "untouchable")
 
     create = await client.post(
-        persons_url(tree_id, "/"),
+        persons_url(tree_id),
         json=PersonCreateRequest(name="intruder", gender=Gender.MALE).model_dump(
             mode="json"
         ),
         headers=outsider.headers,
     )
     update = await client.put(
-        persons_url(tree_id, "/"),
+        persons_url(tree_id),
         json=PersonUpdateRequest(
             data=_PersonUpdateDateRequest(name="renamed-by-intruder"),
             where=_PersonUpdateWhereRequest(person_id=person.safe_id),
@@ -135,10 +120,10 @@ async def test_non_member_cannot_write_persons_of_a_tree(client, tree_id, uow):
 
 @pytest.mark.asyncio
 async def test_non_member_cannot_reach_marriages_of_a_tree(client, tree_id, uow):
-    outsider = await _outsider(client, uow, MARRIAGE_PERMISSIONS)
+    outsider = await _outsider(client, uow)
 
     resp = await client.post(
-        marriages_url(tree_id, "/"),
+        marriages_url(tree_id),
         json={
             "spouse_a_id": str(UUID(int=1)),
             "spouse_b_id": str(UUID(int=2)),
@@ -153,7 +138,7 @@ async def test_non_member_cannot_reach_marriages_of_a_tree(client, tree_id, uow)
 
 @pytest.mark.asyncio
 async def test_non_member_cannot_query_closest_relationship(client, tree_id, uow):
-    outsider = await _outsider(client, uow, PERSON_PERMISSIONS)
+    outsider = await _outsider(client, uow)
     a = await _person_in(uow, tree_id, "path-a")
     b = await _person_in(uow, tree_id, "path-b")
 
@@ -173,7 +158,7 @@ async def test_non_member_cannot_query_closest_relationship(client, tree_id, uow
 
 @pytest.mark.asyncio
 async def test_member_of_one_tree_cannot_touch_another_tree(client, tree_id, uow):
-    actor = await create_authenticated_user(client, uow, permissions=PERSON_PERMISSIONS)
+    actor = await create_authenticated_user(client, uow, permissions=[])
     await add_tree_member(uow, tree_id=tree_id, user_id=actor.user.safe_id)
     other_tree = await create_family_tree_with_owner(uow, name="Foreign Tree")
     await uow.commit()
@@ -236,7 +221,7 @@ async def test_person_from_another_tree_cannot_be_updated_through_your_own_tree(
     foreigner = await _person_in(uow, other_tree.safe_id, "stable-name")
 
     resp = await client.put(
-        persons_url(tree_id, "/"),
+        persons_url(tree_id),
         json=PersonUpdateRequest(
             data=_PersonUpdateDateRequest(name="crossed-over"),
             where=_PersonUpdateWhereRequest(person_id=foreigner.safe_id),

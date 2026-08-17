@@ -3,6 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from app.domain.shared.account_type import AccountType
 from app.domain.shared.dto.sorter_dto import SortOrderField
 from app.domain.shared.dto.user_filter_dto import UserSortField
 from app.presentation.rest.schemas.dto.common import (
@@ -16,6 +17,7 @@ class UserModel(BaseModel):
     username: str
     fullname: str
     role_id: UUID | None = None
+    account_type: AccountType = AccountType.FREE
     last_session_at: datetime | None = None
 
 
@@ -25,6 +27,7 @@ class _UserUpdateDateRequest(BaseModel):
     password: str | None = None
     re_password: str | None = None
     role_id: UUID | None = None
+    account_type: AccountType | None = None
 
 
 class _UserUpdateWhereRequest(BaseModel):
@@ -41,6 +44,7 @@ class UserUpdateResponse(BaseModel):
     username: str
     fullname: str
     role_id: UUID | None
+    account_type: AccountType
 
 
 class UserGetResponse(BaseModel):
@@ -48,6 +52,7 @@ class UserGetResponse(BaseModel):
     username: str
     fullname: str
     role_id: UUID | None
+    account_type: AccountType
 
 
 class UserCreateRequest(BaseModel):
@@ -56,6 +61,7 @@ class UserCreateRequest(BaseModel):
     password: str
     re_password: str
     role_id: UUID | None = None
+    account_type: AccountType = AccountType.FREE
 
 
 class UserCreateResponse(BaseModel):
@@ -63,6 +69,7 @@ class UserCreateResponse(BaseModel):
     username: str
     fullname: str
     role_id: UUID | None
+    account_type: AccountType
 
 
 class UserFilterRequestData(BaseModel):

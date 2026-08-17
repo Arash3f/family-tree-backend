@@ -72,13 +72,19 @@ async def test_sample_excel_has_no_id_column(client, tree_id, admin_headers):  #
 async def test_sample_excel_uses_accept_language(client, tree_id, admin_headers):  # noqa: F811
     from openpyxl import load_workbook
 
+    from app.application.services.tree_excel_service import PERSON_HEADERS_FA
+
     headers = {**admin_headers, "Accept-Language": "fa-IR"}
     resp = await client.get(excel_url(tree_id, "/sample"), headers=headers)
     assert resp.status_code == 200
     assert "family-tree-sample-fa.xlsx" in resp.headers.get("content-disposition", "")
     workbook = load_workbook(BytesIO(resp.content), data_only=True)
-    assert workbook["Instructions"]["A1"].value == "قالب اکسل شجره‌نامه"
-    assert workbook["Persons"]["B2"].value == "علی"
+    assert workbook["راهنما"]["A1"].value == "قالب اکسل شجره‌نامه"
+    assert workbook["افراد"]["B2"].value == "علی"
+    person_headers = [
+        cell.value for cell in workbook["افراد"][1] if cell.value is not None
+    ]
+    assert person_headers == PERSON_HEADERS_FA
 
     resp_en = await client.get(excel_url(tree_id, "/sample"), headers=admin_headers)
     assert resp_en.status_code == 200

@@ -24,6 +24,9 @@ class UserRepository(ABC):
     async def get(self, user_id: UUID) -> User | None: ...
 
     @abstractmethod
+    async def get_for_update(self, user_id: UUID) -> User | None: ...
+
+    @abstractmethod
     async def get_with_details(
         self, user_id: UUID
     ) -> UserGetWithDetailResponseDTO | None: ...

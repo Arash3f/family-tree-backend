@@ -31,6 +31,7 @@ class CreateUserUseCase:
                 fullname=dto.fullname,
                 role_id=role_id,
                 password_hash=hashed_password,
+                account_type=dto.account_type,
             )
 
             user = await self.uow.users.create(user)

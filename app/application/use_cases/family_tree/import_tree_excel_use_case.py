@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from app.application.interfaces.unit_of_work import UnitOfWork
+from app.application.services.account_limit_service import AccountLimitService
 from app.application.services.family_tree_sync_service import FamilyTreeSyncService
 from app.application.services.tree_excel_loader import (
     load_all_tree_marriages,
@@ -18,7 +19,6 @@ from app.domain.exceptions.family_tree_exceptions import (
     TreeExcelEmptyException,
     TreeExcelInvalidException,
 )
-from app.domain.exceptions.marriage_exceptions import ActiveMarriageExistsException
 from app.domain.exceptions.person_exceptions import InvalidParentMarriageException
 from app.domain.services.marriage_rules import MarriageRulesService
 
@@ -35,10 +35,12 @@ class ImportTreeExcelUseCase:
         uow: UnitOfWork,
         marriage_rules_service: MarriageRulesService,
         sync_service: FamilyTreeSyncService | None = None,
+        account_limit_service: AccountLimitService | None = None,
     ):
         self.uow = uow
         self.marriage_rules_service = marriage_rules_service
         self.sync_service = sync_service or FamilyTreeSyncService()
+        self.account_limit_service = account_limit_service or AccountLimitService()
 
     async def execute(
         self,
@@ -70,17 +72,37 @@ class ImportTreeExcelUseCase:
                 marriage_refs, match.marriage_duplicate_of
             )
 
-            person_ref_to_id.update(match.person_existing_id)
-            marriage_ref_to_id.update(match.marriage_existing_id)
-
-            for row in parsed.persons:
-                if not _should_create(
+            persons_to_create = [
+                row
+                for row in parsed.persons
+                if _should_create(
                     row.ref,
                     already_exists=match.person_already_in_tree(row.ref),
                     duplicate_of=match.person_duplicate_of,
                     selected=selected_people,
-                ):
-                    continue
+                )
+            ]
+            marriages_to_create = [
+                row
+                for row in parsed.marriages
+                if _should_create(
+                    row.ref,
+                    already_exists=match.marriage_already_in_tree(row.ref),
+                    duplicate_of=match.marriage_duplicate_of,
+                    selected=selected_marriages,
+                )
+            ]
+            await self.account_limit_service.assert_can_create_persons(
+                self.uow, tree_id=tree_id, additional=len(persons_to_create)
+            )
+            await self.account_limit_service.assert_can_create_marriages(
+                self.uow, tree_id=tree_id, additional=len(marriages_to_create)
+            )
+
+            person_ref_to_id.update(match.person_existing_id)
+            marriage_ref_to_id.update(match.marriage_existing_id)
+
+            for row in persons_to_create:
                 person = Person(
                     id=None,
                     name=row.name,
@@ -102,14 +124,7 @@ class ImportTreeExcelUseCase:
 
             _fill_duplicate_refs(person_ref_to_id, match.person_duplicate_of)
 
-            for marriage_row in parsed.marriages:
-                if not _should_create(
-                    marriage_row.ref,
-                    already_exists=match.marriage_already_in_tree(marriage_row.ref),
-                    duplicate_of=match.marriage_duplicate_of,
-                    selected=selected_marriages,
-                ):
-                    continue
+            for marriage_row in marriages_to_create:
                 spouse_a_id = person_ref_to_id.get(marriage_row.spouse_a_ref)
                 spouse_b_id = person_ref_to_id.get(marriage_row.spouse_b_ref)
                 if spouse_a_id is None or spouse_b_id is None:
@@ -133,15 +148,6 @@ class ImportTreeExcelUseCase:
                     spouse_b=spouse_b,
                     marriage_date=marriage_row.married_at,
                 )
-
-                for spouse in (spouse_a, spouse_b):
-                    if await self.uow.marriages.has_active_for_person(spouse.safe_id):
-                        raise ActiveMarriageExistsException(
-                            detail=[
-                                f"Marriages row {marriage_row.row_number}: person "
-                                f"{spouse.safe_id} already has an active marriage"
-                            ]
-                        )
 
                 marriage = Marriage(
                     id=None,

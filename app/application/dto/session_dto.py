@@ -28,6 +28,7 @@ class MeResponseDTO(BaseModel):
     permissions: list[str]
     permission_details: list[MePermissionDTO] = Field(default_factory=list)
     session_id: UUID
+    account_type: str
 
 
 class ChangePasswordDTO(BaseModel):

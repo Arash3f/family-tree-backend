@@ -54,9 +54,9 @@ async def test_create_person_permission_denied(client, tree_id, member_headers):
 
     assert resp.status_code == 403
     body = resp.json()
-    assert body["error_code"] == 1301
+    assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     assert body["status"] == 403
-    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.PERMISSION_DENIED]
+    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.TREE_MEMBERSHIP_DENIED]
 
 
 @pytest.mark.asyncio
@@ -143,9 +143,9 @@ async def test_get_person_permission_denied(client, tree_id, member_headers):  #
     )
 
     body = resp.json()
-    assert body["error_code"] == 1301
+    assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     assert body["status"] == 403
-    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.PERMISSION_DENIED]
+    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.TREE_MEMBERSHIP_DENIED]
 
 
 @pytest.mark.asyncio
@@ -219,9 +219,9 @@ async def test_update_person_permission_denied(client, tree_id, member_headers):
 
     assert resp.status_code == 403
     body = resp.json()
-    assert body["error_code"] == 1301
+    assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     assert body["status"] == 403
-    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.PERMISSION_DENIED]
+    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.TREE_MEMBERSHIP_DENIED]
 
 
 @pytest.mark.asyncio
@@ -309,9 +309,9 @@ async def test_delete_person_permission_denied(client, tree_id, member_headers):
     )
 
     body = resp.json()
-    assert body["error_code"] == 1301
+    assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     assert body["status"] == 403
-    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.PERMISSION_DENIED]
+    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.TREE_MEMBERSHIP_DENIED]
 
 
 @pytest.mark.asyncio
@@ -390,9 +390,9 @@ async def test_get_person_list_by_filter_permission_denied(
     )
 
     body = resp.json()
-    assert body["error_code"] == 1301
+    assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     assert body["status"] == 403
-    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.PERMISSION_DENIED]
+    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.TREE_MEMBERSHIP_DENIED]
 
 
 @pytest.mark.asyncio
@@ -477,23 +477,16 @@ async def test_get_person_list_by_filter_success(
 
 
 async def _reader_headers(client, uow):
-    from app.domain.entities.role import Role
     from app.domain.entities.user import User
-    from app.domain.shared.permissions import Permissions
     from app.infrastructure.services.security.password_hasher_impl import (
         Argon2PasswordHasher,
     )
 
-    perm = await uow.permissions.get_by_name(Permissions.PERSON_READ)
-    role = await uow.roles.create(
-        Role(name="person_reader", permission_ids=[perm.safe_id])
-    )
     hasher = Argon2PasswordHasher()
     reader = await uow.users.create(
         User(
             username="person_reader",
             password_hash=hasher.hash("person_reader"),
-            role_id=role.safe_id,
         )
     )
     await uow.commit()

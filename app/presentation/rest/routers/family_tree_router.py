@@ -29,6 +29,10 @@ from app.domain.entities.user import User
 from app.domain.shared.permissions import Permissions
 from app.presentation.rest.dependencies.auth_dependencies import get_current_user
 from app.presentation.rest.dependencies.permission_guard import RequirePermission
+from app.presentation.rest.dependencies.tree_guard import (
+    require_tree_member_add,
+    require_tree_member_remove,
+)
 from app.presentation.rest.schemas.dto.common import ResultResponse
 from app.presentation.rest.schemas.dto.family_tree_schema import (
     FamilyTreeCreateRequest,
@@ -144,7 +148,7 @@ async def list_tree_members(
 @router.post(
     "/{tree_id}/members",
     response_model=TreeMembershipResponse,
-    dependencies=[Depends(RequirePermission(Permissions.TREE_MEMBER_ADD))],
+    dependencies=[Depends(require_tree_member_add)],
     status_code=201,
 )
 async def add_tree_member(
@@ -168,7 +172,7 @@ async def add_tree_member(
 @router.patch(
     "/{tree_id}/members/{user_id}",
     response_model=TreeMembershipResponse,
-    dependencies=[Depends(RequirePermission(Permissions.TREE_MEMBER_ADD))],
+    dependencies=[Depends(require_tree_member_add)],
 )
 async def update_tree_member(
     tree_id: UUID,
@@ -190,7 +194,7 @@ async def update_tree_member(
 @router.delete(
     "/{tree_id}/members/{user_id}",
     response_model=ResultResponse,
-    dependencies=[Depends(RequirePermission(Permissions.TREE_MEMBER_REMOVE))],
+    dependencies=[Depends(require_tree_member_remove)],
 )
 async def remove_tree_member(
     tree_id: UUID,

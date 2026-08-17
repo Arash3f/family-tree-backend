@@ -16,7 +16,7 @@ class MarriageType:
     id: UUID | None
     spouse_a_id: UUID
     spouse_b_id: UUID
-    married_at: date
+    married_at: date | None
     divorced_at: date | None = None
 
 

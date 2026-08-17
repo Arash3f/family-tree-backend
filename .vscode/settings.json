@@ -1,5 +1,5 @@
 {
-  "python.languageServer": "Pylance",
+  "python.languageServer": "None",
   "python.analysis.showOnlyDirectDependenciesInAutoImport": true,
   "python.analysis.supportDocstringTemplate": true,
   "python.analysis.typeCheckingMode": "basic",

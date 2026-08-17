@@ -4,6 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel
 
 from app.domain.entities.user import User
+from app.domain.shared.account_type import AccountType
 
 
 class UserUpdateField(str, Enum):
@@ -12,6 +13,7 @@ class UserUpdateField(str, Enum):
     PASSWORD = "password"  # pragma: allowlist secret # nosec B105
     RE_PASSWORD = "re_password"  # pragma: allowlist secret # nosec B105
     ROLE_ID = "role_id"
+    ACCOUNT_TYPE = "account_type"
 
 
 class _UserUpdateDataDTO(BaseModel):
@@ -20,6 +22,7 @@ class _UserUpdateDataDTO(BaseModel):
     password: str | None = None
     re_password: str | None = None
     role_id: UUID | None = None
+    account_type: AccountType | None = None
 
 
 class _UserUpdateWhereDTO(BaseModel):
@@ -36,6 +39,7 @@ class UserUpdateResponseDTO(BaseModel):
     username: str
     fullname: str
     role_id: UUID | None
+    account_type: AccountType
 
 
 class UserUpdateMapper(BaseModel):
@@ -46,4 +50,5 @@ class UserUpdateMapper(BaseModel):
             username=user.username,
             fullname=user.fullname,
             role_id=user.role_id,
+            account_type=user.account_type,
         )

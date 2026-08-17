@@ -15,6 +15,7 @@ from app.domain.exceptions.user_exceptions import (
     SelfRoleChangeException,
 )
 from app.domain.services.password_hasher import PasswordHasher
+from app.domain.shared.account_type import AccountType
 
 
 class UpdateUserUseCase:
@@ -53,7 +54,10 @@ class UpdateUserUseCase:
                 user.password_hash = self.password_hasher.hash(password)
 
             for field, value in update_data_enum.items():
-                setattr(user, field.value, value)
+                if field is UserUpdateField.ACCOUNT_TYPE:
+                    user.account_type = AccountType(value)
+                else:
+                    setattr(user, field.value, value)
 
             user = await self.uow.users.update(user=user)
 

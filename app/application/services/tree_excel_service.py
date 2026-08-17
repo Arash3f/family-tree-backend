@@ -18,11 +18,18 @@ from app.domain.entities.person import (
     Person,
 )
 from app.domain.exceptions.family_tree_exceptions import TreeExcelInvalidException
-from app.presentation.utils.date_convert import jalali_to_gregorian
+from app.presentation.utils.date_convert import gregorian_to_jalali, parse_user_date
 
 PERSONS_SHEET = "Persons"
 MARRIAGES_SHEET = "Marriages"
 INSTRUCTIONS_SHEET = "Instructions"
+
+PERSONS_SHEET_FA = "افراد"
+MARRIAGES_SHEET_FA = "ازدواج‌ها"
+INSTRUCTIONS_SHEET_FA = "راهنما"
+
+PERSONS_SHEET_ALIASES = (PERSONS_SHEET, PERSONS_SHEET_FA)
+MARRIAGES_SHEET_ALIASES = (MARRIAGES_SHEET, MARRIAGES_SHEET_FA)
 
 PERSON_HEADERS = [
     "ref",
@@ -49,9 +56,130 @@ MARRIAGE_HEADERS = [
     "divorced_at",
 ]
 
+PERSON_HEADERS_FA = [
+    "شناسه",
+    "نام",
+    "نام خانوادگی",
+    "جنسیت",
+    "تاریخ تولد",
+    "تاریخ فوت",
+    "محل تولد",
+    "محل فوت",
+    "یادداشت",
+    "شناسه والد ۱",
+    "نوع والد ۱",
+    "شناسه والد ۲",
+    "نوع والد ۲",
+    "شناسه ازدواج",
+]
+
+MARRIAGE_HEADERS_FA = [
+    "شناسه",
+    "شناسه همسر ۱",
+    "شناسه همسر ۲",
+    "تاریخ ازدواج",
+    "تاریخ طلاق",
+]
+
+_PERSON_HEADER_ALIASES: dict[str, frozenset[str]] = {
+    "ref": frozenset({"ref", "شناسه"}),
+    "name": frozenset({"name", "نام"}),
+    "family_name": frozenset({"family_name", "نام خانوادگی"}),
+    "gender": frozenset({"gender", "جنسیت"}),
+    "birth_date": frozenset({"birth_date", "تاریخ تولد", "تولد"}),
+    "death_date": frozenset({"death_date", "تاریخ فوت", "فوت"}),
+    "birth_place": frozenset({"birth_place", "محل تولد"}),
+    "death_place": frozenset({"death_place", "محل فوت"}),
+    "notes": frozenset({"notes", "یادداشت"}),
+    "parent1_ref": frozenset({"parent1_ref", "شناسه والد ۱", "شناسه والد 1"}),
+    "parent1_type": frozenset({"parent1_type", "نوع والد ۱", "نوع والد 1"}),
+    "parent2_ref": frozenset({"parent2_ref", "شناسه والد ۲", "شناسه والد 2"}),
+    "parent2_type": frozenset({"parent2_type", "نوع والد ۲", "نوع والد 2"}),
+    "marriage_ref": frozenset({"marriage_ref", "شناسه ازدواج", "ازدواج مبدأ"}),
+}
+
+_MARRIAGE_HEADER_ALIASES: dict[str, frozenset[str]] = {
+    "ref": frozenset({"ref", "شناسه"}),
+    "spouse_a_ref": frozenset(
+        {"spouse_a_ref", "شناسه همسر ۱", "شناسه همسر 1", "همسر ۱", "همسر 1"}
+    ),
+    "spouse_b_ref": frozenset(
+        {"spouse_b_ref", "شناسه همسر ۲", "شناسه همسر 2", "همسر ۲", "همسر 2"}
+    ),
+    "married_at": frozenset({"married_at", "تاریخ ازدواج"}),
+    "divorced_at": frozenset({"divorced_at", "تاریخ طلاق"}),
+}
+
+_GENDER_ALIASES: dict[str, frozenset[str]] = {
+    Gender.MALE.value: frozenset({"male", "مرد"}),
+    Gender.FEMALE.value: frozenset({"female", "زن"}),
+}
+
+_REL_TYPE_ALIASES: dict[str, frozenset[str]] = {
+    ParentRelationshipType.BIOLOGICAL.value: frozenset({"biological", "بیولوژیک"}),
+    ParentRelationshipType.ADOPTIVE.value: frozenset({"adoptive", "فرزندخواندگی"}),
+    ParentRelationshipType.STEP.value: frozenset({"step", "ناتنی"}),
+}
+
 HEADER_FILL = PatternFill("solid", fgColor="0D6E67")
 HEADER_FONT = Font(color="FFFFFF", bold=True)
 SAMPLE_FILL = PatternFill("solid", fgColor="E8F5F3")
+
+
+def _normalize_locale(lang: str | None) -> str:
+    return "fa" if (lang or "").lower().startswith("fa") else "en"
+
+
+def _sheet_titles(lang: str) -> tuple[str, str, str]:
+    if lang == "fa":
+        return PERSONS_SHEET_FA, MARRIAGES_SHEET_FA, INSTRUCTIONS_SHEET_FA
+    return PERSONS_SHEET, MARRIAGES_SHEET, INSTRUCTIONS_SHEET
+
+
+def _person_headers(lang: str) -> list[str]:
+    return PERSON_HEADERS_FA if lang == "fa" else PERSON_HEADERS
+
+
+def _marriage_headers(lang: str) -> list[str]:
+    return MARRIAGE_HEADERS_FA if lang == "fa" else MARRIAGE_HEADERS
+
+
+def format_excel_date(value: date | None, *, lang: str) -> str:
+    if value is None:
+        return ""
+    if lang == "fa":
+        return gregorian_to_jalali(value)
+    return value.isoformat()
+
+
+def _gender_label(gender: Gender, *, lang: str) -> str:
+    if lang == "fa":
+        return "مرد" if gender == Gender.MALE else "زن"
+    return gender.value
+
+
+def _rel_type_label(rel_type: ParentRelationshipType, *, lang: str) -> str:
+    if lang != "fa":
+        return rel_type.value
+    return {
+        ParentRelationshipType.BIOLOGICAL: "بیولوژیک",
+        ParentRelationshipType.ADOPTIVE: "فرزندخواندگی",
+        ParentRelationshipType.STEP: "ناتنی",
+    }[rel_type]
+
+
+def _alias_lookup(aliases: dict[str, frozenset[str]]) -> dict[str, str]:
+    lookup: dict[str, str] = {}
+    for canonical, names in aliases.items():
+        for name in names:
+            lookup[name.casefold()] = canonical
+    return lookup
+
+
+_PERSON_HEADER_LOOKUP = _alias_lookup(_PERSON_HEADER_ALIASES)
+_MARRIAGE_HEADER_LOOKUP = _alias_lookup(_MARRIAGE_HEADER_ALIASES)
+_GENDER_LOOKUP = _alias_lookup(_GENDER_ALIASES)
+_REL_TYPE_LOOKUP = _alias_lookup(_REL_TYPE_ALIASES)
 
 
 @dataclass
@@ -113,10 +241,7 @@ def parse_excel_date(value: Any, *, field_name: str, row_number: int) -> date | 
         return None
 
     try:
-        if "-" in text:
-            return date.fromisoformat(text[:10])
-        if "/" in text:
-            return jalali_to_gregorian(text)
+        parsed = parse_user_date(text)
     except Exception as exc:
         raise TreeExcelInvalidException(
             detail=[
@@ -124,36 +249,39 @@ def parse_excel_date(value: Any, *, field_name: str, row_number: int) -> date | 
                 "Use Jalali YYYY/MM/DD or Gregorian YYYY-MM-DD."
             ]
         ) from exc
-
-    raise TreeExcelInvalidException(
-        detail=[
-            f"Row {row_number}: invalid {field_name} '{text}'. "
-            "Use Jalali YYYY/MM/DD or Gregorian YYYY-MM-DD."
-        ]
-    )
+    if parsed is None:
+        raise TreeExcelInvalidException(
+            detail=[
+                f"Row {row_number}: invalid {field_name} '{text}'. "
+                "Use Jalali YYYY/MM/DD or Gregorian YYYY-MM-DD."
+            ]
+        )
+    return parsed
 
 
 def _parse_gender(value: Any, *, row_number: int) -> Gender:
-    text = (_cell_str(value) or "").lower()
-    try:
-        return Gender(text)
-    except ValueError as exc:
+    text = (_cell_str(value) or "").casefold()
+    canonical = _GENDER_LOOKUP.get(text)
+    if canonical is None:
         raise TreeExcelInvalidException(
-            detail=[f"Persons row {row_number}: gender must be male or female"]
-        ) from exc
+            detail=[f"Persons row {row_number}: gender must be male/female or مرد/زن"]
+        )
+    return Gender(canonical)
 
 
 def _parse_rel_type(value: Any, *, row_number: int) -> ParentRelationshipType:
-    text = (_cell_str(value) or ParentRelationshipType.BIOLOGICAL.value).lower()
-    try:
-        return ParentRelationshipType(text)
-    except ValueError as exc:
+    raw = _cell_str(value)
+    if not raw:
+        return ParentRelationshipType.BIOLOGICAL
+    canonical = _REL_TYPE_LOOKUP.get(raw.casefold())
+    if canonical is None:
         raise TreeExcelInvalidException(
             detail=[
                 f"Persons row {row_number}: parent type must be "
-                "biological, adoptive, or step"
+                "biological/adoptive/step or بیولوژیک/فرزندخواندگی/ناتنی"
             ]
-        ) from exc
+        )
+    return ParentRelationshipType(canonical)
 
 
 def _style_header(ws, headers: list[str]) -> None:
@@ -167,24 +295,35 @@ def _style_header(ws, headers: list[str]) -> None:
         ws.column_dimensions[get_column_letter(index)].width = 16
 
 
-def _add_person_validations(ws) -> None:
+def _add_person_validations(ws, *, lang: str = "en") -> None:
+    if lang == "fa":
+        gender_list = '"مرد,زن"'
+        gender_error = "از مرد یا زن استفاده کنید"
+        type_list = '"بیولوژیک,فرزندخواندگی,ناتنی"'
+        type_error = "از بیولوژیک، فرزندخواندگی یا ناتنی استفاده کنید"
+    else:
+        gender_list = '"male,female"'
+        gender_error = "Use male or female"
+        type_list = '"biological,adoptive,step"'
+        type_error = "Use biological, adoptive, or step"
+
     gender_dv = DataValidation(
         type="list",
-        formula1='"male,female"',
+        formula1=gender_list,
         allow_blank=True,
         showErrorMessage=True,
     )
-    gender_dv.error = "Use male or female"
+    gender_dv.error = gender_error
     gender_dv.add("D2:D1000")
     ws.add_data_validation(gender_dv)
 
     type_dv = DataValidation(
         type="list",
-        formula1='"biological,adoptive,step"',
+        formula1=type_list,
         allow_blank=True,
         showErrorMessage=True,
     )
-    type_dv.error = "Use biological, adoptive, or step"
+    type_dv.error = type_error
     type_dv.add("K2:K1000")
     type_dv.add("M2:M1000")
     ws.add_data_validation(type_dv)
@@ -207,15 +346,29 @@ _SAMPLE_INSTRUCTIONS: dict[str, list[str]] = {
     "fa": [
         "قالب اکسل شجره‌نامه",
         "",
-        "۱) برگه Persons را پر کنید. هر نفر یک ref یکتا داشته باشد (مثل P1).",
-        "۲) برگه Marriages را با ref افراد در spouse_a_ref و spouse_b_ref پر کنید.",
-        "۳) برای فرزند parent1_ref / parent2_ref و در صورت نیاز marriage_ref را بگذارید.",
-        "۴) gender: male | female",
-        "۵) parent types: biological | adoptive | step",
-        "۶) تاریخ‌ها: میلادی YYYY-MM-DD (شمسی YYYY/MM/DD هم پذیرفته می‌شود)",
+        "۱) برگه «افراد» را پر کنید. هر نفر یک شناسه یکتا داشته باشد (مثل P1).",
+        "۲) برگه «ازدواج‌ها» را با شناسه افراد در «شناسه همسر ۱» و «شناسه همسر ۲» پر کنید.",
+        "۳) برای فرزند «شناسه والد ۱ / ۲» و در صورت نیاز «شناسه ازدواج» را بگذارید.",
+        "۴) جنسیت: مرد | زن",
+        "۵) نوع والد: بیولوژیک | فرزندخواندگی | ناتنی",
+        "۶) تاریخ‌ها شمسی با قالب YYYY/MM/DD (میلادی YYYY-MM-DD هم پذیرفته می‌شود)",
         "۷) تاریخ ازدواج هم با همان قالب‌ها وارد شود.",
         "۸) ستون id لازم نیست. افراد تکراری با نام، نام خانوادگی، جنسیت و تاریخ تولد تشخیص داده می‌شوند.",
         "۹) هنگام ورود می‌توانید ردیف‌ها را انتخاب کنید؛ افراد/ازدواج‌های موجود در درخت نادیده گرفته می‌شوند.",
+        "۱۰) فایل‌های انگلیسی (Persons / Marriages و ستون‌های انگلیسی) هم قابل ورود هستند.",
+    ],
+}
+
+_EXPORT_INSTRUCTIONS: dict[str, list[str]] = {
+    "en": [
+        "Exported family tree data",
+        "All dates are Gregorian YYYY-MM-DD. Jalali YYYY/MM/DD is also accepted on import.",
+        "Re-import matches existing people by name, family name, gender, and birth date.",
+    ],
+    "fa": [
+        "داده‌های خروجی شجره‌نامه",
+        "همه تاریخ‌ها شمسی با قالب YYYY/MM/DD هستند. میلادی YYYY-MM-DD هم هنگام ورود پذیرفته می‌شود.",
+        "ورود مجدد افراد موجود را با نام، نام خانوادگی، جنسیت و تاریخ تولد تطبیق می‌دهد.",
     ],
 }
 
@@ -307,7 +460,7 @@ _SAMPLE_PEOPLE: dict[str, list[list[str]]] = {
             "P1",
             "علی",
             "کریمی",
-            "male",
+            "مرد",
             "1330/01/01",
             "",
             "تهران",
@@ -323,7 +476,7 @@ _SAMPLE_PEOPLE: dict[str, list[list[str]]] = {
             "P2",
             "زهرا",
             "کریمی",
-            "female",
+            "زن",
             "1335/05/10",
             "",
             "تهران",
@@ -339,23 +492,23 @@ _SAMPLE_PEOPLE: dict[str, list[list[str]]] = {
             "P3",
             "رضا",
             "کریمی",
-            "male",
+            "مرد",
             "1358/03/20",
             "",
             "تهران",
             "",
             "پدر",
             "P1",
-            "biological",
+            "بیولوژیک",
             "P2",
-            "biological",
+            "بیولوژیک",
             "M1",
         ],
         [
             "P4",
             "سارا",
             "احمدی",
-            "female",
+            "زن",
             "1360/07/01",
             "",
             "اصفهان",
@@ -371,16 +524,16 @@ _SAMPLE_PEOPLE: dict[str, list[list[str]]] = {
             "P5",
             "آرش",
             "کریمی",
-            "male",
+            "مرد",
             "1379/09/01",
             "",
             "تهران",
             "",
             "فرزند",
             "P3",
-            "biological",
+            "بیولوژیک",
             "P4",
-            "biological",
+            "بیولوژیک",
             "M2",
         ],
     ],
@@ -388,31 +541,38 @@ _SAMPLE_PEOPLE: dict[str, list[list[str]]] = {
 
 
 def build_sample_workbook(*, lang: str = "en") -> bytes:
-    locale = "fa" if lang == "fa" else "en"
+    locale = _normalize_locale(lang)
+    persons_title, marriages_title, instructions_title = _sheet_titles(locale)
     wb = Workbook()
 
     instructions = wb.active
-    instructions.title = INSTRUCTIONS_SHEET
+    instructions.title = instructions_title
     lines = _SAMPLE_INSTRUCTIONS[locale]
     for index, line in enumerate(lines, start=1):
         instructions.cell(row=index, column=1, value=line)
     instructions.column_dimensions["A"].width = 100
 
-    persons = wb.create_sheet(PERSONS_SHEET)
-    _style_header(persons, PERSON_HEADERS)
-    _add_person_validations(persons)
+    persons = wb.create_sheet(persons_title)
+    _style_header(persons, _person_headers(locale))
+    _add_person_validations(persons, lang=locale)
     sample_people = _SAMPLE_PEOPLE[locale]
     for row_index, row in enumerate(sample_people, start=2):
         for col_index, value in enumerate(row, start=1):
             cell = persons.cell(row=row_index, column=col_index, value=value)
             cell.fill = SAMPLE_FILL
 
-    marriages = wb.create_sheet(MARRIAGES_SHEET)
-    _style_header(marriages, MARRIAGE_HEADERS)
-    sample_marriages = [
-        ["M1", "P1", "P2", "1955-06-01", ""],
-        ["M2", "P3", "P4", "1985-04-12", ""],
-    ]
+    marriages = wb.create_sheet(marriages_title)
+    _style_header(marriages, _marriage_headers(locale))
+    if locale == "fa":
+        sample_marriages = [
+            ["M1", "P1", "P2", "1334/03/10", ""],
+            ["M2", "P3", "P4", "1364/01/23", ""],
+        ]
+    else:
+        sample_marriages = [
+            ["M1", "P1", "P2", "1955-06-01", ""],
+            ["M2", "P3", "P4", "1985-04-12", ""],
+        ]
     for row_index, row in enumerate(sample_marriages, start=2):
         for col_index, value in enumerate(row, start=1):
             cell = marriages.cell(row=row_index, column=col_index, value=value)
@@ -427,17 +587,15 @@ def build_export_workbook(
     *,
     persons: list[Person],
     marriages: list[Marriage],
+    lang: str = "en",
 ) -> bytes:
+    locale = _normalize_locale(lang)
+    persons_title, marriages_title, instructions_title = _sheet_titles(locale)
     wb = Workbook()
     instructions = wb.active
-    instructions.title = INSTRUCTIONS_SHEET
-    instructions["A1"] = "Exported family tree data"
-    instructions["A2"] = (
-        "All dates are Gregorian YYYY-MM-DD. Jalali YYYY/MM/DD is also accepted on import."
-    )
-    instructions["A3"] = (
-        "Re-import matches existing people by name, family name, gender, and birth date."
-    )
+    instructions.title = instructions_title
+    for index, line in enumerate(_EXPORT_INSTRUCTIONS[locale], start=1):
+        instructions.cell(row=index, column=1, value=line)
     instructions.column_dimensions["A"].width = 90
 
     person_ref_by_id = {
@@ -448,9 +606,9 @@ def build_export_workbook(
         for index, marriage in enumerate(marriages, start=1)
     }
 
-    persons_ws = wb.create_sheet(PERSONS_SHEET)
-    _style_header(persons_ws, PERSON_HEADERS)
-    _add_person_validations(persons_ws)
+    persons_ws = wb.create_sheet(persons_title)
+    _style_header(persons_ws, _person_headers(locale))
+    _add_person_validations(persons_ws, lang=locale)
 
     for row_index, person in enumerate(persons, start=2):
         parents = list(person.parents)
@@ -460,16 +618,16 @@ def build_export_workbook(
             person_ref_by_id[person.safe_id],
             person.name,
             person.family_name or "",
-            person.gender.value,
-            person.birth_date.isoformat() if person.birth_date else "",
-            person.death_date.isoformat() if person.death_date else "",
+            _gender_label(person.gender, lang=locale),
+            format_excel_date(person.birth_date, lang=locale),
+            format_excel_date(person.death_date, lang=locale),
             person.birth_place or "",
             person.death_place or "",
             person.notes or "",
             person_ref_by_id.get(p1.parent_id, "") if p1 else "",
-            p1.relationship_type.value if p1 else "",
+            _rel_type_label(p1.relationship_type, lang=locale) if p1 else "",
             person_ref_by_id.get(p2.parent_id, "") if p2 else "",
-            p2.relationship_type.value if p2 else "",
+            _rel_type_label(p2.relationship_type, lang=locale) if p2 else "",
             marriage_ref_by_id.get(person.marriage_id, "")
             if person.marriage_id
             else "",
@@ -477,15 +635,15 @@ def build_export_workbook(
         for col_index, value in enumerate(values, start=1):
             persons_ws.cell(row=row_index, column=col_index, value=value)
 
-    marriages_ws = wb.create_sheet(MARRIAGES_SHEET)
-    _style_header(marriages_ws, MARRIAGE_HEADERS)
+    marriages_ws = wb.create_sheet(marriages_title)
+    _style_header(marriages_ws, _marriage_headers(locale))
     for row_index, marriage in enumerate(marriages, start=2):
         values = [
             marriage_ref_by_id[marriage.safe_id],
             person_ref_by_id.get(marriage.spouse_a_id, str(marriage.spouse_a_id)),
             person_ref_by_id.get(marriage.spouse_b_id, str(marriage.spouse_b_id)),
-            marriage.married_at.isoformat(),
-            marriage.divorced_at.isoformat() if marriage.divorced_at else "",
+            format_excel_date(marriage.married_at, lang=locale),
+            format_excel_date(marriage.divorced_at, lang=locale),
         ]
         for col_index, value in enumerate(values, start=1):
             marriages_ws.cell(row=row_index, column=col_index, value=value)
@@ -495,13 +653,27 @@ def build_export_workbook(
     return buffer.getvalue()
 
 
-def _header_map(ws) -> dict[str, int]:
+def _resolve_sheet(wb, aliases: tuple[str, ...], *, label: str):
+    by_key = {name.strip().casefold(): name for name in wb.sheetnames}
+    for alias in aliases:
+        found = by_key.get(alias.strip().casefold())
+        if found is not None:
+            return wb[found]
+    raise TreeExcelInvalidException(
+        detail=[f"Missing required sheet '{label}' ({' / '.join(aliases)})"]
+    )
+
+
+def _header_map(ws, aliases: dict[str, frozenset[str]]) -> dict[str, int]:
+    lookup = _alias_lookup(aliases)
     mapping: dict[str, int] = {}
     for col in range(1, ws.max_column + 1):
         raw = ws.cell(row=1, column=col).value
         if raw is None:
             continue
-        mapping[str(raw).strip().lower()] = col
+        key = str(raw).strip().casefold()
+        canonical = lookup.get(key, key)
+        mapping[canonical] = col
     return mapping
 
 
@@ -521,19 +693,10 @@ def parse_tree_excel(content: bytes) -> ParsedTreeExcel:
             detail=["Could not read Excel file. Upload a valid .xlsx workbook."]
         ) from exc
 
-    if PERSONS_SHEET not in wb.sheetnames:
-        raise TreeExcelInvalidException(
-            detail=[f"Missing required sheet '{PERSONS_SHEET}'"]
-        )
-    if MARRIAGES_SHEET not in wb.sheetnames:
-        raise TreeExcelInvalidException(
-            detail=[f"Missing required sheet '{MARRIAGES_SHEET}'"]
-        )
-
-    persons_ws = wb[PERSONS_SHEET]
-    marriages_ws = wb[MARRIAGES_SHEET]
-    person_cols = _header_map(persons_ws)
-    marriage_cols = _header_map(marriages_ws)
+    persons_ws = _resolve_sheet(wb, PERSONS_SHEET_ALIASES, label=PERSONS_SHEET)
+    marriages_ws = _resolve_sheet(wb, MARRIAGES_SHEET_ALIASES, label=MARRIAGES_SHEET)
+    person_cols = _header_map(persons_ws, _PERSON_HEADER_ALIASES)
+    marriage_cols = _header_map(marriages_ws, _MARRIAGE_HEADER_ALIASES)
 
     _require_headers(
         person_cols,

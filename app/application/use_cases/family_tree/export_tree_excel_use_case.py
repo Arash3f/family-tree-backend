@@ -15,7 +15,8 @@ class ExportTreeExcelUseCase:
     def __init__(self, uow: UnitOfWork):
         self.uow = uow
 
-    async def execute(self, *, tree_id: UUID) -> ExcelFileDTO:
+    async def execute(self, *, tree_id: UUID, lang: str = "en") -> ExcelFileDTO:
+        locale = "fa" if lang == "fa" else "en"
         async with self.uow:
             tree = await self.uow.family_trees.get_or_raise(tree_id)
             persons = await load_all_tree_persons(self.uow, tree_id)
@@ -30,6 +31,8 @@ class ExportTreeExcelUseCase:
         )
 
         return ExcelFileDTO(
-            filename=f"{safe_name}-export.xlsx",
-            content=build_export_workbook(persons=persons, marriages=marriages),
+            filename=f"{safe_name}-export-{locale}.xlsx",
+            content=build_export_workbook(
+                persons=persons, marriages=marriages, lang=locale
+            ),
         )

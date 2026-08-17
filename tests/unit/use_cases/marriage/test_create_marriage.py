@@ -13,10 +13,7 @@ from app.application.dto.marriage.marriage_create_dto import (
 from app.domain.entities.marriage import Marriage
 from app.domain.entities.person import Gender
 from app.domain.exceptions.person_exceptions import PersonNotFoundException
-from app.domain.exceptions.marriage_exceptions import (
-    ActiveMarriageExistsException,
-    UnderageMarriageException,
-)
+from app.domain.exceptions.marriage_exceptions import UnderageMarriageException
 
 
 @pytest.mark.asyncio
@@ -146,9 +143,10 @@ async def test_create_marriage_raises_if_wife_not_found(mock_uow):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("busy_spouse", [0, 1])
-async def test_create_marriage_rejects_a_spouse_who_is_already_married(
+async def test_create_marriage_allows_a_spouse_who_is_already_married(
     mock_uow, busy_spouse
 ):
+    """A person may have several concurrent active marriages (polygamy)."""
     dto = MarriageCreateDTO(
         spouse_a_id=UUID(int=1),
         spouse_b_id=UUID(int=2),
@@ -160,16 +158,29 @@ async def test_create_marriage_rejects_a_spouse_who_is_already_married(
     mock_uow.marriages.has_active_for_person = AsyncMock(
         side_effect=lambda person_id: person_id == spouses[busy_spouse].safe_id
     )
+    created = MagicMock(
+        spouse_a_id=UUID(int=1),
+        spouse_b_id=UUID(int=2),
+    )
+    mock_uow.marriages.create = AsyncMock(return_value=created)
 
-    use_case = CreateMarriageUseCase(
-        mock_uow, marriage_rules_service=MagicMock(), sync_service=MagicMock()
+    expected = MarriageCreateResponseDTO(
+        id=UUID(int=9),
+        spouse_a_id=UUID(int=1),
+        spouse_b_id=UUID(int=2),
+        divorced_at=None,
+        married_at=date(2020, 1, 1),
     )
 
-    with pytest.raises(ActiveMarriageExistsException):
-        await use_case.execute(dto, tree_id=UUID(int=7))
+    with patch.object(MarriageCreateMapper, "to_response", return_value=expected):
+        use_case = CreateMarriageUseCase(
+            mock_uow, marriage_rules_service=MagicMock(), sync_service=MagicMock()
+        )
+        result = await use_case.execute(dto, tree_id=UUID(int=7))
 
-    mock_uow.marriages.create.assert_not_awaited()
-    mock_uow.commit.assert_not_awaited()
+    mock_uow.marriages.create.assert_awaited_once()
+    mock_uow.commit.assert_awaited_once()
+    assert result == expected
 
 
 @pytest.mark.asyncio

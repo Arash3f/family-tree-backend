@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -143,6 +143,18 @@ class SQLPersonRepository(PersonRepository):
         models = result.scalars().unique().all()
 
         return [self._to_entity(m) for m in models]
+
+    async def count_in_tree(self, tree_id: UUID) -> int:
+        stmt = (
+            select(func.count())
+            .select_from(PersonModel)
+            .where(
+                PersonModel.tree_id == tree_id,
+                PersonModel.deleted_at.is_(None),
+            )
+        )
+        result = await self.session.execute(stmt)
+        return int(result.scalar_one())
 
     async def update(self, person: Person) -> Person:
         stmt = (

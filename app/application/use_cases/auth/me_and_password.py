@@ -33,6 +33,7 @@ class GetMeUseCase:
                     permissions=[],
                     permission_details=[],
                     session_id=session_id,
+                    account_type=user.account_type.value,
                 )
 
             permissions: list[str] = []
@@ -63,6 +64,7 @@ class GetMeUseCase:
                 permissions=permissions,
                 permission_details=permission_details,
                 session_id=session_id,
+                account_type=details.account_type.value,
             )
 
 

@@ -19,6 +19,9 @@ class TreeRepository(ABC):
     async def list_for_user(self, user_id: UUID) -> list[FamilyTree]: ...
 
     @abstractmethod
+    async def count_owned_by_user(self, user_id: UUID) -> int: ...
+
+    @abstractmethod
     async def update(self, tree: FamilyTree) -> FamilyTree: ...
 
     @abstractmethod

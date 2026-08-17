@@ -47,6 +47,9 @@ class MarriageRepository(ABC):
     async def exists_for_person(self, person_id: UUID) -> bool: ...
 
     @abstractmethod
+    async def count_in_tree(self, tree_id: UUID) -> int: ...
+
+    @abstractmethod
     async def delete(self, marriage_id: UUID) -> None: ...
 
     @abstractmethod

@@ -16,14 +16,12 @@ from app.application.use_cases.family_tree.preview_tree_excel_use_case import (
     PreviewTreeExcelUseCase,
 )
 from app.domain.exceptions.family_tree_exceptions import TreeExcelInvalidException
-from app.domain.shared.permissions import Permissions
-from app.presentation.rest.dependencies.permission_guard import (
-    RequireAllPermissions,
-    RequirePermission,
-)
 from app.presentation.rest.dependencies.tree_guard import (
-    require_tree_add_persons,
+    require_tree_marriage_create,
+    require_tree_person_create,
     require_tree_view,
+    require_tree_view_birth_date,
+    require_tree_view_marriage_date,
 )
 from app.presentation.rest.utils.dependencies import (
     get_marriage_rules_service,
@@ -111,10 +109,7 @@ def _parse_include(raw: str | None) -> TreeExcelImportInclude | None:
 
 @router.get(
     "/sample",
-    dependencies=[
-        Depends(RequirePermission(Permissions.PERSON_READ)),
-        Depends(require_tree_view),
-    ],
+    dependencies=[Depends(require_tree_view)],
 )
 async def download_excel_sample(
     request: Request,
@@ -129,21 +124,18 @@ async def download_excel_sample(
 @router.get(
     "/export",
     dependencies=[
-        Depends(
-            RequireAllPermissions(
-                Permissions.PERSON_READ,
-                Permissions.MARRIAGE_READ,
-            )
-        ),
         Depends(require_tree_view),
+        Depends(require_tree_view_birth_date),
+        Depends(require_tree_view_marriage_date),
     ],
 )
 async def export_excel(
+    request: Request,
     tree_id: UUID,
     uow=Depends(get_uow),
 ) -> Response:
     usecase = ExportTreeExcelUseCase(uow)
-    result = await usecase.execute(tree_id=tree_id)
+    result = await usecase.execute(tree_id=tree_id, lang=detect_language(request))
     return _xlsx_response(filename=result.filename, content=result.content)
 
 
@@ -151,13 +143,8 @@ async def export_excel(
     "/import/preview",
     response_model=TreeExcelPreviewResponse,
     dependencies=[
-        Depends(
-            RequireAllPermissions(
-                Permissions.PERSON_CREATE,
-                Permissions.MARRIAGE_CREATE,
-            )
-        ),
-        Depends(require_tree_add_persons),
+        Depends(require_tree_person_create),
+        Depends(require_tree_marriage_create),
     ],
 )
 async def preview_excel_import(
@@ -193,13 +180,8 @@ async def preview_excel_import(
     "/import",
     response_model=TreeExcelImportResponse,
     dependencies=[
-        Depends(
-            RequireAllPermissions(
-                Permissions.PERSON_CREATE,
-                Permissions.MARRIAGE_CREATE,
-            )
-        ),
-        Depends(require_tree_add_persons),
+        Depends(require_tree_person_create),
+        Depends(require_tree_marriage_create),
     ],
 )
 async def import_excel(

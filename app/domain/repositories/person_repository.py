@@ -48,6 +48,9 @@ class PersonRepository(ABC):
     async def get_children(self, parent_id: UUID) -> list[Person]: ...
 
     @abstractmethod
+    async def count_in_tree(self, tree_id: UUID) -> int: ...
+
+    @abstractmethod
     async def update(self, person: Person) -> Person: ...
 
     @abstractmethod

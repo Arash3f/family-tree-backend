@@ -24,6 +24,7 @@ def test_user_create_mapper_to_response():
     assert dto.username == user.username
     assert dto.fullname == user.fullname
     assert dto.role_id == user.role_id
+    assert dto.account_type == user.account_type
 
 
 def test_user_get_mapper_to_response():
@@ -35,6 +36,7 @@ def test_user_get_mapper_to_response():
     assert dto.username == user.username
     assert dto.fullname == user.fullname
     assert dto.role_id == user.role_id
+    assert dto.account_type == user.account_type
 
 
 def test_user_update_mapper_to_response():
@@ -46,3 +48,4 @@ def test_user_update_mapper_to_response():
     assert dto.username == user.username
     assert dto.fullname == user.fullname
     assert dto.role_id == user.role_id
+    assert dto.account_type == user.account_type

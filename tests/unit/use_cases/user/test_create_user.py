@@ -58,6 +58,7 @@ async def test_create_user_with_role(mock_uow):
     assert user_arg.fullname == "Arash Alf"
     assert user_arg.role_id == UUID(int=1)
     assert user_arg.password_hash == "hashed_password"
+    assert user_arg.account_type.value == "free"
 
     mock_uow.commit.assert_awaited_once()
 

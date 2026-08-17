@@ -4,6 +4,7 @@ from uuid import UUID
 
 from app.domain.exceptions.common_exceptions import UnExpectedIdException
 from app.domain.services.password_hasher import PasswordHasher
+from app.domain.shared.account_type import AccountType
 
 
 @dataclass
@@ -19,12 +20,19 @@ class User:
     fullname: str = ""
     id: UUID | None = None
     role_id: UUID | None = None
+    account_type: AccountType = AccountType.FREE
     # Populated only on list queries (max session created_at); not persisted on User.
     last_session_at: datetime | None = None
 
     def __post_init__(self) -> None:
         if not self.fullname:
             self.fullname = self.username
+        if isinstance(self.account_type, str):
+            self.account_type = AccountType(self.account_type)
+
+    @property
+    def is_free(self) -> bool:
+        return self.account_type is AccountType.FREE
 
     def verify_password(self, plain_password: str, hasher: PasswordHasher) -> bool:
         """

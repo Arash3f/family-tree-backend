@@ -46,6 +46,12 @@ class SQLUserRepository(UserRepository):
 
         return self._to_entity(model)
 
+    async def get_for_update(self, user_id: UUID) -> User | None:
+        stmt = select(UserModel).where(UserModel.id == user_id).with_for_update()
+        result = await self.session.execute(stmt)
+        model = result.scalar_one_or_none()
+        return self._to_entity(model) if model else None
+
     async def get_with_details(
         self, user_id: UUID
     ) -> UserGetWithDetailResponseDTO | None:
@@ -170,6 +176,7 @@ class SQLUserRepository(UserRepository):
         model.fullname = user.fullname
         model.role_id = user.role_id
         model.password_hash = user.password_hash
+        model.account_type = user.account_type.value
 
         await self.session.flush()
         await self.session.refresh(model)
@@ -188,6 +195,7 @@ class SQLUserRepository(UserRepository):
             fullname=model.fullname,
             password_hash=model.password_hash,
             role_id=model.role_id,
+            account_type=model.account_type,
         )
 
     def _to_model(self, entity: User) -> UserModel:
@@ -197,6 +205,7 @@ class SQLUserRepository(UserRepository):
             fullname=entity.fullname,
             password_hash=entity.password_hash,
             role_id=entity.role_id,
+            account_type=entity.account_type.value,
         )
 
         return model

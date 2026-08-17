@@ -3,6 +3,7 @@ from uuid import UUID
 from pydantic import BaseModel
 
 from app.domain.entities.user import User
+from app.domain.shared.account_type import AccountType
 
 
 class UserGetResponseDTO(BaseModel):
@@ -10,6 +11,7 @@ class UserGetResponseDTO(BaseModel):
     username: str
     fullname: str
     role_id: UUID | None
+    account_type: AccountType
 
 
 class UserGetMapper(BaseModel):
@@ -20,4 +22,5 @@ class UserGetMapper(BaseModel):
             username=user.username,
             fullname=user.fullname,
             role_id=user.role_id,
+            account_type=user.account_type,
         )

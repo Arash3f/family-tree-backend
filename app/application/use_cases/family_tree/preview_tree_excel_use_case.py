@@ -143,12 +143,6 @@ class PreviewTreeExcelUseCase:
 
         match = match_tree_excel(parsed, existing_persons, existing_marriages)
         existing_person_by_id = {person.safe_id: person for person in existing_persons}
-        active_spouse_ids = {
-            spouse_id
-            for marriage in existing_marriages
-            if marriage.is_active()
-            for spouse_id in (marriage.spouse_a_id, marriage.spouse_b_id)
-        }
 
         for preview_person in persons_out:
             preview_person.already_exists = match.person_already_in_tree(
@@ -203,12 +197,9 @@ class PreviewTreeExcelUseCase:
 
         marriage_by_ref: dict[str, ExcelMarriageRow] = {}
         marriage_ids: dict[str, UUID] = {}
-        active_spouse_refs: set[str] = set()
 
-        preview_marriage_by_ref = {item.ref: item for item in marriages_out}
         for marriage_row in parsed.marriages:
             marriage_by_ref[marriage_row.ref] = marriage_row
-            preview_marriage = preview_marriage_by_ref[marriage_row.ref]
             if match.marriage_already_in_tree(marriage_row.ref):
                 marriage_ids[marriage_row.ref] = match.marriage_existing_id[
                     marriage_row.ref
@@ -235,28 +226,6 @@ class PreviewTreeExcelUseCase:
             except AppException as exc:
                 for message in _exc_messages(exc):
                     errors.append(f"Marriages row {marriage_row.row_number}: {message}")
-
-            if marriage_row.divorced_at is None:
-                tree_conflict_refs: list[str] = []
-                for ref, spouse in (
-                    (marriage_row.spouse_a_ref, spouse_a),
-                    (marriage_row.spouse_b_ref, spouse_b),
-                ):
-                    if ref in active_spouse_refs:
-                        errors.append(
-                            f"Marriages row {marriage_row.row_number}: '{ref}' "
-                            "already has an active marriage in this file"
-                        )
-                    existing_id = spouse.id
-                    if existing_id is not None and existing_id in active_spouse_ids:
-                        tree_conflict_refs.append(ref)
-                active_spouse_refs.add(marriage_row.spouse_a_ref)
-                active_spouse_refs.add(marriage_row.spouse_b_ref)
-                if tree_conflict_refs:
-                    preview_marriage.warning = (
-                        "Already has an active marriage in this tree: "
-                        + ", ".join(tree_conflict_refs)
-                    )
 
             marriage_id = uuid4()
             try:

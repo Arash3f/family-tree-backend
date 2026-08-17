@@ -2,6 +2,8 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
+from app.domain.shared.account_type import AccountType
+
 
 class _Permission(BaseModel):
     id: UUID
@@ -21,4 +23,5 @@ class UserGetWithDetailResponseDTO(BaseModel):
     username: str
     fullname: str
     role_id: UUID | None
+    account_type: AccountType
     role: _RoleData | None

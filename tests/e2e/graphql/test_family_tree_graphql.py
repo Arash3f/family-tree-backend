@@ -22,8 +22,6 @@ ALL_TREE_PERMISSIONS = [
     Permissions.TREE_READ,
     Permissions.TREE_UPDATE,
     Permissions.TREE_DELETE,
-    Permissions.TREE_MEMBER_ADD,
-    Permissions.TREE_MEMBER_REMOVE,
 ]
 
 
@@ -174,9 +172,7 @@ async def test_graphql_plain_member_cannot_rename_a_tree(client, tree_id, uow):
 
 @pytest.mark.asyncio
 async def test_graphql_plain_member_cannot_add_members(client, tree_id, uow):
-    member = await create_authenticated_user(
-        client, uow, permissions=[Permissions.TREE_MEMBER_ADD]
-    )
+    member = await create_authenticated_user(client, uow, permissions=[])
     await add_tree_member(uow, tree_id=tree_id, user_id=member.user.safe_id)
     outsider = await create_authenticated_user(client, uow, permissions=[])
     await uow.commit()
@@ -188,7 +184,7 @@ async def test_graphql_plain_member_cannot_add_members(client, tree_id, uow):
         headers=member.headers,
     )
 
-    assert first_error_code(resp) == int(ErrorCode.TREE_OWNER_REQUIRED)
+    assert first_error_code(resp) == int(ErrorCode.TREE_ACCESS_DENIED)
 
 
 # ============================================================
@@ -198,9 +194,7 @@ async def test_graphql_plain_member_cannot_add_members(client, tree_id, uow):
 
 @pytest.mark.asyncio
 async def test_graphql_non_member_cannot_list_persons(client, tree_id, uow):
-    outsider = await create_authenticated_user(
-        client, uow, permissions=[Permissions.PERSON_READ]
-    )
+    outsider = await create_authenticated_user(client, uow, permissions=[])
     await _person_in(uow, tree_id, "hidden")
 
     resp = await gql(
@@ -212,9 +206,7 @@ async def test_graphql_non_member_cannot_list_persons(client, tree_id, uow):
 
 @pytest.mark.asyncio
 async def test_graphql_non_member_cannot_create_a_person(client, tree_id, uow):
-    outsider = await create_authenticated_user(
-        client, uow, permissions=[Permissions.PERSON_CREATE]
-    )
+    outsider = await create_authenticated_user(client, uow, permissions=[])
 
     resp = await gql(
         client,
@@ -228,9 +220,7 @@ async def test_graphql_non_member_cannot_create_a_person(client, tree_id, uow):
 
 @pytest.mark.asyncio
 async def test_graphql_member_of_one_tree_cannot_read_another(client, tree_id, uow):
-    actor = await create_authenticated_user(
-        client, uow, permissions=[Permissions.PERSON_READ]
-    )
+    actor = await create_authenticated_user(client, uow, permissions=[])
     await add_tree_member(uow, tree_id=tree_id, user_id=actor.user.safe_id)
     other_tree = await create_family_tree_with_owner(uow, name="Foreign Tree")
     await uow.commit()

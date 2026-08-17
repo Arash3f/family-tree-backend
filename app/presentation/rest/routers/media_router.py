@@ -4,18 +4,18 @@ from fastapi.responses import Response
 from app.application.services.person_photo_service import PersonPhotoService
 from app.application.use_cases.media.get_media_use_case import GetMediaUseCase
 from app.application.use_cases.media.upload_media_use_case import UploadMediaUseCase
-from app.domain.shared.permissions import Permissions
-from app.presentation.rest.dependencies.permission_guard import RequirePermission
+from app.presentation.rest.dependencies.tree_guard import require_tree_upload_photo
 from app.presentation.rest.schemas.dto.media_schema import MediaUploadResponse
 from app.presentation.rest.utils.dependencies import get_person_photo_service
 
 router = APIRouter(prefix="/media", tags=["Media"])
+upload_router = APIRouter(prefix="/media", tags=["Media"])
 
 
-@router.post(
+@upload_router.post(
     "/upload",
     response_model=MediaUploadResponse,
-    dependencies=[Depends(RequirePermission(Permissions.MEDIA_UPLOAD))],
+    dependencies=[Depends(require_tree_upload_photo)],
 )
 async def upload_media(
     file: UploadFile = File(...),

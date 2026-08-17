@@ -46,6 +46,15 @@ class SQLTreeRepository(TreeRepository):
         result = await self.session.execute(stmt)
         return [self._to_entity(m) for m in result.scalars().all()]
 
+    async def count_owned_by_user(self, user_id: UUID) -> int:
+        stmt = (
+            select(func.count())
+            .select_from(FamilyTreeModel)
+            .where(FamilyTreeModel.owner_user_id == user_id)
+        )
+        result = await self.session.execute(stmt)
+        return int(result.scalar_one())
+
     async def update(self, tree: FamilyTree) -> FamilyTree:
         stmt = select(FamilyTreeModel).where(FamilyTreeModel.id == tree.id)
         result = await self.session.execute(stmt)

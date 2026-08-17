@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from app.domain.shared.dto.marriage_filter_dto import MarriageSortField
 from app.domain.shared.dto.sorter_dto import SortOrderField
 from app.presentation.rest.schemas.dto.common import (
+    IsoDate,
     PaginationRequestParams,
     RangeRequest,
     SortRequestParams,
@@ -16,15 +17,15 @@ class MarriageModel(BaseModel):
     id: UUID | None
     spouse_a_id: UUID
     spouse_b_id: UUID
-    married_at: date
-    divorced_at: date | None = None
+    married_at: IsoDate | None
+    divorced_at: IsoDate | None = None
 
 
 class _MarriageUpdateDateRequest(BaseModel):
     spouse_a_id: UUID | None = None
     spouse_b_id: UUID | None = None
-    married_at: date | None = None
-    divorced_at: date | None = None
+    married_at: IsoDate | None = None
+    divorced_at: IsoDate | None = None
 
 
 class _MarriageUpdateWhereRequest(BaseModel):
@@ -40,7 +41,7 @@ class MarriageUpdateResponse(BaseModel):
     id: UUID
     spouse_a_id: UUID
     spouse_b_id: UUID
-    married_at: date
+    married_at: date | None
     divorced_at: date | None
 
 
@@ -48,27 +49,27 @@ class MarriageGetResponse(BaseModel):
     id: UUID
     spouse_a_id: UUID
     spouse_b_id: UUID
-    married_at: date
+    married_at: date | None
     divorced_at: date | None
 
 
 class MarriageCreateRequest(BaseModel):
     spouse_a_id: UUID
     spouse_b_id: UUID
-    married_at: date
+    married_at: IsoDate
 
 
 class MarriageCreateResponse(BaseModel):
     id: UUID
     spouse_a_id: UUID
     spouse_b_id: UUID
-    married_at: date
+    married_at: date | None
     divorced_at: date | None
 
 
 class DivorceRequest(BaseModel):
     marriage_id: UUID
-    divorced_at: date
+    divorced_at: IsoDate
 
 
 class MarriageFilterRequestData(BaseModel):

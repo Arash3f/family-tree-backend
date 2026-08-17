@@ -43,5 +43,20 @@ class RequireTreeAccess:
 
 
 require_tree_view = RequireTreeAccess(TreeAccessPermissions.VIEW)
-require_tree_edit = RequireTreeAccess(TreeAccessPermissions.EDIT)
-require_tree_add_persons = RequireTreeAccess(TreeAccessPermissions.ADD_PERSONS)
+require_tree_person_create = RequireTreeAccess(TreeAccessPermissions.PERSON_CREATE)
+require_tree_person_update = RequireTreeAccess(TreeAccessPermissions.PERSON_UPDATE)
+require_tree_person_delete = RequireTreeAccess(TreeAccessPermissions.PERSON_DELETE)
+require_tree_marriage_create = RequireTreeAccess(TreeAccessPermissions.MARRIAGE_CREATE)
+require_tree_marriage_update = RequireTreeAccess(TreeAccessPermissions.MARRIAGE_UPDATE)
+require_tree_marriage_delete = RequireTreeAccess(TreeAccessPermissions.MARRIAGE_DELETE)
+require_tree_marriage_divorce = RequireTreeAccess(
+    TreeAccessPermissions.MARRIAGE_DIVORCE
+)
+require_tree_upload_photo = RequireTreeAccess(TreeAccessPermissions.UPLOAD_PHOTO)
+require_tree_member_add = RequireTreeAccess(TreeAccessPermissions.MEMBER_ADD)
+require_tree_member_remove = RequireTreeAccess(TreeAccessPermissions.MEMBER_REMOVE)
+require_tree_view_birth_date = RequireTreeAccess(TreeAccessPermissions.VIEW_BIRTH_DATE)
+require_tree_view_marriage_date = RequireTreeAccess(
+    TreeAccessPermissions.VIEW_MARRIAGE_DATE
+)
+require_tree_view_photo = RequireTreeAccess(TreeAccessPermissions.VIEW_PHOTO)

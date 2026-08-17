@@ -1,8 +1,10 @@
 from unittest.mock import AsyncMock, MagicMock
+from uuid import UUID
 
 import pytest
 
 from app.application.interfaces.unit_of_work import UnitOfWork
+from app.domain.entities.user import User
 from app.domain.repositories.marriage_repository import MarriageRepository
 from app.domain.repositories.permission_repository import PermissionRepository
 from app.domain.repositories.person_repository import PersonRepository
@@ -12,11 +14,21 @@ from app.domain.repositories.tree_repository import (
     TreeRepository,
 )
 from app.domain.repositories.user_repository import UserRepository
+from app.domain.shared.account_type import AccountType
 from app.domain.shared.dto.pagination_dto import PaginatedResult
 
 
 def _empty_page():
     return PaginatedResult(items=[], total=0, page=1, page_size=100)
+
+
+def _paid_user(**overrides) -> User:
+    return User(
+        id=overrides.get("id", UUID(int=1)),
+        username=overrides.get("username", "tester"),
+        password_hash=overrides.get("password_hash", "hash"),
+        account_type=AccountType.PAID,
+    )
 
 
 @pytest.fixture
@@ -31,6 +43,7 @@ def mock_uow():
     users_repo = MagicMock(spec_set=UserRepository)
     users_repo.create = AsyncMock()
     users_repo.get_or_raise = AsyncMock()
+    users_repo.get_for_update = AsyncMock(return_value=_paid_user())
     users_repo.ids_having_permission = AsyncMock(return_value=set())
 
     persons_repo = MagicMock(spec_set=PersonRepository)
@@ -38,6 +51,7 @@ def mock_uow():
     persons_repo.delete = AsyncMock()
     persons_repo.get_in_tree_or_raise = AsyncMock()
     persons_repo.get_children = AsyncMock(return_value=[])
+    persons_repo.count_in_tree = AsyncMock(return_value=0)
     persons_repo.get_list_by_filter = AsyncMock(return_value=_empty_page())
 
     marriages_repo = MagicMock(spec_set=MarriageRepository)
@@ -47,6 +61,7 @@ def mock_uow():
     marriages_repo.get_or_raise = AsyncMock()
     marriages_repo.has_active_for_person = AsyncMock(return_value=False)
     marriages_repo.exists_for_person = AsyncMock(return_value=False)
+    marriages_repo.count_in_tree = AsyncMock(return_value=0)
     marriages_repo.get_list_by_filter = AsyncMock(return_value=_empty_page())
 
     sessions_repo = MagicMock()
@@ -72,6 +87,7 @@ def mock_uow():
 
     family_trees_repo = MagicMock(spec_set=TreeRepository)
     family_trees_repo.get_or_raise = AsyncMock()
+    family_trees_repo.count_owned_by_user = AsyncMock(return_value=0)
 
     tree_memberships_repo = MagicMock(spec_set=TreeMembershipRepository)
 

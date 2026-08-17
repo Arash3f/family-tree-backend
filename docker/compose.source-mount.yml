@@ -1,0 +1,25 @@
+# Run the containers against the working tree instead of the code baked into the
+# image. Useful when the registry is unreachable and the image cannot be rebuilt.
+#
+# From backend repo root:
+#   docker compose -f docker/compose.yml -f docker/compose.source-mount.yml --env-file .env up -d
+#
+# Dependencies still come from the image, so a changed requirements.txt needs a
+# real rebuild.
+
+name: family-tree
+
+x-source-mounts: &source-mounts
+  - ../app:/app/app:ro
+  - ../migrations:/app/migrations:ro
+  - ../alembic.ini:/app/alembic.ini:ro
+
+services:
+  api:
+    volumes: *source-mounts
+
+  celery_worker:
+    volumes: *source-mounts
+
+  celery_beat:
+    volumes: *source-mounts

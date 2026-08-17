@@ -99,3 +99,12 @@ class TreeExcelEmptyException(AppException):
             status_code=422,
             detail=detail or [],
         )
+
+
+class FreeAccountLimitException(AppException):
+    def __init__(self, detail: list[str] | None = None):
+        super().__init__(
+            code=ErrorCode.FREE_ACCOUNT_LIMIT,
+            status_code=403,
+            detail=detail or [],
+        )

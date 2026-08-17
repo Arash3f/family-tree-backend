@@ -79,9 +79,9 @@ async def test_create_marriage_permission_denied(client, tree_id, member_headers
 
     assert resp.status_code == 403
     body = resp.json()
-    assert body["error_code"] == 1301
+    assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     assert body["status"] == 403
-    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.PERMISSION_DENIED]
+    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.TREE_MEMBERSHIP_DENIED]
 
 
 @pytest.mark.asyncio
@@ -146,9 +146,9 @@ async def test_get_marriage_permission_denied(client, tree_id, member_headers): 
     )
 
     body = resp.json()
-    assert body["error_code"] == 1301
+    assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     assert body["status"] == 403
-    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.PERMISSION_DENIED]
+    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.TREE_MEMBERSHIP_DENIED]
 
 
 @pytest.mark.asyncio
@@ -227,9 +227,9 @@ async def test_update_marriage_permission_denied(client, tree_id, member_headers
 
     assert resp.status_code == 403
     body = resp.json()
-    assert body["error_code"] == 1301
+    assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     assert body["status"] == 403
-    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.PERMISSION_DENIED]
+    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.TREE_MEMBERSHIP_DENIED]
 
 
 @pytest.mark.asyncio
@@ -331,9 +331,9 @@ async def test_delete_marriage_permission_denied(client, tree_id, member_headers
     )
 
     body = resp.json()
-    assert body["error_code"] == 1301
+    assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     assert body["status"] == 403
-    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.PERMISSION_DENIED]
+    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.TREE_MEMBERSHIP_DENIED]
 
 
 @pytest.mark.asyncio
@@ -419,9 +419,9 @@ async def test_divorce_permission_denied(client, tree_id, member_headers):  # no
     )
 
     body = resp.json()
-    assert body["error_code"] == 1301
+    assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     assert body["status"] == 403
-    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.PERMISSION_DENIED]
+    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.TREE_MEMBERSHIP_DENIED]
 
 
 @pytest.mark.asyncio
@@ -519,9 +519,9 @@ async def test_get_marriage_list_by_filter_permission_denied(
     )
 
     body = resp.json()
-    assert body["error_code"] == 1301
+    assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     assert body["status"] == 403
-    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.PERMISSION_DENIED]
+    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.TREE_MEMBERSHIP_DENIED]
 
 
 @pytest.mark.asyncio

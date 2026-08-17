@@ -12,6 +12,7 @@ from app.presentation.graphql.types.common import (
     PersonSortByEnum,
     SortOrderEnum,
 )
+from app.presentation.utils.date_convert import parse_user_date
 
 
 @strawberry.enum(name="ParentRelationshipType")
@@ -148,9 +149,9 @@ def person_from_mapping(data: dict) -> PersonType:
     birth = data.get("birth_date")
     death = data.get("death_date")
     if isinstance(birth, str):
-        birth = date.fromisoformat(birth[:10])
+        birth = parse_user_date(birth)
     if isinstance(death, str):
-        death = date.fromisoformat(death[:10])
+        death = parse_user_date(death)
 
     parents_raw = data.get("parents") or []
     parents: list[ParentLinkType] = []

@@ -78,6 +78,7 @@ class ErrorCode(int, Enum):
     TREE_EXCEL_INVALID = 1708
     TREE_EXCEL_EMPTY = 1709
     TREE_ACCESS_DENIED = 1710
+    FREE_ACCOUNT_LIMIT = 1711
 
 
 ERROR_MESSAGES = {
@@ -142,6 +143,7 @@ ERROR_MESSAGES = {
         ErrorCode.TREE_EXCEL_INVALID: "Excel file is invalid or does not match the expected template",
         ErrorCode.TREE_EXCEL_EMPTY: "Excel file has no people or marriages to import",
         ErrorCode.TREE_ACCESS_DENIED: "You do not have this access on the family tree",
+        ErrorCode.FREE_ACCOUNT_LIMIT: "You are on a free account",
     },
     "fa": {
         ErrorCode.UN_EXPECTED_ID: "شناسه غیرمنتظره",
@@ -204,5 +206,6 @@ ERROR_MESSAGES = {
         ErrorCode.TREE_EXCEL_INVALID: "فایل اکسل نامعتبر است یا با قالب مورد انتظار هم‌خوانی ندارد",
         ErrorCode.TREE_EXCEL_EMPTY: "فایل اکسل هیچ شخص یا ازدواجی برای ورود ندارد",
         ErrorCode.TREE_ACCESS_DENIED: "این دسترسی را روی شجره‌نامه ندارید",
+        ErrorCode.FREE_ACCOUNT_LIMIT: "شما اکانت رایگان دارید",
     },
 }

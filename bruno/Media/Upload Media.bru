@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: {{base_url}}/media/upload
+  url: {{base_url}}/family-trees/{{tree_id}}/media/upload
   body: multipartForm
   auth: inherit
 }
@@ -43,5 +43,5 @@ docs {
   ```
 
   Pass `object_key` as `photo_object_key` on person create/update.
-  Requires permission `media_upload`.
+  Requires tree access `upload_photo` on `{{tree_id}}`.
 }
