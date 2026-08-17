@@ -151,14 +151,8 @@ class ListTreeMembersUseCase:
     ) -> list[TreeMembershipResponseDTO]:
         async with self.uow:
             await self.access.require_member(tree_id=tree_id, user_id=user_id)
-            members = await self.uow.tree_memberships.list_by_tree(tree_id)
-            responses: list[TreeMembershipResponseDTO] = []
-            for membership in members:
-                user = await self.uow.users.get(membership.user_id)
-                responses.append(
-                    FamilyTreeMapper.membership_to_response(
-                        membership,
-                        username=user.username if user else None,
-                    )
-                )
-            return responses
+            members_with_usernames = await self.uow.tree_memberships.list_by_tree_with_usernames(tree_id)
+            return [
+                FamilyTreeMapper.membership_to_response(membership, username=username)
+                for membership, username in members_with_usernames
+            ]

@@ -111,6 +111,17 @@ class SQLTreeMembershipRepository(TreeMembershipRepository):
         result = await self.session.execute(stmt)
         return [self._to_entity(m) for m in result.scalars().all()]
 
+    async def list_by_tree_with_usernames(self, tree_id: UUID) -> list[tuple[TreeMembership, str | None]]:
+        from app.infrastructure.database.models.user_model import UserModel
+        stmt = (
+            select(TreeMembershipModel, UserModel.username)
+            .outerjoin(UserModel, UserModel.id == TreeMembershipModel.user_id)
+            .where(TreeMembershipModel.tree_id == tree_id)
+            .order_by(TreeMembershipModel.created_at.asc())
+        )
+        result = await self.session.execute(stmt)
+        return [(self._to_entity(m), username) for m, username in result.all()]
+
     async def count_owners(self, tree_id: UUID) -> int:
         stmt = (
             select(func.count())
