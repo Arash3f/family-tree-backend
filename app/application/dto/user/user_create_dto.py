@@ -1,16 +1,16 @@
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.domain.entities.user import User
 from app.domain.shared.account_type import AccountType
 
 
 class UserCreateDTO(BaseModel):
-    username: str
-    fullname: str
-    password: str
-    re_password: str
+    username: str = Field(min_length=3, max_length=255, description="Username must be 3-255 characters")
+    fullname: str = Field(min_length=1, max_length=500, description="Full name must be 1-500 characters")
+    password: str = Field(min_length=8, description="Password must be at least 8 characters")
+    re_password: str = Field(min_length=8)
     role_id: UUID | None
     account_type: AccountType = AccountType.FREE
 

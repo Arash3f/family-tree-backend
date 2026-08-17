@@ -148,8 +148,11 @@ def neo4j_health():
     Returns:
         dict: Health status indicating whether Neo4j is reachable.
     """
-    result = neo4j_client.execute_read("RETURN 1 AS ok", params={})
-    return {"neo4j": result[0]["ok"]}
+    try:
+        neo4j_client.execute_read("RETURN 1 AS ok", params={})
+        return {"status": "ok"}
+    except Exception:
+        return JSONResponse({"status": "error"}, status_code=503)
 
 
 @app.get("/health")
@@ -198,8 +201,8 @@ if cors_origins:
         CORSMiddleware,
         allow_origins=cors_origins,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization"],
     )
 
 # Global application exception handler

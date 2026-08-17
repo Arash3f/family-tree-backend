@@ -11,12 +11,17 @@ from app.infrastructure.database.session import async_session
 from app.infrastructure.repositories.neo4j_family_tree_repository import (
     Neo4jFamilyTreeRepository,
 )
+from app.infrastructure.services.permission_cache_service import (
+    PermissionCacheService,
+)
 from app.infrastructure.services.security.password_hasher_impl import (
     Argon2PasswordHasher,
 )
 from app.infrastructure.services.security.token_service_imp import JWTService
 from app.infrastructure.services.unit_of_work.sqlalchemy_uow import SQLAlchemyUnitOfWork
 from app.infrastructure.storage.minio_object_storage import MinioObjectStorage
+
+_permission_cache = PermissionCacheService(ttl_seconds=3600)
 
 
 def get_uow():
@@ -47,6 +52,10 @@ def get_password_hasher() -> PasswordHasher:
 
 def get_token_service() -> JWTService:
     return JWTService()
+
+
+def get_permission_cache() -> PermissionCacheService:
+    return _permission_cache
 
 
 def get_authorization_service(
