@@ -59,14 +59,19 @@ async def app_exception_handler(request: Request, exc: Exception) -> Response:
     # Retrieve trace_id (set by TraceMiddleware)
     trace_id = getattr(request.state, "trace_id", None)
 
-    # Build the error response
+    from app.core.config import settings
+
+    error_content = {
+        "error_code": app_exc.code,
+        "message": message,
+        "status": app_exc.status_code,
+        "trace_id": trace_id,
+    }
+
+    if settings.is_development_like:
+        error_content["detail"] = app_exc.detail
+
     return JSONResponse(
         status_code=app_exc.status_code,
-        content={
-            "error_code": app_exc.code,
-            "message": message,
-            "status": app_exc.status_code,
-            "trace_id": trace_id,
-            "detail": app_exc.detail,
-        },
+        content=error_content,
     )
