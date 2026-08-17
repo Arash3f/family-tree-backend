@@ -99,8 +99,8 @@ services:
     command: >
       sh -c "celery -A app.celery.celery_app flower --port=5555
       --basic_auth=$${FLOWER_BASIC_AUTH:-admin:admin}"
-    ports:
-      - "${FLOWER_PORT:-5555}:5555"
+    networks:
+      - family-tree
     depends_on:
       redis:
         condition: service_healthy
