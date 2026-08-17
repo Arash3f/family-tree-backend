@@ -151,6 +151,31 @@ class SQLMarriageRepository(MarriageRepository):
         result = await self.session.execute(stmt.limit(1))
         return result.scalar_one_or_none() is not None
 
+    async def get_by_tree_id(self, tree_id: UUID) -> list[Marriage]:
+        stmt = (
+            select(MarriageModel)
+            .where(MarriageModel.tree_id == tree_id)
+            .order_by(MarriageModel.married_at.asc())
+        )
+        result = await self.session.execute(stmt)
+        return [self._to_entity(m) for m in result.scalars().all()]
+
+    async def get_by_person_ids(self, person_ids: list[UUID]) -> list[Marriage]:
+        if not person_ids:
+            return []
+        stmt = (
+            select(MarriageModel)
+            .where(
+                or_(
+                    MarriageModel.spouse_a_id.in_(person_ids),
+                    MarriageModel.spouse_b_id.in_(person_ids),
+                )
+            )
+            .order_by(MarriageModel.married_at.asc())
+        )
+        result = await self.session.execute(stmt)
+        return [self._to_entity(m) for m in result.scalars().all()]
+
     async def count_in_tree(self, tree_id: UUID) -> int:
         stmt = (
             select(func.count())

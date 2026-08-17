@@ -72,21 +72,4 @@ async def load_all_tree_persons(uow: UnitOfWork, tree_id: UUID) -> list[Person]:
 
 
 async def load_all_tree_marriages(uow: UnitOfWork, tree_id: UUID) -> list[Marriage]:
-    items: list[Marriage] = []
-    page = 1
-    while True:
-        result = await uow.marriages.get_list_by_filter(
-            query=FilterMarriageDTO(
-                pagination=PaginationParams(page=page, page_size=_PAGE_SIZE, offset=0),
-                filters=MarriageFilterDataDTO(tree_id=tree_id),
-                sort=SortParams(
-                    sort_order=SortOrderField.ASC,
-                    sort_by=MarriageSortField.ID,
-                ),
-            )
-        )
-        items.extend(result.items)
-        if len(items) >= result.total or not result.items:
-            break
-        page += 1
-    return items
+    return await uow.marriages.get_by_tree_id(tree_id)

@@ -55,6 +55,12 @@ class MarriageRepository(ABC):
     @abstractmethod
     async def update(self, marriage: Marriage) -> Marriage: ...
 
+    @abstractmethod
+    async def get_by_tree_id(self, tree_id: UUID) -> list[Marriage]: ...
+
+    @abstractmethod
+    async def get_by_person_ids(self, person_ids: list[UUID]) -> list[Marriage]: ...
+
     async def get_in_tree_or_raise(self, marriage_id: UUID, tree_id: UUID) -> Marriage:
         from app.domain.exceptions.family_tree_exceptions import (
             MarriageTreeMismatchException,
