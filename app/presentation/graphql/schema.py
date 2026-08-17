@@ -552,9 +552,13 @@ schema = strawberry.Schema(
 )
 
 
+from app.presentation.rest.dependencies.rate_limit import rate_limit_auth
+from fastapi import Depends
+
 graphql_router = GraphQLRouter(
     schema,
     path="/graphql",
     context_getter=get_graphql_context,
     graphql_ide="graphiql" if settings.is_development_like else None,
+    dependencies=[Depends(rate_limit_auth)],
 )
