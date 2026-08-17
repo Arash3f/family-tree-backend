@@ -49,10 +49,12 @@ def test_person_create_accepts_persian_iso_digits():
     from app.domain.entities.person import Gender
     from app.presentation.rest.schemas.dto.person_schema import PersonCreateRequest
 
-    req = PersonCreateRequest(
-        name="Ali",
-        gender=Gender.MALE,
-        birth_date="۱۹۶۵-۰۲-۲۰",
+    req = PersonCreateRequest.model_validate(
+        {
+            "name": "Ali",
+            "gender": Gender.MALE,
+            "birth_date": "۱۹۶۵-۰۲-۲۰",
+        }
     )
     assert req.birth_date == date(1965, 2, 20)
 
@@ -61,9 +63,11 @@ def test_person_create_accepts_jalali_day_31():
     from app.domain.entities.person import Gender
     from app.presentation.rest.schemas.dto.person_schema import PersonCreateRequest
 
-    req = PersonCreateRequest(
-        name="Ali",
-        gender=Gender.MALE,
-        birth_date="۱۴۰۳-۰۶-۳۱",
+    req = PersonCreateRequest.model_validate(
+        {
+            "name": "Ali",
+            "gender": Gender.MALE,
+            "birth_date": "۱۴۰۳-۰۶-۳۱",
+        }
     )
     assert req.birth_date == date(2024, 9, 21)

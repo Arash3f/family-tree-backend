@@ -14,6 +14,7 @@ from app.application.use_cases.user.get_user_list_by_filter_use_case import (
 )
 from app.application.use_cases.user.get_user_use_case import GetUserUseCase
 from app.application.use_cases.user.update_user_use_case import UpdateUserUseCase
+from app.domain.shared.account_type import AccountType
 from app.domain.shared.permissions import Permissions
 from app.presentation.graphql.auth import require_permission
 from app.presentation.graphql.types.common import (
@@ -51,7 +52,9 @@ def _user_create_request(data: UserCreateInput) -> UserCreateRequest:
         re_password=data.re_password,
         role_id=data.role_id,
         account_type=(
-            data.account_type.value if data.account_type is not None else "free"
+            AccountType(data.account_type.value)
+            if data.account_type is not None
+            else AccountType.FREE
         ),
     )
 
