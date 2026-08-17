@@ -21,8 +21,8 @@ class FamilyTreeSyncService:
     def _enqueue(self, dispatch) -> None:
         try:
             dispatch()
-        except Exception:
-            logger.exception("Failed to enqueue Neo4j sync task after commit")
+        except (OSError, RuntimeError) as e:
+            logger.exception("Failed to enqueue Neo4j sync task after commit: %s", e)
 
     def upsert_person(self, person: Person) -> None:
         payload = {

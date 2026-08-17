@@ -55,7 +55,7 @@ async def get_current_user(info: Info) -> User:
         session_id = UUID(str(session_id_raw))
     except InvalidCredentialsException:
         raise
-    except Exception as exc:
+    except (ValueError, KeyError, TypeError) as exc:
         raise InvalidCredentialsException() from exc
 
     async with ctx.uow:

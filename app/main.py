@@ -151,7 +151,7 @@ def neo4j_health():
     try:
         neo4j_client.execute_read("RETURN 1 AS ok", params={})
         return {"status": "ok"}
-    except Exception:
+    except (ConnectionError, TimeoutError, RuntimeError):
         return JSONResponse({"status": "error"}, status_code=503, headers={"Content-Type": "application/json"})
 
 
@@ -172,7 +172,7 @@ async def health():
         async with uow:
             await uow.session.execute(text("SELECT 1"))
         status["postgres"] = "ok"
-    except Exception:
+    except (ConnectionError, TimeoutError, RuntimeError):
         status["postgres"] = "error"
         healthy = False
 
@@ -181,7 +181,7 @@ async def health():
         status["neo4j"] = "ok" if result and result[0].get("ok") == 1 else "error"
         if status["neo4j"] != "ok":
             healthy = False
-    except Exception:
+    except (ConnectionError, TimeoutError, RuntimeError):
         status["neo4j"] = "error"
         healthy = False
 

@@ -242,7 +242,7 @@ def parse_excel_date(value: Any, *, field_name: str, row_number: int) -> date | 
 
     try:
         parsed = parse_user_date(text)
-    except Exception as exc:
+    except (ValueError, KeyError) as exc:
         raise TreeExcelInvalidException(
             detail=[
                 f"Row {row_number}: invalid {field_name} '{text}'. "
@@ -688,7 +688,7 @@ def _require_headers(mapping: dict[str, int], required: list[str], sheet: str) -
 def parse_tree_excel(content: bytes) -> ParsedTreeExcel:
     try:
         wb = load_workbook(BytesIO(content), data_only=True)
-    except Exception as exc:
+    except (OSError, ValueError, KeyError) as exc:
         raise TreeExcelInvalidException(
             detail=["Could not read Excel file. Upload a valid .xlsx workbook."]
         ) from exc

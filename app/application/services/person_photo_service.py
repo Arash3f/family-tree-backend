@@ -110,8 +110,8 @@ class PersonPhotoService:
             return
         try:
             await self.storage.delete(key)
-        except Exception:
-            logger.exception("Best-effort delete failed for key=%s", key)
+        except (OSError, RuntimeError) as e:
+            logger.exception("Best-effort delete failed for key=%s: %s", key, e)
 
     def validate_upload_bytes(self, data: bytes, content_type: str | None) -> str:
         """Validate the declared type, the size, and the actual file signature."""

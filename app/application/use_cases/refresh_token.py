@@ -24,7 +24,7 @@ class RefreshTokenUseCase:
     ) -> LoginResponseDTO:
         try:
             payload = self.token_service.decode_token(refresh_token)
-        except Exception as exc:
+        except (ValueError, KeyError, TypeError) as exc:
             raise InvalidCredentialsException() from exc
 
         if payload.get("type") != "refresh":

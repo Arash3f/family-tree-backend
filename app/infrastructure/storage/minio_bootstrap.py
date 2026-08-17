@@ -23,7 +23,7 @@ async def ensure_minio_buckets(
         try:
             await storage.ensure_buckets(bucket_names)
             return
-        except Exception as exc:
+        except (ConnectionError, TimeoutError, OSError) as exc:
             last_error = exc
             if attempt >= retries:
                 break

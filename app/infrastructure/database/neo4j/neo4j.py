@@ -61,7 +61,7 @@ class Neo4jClient:
         try:
             self.execute_write(CONSTRAINT_PERSON_ID, params={})
             logger.info("Neo4j constraints initialized successfully.")
-        except Exception as e:
+        except (RuntimeError, ConnectionError) as e:
             logger.error(f"Failed to initialize Neo4j constraints: {e}")
 
     def close(self) -> None:

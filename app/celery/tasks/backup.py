@@ -54,7 +54,7 @@ def backup_postgres():
     except subprocess.CalledProcessError as e:
         logger.error(f"Backup failed with exit code {e.returncode}: {e.stderr}")
         raise RuntimeError(f"Backup failed: {e.stderr}")
-    except Exception as e:
+    except (OSError, IOError) as e:
         logger.error(f"Unexpected error during backup: {e}")
         raise
 
@@ -75,13 +75,13 @@ def backup_neo4j():
             pull_uniqueness_constraints=True,
         )
 
-        print(f"Starting backup neo4j to {backup_dir}...")
+        logger.info(f"Starting backup neo4j to {backup_dir}...")
         extractor.extract_data()
-        print(f"Backup neo4j completed successfully! Saved to: {backup_dir}")
+        logger.info(f"Backup neo4j completed successfully! Saved to: {backup_dir}")
 
         return backup_dir
 
-    except Exception as e:
+    except (OSError, RuntimeError) as e:
         logger.error(f"Unexpected error during backup Neo4j: {e}")
         raise
 
