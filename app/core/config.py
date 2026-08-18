@@ -30,6 +30,14 @@ class AppSettings(PydanticBaseSettings):
     POSTGRES_DB: str = "family_tree"
     POSTGRES_PORT: int = 5432
 
+    # Async engine connection pool. Explicit values instead of SQLAlchemy's
+    # defaults so pool exhaustion under load is a deliberate, tunable limit
+    # rather than whatever the library happens to default to.
+    DB_POOL_SIZE: int = 10
+    DB_MAX_OVERFLOW: int = 20
+    DB_POOL_TIMEOUT_SECONDS: int = 30
+    DB_POOL_RECYCLE_SECONDS: int = 1800
+
     # Database Test (must be a separate database — e2e drops/recreates schema):
     POSTGRES_HOST_TEST: str = "127.0.0.1"
     POSTGRES_USER_TEST: str = "postgres"
@@ -122,6 +130,8 @@ class AppSettings(PydanticBaseSettings):
             weak.append("MINIO_ACCESS_KEY/MINIO_SECRET_KEY")
         if self.JWT_SECRET.startswith("local-dev-only"):  # pragma: allowlist secret
             weak.append("JWT_SECRET")
+        if "*" in {origin.strip() for origin in self.CORS_ORIGINS.split(",")}:
+            weak.append("CORS_ORIGINS")
 
         if weak:
             raise ValueError(

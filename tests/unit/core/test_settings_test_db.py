@@ -53,3 +53,32 @@ def test_settings_allow_weak_secrets_in_local():
         **_base_kwargs(ENVIRONMENT="local", ADMIN_PASSWORD="admin"),
     )
     assert settings.ENVIRONMENT == "local"
+
+
+def _strong_secret_kwargs(**overrides: Any) -> dict[str, Any]:
+    return _base_kwargs(
+        ADMIN_PASSWORD="Str0ng-Admin-Pass!",  # pragma: allowlist secret
+        NEO4J_PASSWORD="Str0ng-Neo4j-Pass!",  # pragma: allowlist secret
+        POSTGRES_PASSWORD="Str0ng-Postgres-Pass!",  # pragma: allowlist secret
+        FLOWER_BASIC_AUTH="ops:Str0ng-Flower-Pass!",  # pragma: allowlist secret
+        MINIO_ACCESS_KEY="not-minioadmin",  # pragma: allowlist secret
+        MINIO_SECRET_KEY="not-minioadmin",  # pragma: allowlist secret
+        JWT_SECRET="a-real-production-secret-that-is-long-enough",
+        **overrides,
+    )
+
+
+def test_settings_reject_wildcard_cors_origin_outside_local():
+    with pytest.raises(ValidationError, match="Weak/default secrets"):
+        AppSettings(
+            _env_file=None,  # type: ignore[call-arg]
+            **_strong_secret_kwargs(ENVIRONMENT="production", CORS_ORIGINS="*"),
+        )
+
+
+def test_settings_allow_wildcard_cors_origin_in_local():
+    settings = AppSettings(
+        _env_file=None,  # type: ignore[call-arg]
+        **_base_kwargs(ENVIRONMENT="local", CORS_ORIGINS="*"),
+    )
+    assert settings.CORS_ORIGINS == "*"
