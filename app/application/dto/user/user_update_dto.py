@@ -1,13 +1,13 @@
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.domain.entities.user import User
 from app.domain.shared.account_type import AccountType
 
 
-class UserUpdateField(str, Enum):
+class UserUpdateField(StrEnum):
     USERNAME = "username"
     FULLNAME = "fullname"
     PASSWORD = "password"  # pragma: allowlist secret # nosec B105
@@ -19,8 +19,8 @@ class UserUpdateField(str, Enum):
 class _UserUpdateDataDTO(BaseModel):
     username: str | None = None
     fullname: str | None = None
-    password: str | None = None
-    re_password: str | None = None
+    password: str | None = Field(default=None, min_length=8, max_length=256)
+    re_password: str | None = Field(default=None, min_length=8, max_length=256)
     role_id: UUID | None = None
     account_type: AccountType | None = None
 

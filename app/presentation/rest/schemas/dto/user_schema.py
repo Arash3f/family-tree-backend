@@ -24,8 +24,8 @@ class UserModel(BaseModel):
 class _UserUpdateDateRequest(BaseModel):
     username: str | None = None
     fullname: str | None = None
-    password: str | None = None
-    re_password: str | None = None
+    password: str | None = Field(default=None, min_length=8, max_length=256)
+    re_password: str | None = Field(default=None, min_length=8, max_length=256)
     role_id: UUID | None = None
     account_type: AccountType | None = None
 
@@ -58,8 +58,8 @@ class UserGetResponse(BaseModel):
 class UserCreateRequest(BaseModel):
     username: str
     fullname: str
-    password: str
-    re_password: str
+    password: str = Field(min_length=8, max_length=256)
+    re_password: str = Field(min_length=8, max_length=256)
     role_id: UUID | None = None
     account_type: AccountType = AccountType.FREE
 
