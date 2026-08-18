@@ -23,7 +23,7 @@ class UpdateUserUseCase:
         self,
         uow: UnitOfWork,
         password_hasher: PasswordHasher,
-        current_user: User | None = None,
+        current_user: User,
     ):
         self.uow = uow
         self.password_hasher = password_hasher
@@ -66,16 +66,8 @@ class UpdateUserUseCase:
             return UserUpdateMapper.to_response(user=user)
 
     async def _authorize_role_change(self, target: User, new_role_id: UUID) -> None:
-        """
-        Guard the two ways a role change can escalate privileges.
-
-        Without a caller the guards cannot be evaluated, which only happens in
-        code paths that construct the use case directly rather than serving a
-        request.
-        """
+        """Guard the two ways a role change can escalate privileges."""
         caller = self.current_user
-        if caller is None:
-            return
 
         if target.safe_id == caller.safe_id:
             raise SelfRoleChangeException()
