@@ -1,6 +1,7 @@
+from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.family_tree import FamilyTree, TreeMemberRole, TreeMembership
@@ -43,6 +44,11 @@ class SQLTreeRepository(TreeRepository):
             .where(TreeMembershipModel.user_id == user_id)
             .order_by(FamilyTreeModel.created_at.desc())
         )
+        result = await self.session.execute(stmt)
+        return [self._to_entity(m) for m in result.scalars().all()]
+
+    async def list_all(self) -> list[FamilyTree]:
+        stmt = select(FamilyTreeModel).order_by(FamilyTreeModel.created_at.asc())
         result = await self.session.execute(stmt)
         return [self._to_entity(m) for m in result.scalars().all()]
 
@@ -97,6 +103,7 @@ class SQLTreeMembershipRepository(TreeMembershipRepository):
         stmt = select(TreeMembershipModel).where(
             TreeMembershipModel.tree_id == tree_id,
             TreeMembershipModel.user_id == user_id,
+            TreeMembershipModel.deleted_at.is_(None),
         )
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
@@ -105,18 +112,27 @@ class SQLTreeMembershipRepository(TreeMembershipRepository):
     async def list_by_tree(self, tree_id: UUID) -> list[TreeMembership]:
         stmt = (
             select(TreeMembershipModel)
-            .where(TreeMembershipModel.tree_id == tree_id)
+            .where(
+                TreeMembershipModel.tree_id == tree_id,
+                TreeMembershipModel.deleted_at.is_(None),
+            )
             .order_by(TreeMembershipModel.created_at.asc())
         )
         result = await self.session.execute(stmt)
         return [self._to_entity(m) for m in result.scalars().all()]
 
-    async def list_by_tree_with_usernames(self, tree_id: UUID) -> list[tuple[TreeMembership, str | None]]:
+    async def list_by_tree_with_usernames(
+        self, tree_id: UUID
+    ) -> list[tuple[TreeMembership, str | None]]:
         from app.infrastructure.database.models.user_model import UserModel
+
         stmt = (
             select(TreeMembershipModel, UserModel.username)
             .outerjoin(UserModel, UserModel.id == TreeMembershipModel.user_id)
-            .where(TreeMembershipModel.tree_id == tree_id)
+            .where(
+                TreeMembershipModel.tree_id == tree_id,
+                TreeMembershipModel.deleted_at.is_(None),
+            )
             .order_by(TreeMembershipModel.created_at.asc())
         )
         result = await self.session.execute(stmt)
@@ -129,6 +145,7 @@ class SQLTreeMembershipRepository(TreeMembershipRepository):
             .where(
                 TreeMembershipModel.tree_id == tree_id,
                 TreeMembershipModel.role == TreeMemberRole.OWNER.value,
+                TreeMembershipModel.deleted_at.is_(None),
             )
         )
         result = await self.session.execute(stmt)
@@ -138,6 +155,7 @@ class SQLTreeMembershipRepository(TreeMembershipRepository):
         stmt = select(TreeMembershipModel).where(
             TreeMembershipModel.tree_id == membership.tree_id,
             TreeMembershipModel.user_id == membership.user_id,
+            TreeMembershipModel.deleted_at.is_(None),
         )
         result = await self.session.execute(stmt)
         model = result.scalar_one()
@@ -148,9 +166,14 @@ class SQLTreeMembershipRepository(TreeMembershipRepository):
         return self._to_entity(model)
 
     async def delete(self, tree_id: UUID, user_id: UUID) -> None:
-        stmt = delete(TreeMembershipModel).where(
-            TreeMembershipModel.tree_id == tree_id,
-            TreeMembershipModel.user_id == user_id,
+        stmt = (
+            update(TreeMembershipModel)
+            .where(
+                TreeMembershipModel.tree_id == tree_id,
+                TreeMembershipModel.user_id == user_id,
+                TreeMembershipModel.deleted_at.is_(None),
+            )
+            .values(deleted_at=datetime.now(UTC))
         )
         await self.session.execute(stmt)
 

@@ -1,13 +1,13 @@
-from datetime import date
+from datetime import date, datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import (
     CheckConstraint,
     Date,
+    DateTime,
     ForeignKey,
     Index,
-    UniqueConstraint,
     text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -40,6 +40,10 @@ class MarriageModel(Base):
 
     divorced_at: Mapped[date | None] = mapped_column(Date, nullable=True)
 
+    deleted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
+
     family_tree: Mapped["FamilyTreeModel"] = relationship(
         "FamilyTreeModel",
         foreign_keys=[tree_id],
@@ -54,12 +58,14 @@ class MarriageModel(Base):
     )
 
     __table_args__ = (
-        UniqueConstraint(
+        Index(
+            "uq_marriage_tree_couple_date",
             "tree_id",
             "spouse_a_id",
             "spouse_b_id",
             "married_at",
-            name="uq_marriage_tree_couple_date",
+            unique=True,
+            postgresql_where=text("deleted_at IS NULL"),
         ),
         CheckConstraint(
             "spouse_a_id != spouse_b_id", name="ck_marriage_no_self_marriage"

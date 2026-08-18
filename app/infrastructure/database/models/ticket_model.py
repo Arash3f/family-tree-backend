@@ -1,7 +1,8 @@
+from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import CheckConstraint, ForeignKey, String
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.domain.shared.enums.ticket_category import TicketCategory
@@ -33,6 +34,9 @@ class TicketModel(Base):
         ForeignKey("family_trees.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
+    )
+    deleted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
     )
 
     __table_args__ = (

@@ -40,7 +40,7 @@ class SQLTicketRepository(TicketRepository):
         stmt = (
             select(TicketModel)
             .options(selectinload(TicketModel.family_tree))
-            .where(TicketModel.id == ticket_id)
+            .where(TicketModel.id == ticket_id, TicketModel.deleted_at.is_(None))
         )
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
@@ -51,14 +51,20 @@ class SQLTicketRepository(TicketRepository):
     async def get_list_by_filter(
         self, query: FilterTicketQuery
     ) -> PaginatedResult[Ticket]:
-        stmt = select(TicketModel).options(selectinload(TicketModel.family_tree))
+        stmt = (
+            select(TicketModel)
+            .options(selectinload(TicketModel.family_tree))
+            .where(TicketModel.deleted_at.is_(None))
+        )
         filters = query.filters
 
         if filters:
             if filters.id:
                 stmt = stmt.where(TicketModel.id == filters.id)
             if filters.title:
-                stmt = stmt.where(TicketModel.title.contains(filters.title, autoescape=True))
+                stmt = stmt.where(
+                    TicketModel.title.contains(filters.title, autoescape=True)
+                )
             if filters.status is not None:
                 stmt = stmt.where(TicketModel.status == filters.status.value)
             if filters.category is not None:

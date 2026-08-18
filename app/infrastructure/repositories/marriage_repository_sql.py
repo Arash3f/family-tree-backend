@@ -1,10 +1,10 @@
 from collections.abc import Mapping
-from datetime import date
+from datetime import UTC, date, datetime
 from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import delete, func, or_, select, update
+from sqlalchemy import func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.marriage import Marriage
@@ -23,6 +23,9 @@ from app.infrastructure.database.utils.range_filter import apply_range_filter
 class SQLMarriageRepository(MarriageRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
+
+    def _active_marriage_stmt(self):
+        return select(MarriageModel).where(MarriageModel.deleted_at.is_(None))
 
     async def create(self, marriage: Marriage) -> Marriage:
         model = self._to_model(marriage)
@@ -46,7 +49,7 @@ class SQLMarriageRepository(MarriageRepository):
     async def get_list_by_filter(
         self, query: FilterMarriageDTO
     ) -> PaginatedResult[Marriage]:
-        stmt = select(MarriageModel)
+        stmt = self._active_marriage_stmt()
 
         filters = query.filters
 
@@ -98,7 +101,9 @@ class SQLMarriageRepository(MarriageRepository):
         )
 
     async def get(self, marriage_id: UUID) -> Marriage | None:
-        model = await self.session.get(MarriageModel, marriage_id)
+        stmt = self._active_marriage_stmt().where(MarriageModel.id == marriage_id)
+        result = await self.session.execute(stmt)
+        model = result.scalar_one_or_none()
 
         if not model:
             return None
@@ -107,7 +112,7 @@ class SQLMarriageRepository(MarriageRepository):
 
     async def get_by_ids(self, spouse_a_id: UUID, spouse_b_id: UUID) -> Marriage | None:
         stmt = (
-            select(MarriageModel)
+            self._active_marriage_stmt()
             .where(
                 MarriageModel.spouse_b_id == spouse_b_id,
                 MarriageModel.spouse_a_id == spouse_a_id,
@@ -129,6 +134,7 @@ class SQLMarriageRepository(MarriageRepository):
         exclude_marriage_id: UUID | None = None,
     ) -> bool:
         stmt = select(MarriageModel.id).where(
+            MarriageModel.deleted_at.is_(None),
             MarriageModel.divorced_at.is_(None),
             or_(
                 MarriageModel.spouse_a_id == person_id,
@@ -143,17 +149,18 @@ class SQLMarriageRepository(MarriageRepository):
 
     async def exists_for_person(self, person_id: UUID) -> bool:
         stmt = select(MarriageModel.id).where(
+            MarriageModel.deleted_at.is_(None),
             or_(
                 MarriageModel.spouse_a_id == person_id,
                 MarriageModel.spouse_b_id == person_id,
-            )
+            ),
         )
         result = await self.session.execute(stmt.limit(1))
         return result.scalar_one_or_none() is not None
 
     async def get_by_tree_id(self, tree_id: UUID) -> list[Marriage]:
         stmt = (
-            select(MarriageModel)
+            self._active_marriage_stmt()
             .where(MarriageModel.tree_id == tree_id)
             .order_by(MarriageModel.married_at.asc())
         )
@@ -164,7 +171,7 @@ class SQLMarriageRepository(MarriageRepository):
         if not person_ids:
             return []
         stmt = (
-            select(MarriageModel)
+            self._active_marriage_stmt()
             .where(
                 or_(
                     MarriageModel.spouse_a_id.in_(person_ids),
@@ -180,13 +187,20 @@ class SQLMarriageRepository(MarriageRepository):
         stmt = (
             select(func.count())
             .select_from(MarriageModel)
-            .where(MarriageModel.tree_id == tree_id)
+            .where(
+                MarriageModel.tree_id == tree_id,
+                MarriageModel.deleted_at.is_(None),
+            )
         )
         result = await self.session.execute(stmt)
         return int(result.scalar_one())
 
     async def delete(self, marriage_id: UUID) -> None:
-        stmt = delete(MarriageModel).where(MarriageModel.id == marriage_id)
+        stmt = (
+            update(MarriageModel)
+            .where(MarriageModel.id == marriage_id, MarriageModel.deleted_at.is_(None))
+            .values(deleted_at=datetime.now(UTC))
+        )
 
         await self.session.execute(stmt)
 

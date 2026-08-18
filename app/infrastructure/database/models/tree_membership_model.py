@@ -1,7 +1,8 @@
+from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import CheckConstraint, ForeignKey, String, UniqueConstraint
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, String, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -32,9 +33,18 @@ class TreeMembershipModel(Base):
         default=lambda: ["view"],
         server_default='["view"]',
     )
+    deleted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
 
     __table_args__ = (
-        UniqueConstraint("tree_id", "user_id", name="uq_tree_membership_tree_user"),
+        Index(
+            "uq_tree_membership_tree_user",
+            "tree_id",
+            "user_id",
+            unique=True,
+            postgresql_where=text("deleted_at IS NULL"),
+        ),
         CheckConstraint(
             "role IN ('owner', 'member')",
             name="ck_tree_membership_role",
