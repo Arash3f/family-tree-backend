@@ -406,16 +406,10 @@ async def test_list_tree_members_rejects_a_non_member(mock_uow):
 @pytest.mark.asyncio
 async def test_list_tree_members_returns_the_roster_for_a_member(mock_uow):
     _memberships(mock_uow, present=_membership(MEMBER_ID, TreeMemberRole.MEMBER))
-    mock_uow.tree_memberships.list_by_tree = AsyncMock(
+    mock_uow.tree_memberships.list_by_tree_with_usernames = AsyncMock(
         return_value=[
-            _membership(OWNER_ID, TreeMemberRole.OWNER),
-            _membership(MEMBER_ID, TreeMemberRole.MEMBER),
-        ]
-    )
-    mock_uow.users.get = AsyncMock(
-        side_effect=[
-            User(id=OWNER_ID, username="owner", password_hash="x"),
-            User(id=MEMBER_ID, username="member", password_hash="x"),
+            (_membership(OWNER_ID, TreeMemberRole.OWNER), "owner"),
+            (_membership(MEMBER_ID, TreeMemberRole.MEMBER), "member"),
         ]
     )
 
