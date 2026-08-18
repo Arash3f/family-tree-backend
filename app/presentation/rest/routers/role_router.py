@@ -23,7 +23,7 @@ from app.presentation.rest.schemas.dto.role_schema import (
 )
 from app.presentation.rest.schemas.mappers.common_mappers import CommonApiMapper
 from app.presentation.rest.schemas.mappers.role_mappers import RoleApiMapper
-from app.presentation.rest.utils.dependencies import get_uow
+from app.presentation.rest.utils.dependencies import get_request_uow
 
 router = APIRouter(prefix="/roles", tags=["Roles"])
 
@@ -36,7 +36,7 @@ router = APIRouter(prefix="/roles", tags=["Roles"])
 )
 async def create_role(
     data: RoleCreateRequest,
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> RoleCreateResponse:
     usecase = CreateRoleUseCase(uow)
 
@@ -52,7 +52,7 @@ async def create_role(
 )
 async def delete_role(
     role_id: UUID,
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> ResultResponse:
     usecase = DeleteRoleUseCase(uow)
 
@@ -68,7 +68,7 @@ async def delete_role(
 )
 async def update_role(
     data: RoleUpdateRequest,
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> RoleUpdateResponse:
     usecase = UpdateRoleUseCase(uow)
 
@@ -84,7 +84,7 @@ async def update_role(
 )
 async def get_role(
     role_id: UUID,
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> RoleGetResponse:
     usecase = GetRoleUseCase(uow)
 
@@ -100,7 +100,7 @@ async def get_role(
 )
 async def get_role_list_by_filter(
     data: FilterRoleRequest,
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> PaginatedResponse[RoleModel]:
     usecase = GetRoleListByFilterUseCase(uow)
 

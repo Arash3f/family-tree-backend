@@ -34,8 +34,8 @@ from app.presentation.rest.schemas.dto.ticket_schema import (
 )
 from app.presentation.rest.schemas.mappers.ticket_mappers import TicketApiMapper
 from app.presentation.rest.utils.dependencies import (
-    get_authorization_service,
-    get_uow,
+    get_authorization_service_request,
+    get_request_uow,
 )
 
 router = APIRouter(prefix="/tickets", tags=["Tickets"])
@@ -54,7 +54,7 @@ async def _user_can_manage(user_id: UUID, auth_service: AuthorizationService) ->
 async def create_ticket(
     data: TicketCreateRequest,
     current_user=Depends(get_current_user),
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> TicketCreateResponse:
     usecase = CreateTicketUseCase(uow)
     res = await usecase.execute(
@@ -71,8 +71,8 @@ async def create_ticket(
 async def list_tickets(
     data: FilterTicketRequest,
     current_user=Depends(get_current_user),
-    uow=Depends(get_uow),
-    auth_service: AuthorizationService = Depends(get_authorization_service),
+    uow=Depends(get_request_uow),
+    auth_service: AuthorizationService = Depends(get_authorization_service_request),
 ) -> PaginatedResponse[TicketSummaryModel]:
     can_manage = await _user_can_manage(current_user.safe_id, auth_service)
     usecase = GetTicketListByFilterUseCase(uow)
@@ -90,8 +90,8 @@ async def list_tickets(
 async def get_ticket(
     ticket_id: UUID,
     current_user=Depends(get_current_user),
-    uow=Depends(get_uow),
-    auth_service: AuthorizationService = Depends(get_authorization_service),
+    uow=Depends(get_request_uow),
+    auth_service: AuthorizationService = Depends(get_authorization_service_request),
 ) -> TicketGetResponse:
     can_manage = await _user_can_manage(current_user.safe_id, auth_service)
     usecase = GetTicketUseCase(uow)
@@ -118,8 +118,8 @@ async def add_ticket_message(
     ticket_id: UUID,
     data: TicketMessageCreateRequest,
     current_user=Depends(get_current_user),
-    uow=Depends(get_uow),
-    auth_service: AuthorizationService = Depends(get_authorization_service),
+    uow=Depends(get_request_uow),
+    auth_service: AuthorizationService = Depends(get_authorization_service_request),
 ) -> TicketMessageCreateResponse:
     can_manage = await _user_can_manage(current_user.safe_id, auth_service)
     usecase = AddTicketMessageUseCase(uow)
@@ -139,7 +139,7 @@ async def add_ticket_message(
 async def update_ticket_status(
     ticket_id: UUID,
     data: TicketUpdateStatusRequest,
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> TicketUpdateStatusResponse:
     usecase = UpdateTicketStatusUseCase(uow)
     res = await usecase.execute(TicketApiMapper.to_update_status_dto(ticket_id, data))

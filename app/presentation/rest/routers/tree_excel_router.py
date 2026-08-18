@@ -1,9 +1,9 @@
+import asyncio
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
-from fastapi.exceptions import RequestValidationError
 from fastapi.responses import Response
 from pydantic import BaseModel, ValidationError
-from uuid import UUID
-import asyncio
 
 from app.application.use_cases.family_tree.export_tree_excel_use_case import (
     ExportTreeExcelUseCase,
@@ -27,7 +27,7 @@ from app.presentation.rest.dependencies.tree_guard import (
 )
 from app.presentation.rest.utils.dependencies import (
     get_marriage_rules_service,
-    get_uow,
+    get_request_uow,
 )
 from app.presentation.rest.utils.language import detect_language
 
@@ -116,7 +116,7 @@ def _parse_include(raw: str | None) -> TreeExcelImportInclude | None:
 async def download_excel_sample(
     request: Request,
     tree_id: UUID,
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> Response:
     usecase = GetTreeExcelSampleUseCase(uow)
     result = await usecase.execute(tree_id=tree_id, lang=detect_language(request))
@@ -134,7 +134,7 @@ async def download_excel_sample(
 async def export_excel(
     request: Request,
     tree_id: UUID,
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> Response:
     try:
         usecase = ExportTreeExcelUseCase(uow)
@@ -143,7 +143,7 @@ async def export_excel(
             timeout=300.0,
         )
         return _xlsx_response(filename=result.filename, content=result.content)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         return Response(
             content='{"detail": "Excel export timed out after 5 minutes"}',
             status_code=504,
@@ -162,7 +162,7 @@ async def export_excel(
 async def preview_excel_import(
     tree_id: UUID,
     file: UploadFile = File(...),
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
     marriage_rule_service=Depends(get_marriage_rules_service),
 ) -> TreeExcelPreviewResponse:
     filename = (file.filename or "").lower()
@@ -190,7 +190,7 @@ async def preview_excel_import(
             ],
             errors=result.errors,
         )
-    except asyncio.TimeoutError:
+    except TimeoutError:
         return TreeExcelPreviewResponse(
             valid=False,
             persons=[],
@@ -211,9 +211,9 @@ async def import_excel(
     tree_id: UUID,
     file: UploadFile = File(...),
     include: str | None = Form(default=None),
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
     marriage_rule_service=Depends(get_marriage_rules_service),
-) -> TreeExcelImportResponse:
+) -> TreeExcelImportResponse | Response:
     filename = (file.filename or "").lower()
     if not filename.endswith(".xlsx"):
         raise TreeExcelInvalidException(detail=["Only .xlsx Excel files are supported"])
@@ -238,7 +238,7 @@ async def import_excel(
             persons_created=result.persons_created,
             marriages_created=result.marriages_created,
         )
-    except asyncio.TimeoutError:
+    except TimeoutError:
         return Response(
             content='{"detail": "Excel import timed out after 5 minutes"}',
             status_code=504,

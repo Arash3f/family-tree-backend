@@ -32,7 +32,10 @@ from app.presentation.rest.schemas.dto.user_schema import (
 )
 from app.presentation.rest.schemas.mappers.common_mappers import CommonApiMapper
 from app.presentation.rest.schemas.mappers.user_mappers import UserApiMapper
-from app.presentation.rest.utils.dependencies import get_password_hasher, get_uow
+from app.presentation.rest.utils.dependencies import (
+    get_password_hasher,
+    get_request_uow,
+)
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -44,7 +47,7 @@ router = APIRouter(prefix="/users", tags=["Users"])
 )
 async def create_user(
     data: UserCreateRequest,
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
     hasher: PasswordHasher = Depends(get_password_hasher),
 ) -> UserCreateResponse:
     usecase = CreateUserUseCase(uow, hasher)
@@ -61,7 +64,7 @@ async def create_user(
 )
 async def delete_user(
     user_id: UUID,
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> ResultResponse:
     usecase = DeleteUserUseCase(uow)
 
@@ -77,7 +80,7 @@ async def delete_user(
 async def update_user(
     data: UserUpdateRequest,
     current_user: User = Depends(RequirePermission(Permissions.USER_UPDATE)),
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
     hasher: PasswordHasher = Depends(get_password_hasher),
 ) -> UserUpdateResponse:
     usecase = UpdateUserUseCase(uow, hasher, current_user=current_user)
@@ -94,7 +97,7 @@ async def update_user(
 )
 async def get_user(
     user_id: UUID,
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> UserGetResponse:
     usecase = GetUserUseCase(uow)
 
@@ -110,7 +113,7 @@ async def get_user(
 )
 async def get_user_list_by_filter(
     data: FilterUserRequest,
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> PaginatedResponse[UserModel]:
     usecase = GetUserListByFilterUseCase(uow)
 
@@ -127,7 +130,7 @@ async def get_user_list_by_filter(
 async def list_user_sessions(
     user_id: UUID,
     current_session_id: UUID = Depends(get_current_session_id),
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> list[SessionResponse]:
     usecase = ListUserSessionsUseCase(uow)
     items = await usecase.execute(user_id, current_session_id=current_session_id)
@@ -152,7 +155,7 @@ async def list_user_sessions(
 async def revoke_user_session(
     user_id: UUID,
     session_id: UUID,
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> ResultResponse:
     usecase = RevokeUserSessionUseCase(uow)
     result = await usecase.execute(user_id=user_id, session_id=session_id)
@@ -166,7 +169,7 @@ async def revoke_user_session(
 )
 async def revoke_all_user_sessions(
     user_id: UUID,
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> ResultResponse:
     usecase = RevokeAllUserSessionsUseCase(uow)
     result = await usecase.execute(user_id)

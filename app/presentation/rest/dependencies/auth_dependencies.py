@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import Depends
@@ -8,14 +8,14 @@ from app.application.interfaces.token_service import TokenService
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.exceptions.auth_exceptions import InvalidCredentialsException
 from app.domain.exceptions.user_exceptions import UserNotFoundException
-from app.presentation.rest.utils.dependencies import get_token_service, get_uow
+from app.presentation.rest.utils.dependencies import get_request_uow, get_token_service
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
-    uow: UnitOfWork = Depends(get_uow),
+    uow: UnitOfWork = Depends(get_request_uow),
     token_service: TokenService = Depends(get_token_service),
 ):
     try:
@@ -38,23 +38,22 @@ async def get_current_user(
     except (ValueError, KeyError, TypeError) as exc:
         raise InvalidCredentialsException() from exc
 
-    async with uow:
-        session = await uow.sessions.get(session_id)
-        if (
-            session is None
-            or session.user_id != user_id
-            or not session.is_active(datetime.now(timezone.utc))
-        ):
-            raise InvalidCredentialsException()
+    session = await uow.sessions.get(session_id)
+    if (
+        session is None
+        or session.user_id != user_id
+        or not session.is_active(datetime.now(UTC))
+    ):
+        raise InvalidCredentialsException()
 
-        user = await uow.users.get(user_id)
+    user = await uow.users.get(user_id)
 
-        if not user:
-            raise UserNotFoundException()
+    if not user:
+        raise UserNotFoundException()
 
-        # Attach session id for logout handlers
-        user._active_session_id = session_id  # type: ignore[attr-defined]
-        return user
+    # Attach session id for logout handlers
+    user._active_session_id = session_id  # type: ignore[attr-defined]
+    return user
 
 
 def get_current_session_id(current_user=Depends(get_current_user)) -> UUID:

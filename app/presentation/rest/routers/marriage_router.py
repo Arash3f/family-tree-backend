@@ -17,7 +17,6 @@ from app.application.use_cases.marriage.update_marriage_use_case import (
     UpdateMarriageUseCase,
 )
 from app.domain.entities.family_tree import TreeMembership
-from app.presentation.tree_data_access import redact_marriage_data
 from app.presentation.rest.dependencies.tree_guard import (
     require_tree_marriage_create,
     require_tree_marriage_delete,
@@ -42,7 +41,11 @@ from app.presentation.rest.schemas.dto.marriage_schema import (
 )
 from app.presentation.rest.schemas.mappers.common_mappers import CommonApiMapper
 from app.presentation.rest.schemas.mappers.marriage_mappers import MarriageApiMapper
-from app.presentation.rest.utils.dependencies import get_marriage_rules_service, get_uow
+from app.presentation.rest.utils.dependencies import (
+    get_marriage_rules_service,
+    get_request_uow,
+)
+from app.presentation.tree_data_access import redact_marriage_data
 
 router = APIRouter(prefix="/marriages", tags=["Marriages"])
 
@@ -55,7 +58,7 @@ async def create_marriage(
     tree_id: UUID,
     data: MarriageCreateRequest,
     membership: TreeMembership = Depends(require_tree_marriage_create),
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
     marriage_rule_service=Depends(get_marriage_rules_service),
 ) -> MarriageCreateResponse:
     usecase = CreateMarriageUseCase(uow, marriage_rule_service)
@@ -76,7 +79,7 @@ async def create_marriage(
 async def delete_marriage(
     tree_id: UUID,
     data: IdRequest,
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> ResultResponse:
     usecase = DeleteMarriageUseCase(uow)
     res = await usecase.execute(CommonApiMapper.to_id_dto(id=data.id), tree_id=tree_id)
@@ -91,7 +94,7 @@ async def update_marriage(
     tree_id: UUID,
     data: MarriageUpdateRequest,
     membership: TreeMembership = Depends(require_tree_marriage_update),
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
     marriage_rule_service=Depends(get_marriage_rules_service),
 ) -> MarriageUpdateResponse:
     usecase = UpdateMarriageUseCase(uow, marriage_rule_service)
@@ -112,7 +115,7 @@ async def get_marriage_list_by_filter(
     tree_id: UUID,
     data: FilterMarriageRequest,
     membership: TreeMembership = Depends(require_tree_view),
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> PaginatedResponse[MarriageModel]:
     usecase = GetMarriageListByFilterUseCase(uow)
     res = await usecase.execute(
@@ -139,7 +142,7 @@ async def get_marriage_list_by_filter(
 async def divorce(
     tree_id: UUID,
     data: DivorceRequest,
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> ResultResponse:
     usecase = DivorceUseCase(uow)
     res = await usecase.execute(
@@ -156,7 +159,7 @@ async def get_marriage(
     tree_id: UUID,
     marriage_id: UUID,
     membership: TreeMembership = Depends(require_tree_view),
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> MarriageGetResponse:
     usecase = GetMarriageUseCase(uow)
     res = await usecase.execute(

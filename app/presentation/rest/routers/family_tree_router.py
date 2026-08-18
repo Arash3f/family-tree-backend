@@ -39,10 +39,10 @@ from app.presentation.rest.schemas.dto.family_tree_schema import (
     FamilyTreeResponse,
     FamilyTreeUpdateRequest,
     TreeMemberAddRequest,
-    TreeMemberUpdateRequest,
     TreeMembershipResponse,
+    TreeMemberUpdateRequest,
 )
-from app.presentation.rest.utils.dependencies import get_uow
+from app.presentation.rest.utils.dependencies import get_request_uow
 
 router = APIRouter(prefix="/family-trees", tags=["Family Trees"])
 
@@ -56,7 +56,7 @@ router = APIRouter(prefix="/family-trees", tags=["Family Trees"])
 async def create_family_tree(
     data: FamilyTreeCreateRequest,
     current_user: User = Depends(get_current_user),
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> FamilyTreeResponse:
     usecase = CreateFamilyTreeUseCase(uow)
     res = await usecase.execute(
@@ -73,7 +73,7 @@ async def create_family_tree(
 )
 async def list_family_trees(
     current_user: User = Depends(get_current_user),
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> list[FamilyTreeResponse]:
     usecase = ListFamilyTreesUseCase(uow)
     res = await usecase.execute(user_id=current_user.safe_id)
@@ -88,7 +88,7 @@ async def list_family_trees(
 async def get_family_tree(
     tree_id: UUID,
     current_user: User = Depends(get_current_user),
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> FamilyTreeResponse:
     usecase = GetFamilyTreeUseCase(uow)
     res = await usecase.execute(tree_id=tree_id, user_id=current_user.safe_id)
@@ -104,7 +104,7 @@ async def update_family_tree(
     tree_id: UUID,
     data: FamilyTreeUpdateRequest,
     current_user: User = Depends(get_current_user),
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> FamilyTreeResponse:
     usecase = UpdateFamilyTreeUseCase(uow)
     res = await usecase.execute(
@@ -123,7 +123,7 @@ async def update_family_tree(
 async def delete_family_tree(
     tree_id: UUID,
     current_user: User = Depends(get_current_user),
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> ResultResponse:
     usecase = DeleteFamilyTreeUseCase(uow)
     await usecase.execute(tree_id=tree_id, user_id=current_user.safe_id)
@@ -138,7 +138,7 @@ async def delete_family_tree(
 async def list_tree_members(
     tree_id: UUID,
     current_user: User = Depends(get_current_user),
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> list[TreeMembershipResponse]:
     usecase = ListTreeMembersUseCase(uow)
     res = await usecase.execute(tree_id=tree_id, user_id=current_user.safe_id)
@@ -155,7 +155,7 @@ async def add_tree_member(
     tree_id: UUID,
     data: TreeMemberAddRequest,
     current_user: User = Depends(get_current_user),
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> TreeMembershipResponse:
     usecase = AddTreeMemberUseCase(uow)
     res = await usecase.execute(
@@ -179,7 +179,7 @@ async def update_tree_member(
     user_id: UUID,
     data: TreeMemberUpdateRequest,
     current_user: User = Depends(get_current_user),
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> TreeMembershipResponse:
     usecase = UpdateTreeMemberUseCase(uow)
     res = await usecase.execute(
@@ -200,7 +200,7 @@ async def remove_tree_member(
     tree_id: UUID,
     user_id: UUID,
     current_user: User = Depends(get_current_user),
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> ResultResponse:
     usecase = RemoveTreeMemberUseCase(uow)
     await usecase.execute(

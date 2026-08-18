@@ -34,8 +34,8 @@ from app.presentation.rest.schemas.mappers.auth_mappers import AuthApiMapper
 from app.presentation.rest.schemas.mappers.common_mappers import CommonApiMapper
 from app.presentation.rest.utils.dependencies import (
     get_password_hasher,
+    get_request_uow,
     get_token_service,
-    get_uow,
 )
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -59,7 +59,7 @@ def _client_meta(request: Request) -> tuple[str | None, str | None]:
 async def login(
     request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
     token_service=Depends(get_token_service),
     password_hasher=Depends(get_password_hasher),
 ) -> LoginResponse:
@@ -83,7 +83,7 @@ async def login(
 async def refresh(
     request: Request,
     data: RefreshTokenRequest,
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
     token_service=Depends(get_token_service),
 ) -> LoginResponse:
     user_agent, ip_address = _client_meta(request)
@@ -98,7 +98,7 @@ async def refresh(
 async def logout(
     current_user: User = Depends(get_current_user),
     session_id=Depends(get_current_session_id),
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> ResultResponse:
     usecase = LogoutUseCase(uow)
     result = await usecase.execute(session_id=session_id, user_id=current_user.safe_id)
@@ -108,7 +108,7 @@ async def logout(
 @router.post("/logout-all", response_model=ResultResponse)
 async def logout_all(
     current_user: User = Depends(get_current_user),
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> ResultResponse:
     usecase = LogoutAllUseCase(uow)
     result = await usecase.execute(user_id=current_user.safe_id)
@@ -119,7 +119,7 @@ async def logout_all(
 async def me(
     current_user: User = Depends(get_current_user),
     session_id: UUID = Depends(get_current_session_id),
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> MeResponse:
     usecase = GetMeUseCase(uow)
     data = await usecase.execute(current_user.safe_id, session_id)
@@ -130,7 +130,7 @@ async def me(
 async def list_my_sessions(
     current_user: User = Depends(get_current_user),
     session_id: UUID = Depends(get_current_session_id),
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> list[SessionResponse]:
     usecase = ListUserSessionsUseCase(uow)
     items = await usecase.execute(current_user.safe_id, current_session_id=session_id)
@@ -151,7 +151,7 @@ async def list_my_sessions(
 async def revoke_my_session(
     session_id: UUID,
     current_user: User = Depends(get_current_user),
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
 ) -> ResultResponse:
     usecase = RevokeUserSessionUseCase(uow)
     result = await usecase.execute(user_id=current_user.safe_id, session_id=session_id)
@@ -162,7 +162,7 @@ async def revoke_my_session(
 async def change_own_password(
     data: ChangePasswordRequest,
     current_user: User = Depends(get_current_user),
-    uow=Depends(get_uow),
+    uow=Depends(get_request_uow),
     password_hasher=Depends(get_password_hasher),
 ) -> ResultResponse:
     usecase = ChangeOwnPasswordUseCase(uow, password_hasher)

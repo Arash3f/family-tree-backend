@@ -24,24 +24,42 @@ from app.infrastructure.repositories.user_session_repository_sql import (
 class SQLAlchemyUnitOfWork(UnitOfWork):
     def __init__(self, session_factory):
         self.session_factory = session_factory
+        self._enter_depth = 0
 
     async def __aenter__(self) -> "SQLAlchemyUnitOfWork":
-        self.session = self.session_factory()
+        # Reentrant guard: a single request can legitimately enter the same
+        # UnitOfWork instance more than once (e.g. a request-scoped FastAPI
+        # dependency opens the session, and a use case further down the call
+        # chain does its own `async with self.uow:`). Only the outermost
+        # `async with` actually opens/closes the session; nested entries
+        # reuse it so callers keep working with one shared transaction
+        # instead of silently getting a fresh session each time.
+        if self._enter_depth == 0:
+            self.session = self.session_factory()
 
-        self.persons = SQLPersonRepository(self.session)
-        self.marriages = SQLMarriageRepository(self.session)
-        self.users = SQLUserRepository(self.session)
-        self.permissions = SQLPermissionRepository(self.session)
-        self.roles = SQLRoleRepository(self.session)
-        self.sessions = SQLUserSessionRepository(self.session)
-        self.tickets = SQLTicketRepository(self.session)
-        self.ticket_messages = SQLTicketMessageRepository(self.session)
-        self.family_trees = SQLTreeRepository(self.session)
-        self.tree_memberships = SQLTreeMembershipRepository(self.session)
+            self.persons = SQLPersonRepository(self.session)
+            self.marriages = SQLMarriageRepository(self.session)
+            self.users = SQLUserRepository(self.session)
+            self.permissions = SQLPermissionRepository(self.session)
+            self.roles = SQLRoleRepository(self.session)
+            self.sessions = SQLUserSessionRepository(self.session)
+            self.tickets = SQLTicketRepository(self.session)
+            self.ticket_messages = SQLTicketMessageRepository(self.session)
+            self.family_trees = SQLTreeRepository(self.session)
+            self.tree_memberships = SQLTreeMembershipRepository(self.session)
 
+        self._enter_depth += 1
         return self
 
     async def __aexit__(self, exc_type, exc, tb):
+        self._enter_depth -= 1
+
+        if self._enter_depth > 0:
+            # Still inside an outer `async with self.uow:` block -- let that
+            # outer block own rollback/close so it can keep using the
+            # session after this nested block exits.
+            return
+
         if exc_type:
             await self.session.rollback()
 

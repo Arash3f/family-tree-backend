@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import Request
@@ -63,7 +63,7 @@ async def get_current_user(info: Info) -> User:
         if (
             session is None
             or session.user_id != user_id
-            or not session.is_active(datetime.now(timezone.utc))
+            or not session.is_active(datetime.now(UTC))
         ):
             raise InvalidCredentialsException()
 

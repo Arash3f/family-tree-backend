@@ -28,6 +28,21 @@ def get_uow():
     return SQLAlchemyUnitOfWork(async_session)
 
 
+async def get_request_uow(uow: UnitOfWork = Depends(get_uow)):
+    """Open the unit of work's session once per request and share it.
+
+    FastAPI caches `Depends(get_uow)` results per request, so every consumer
+    of this dependency receives the same `UnitOfWork` instance. By entering
+    its `async with` block here -- exactly once, at the top of the dependency
+    graph -- and yielding the already-entered instance, `get_current_user`,
+    `require_tree_member`/`RequireTreeAccess`, and the route handler's use
+    case all share one live `AsyncSession`/transaction for the lifetime of
+    the request instead of each opening and closing their own.
+    """
+    async with uow:
+        yield uow
+
+
 def get_neo() -> FamilyTreeRepository:
     return Neo4jFamilyTreeRepository()
 
@@ -60,5 +75,18 @@ def get_permission_cache() -> PermissionCacheService:
 
 def get_authorization_service(
     uow: UnitOfWork = Depends(get_uow),
+) -> AuthorizationService:
+    """Build an AuthorizationService bound to a fresh, unentered UnitOfWork.
+
+    Used by the GraphQL context (`get_graphql_context`), which manages its
+    own session lifecycle via the use case's `async with self.uow:` block.
+    REST call sites should use `get_authorization_service_request` instead so
+    the permission check shares the single request-scoped session.
+    """
+    return AuthorizationService(uow)
+
+
+def get_authorization_service_request(
+    uow: UnitOfWork = Depends(get_request_uow),
 ) -> AuthorizationService:
     return AuthorizationService(uow)

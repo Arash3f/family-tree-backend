@@ -4,7 +4,7 @@ from app.application.services.authorization_service import AuthorizationService
 from app.domain.entities.user import User
 from app.domain.exceptions.permission_exceptions import PermissionDeniedException
 from app.presentation.rest.dependencies.auth_dependencies import get_current_user
-from app.presentation.rest.utils.dependencies import get_authorization_service
+from app.presentation.rest.utils.dependencies import get_authorization_service_request
 
 
 class RequirePermission:
@@ -14,7 +14,7 @@ class RequirePermission:
     async def __call__(
         self,
         current_user: User = Depends(get_current_user),
-        auth_service: AuthorizationService = Depends(get_authorization_service),
+        auth_service: AuthorizationService = Depends(get_authorization_service_request),
     ) -> User:
         has_permission = await auth_service.user_has_permission(
             current_user.safe_id,
@@ -34,7 +34,7 @@ class RequireAnyPermission:
     async def __call__(
         self,
         current_user: User = Depends(get_current_user),
-        auth_service: AuthorizationService = Depends(get_authorization_service),
+        auth_service: AuthorizationService = Depends(get_authorization_service_request),
     ) -> User:
         has_permission = await auth_service.user_has_any_permission(
             current_user.safe_id,
@@ -52,7 +52,7 @@ class RequireAllPermissions:
     async def __call__(
         self,
         current_user: User = Depends(get_current_user),
-        auth_service: AuthorizationService = Depends(get_authorization_service),
+        auth_service: AuthorizationService = Depends(get_authorization_service_request),
     ) -> User:
         for permission in self.permissions:
             has_permission = await auth_service.user_has_permission(
