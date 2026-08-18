@@ -12,10 +12,10 @@ from swagger_ui_bundle import swagger_ui_path
 from app.core.config import settings
 from app.infrastructure.database.neo4j.neo4j import neo4j_client
 from app.infrastructure.database.seed import seed_initial_permissions, seed_initial_user
-from app.infrastructure.storage.minio_bootstrap import ensure_minio_buckets
 from app.infrastructure.services.security.password_hasher_impl import (
     Argon2PasswordHasher,
 )
+from app.infrastructure.storage.minio_bootstrap import ensure_minio_buckets
 from app.infrastructure.utils.logging import configure_logging
 from app.presentation.graphql.schema import graphql_router
 from app.presentation.rest.errors.handlers import app_exception_handler
@@ -25,7 +25,6 @@ from app.presentation.rest.routers.family_tree_router import (
 )
 from app.presentation.rest.routers.marriage_router import router as marriage_router
 from app.presentation.rest.routers.media_router import (
-    router as media_router,
     upload_router as media_upload_router,
 )
 from app.presentation.rest.routers.permission_router import router as permission_router
@@ -35,6 +34,7 @@ from app.presentation.rest.routers.ticket_router import router as ticket_router
 from app.presentation.rest.routers.tree_excel_router import router as tree_excel_router
 from app.presentation.rest.routers.user_router import router as user_router
 from app.presentation.rest.utils.dependencies import get_uow
+from app.presentation.rest.utils.security_headers import SecurityHeadersMiddleware
 from app.presentation.rest.utils.trace_id import TraceIDMiddleware
 from app.utils.app_exception import AppException
 
@@ -69,7 +69,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    neo4j_client.close()
+    await neo4j_client.close()
 
 
 app = FastAPI(
@@ -81,7 +81,8 @@ app = FastAPI(
     openapi_version="3.0.3",
     openapi_url="/openapi.json",
     # Avoid 307 /tickets → /tickets/ with an absolute upstream Location
-    # (Next.js /backend proxy strips trailing slashes; browsers then drop Authorization).
+    # (Next.js /backend proxy strips trailing slashes; browsers then drop
+    # Authorization).
     redirect_slashes=False,
 )
 
@@ -138,7 +139,7 @@ async def custom_swagger_ui():
 
 
 @app.get("/health/neo4j")
-def neo4j_health():
+async def neo4j_health():
     """
     Health check endpoint for Neo4j database.
 
@@ -149,10 +150,14 @@ def neo4j_health():
         dict: Health status indicating whether Neo4j is reachable.
     """
     try:
-        neo4j_client.execute_read("RETURN 1 AS ok", params={})
+        await neo4j_client.execute_read("RETURN 1 AS ok", params={})
         return {"status": "ok"}
     except (ConnectionError, TimeoutError, RuntimeError):
-        return JSONResponse({"status": "error"}, status_code=503, headers={"Content-Type": "application/json"})
+        return JSONResponse(
+            {"status": "error"},
+            status_code=503,
+            headers={"Content-Type": "application/json"},
+        )
 
 
 @app.get("/health")
@@ -177,7 +182,7 @@ async def health():
         healthy = False
 
     try:
-        result = neo4j_client.execute_read("RETURN 1 AS ok", params={})
+        result = await neo4j_client.execute_read("RETURN 1 AS ok", params={})
         status["neo4j"] = "ok" if result and result[0].get("ok") == 1 else "error"
         if status["neo4j"] != "ok":
             healthy = False
@@ -194,6 +199,7 @@ async def health():
 
 # Middleware for request tracing
 app.add_middleware(TraceIDMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
 
 cors_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
 if cors_origins:
@@ -212,7 +218,6 @@ app.add_exception_handler(AppException, app_exception_handler)
 app.include_router(family_tree_router)
 app.include_router(person_router, prefix="/family-trees/{tree_id}")
 app.include_router(media_upload_router, prefix="/family-trees/{tree_id}")
-app.include_router(media_router)
 app.include_router(marriage_router, prefix="/family-trees/{tree_id}")
 app.include_router(tree_excel_router, prefix="/family-trees/{tree_id}")
 app.include_router(user_router)
