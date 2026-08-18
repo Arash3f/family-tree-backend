@@ -1,5 +1,5 @@
-from uuid import UUID
 from unittest.mock import Mock
+from uuid import UUID
 
 import pytest
 

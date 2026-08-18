@@ -49,6 +49,14 @@ exclude = [
     "**/models/__init__.py",
 ]
 
+[tool.ruff.lint]
+# Beyond pyflakes/pycodestyle defaults: import order, modern-syntax upgrades,
+# obvious simplifications, and comprehension cleanups. Deliberately excludes
+# flake8-bugbear (B008 false-positives on FastAPI's `Depends(...)` default
+# args) and RUF001 (flags this codebase's intentional Persian/Farsi strings
+# as "ambiguous" Unicode).
+select = ["E", "F", "I", "UP", "SIM", "C4"]
+
 [tool.mypy]
 plugins = ["strawberry.ext.mypy_plugin"]
 python_version = "3.11"

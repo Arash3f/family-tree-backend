@@ -1,9 +1,11 @@
-from uuid import UUID
 from datetime import date
-import pytest
 from unittest.mock import AsyncMock, MagicMock
-from app.application.use_cases.marriage.divorce_use_case import DivorceUseCase
+from uuid import UUID
+
+import pytest
+
 from app.application.dto.marriage.divorce_dto import DivorceDTO
+from app.application.use_cases.marriage.divorce_use_case import DivorceUseCase
 from app.domain.exceptions.marriage_exceptions import (
     MarriageAlreadyDivorcedException,
     MarriageNotFoundException,

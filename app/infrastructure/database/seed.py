@@ -4,10 +4,10 @@ from app.domain.entities.permission import Permission
 from app.domain.entities.role import Role
 from app.domain.entities.user import User
 from app.domain.shared.account_type import AccountType
+from app.domain.shared.permissions import Permissions
 from app.infrastructure.services.security.password_hasher_impl import (
     Argon2PasswordHasher,
 )
-from app.domain.shared.permissions import Permissions
 
 
 async def seed_initial_user(uow: UnitOfWork, password_hasher: Argon2PasswordHasher):

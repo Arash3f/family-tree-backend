@@ -1,6 +1,5 @@
-from typing import Any
-
 from collections.abc import Mapping
+from typing import Any
 
 from app.domain.entities.family_tree import TreeMembership
 from app.domain.shared.tree_access import TreeAccessPermissions

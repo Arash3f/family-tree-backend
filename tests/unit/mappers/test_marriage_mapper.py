@@ -1,11 +1,10 @@
-from uuid import UUID
 from datetime import date
+from uuid import UUID
 
 from app.application.dto.marriage.marriage_create_dto import MarriageCreateMapper
 from app.application.dto.marriage.marriage_get_dto import MarriageGetMapper
 from app.application.dto.marriage.marriage_update_dto import MarriageUpdateDTOMapper
 from app.domain.entities.marriage import Marriage
-
 
 TEST_TREE_ID = UUID(int=1)
 
@@ -17,7 +16,7 @@ def create_marriage(**overrides):
         spouse_a_id=overrides.get("spouse_a_id", UUID(int=10)),
         spouse_b_id=overrides.get("spouse_b_id", UUID(int=20)),
         married_at=overrides.get("married_at", date(2020, 1, 1)),
-        divorced_at=overrides.get("divorced_at", None),
+        divorced_at=overrides.get("divorced_at"),
     )
 
 

@@ -1,6 +1,6 @@
-from datetime import datetime, timedelta, timezone
-from uuid import UUID
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
+from uuid import UUID
 
 import pytest
 
@@ -18,7 +18,7 @@ async def test_refresh_rotates_session(mock_uow):
         id=session_id,
         user_id=user_id,
         refresh_token_hash="old_hash",
-        expires_at=datetime.now(timezone.utc) + timedelta(days=1),
+        expires_at=datetime.now(UTC) + timedelta(days=1),
     )
 
     user = MagicMock()
@@ -58,8 +58,8 @@ async def test_refresh_reuse_revokes_all(mock_uow):
         id=session_id,
         user_id=user_id,
         refresh_token_hash="old_hash",
-        expires_at=datetime.now(timezone.utc) + timedelta(days=1),
-        revoked_at=datetime.now(timezone.utc),
+        expires_at=datetime.now(UTC) + timedelta(days=1),
+        revoked_at=datetime.now(UTC),
     )
 
     mock_uow.sessions.get_for_update = AsyncMock(return_value=session)

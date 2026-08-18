@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class AccountType(str, Enum):
+class AccountType(StrEnum):
     FREE = "free"
     PAID = "paid"
 

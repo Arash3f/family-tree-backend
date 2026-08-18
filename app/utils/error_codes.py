@@ -97,20 +97,34 @@ ERROR_MESSAGES = {
         ErrorCode.PERSON_NOT_FOUND: "Person not found",
         ErrorCode.SAME_PARENT: "Person cannot have the same parent more than once",
         ErrorCode.INVALID_GENDER: "Person's gender is invalid",
-        ErrorCode.PERSON_HAS_MARRIAGES: "Person cannot be deleted while linked to marriages",
+        ErrorCode.PERSON_HAS_MARRIAGES: (
+            "Person cannot be deleted while linked to marriages"
+        ),
         ErrorCode.INVALID_MEDIA_CONTENT_TYPE: "Unsupported media content type",
         ErrorCode.MEDIA_TOO_LARGE: "Uploaded media exceeds size limit",
         ErrorCode.INVALID_MEDIA_OBJECT_KEY: "Invalid media object key",
         ErrorCode.MEDIA_OBJECT_NOT_FOUND: "Media object not found",
-        ErrorCode.TOO_MANY_BIOLOGICAL_PARENTS: "Child cannot have more than two biological parents",
-        ErrorCode.INVALID_PARENT_MARRIAGE: "Biological parents must match the origin marriage spouses",
-        ErrorCode.PERSON_HAS_CHILDREN: "Person cannot be deleted while linked to children",
+        ErrorCode.TOO_MANY_BIOLOGICAL_PARENTS: (
+            "Child cannot have more than two biological parents"
+        ),
+        ErrorCode.INVALID_PARENT_MARRIAGE: (
+            "Biological parents must match the origin marriage spouses"
+        ),
+        ErrorCode.PERSON_HAS_CHILDREN: (
+            "Person cannot be deleted while linked to children"
+        ),
         # Domain Marriage
         ErrorCode.SELF_MARRIAGE: "A person cannot marry themselves",
-        ErrorCode.DIVORCED_BEFORE_MARRIAGE: "A divorced person cannot be married again without proper validation",
-        ErrorCode.MARRIAGE_AFTER_DIVORCE: "Marriage cannot be registered for a divorced person",
+        ErrorCode.DIVORCED_BEFORE_MARRIAGE: (
+            "A divorced person cannot be married again without proper validation"
+        ),
+        ErrorCode.MARRIAGE_AFTER_DIVORCE: (
+            "Marriage cannot be registered for a divorced person"
+        ),
         ErrorCode.UNDERAGE_MARRIAGE: "Marriage is not allowed for underage persons",
-        ErrorCode.INVALID_MARRIAGE_GENDER: "Marriage is only allowed between a male and a female",
+        ErrorCode.INVALID_MARRIAGE_GENDER: (
+            "Marriage is only allowed between a male and a female"
+        ),
         ErrorCode.MARRIAGE_NOT_FOUND: "Marriage not found",
         ErrorCode.ACTIVE_MARRIAGE_EXISTS: "Person already has an active marriage",
         ErrorCode.MARRIAGE_ALREADY_DIVORCED: "Marriage is already divorced",
@@ -120,9 +134,13 @@ ERROR_MESSAGES = {
         # Domain User
         ErrorCode.USER_NOT_FOUND: "User not found",
         ErrorCode.USER_PASSWORD_INCORECT: "User password incorrect",
-        ErrorCode.PASSWORD_CONFIRMATION_MISMATCH: "Password and its confirmation do not match",
+        ErrorCode.PASSWORD_CONFIRMATION_MISMATCH: (
+            "Password and its confirmation do not match"
+        ),
         ErrorCode.SELF_ROLE_CHANGE: "You cannot change your own role",
-        ErrorCode.PRIVILEGED_USER_MODIFICATION: "Only an administrator can grant or modify the administrator role",
+        ErrorCode.PRIVILEGED_USER_MODIFICATION: (
+            "Only an administrator can grant or modify the administrator role"
+        ),
         # Domain Role
         ErrorCode.ROLE_NOT_FOUND: "Role not found",
         ErrorCode.ROLE_NAME_DUPLICATED: "Role name duplicated",
@@ -137,10 +155,16 @@ ERROR_MESSAGES = {
         ErrorCode.TREE_OWNER_REQUIRED: "Only the tree owner can perform this action",
         ErrorCode.TREE_MEMBER_ALREADY_EXISTS: "User is already a member of this tree",
         ErrorCode.TREE_MEMBER_NOT_FOUND: "Tree membership not found",
-        ErrorCode.CANNOT_REMOVE_LAST_OWNER: "Cannot remove the last owner of a family tree",
+        ErrorCode.CANNOT_REMOVE_LAST_OWNER: (
+            "Cannot remove the last owner of a family tree"
+        ),
         ErrorCode.PERSON_TREE_MISMATCH: "Person does not belong to this family tree",
-        ErrorCode.MARRIAGE_TREE_MISMATCH: "Marriage or related persons are not in this family tree",
-        ErrorCode.TREE_EXCEL_INVALID: "Excel file is invalid or does not match the expected template",
+        ErrorCode.MARRIAGE_TREE_MISMATCH: (
+            "Marriage or related persons are not in this family tree"
+        ),
+        ErrorCode.TREE_EXCEL_INVALID: (
+            "Excel file is invalid or does not match the expected template"
+        ),
         ErrorCode.TREE_EXCEL_EMPTY: "Excel file has no people or marriages to import",
         ErrorCode.TREE_ACCESS_DENIED: "You do not have this access on the family tree",
         ErrorCode.FREE_ACCOUNT_LIMIT: "You are on a free account",
@@ -165,13 +189,21 @@ ERROR_MESSAGES = {
         ErrorCode.MEDIA_TOO_LARGE: "حجم رسانه از حد مجاز بیشتر است",
         ErrorCode.INVALID_MEDIA_OBJECT_KEY: "کلید شیء رسانه نامعتبر است",
         ErrorCode.MEDIA_OBJECT_NOT_FOUND: "شیء رسانه یافت نشد",
-        ErrorCode.TOO_MANY_BIOLOGICAL_PARENTS: "فرزند نمی‌تواند بیش از دو والد تنی داشته باشد",
-        ErrorCode.INVALID_PARENT_MARRIAGE: "والدهای تنی باید با همسران ازدواج مبدأ مطابقت داشته باشند",
+        ErrorCode.TOO_MANY_BIOLOGICAL_PARENTS: (
+            "فرزند نمی‌تواند بیش از دو والد تنی داشته باشد"
+        ),
+        ErrorCode.INVALID_PARENT_MARRIAGE: (
+            "والدهای تنی باید با همسران ازدواج مبدأ مطابقت داشته باشند"
+        ),
         ErrorCode.PERSON_HAS_CHILDREN: "شخص دارای فرزند قابل حذف نیست",
         # Domain Marriage
         ErrorCode.SELF_MARRIAGE: "یک شخص نمی‌تواند با خودش ازدواج کند",
-        ErrorCode.DIVORCED_BEFORE_MARRIAGE: "فردی که طلاق گرفته است بدون اعتبارسنجی مناسب نمی‌تواند دوباره ازدواج کند",
-        ErrorCode.MARRIAGE_AFTER_DIVORCE: "برای فرد مطلقه امکان ثبت این ازدواج وجود ندارد",
+        ErrorCode.DIVORCED_BEFORE_MARRIAGE: (
+            "فردی که طلاق گرفته است بدون اعتبارسنجی مناسب نمی‌تواند دوباره ازدواج کند"
+        ),
+        ErrorCode.MARRIAGE_AFTER_DIVORCE: (
+            "برای فرد مطلقه امکان ثبت این ازدواج وجود ندارد"
+        ),
         ErrorCode.UNDERAGE_MARRIAGE: "ازدواج برای افراد زیر سن قانونی مجاز نیست",
         ErrorCode.INVALID_MARRIAGE_GENDER: "ازدواج فقط بین یک مرد و یک زن مجاز است",
         ErrorCode.MARRIAGE_NOT_FOUND: "ازدواج مورد نظر یافت نشد",
@@ -185,7 +217,9 @@ ERROR_MESSAGES = {
         ErrorCode.USER_PASSWORD_INCORECT: "رمز کاربر اشتباه است",
         ErrorCode.PASSWORD_CONFIRMATION_MISMATCH: "رمز عبور و تکرار آن یکسان نیستند",
         ErrorCode.SELF_ROLE_CHANGE: "نمی‌توانید نقش خودتان را تغییر دهید",
-        ErrorCode.PRIVILEGED_USER_MODIFICATION: "فقط مدیر می‌تواند نقش مدیر را بدهد یا تغییر دهد",
+        ErrorCode.PRIVILEGED_USER_MODIFICATION: (
+            "فقط مدیر می‌تواند نقش مدیر را بدهد یا تغییر دهد"
+        ),
         # Domain Role
         ErrorCode.ROLE_NOT_FOUND: "نقش پیدا نشد",
         ErrorCode.ROLE_NAME_DUPLICATED: "اسم نقش تکراری است",
@@ -202,8 +236,12 @@ ERROR_MESSAGES = {
         ErrorCode.TREE_MEMBER_NOT_FOUND: "عضویت در شجره‌نامه یافت نشد",
         ErrorCode.CANNOT_REMOVE_LAST_OWNER: "نمی‌توان آخرین مالک شجره‌نامه را حذف کرد",
         ErrorCode.PERSON_TREE_MISMATCH: "شخص متعلق به این شجره‌نامه نیست",
-        ErrorCode.MARRIAGE_TREE_MISMATCH: "ازدواج یا افراد مرتبط در این شجره‌نامه نیستند",
-        ErrorCode.TREE_EXCEL_INVALID: "فایل اکسل نامعتبر است یا با قالب مورد انتظار هم‌خوانی ندارد",
+        ErrorCode.MARRIAGE_TREE_MISMATCH: (
+            "ازدواج یا افراد مرتبط در این شجره‌نامه نیستند"
+        ),
+        ErrorCode.TREE_EXCEL_INVALID: (
+            "فایل اکسل نامعتبر است یا با قالب مورد انتظار هم‌خوانی ندارد"
+        ),
         ErrorCode.TREE_EXCEL_EMPTY: "فایل اکسل هیچ شخص یا ازدواجی برای ورود ندارد",
         ErrorCode.TREE_ACCESS_DENIED: "این دسترسی را روی شجره‌نامه ندارید",
         ErrorCode.FREE_ACCOUNT_LIMIT: "شما اکانت رایگان دارید",

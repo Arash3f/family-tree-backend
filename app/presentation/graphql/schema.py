@@ -1,12 +1,9 @@
 from collections.abc import Callable
-
 from uuid import UUID
 
-
 import strawberry
-
+from fastapi import Depends
 from graphql.validation import NoSchemaIntrospectionCustomRule
-
 from strawberry.extensions import (
     AddValidationRules,
     MaxAliasesLimiter,
@@ -14,43 +11,28 @@ from strawberry.extensions import (
     QueryDepthLimiter,
     SchemaExtension,
 )
-
 from strawberry.fastapi import GraphQLRouter
 
-
 from app.core.config import settings
-
 from app.presentation.graphql.context import get_graphql_context
-
 from app.presentation.graphql.errors import AppExceptionExtension
-
 from app.presentation.graphql.resolvers import auth as auth_resolvers
-
 from app.presentation.graphql.resolvers import family_tree as family_tree_resolvers
-
 from app.presentation.graphql.resolvers import marriage as marriage_resolvers
-
 from app.presentation.graphql.resolvers import permission as permission_resolvers
-
 from app.presentation.graphql.resolvers import person as person_resolvers
-
 from app.presentation.graphql.resolvers import role as role_resolvers
-
 from app.presentation.graphql.resolvers import ticket as ticket_resolvers
-
 from app.presentation.graphql.resolvers import user as user_resolvers
-
 from app.presentation.graphql.types.common import ResultType
-
 from app.presentation.graphql.types.family_tree import (
     FamilyTreeCreateInput,
     FamilyTreeType,
     FamilyTreeUpdateInput,
     TreeMemberAddInput,
-    TreeMemberUpdateInput,
     TreeMembershipType,
+    TreeMemberUpdateInput,
 )
-
 from app.presentation.graphql.types.marriage import (
     DivorceInput,
     MarriageCreateInput,
@@ -59,12 +41,10 @@ from app.presentation.graphql.types.marriage import (
     MarriageType,
     MarriageUpdateInput,
 )
-
 from app.presentation.graphql.types.permission import (
     PermissionListInput,
     PermissionPage,
 )
-
 from app.presentation.graphql.types.person import (
     ClosestRelationshipType,
     PersonCreateInput,
@@ -73,7 +53,6 @@ from app.presentation.graphql.types.person import (
     PersonType,
     PersonUpdateInput,
 )
-
 from app.presentation.graphql.types.role import (
     RoleCreateInput,
     RoleListInput,
@@ -81,7 +60,6 @@ from app.presentation.graphql.types.role import (
     RoleType,
     RoleUpdateInput,
 )
-
 from app.presentation.graphql.types.ticket import (
     TicketCreateInput,
     TicketListInput,
@@ -92,7 +70,6 @@ from app.presentation.graphql.types.ticket import (
     TicketType,
     TicketUpdateStatusInput,
 )
-
 from app.presentation.graphql.types.user import (
     AuthTokensType,
     UserCreateInput,
@@ -101,6 +78,7 @@ from app.presentation.graphql.types.user import (
     UserType,
     UserUpdateInput,
 )
+from app.presentation.rest.dependencies.rate_limit import rate_limit_auth
 
 
 @strawberry.type
@@ -143,7 +121,9 @@ class Query:
         return await person_resolvers.resolve_person(info, tree_id, person_id)
 
     @strawberry.field(
-        description="Filtered person list (REST: POST /family-trees/{tree_id}/persons/list)"
+        description=(
+            "Filtered person list (REST: POST /family-trees/{tree_id}/persons/list)"
+        )
     )
     async def persons(
         self,
@@ -155,7 +135,10 @@ class Query:
         return await person_resolvers.resolve_persons(info, tree_id, data)
 
     @strawberry.field(
-        description="Closest relationship path (REST: GET /family-trees/{tree_id}/persons/{from}/relation/{to})"
+        description=(
+            "Closest relationship path "
+            "(REST: GET /family-trees/{tree_id}/persons/{from}/relation/{to})"
+        )
     )
     async def closest_relationship(
         self,
@@ -209,7 +192,9 @@ class Query:
         return await permission_resolvers.resolve_permissions(info, data)
 
     @strawberry.field(
-        description="Get marriage by id (REST: GET /family-trees/{tree_id}/marriages/{id})"
+        description=(
+            "Get marriage by id (REST: GET /family-trees/{tree_id}/marriages/{id})"
+        )
     )
     async def marriage(
         self, info: strawberry.Info, tree_id: UUID, marriage_id: UUID
@@ -218,7 +203,9 @@ class Query:
         return await marriage_resolvers.resolve_marriage(info, tree_id, marriage_id)
 
     @strawberry.field(
-        description="Filtered marriage list (REST: POST /family-trees/{tree_id}/marriages/list)"
+        description=(
+            "Filtered marriage list (REST: POST /family-trees/{tree_id}/marriages/list)"
+        )
     )
     async def marriages(
         self,
@@ -322,7 +309,10 @@ class Mutation:
         return await family_tree_resolvers.resolve_add_tree_member(info, tree_id, data)
 
     @strawberry.mutation(
-        description="Update tree member access (REST: PATCH /family-trees/{id}/members/{user_id})"
+        description=(
+            "Update tree member access "
+            "(REST: PATCH /family-trees/{id}/members/{user_id})"
+        )
     )
     async def update_tree_member(
         self,
@@ -337,7 +327,9 @@ class Mutation:
         )
 
     @strawberry.mutation(
-        description="Remove tree member (REST: DELETE /family-trees/{id}/members/{user_id})"
+        description=(
+            "Remove tree member (REST: DELETE /family-trees/{id}/members/{user_id})"
+        )
     )
     async def remove_tree_member(
         self, info: strawberry.Info, tree_id: UUID, user_id: UUID
@@ -551,9 +543,6 @@ schema = strawberry.Schema(
     extensions=_build_extensions(),
 )
 
-
-from app.presentation.rest.dependencies.rate_limit import rate_limit_auth
-from fastapi import Depends
 
 graphql_router = GraphQLRouter(
     schema,

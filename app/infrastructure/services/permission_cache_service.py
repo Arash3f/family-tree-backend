@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import NamedTuple
 from uuid import UUID
 
@@ -18,7 +18,7 @@ class PermissionCacheService:
         self._ttl_seconds = ttl_seconds
 
     async def get_permissions(self, user_id: UUID, uow: UnitOfWork) -> set[str]:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         cached = self._cache.get(user_id)
         if cached and cached.expires_at > now:
             return cached.permissions

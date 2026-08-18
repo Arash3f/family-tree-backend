@@ -7,7 +7,6 @@ from pydantic import TypeAdapter
 from app.domain.entities.person import Gender, Person
 from app.domain.shared.dto.person_filter_dto import PersonSortField
 from app.domain.shared.dto.sorter_dto import SortOrderField
-from tests.helpers.uow import TreeUnitOfWork
 from app.presentation.rest.schemas.dto.common import (
     PaginatedResponse,
     PaginationRequestParams,
@@ -29,6 +28,7 @@ from app.presentation.rest.schemas.dto.person_schema import (
 from app.utils.error_codes import ERROR_MESSAGES, ErrorCode
 from tests.e2e.auth_headers import admin_headers as admin_headers
 from tests.e2e.auth_headers import member_headers as member_headers
+from tests.helpers.uow import TreeUnitOfWork
 
 
 def persons_url(tree_id: UUID, suffix: str = "") -> str:

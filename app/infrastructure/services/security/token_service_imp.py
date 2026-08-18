@@ -1,5 +1,5 @@
 import hashlib
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from jose import jwt
@@ -11,7 +11,7 @@ from app.core.config import settings
 class JWTService(TokenService):
     # Issue access tokens a few seconds early to absorb minor clock skew
     def create_access_token(self, user_id: UUID, session_id: UUID) -> str:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         payload = {
             "sub": str(user_id),
             "sid": str(session_id),
@@ -25,7 +25,7 @@ class JWTService(TokenService):
         )
 
     def create_refresh_token(self, user_id: UUID, session_id: UUID) -> str:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         payload = {
             "sub": str(user_id),
             "sid": str(session_id),

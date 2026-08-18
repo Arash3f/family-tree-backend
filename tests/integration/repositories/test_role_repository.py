@@ -1,4 +1,5 @@
 from uuid import UUID
+
 import pytest
 
 from app.application.interfaces.unit_of_work import UnitOfWork

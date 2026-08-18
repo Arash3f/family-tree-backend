@@ -1,6 +1,8 @@
-from uuid import UUID
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+from uuid import UUID
+
+import pytest
+
 from app.application.use_cases.marriage.delete_marriage_use_case import (
     DeleteMarriageUseCase,
 )

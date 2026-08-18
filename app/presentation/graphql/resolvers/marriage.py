@@ -19,8 +19,8 @@ from app.application.use_cases.marriage.update_marriage_use_case import (
 )
 from app.domain.shared.tree_access import TreeAccessPermissions
 from app.presentation.graphql.tree_access import (
-    require_tree_membership_with_access,
     require_tree_member_with_access,
+    require_tree_membership_with_access,
 )
 from app.presentation.graphql.types.common import (
     ResultType,

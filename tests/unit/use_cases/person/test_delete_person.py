@@ -1,6 +1,8 @@
-from uuid import UUID
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+from uuid import UUID
+
+import pytest
+
 from app.application.use_cases.person.delete_person_use_case import DeletePersonUseCase
 from app.domain.exceptions.person_exceptions import (
     PersonHasChildrenException,

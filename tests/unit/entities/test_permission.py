@@ -1,4 +1,5 @@
 from uuid import UUID
+
 import pytest
 
 from app.domain.entities.permission import Permission

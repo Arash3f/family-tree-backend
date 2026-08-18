@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from app.application.dto.session_dto import SessionListItemDTO
@@ -49,7 +49,7 @@ class RevokeUserSessionUseCase:
                 raise SessionNotFoundException()
 
             if session.revoked_at is None:
-                await self.uow.sessions.revoke(session_id, datetime.now(timezone.utc))
+                await self.uow.sessions.revoke(session_id, datetime.now(UTC))
                 await self.uow.commit()
 
             return ResultDTO(result="Session revoked")
@@ -66,7 +66,7 @@ class RevokeAllUserSessionsUseCase:
                 raise UserNotFoundException(detail=[f"user id is {user_id}"])
 
             count = await self.uow.sessions.revoke_all_for_user(
-                user_id, datetime.now(timezone.utc)
+                user_id, datetime.now(UTC)
             )
             await self.uow.commit()
             return ResultDTO(result=f"Revoked {count} session(s)")

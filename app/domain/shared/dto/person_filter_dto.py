@@ -1,5 +1,5 @@
 from datetime import date
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -10,7 +10,7 @@ from app.domain.shared.dto.range_dto import RangeDTO
 from app.domain.shared.dto.sorter_dto import SortParams
 
 
-class PersonSortField(str, Enum):
+class PersonSortField(StrEnum):
     ID = "id"
     NAME = "name"
     BIRTH_DAY = "birth_date"

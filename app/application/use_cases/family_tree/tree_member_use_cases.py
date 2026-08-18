@@ -3,8 +3,8 @@ from uuid import UUID
 from app.application.dto.family_tree.family_tree_dto import (
     FamilyTreeMapper,
     TreeMemberAddDTO,
-    TreeMemberUpdateDTO,
     TreeMembershipResponseDTO,
+    TreeMemberUpdateDTO,
 )
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.application.services.tree_access_service import TreeAccessService
@@ -151,7 +151,9 @@ class ListTreeMembersUseCase:
     ) -> list[TreeMembershipResponseDTO]:
         async with self.uow:
             await self.access.require_member(tree_id=tree_id, user_id=user_id)
-            members_with_usernames = await self.uow.tree_memberships.list_by_tree_with_usernames(tree_id)
+            members_with_usernames = (
+                await self.uow.tree_memberships.list_by_tree_with_usernames(tree_id)
+            )
             return [
                 FamilyTreeMapper.membership_to_response(membership, username=username)
                 for membership, username in members_with_usernames

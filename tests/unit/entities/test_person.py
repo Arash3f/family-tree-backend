@@ -1,5 +1,5 @@
-from uuid import UUID
 from datetime import date, timedelta
+from uuid import UUID
 
 import pytest
 
@@ -17,7 +17,6 @@ from app.domain.exceptions.person_exceptions import (
     TooManyBiologicalParentsException,
 )
 
-
 TEST_TREE_ID = UUID(int=1)
 
 
@@ -28,9 +27,9 @@ def create_person(**overrides):
         gender=overrides.get("gender", Gender.MALE),
         tree_id=overrides.get("tree_id", TEST_TREE_ID),
         birth_date=overrides.get("birth_date", date(2000, 1, 1)),
-        death_date=overrides.get("death_date", None),
+        death_date=overrides.get("death_date"),
         parents=overrides.get("parents", []),
-        marriage_id=overrides.get("marriage_id", None),
+        marriage_id=overrides.get("marriage_id"),
     )
 
 

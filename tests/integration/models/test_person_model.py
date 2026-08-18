@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import UTC, date
 
 import pytest
 from sqlalchemy.exc import IntegrityError
@@ -234,7 +234,7 @@ async def test_divorce_before_marriage_rejected(uow):
 
 @pytest.mark.asyncio
 async def test_soft_deleted_person_frees_name_under_marriage(uow):
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     spouse_a = PersonModel(tree_id=uow.tree_id, name="Ali", gender="male")
     spouse_b = PersonModel(tree_id=uow.tree_id, name="Sara", gender="female")
@@ -259,7 +259,7 @@ async def test_soft_deleted_person_frees_name_under_marriage(uow):
     uow.session.add(child)
     await uow.session.flush()
 
-    child.deleted_at = datetime.now(timezone.utc)
+    child.deleted_at = datetime.now(UTC)
     await uow.session.flush()
 
     replacement = PersonModel(

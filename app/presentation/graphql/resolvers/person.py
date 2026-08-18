@@ -16,8 +16,8 @@ from app.application.use_cases.person.get_person_use_case import GetPersonUseCas
 from app.application.use_cases.person.update_person_use_case import UpdatePersonUseCase
 from app.domain.shared.tree_access import TreeAccessPermissions
 from app.presentation.graphql.tree_access import (
-    require_tree_membership_with_access,
     require_tree_member_with_access,
+    require_tree_membership_with_access,
 )
 from app.presentation.graphql.types.common import (
     ResultType,

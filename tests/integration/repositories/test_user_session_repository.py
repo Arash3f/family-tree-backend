@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
@@ -27,7 +27,7 @@ async def _create_user(uow: UnitOfWork, username: str) -> User:
 async def test_create_get_and_revoke_session(uow: UnitOfWork):
     async with uow:
         user = await _create_user(uow, "session_user")
-        expires = datetime.now(timezone.utc) + timedelta(days=7)
+        expires = datetime.now(UTC) + timedelta(days=7)
         created = await uow.sessions.create(
             UserSession(
                 id=None,
@@ -46,7 +46,7 @@ async def test_create_get_and_revoke_session(uow: UnitOfWork):
         assert fetched.revoked_at is None
         assert fetched.is_active()
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         await uow.sessions.revoke(created.safe_id, revoked_at=now)
         revoked = await uow.sessions.get(created.safe_id)
         assert revoked is not None
@@ -63,7 +63,7 @@ async def test_get_for_update_and_update_session(uow: UnitOfWork):
                 id=None,
                 user_id=user.safe_id,
                 refresh_token_hash="hash-before",
-                expires_at=datetime.now(timezone.utc) + timedelta(days=1),
+                expires_at=datetime.now(UTC) + timedelta(days=1),
             )
         )
 
@@ -82,7 +82,7 @@ async def test_revoke_all_for_user(uow: UnitOfWork):
     async with uow:
         user = await _create_user(uow, "session_revoke_all_user")
         other = await _create_user(uow, "session_other_user")
-        expires = datetime.now(timezone.utc) + timedelta(days=3)
+        expires = datetime.now(UTC) + timedelta(days=3)
 
         first = await uow.sessions.create(
             UserSession(
@@ -110,7 +110,7 @@ async def test_revoke_all_for_user(uow: UnitOfWork):
         )
 
         revoked_count = await uow.sessions.revoke_all_for_user(
-            user.safe_id, revoked_at=datetime.now(timezone.utc)
+            user.safe_id, revoked_at=datetime.now(UTC)
         )
         assert revoked_count == 2
 

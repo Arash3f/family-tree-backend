@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -9,7 +9,7 @@ from app.domain.shared.enums.ticket_category import TicketCategory
 from app.domain.shared.enums.ticket_status import TicketStatus
 
 
-class TicketSortField(str, Enum):
+class TicketSortField(StrEnum):
     ID = "id"
     TITLE = "title"
     STATUS = "status"

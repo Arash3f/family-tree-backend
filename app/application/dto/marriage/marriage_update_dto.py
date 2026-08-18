@@ -1,5 +1,5 @@
 from datetime import date
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from app.domain.entities.marriage import Marriage
 
 
-class MarriageUpdateField(str, Enum):
+class MarriageUpdateField(StrEnum):
     spouse_a_id = "spouse_a_id"
     spouse_b_id = "spouse_b_id"
     MARRIAGE_AT = "married_at"

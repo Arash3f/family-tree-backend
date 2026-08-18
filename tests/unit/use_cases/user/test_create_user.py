@@ -1,11 +1,13 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import UUID
+
+import pytest
+
 from app.application.dto.user.user_create_dto import (
     UserCreateDTO,
     UserCreateMapper,
 )
 from app.application.use_cases.user.create_user_use_case import CreateUserUseCase
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from uuid import UUID
 
 
 @pytest.mark.asyncio
@@ -13,8 +15,8 @@ async def test_create_user_with_role(mock_uow):
     dto = UserCreateDTO(
         username="arash",
         fullname="Arash Alf",
-        password="secret",
-        re_password="secret",
+        password="secret123",
+        re_password="secret123",
         role_id=UUID(int=1),
     )
 
@@ -46,7 +48,7 @@ async def test_create_user_with_role(mock_uow):
 
     mock_uow.roles.get_or_raise.assert_awaited_once_with(role_id=UUID(int=1))
 
-    password_hasher.hash.assert_called_once_with("secret")
+    password_hasher.hash.assert_called_once_with("secret123")
 
     mock_uow.users.create.assert_awaited_once()
     args = mock_uow.users.create.await_args
@@ -70,8 +72,8 @@ async def test_create_user_without_role(mock_uow):
     dto = UserCreateDTO(
         username="arash",
         fullname="Arash",
-        password="secret",
-        re_password="secret",
+        password="secret123",
+        re_password="secret123",
         role_id=None,
     )
 
@@ -102,7 +104,7 @@ async def test_create_user_without_role(mock_uow):
 
     mock_uow.roles.get_or_raise.assert_not_awaited()
 
-    password_hasher.hash.assert_called_once_with("secret")
+    password_hasher.hash.assert_called_once_with("secret123")
 
     mock_uow.users.create.assert_awaited_once()
 

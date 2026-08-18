@@ -34,8 +34,8 @@ from app.presentation.graphql.types.family_tree import (
     FamilyTreeType,
     FamilyTreeUpdateInput,
     TreeMemberAddInput,
-    TreeMemberUpdateInput,
     TreeMembershipType,
+    TreeMemberUpdateInput,
     family_tree_from_mapping,
     tree_membership_from_mapping,
 )

@@ -49,14 +49,16 @@ async def test_ensure_minio_buckets_retries_until_success():
     storage = MagicMock()
     storage.ensure_buckets = AsyncMock(side_effect=[ConnectionError("down"), None])
 
-    with patch(
-        "app.infrastructure.storage.minio_bootstrap.MinioObjectStorage",
-        return_value=storage,
-    ):
-        with patch(
+    with (
+        patch(
+            "app.infrastructure.storage.minio_bootstrap.MinioObjectStorage",
+            return_value=storage,
+        ),
+        patch(
             "app.infrastructure.storage.minio_bootstrap.asyncio.sleep", new=AsyncMock()
-        ):
-            await ensure_minio_buckets(retries=2, retry_delay_seconds=0)
+        ),
+    ):
+        await ensure_minio_buckets(retries=2, retry_delay_seconds=0)
 
     assert storage.ensure_buckets.await_count == 2
 
@@ -66,14 +68,16 @@ async def test_ensure_minio_buckets_raises_after_retries_exhausted():
     storage = MagicMock()
     storage.ensure_buckets = AsyncMock(side_effect=ConnectionError("still down"))
 
-    with patch(
-        "app.infrastructure.storage.minio_bootstrap.MinioObjectStorage",
-        return_value=storage,
-    ):
-        with patch(
+    with (
+        patch(
+            "app.infrastructure.storage.minio_bootstrap.MinioObjectStorage",
+            return_value=storage,
+        ),
+        patch(
             "app.infrastructure.storage.minio_bootstrap.asyncio.sleep", new=AsyncMock()
-        ):
-            with pytest.raises(ConnectionError, match="still down"):
-                await ensure_minio_buckets(retries=2, retry_delay_seconds=0)
+        ),
+        pytest.raises(ConnectionError, match="still down"),
+    ):
+        await ensure_minio_buckets(retries=2, retry_delay_seconds=0)
 
     assert storage.ensure_buckets.await_count == 2

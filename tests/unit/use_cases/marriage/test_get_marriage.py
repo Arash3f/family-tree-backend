@@ -1,6 +1,8 @@
-from uuid import UUID
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import UUID
+
+import pytest
+
 from app.application.dto.marriage.marriage_get_dto import MarriageGetMapper
 from app.application.use_cases.marriage.get_marriage_use_case import GetMarriageUseCase
 from app.domain.exceptions.marriage_exceptions import MarriageNotFoundException
@@ -40,9 +42,11 @@ async def test_get_marriage_propagates_exception(mock_uow):
 
     use_case = GetMarriageUseCase(mock_uow)
 
-    with patch.object(MarriageGetMapper, "to_response") as mapper_mock:
-        with pytest.raises(MarriageNotFoundException):
-            await use_case.execute(dto, tree_id=UUID(int=7))
+    with (
+        patch.object(MarriageGetMapper, "to_response") as mapper_mock,
+        pytest.raises(MarriageNotFoundException),
+    ):
+        await use_case.execute(dto, tree_id=UUID(int=7))
 
     mock_uow.marriages.get_in_tree_or_raise.assert_awaited_once_with(
         marriage_id=UUID(int=1), tree_id=UUID(int=7)

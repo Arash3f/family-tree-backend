@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from app.application.use_cases.user.get_user_list_by_filter_use_case import (
     GetUserListByFilterUseCase,

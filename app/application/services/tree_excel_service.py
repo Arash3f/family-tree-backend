@@ -340,35 +340,45 @@ _SAMPLE_INSTRUCTIONS: dict[str, list[str]] = {
         "5) parent types: biological | adoptive | step",
         "6) Dates: Gregorian YYYY-MM-DD (Jalali YYYY/MM/DD is also accepted)",
         "7) Marriage dates use the same formats as person dates.",
-        "8) Do not include an id column. Matching uses name, family name, gender, and birth date.",
-        "9) Import lets you pick rows; people/marriages already in the tree are skipped.",
+        "8) Do not include an id column. Matching uses name, family name, "
+        "gender, and birth date.",
+        "9) Import lets you pick rows; people/marriages already in the tree "
+        "are skipped.",
     ],
     "fa": [
         "قالب اکسل شجره‌نامه",
         "",
         "۱) برگه «افراد» را پر کنید. هر نفر یک شناسه یکتا داشته باشد (مثل P1).",
-        "۲) برگه «ازدواج‌ها» را با شناسه افراد در «شناسه همسر ۱» و «شناسه همسر ۲» پر کنید.",
+        "۲) برگه «ازدواج‌ها» را با شناسه افراد در «شناسه همسر ۱» و "
+        "«شناسه همسر ۲» پر کنید.",
         "۳) برای فرزند «شناسه والد ۱ / ۲» و در صورت نیاز «شناسه ازدواج» را بگذارید.",
         "۴) جنسیت: مرد | زن",
         "۵) نوع والد: بیولوژیک | فرزندخواندگی | ناتنی",
         "۶) تاریخ‌ها شمسی با قالب YYYY/MM/DD (میلادی YYYY-MM-DD هم پذیرفته می‌شود)",
         "۷) تاریخ ازدواج هم با همان قالب‌ها وارد شود.",
-        "۸) ستون id لازم نیست. افراد تکراری با نام، نام خانوادگی، جنسیت و تاریخ تولد تشخیص داده می‌شوند.",
-        "۹) هنگام ورود می‌توانید ردیف‌ها را انتخاب کنید؛ افراد/ازدواج‌های موجود در درخت نادیده گرفته می‌شوند.",
-        "۱۰) فایل‌های انگلیسی (Persons / Marriages و ستون‌های انگلیسی) هم قابل ورود هستند.",
+        "۸) ستون id لازم نیست. افراد تکراری با نام، نام خانوادگی، جنسیت و "
+        "تاریخ تولد تشخیص داده می‌شوند.",
+        "۹) هنگام ورود می‌توانید ردیف‌ها را انتخاب کنید؛ افراد/ازدواج‌های "
+        "موجود در درخت نادیده گرفته می‌شوند.",
+        "۱۰) فایل‌های انگلیسی (Persons / Marriages و ستون‌های انگلیسی) هم "
+        "قابل ورود هستند.",
     ],
 }
 
 _EXPORT_INSTRUCTIONS: dict[str, list[str]] = {
     "en": [
         "Exported family tree data",
-        "All dates are Gregorian YYYY-MM-DD. Jalali YYYY/MM/DD is also accepted on import.",
-        "Re-import matches existing people by name, family name, gender, and birth date.",
+        "All dates are Gregorian YYYY-MM-DD. Jalali YYYY/MM/DD is also "
+        "accepted on import.",
+        "Re-import matches existing people by name, family name, gender, "
+        "and birth date.",
     ],
     "fa": [
         "داده‌های خروجی شجره‌نامه",
-        "همه تاریخ‌ها شمسی با قالب YYYY/MM/DD هستند. میلادی YYYY-MM-DD هم هنگام ورود پذیرفته می‌شود.",
-        "ورود مجدد افراد موجود را با نام، نام خانوادگی، جنسیت و تاریخ تولد تطبیق می‌دهد.",
+        "همه تاریخ‌ها شمسی با قالب YYYY/MM/DD هستند. میلادی YYYY-MM-DD هم "
+        "هنگام ورود پذیرفته می‌شود.",
+        "ورود مجدد افراد موجود را با نام، نام خانوادگی، جنسیت و تاریخ تولد "
+        "تطبیق می‌دهد.",
     ],
 }
 

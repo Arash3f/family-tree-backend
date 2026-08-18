@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -7,7 +7,7 @@ from app.domain.shared.dto.pagination_dto import PaginationParams
 from app.domain.shared.dto.sorter_dto import SortParams
 
 
-class UserSortField(str, Enum):
+class UserSortField(StrEnum):
     ID = "id"
     USERNAME = "username"
     ROLE_ID = "role_id"

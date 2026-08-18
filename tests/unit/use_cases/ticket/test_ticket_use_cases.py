@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock
 from uuid import UUID
 
@@ -42,7 +42,7 @@ async def test_create_ticket(mock_uow):
     user_id = UUID(int=10)
     ticket_id = UUID(int=20)
     message_id = UUID(int=30)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     created_ticket = Ticket(
         id=ticket_id,
@@ -165,7 +165,7 @@ async def test_list_tickets_scopes_to_owner(mock_uow):
 async def test_add_consecutive_messages_from_same_author(mock_uow):
     user_id = UUID(int=10)
     ticket_id = UUID(int=20)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     ticket = Ticket(
         id=ticket_id,
         title="Help",

@@ -5,7 +5,6 @@ from uuid import UUID
 from app.application.services.family_tree_sync_service import FamilyTreeSyncService
 from app.domain.entities.person import Gender, ParentLink, Person
 
-
 TEST_TREE_ID = UUID(int=1)
 
 

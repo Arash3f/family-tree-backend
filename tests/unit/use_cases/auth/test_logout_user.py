@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID
 
@@ -26,7 +26,7 @@ async def test_logout_success(mock_uow):
 async def test_logout_already_revoked_skips_revoke(mock_uow):
     session_id = UUID(int=1)
     user_id = UUID(int=2)
-    session = MagicMock(user_id=user_id, revoked_at=datetime.now(timezone.utc))
+    session = MagicMock(user_id=user_id, revoked_at=datetime.now(UTC))
     mock_uow.sessions.get = AsyncMock(return_value=session)
 
     result = await LogoutUseCase(mock_uow).execute(session_id, user_id)

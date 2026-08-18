@@ -1,9 +1,8 @@
-import pytest
 from unittest.mock import MagicMock
 
-from app.application.use_cases.permission.get_permission_list_by_filter_use_case import (
-    GetPermissionListByFilterUseCase,
-)
+import pytest
+
+from app.application.use_cases.permission import get_permission_list_by_filter_use_case
 
 
 @pytest.mark.asyncio
@@ -13,7 +12,9 @@ async def test_get_permission_list_by_filter(mock_uow):
 
     mock_uow.permissions.get_list_by_filter.return_value = expected
 
-    use_case = GetPermissionListByFilterUseCase(mock_uow)
+    use_case = get_permission_list_by_filter_use_case.GetPermissionListByFilterUseCase(
+        mock_uow
+    )
 
     result = await use_case.execute(query)
 

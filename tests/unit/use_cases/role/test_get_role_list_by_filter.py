@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 from app.application.use_cases.role.get_role_list_by_filter_use_case import (
     GetRoleListByFilterUseCase,

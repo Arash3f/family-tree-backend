@@ -1,12 +1,12 @@
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from app.domain.exceptions.common_exceptions import UnExpectedIdException
 from app.domain.shared.tree_access import TreeAccessPermissions
 
 
-class TreeMemberRole(str, Enum):
+class TreeMemberRole(StrEnum):
     OWNER = "owner"
     MEMBER = "member"
 

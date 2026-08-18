@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -14,7 +14,7 @@ metadata = MetaData()
 sample_table = Table("sample", metadata, Column("id", Integer, primary_key=True))
 
 
-class SortBy(str, Enum):
+class SortBy(StrEnum):
     ID = "id"
 
 

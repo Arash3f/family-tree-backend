@@ -1,10 +1,11 @@
 from unittest.mock import MagicMock
 from uuid import UUID
 
+import pytest
+
 from app.application.use_cases.role.delete_role_use_case import DeleteRoleUseCase
 from app.domain.exceptions.role_exceptions import RoleNotFoundException
 from app.domain.shared.dto.common_dto import IdDTO, ResultDTO
-import pytest
 
 
 @pytest.mark.asyncio

@@ -50,14 +50,13 @@ async def test_graphql_login_success(client):
 async def test_graphql_login_invalid_credentials(client):
     resp = await gql(
         client,
-        """
-        mutation {
-          login(username: "%s", password: "wrong-password") {
+        f"""
+        mutation {{
+          login(username: "{settings.ADMIN_USERNAME}", password: "wrong-password") {{
             accessToken
-          }
-        }
-        """
-        % settings.ADMIN_USERNAME,
+          }}
+        }}
+        """,
     )
     assert resp.status_code == 200
     body = resp.json()
@@ -86,15 +85,17 @@ async def test_graphql_me_success(client, admin_headers):  # noqa: F811
 async def test_graphql_refresh_and_logout(client):
     login = await gql(
         client,
-        """
-        mutation {
-          login(username: "%s", password: "%s") {
+        f"""
+        mutation {{
+          login(
+            username: "{settings.ADMIN_USERNAME}"
+            password: "{settings.ADMIN_PASSWORD}"
+          ) {{
             accessToken
             refreshToken
-          }
-        }
-        """
-        % (settings.ADMIN_USERNAME, settings.ADMIN_PASSWORD),
+          }}
+        }}
+        """,
     )
     tokens = login.json()["data"]["login"]
 

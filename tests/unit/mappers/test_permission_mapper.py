@@ -1,4 +1,5 @@
 from uuid import UUID
+
 from app.application.dto.permission.permission_create_dto import PermissionCreateMapper
 from app.application.dto.permission.permission_get_dto import PermissionGetMapper
 from app.domain.entities.permission import Permission

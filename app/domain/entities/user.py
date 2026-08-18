@@ -40,7 +40,8 @@ class User:
 
         Args:
             plain_password (str): The plain text password provided by the user.
-            hasher (PasswordHasher): Password hashing service used to perform verification.
+            hasher (PasswordHasher): Password hashing service used to perform
+                verification.
 
         Returns:
             bool: True if the password matches the stored hash, otherwise False.

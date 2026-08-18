@@ -1,6 +1,8 @@
-import pytest
-from uuid import UUID
 from unittest.mock import AsyncMock, MagicMock
+from uuid import UUID
+
+import pytest
+
 from app.application.use_cases.marriage.get_marriage_list_by_filter_use_case import (
     GetMarriageListByFilterUseCase,
 )

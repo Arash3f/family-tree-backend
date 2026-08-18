@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 from app.application.dto.auth_dto import LoginDTO, LoginResponseDTO
@@ -38,7 +38,7 @@ class LoginUserUseCase:
                 raise InvalidCredentialsException()
 
             session_id = uuid4()
-            expires_at = datetime.now(timezone.utc) + timedelta(
+            expires_at = datetime.now(UTC) + timedelta(
                 minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES
             )
 

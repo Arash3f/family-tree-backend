@@ -1,9 +1,8 @@
-from uuid import UUID
 from datetime import date
+from uuid import UUID
 
 import pytest
 
-from tests.helpers.uow import TreeUnitOfWork
 from app.domain.entities.marriage import Marriage
 from app.domain.entities.person import Gender, Person
 from app.domain.exceptions.marriage_exceptions import MarriageNotFoundException
@@ -15,6 +14,7 @@ from app.domain.shared.dto.marriage_filter_dto import (
 from app.domain.shared.dto.pagination_dto import PaginatedResult, PaginationParams
 from app.domain.shared.dto.range_dto import RangeDTO
 from app.domain.shared.dto.sorter_dto import SortOrderField, SortParams
+from tests.helpers.uow import TreeUnitOfWork
 
 
 @pytest.mark.asyncio

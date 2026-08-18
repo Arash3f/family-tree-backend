@@ -1,6 +1,6 @@
-from datetime import datetime, timedelta, timezone
-from uuid import UUID, uuid4
 import hmac
+from datetime import UTC, datetime, timedelta
+from uuid import UUID, uuid4
 
 from app.application.dto.auth_dto import LoginResponseDTO
 from app.application.interfaces.token_service import TokenService
@@ -47,9 +47,7 @@ class RefreshTokenUseCase:
 
             # Stolen token reuse after rotation → revoke all sessions for the user
             if session.revoked_at is not None:
-                await self.uow.sessions.revoke_all_for_user(
-                    user_id, datetime.now(timezone.utc)
-                )
+                await self.uow.sessions.revoke_all_for_user(user_id, datetime.now(UTC))
                 await self.uow.commit()
                 raise InvalidCredentialsException(
                     detail=["refresh token reuse detected"]
@@ -59,9 +57,7 @@ class RefreshTokenUseCase:
                 raise InvalidCredentialsException()
 
             if not hmac.compare_digest(session.refresh_token_hash, token_hash):
-                await self.uow.sessions.revoke_all_for_user(
-                    user_id, datetime.now(timezone.utc)
-                )
+                await self.uow.sessions.revoke_all_for_user(user_id, datetime.now(UTC))
                 await self.uow.commit()
                 raise InvalidCredentialsException()
 
@@ -70,7 +66,7 @@ class RefreshTokenUseCase:
                 raise InvalidCredentialsException()
 
             new_session_id = uuid4()
-            expires_at = datetime.now(timezone.utc) + timedelta(
+            expires_at = datetime.now(UTC) + timedelta(
                 minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES
             )
 

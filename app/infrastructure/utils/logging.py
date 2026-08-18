@@ -24,7 +24,8 @@ class ContextTraceFilter(logging.Filter):
     """
 
     def filter(self, record):
-        # Retrieve trace_id from request context (via contextvars or any custom mechanism)
+        # Retrieve trace_id from request context (via contextvars or any
+        # custom mechanism)
         record.trace_id = get_trace_id() or "-"
 
         # Allow the record to be processed
@@ -38,7 +39,8 @@ def configure_logging() -> None:
     Configures the application's logging system.
 
     Responsibilities:
-        - Define a consistent log format including timestamp, level, trace_id, and message
+        - Define a consistent log format including timestamp, level,
+          trace_id, and message
         - Create a StreamHandler for console output
         - Set the global log level to INFO
         - Attach the ContextTraceFilter so every log record includes trace_id

@@ -24,7 +24,7 @@ class PersonCreateDTO(BaseModel):
     family_name: str | None = None
     birth_place: str | None = None
     death_place: str | None = None
-    notes: str | None = None
+    notes: str | None = Field(default=None, max_length=5_000)
     parents: list[ParentLinkDTO] = Field(default_factory=list)
     marriage_id: UUID | None = None
     photo_object_key: str | None = None

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from app.domain.exceptions.common_exceptions import UnExpectedIdException
@@ -20,16 +20,16 @@ class UserSession:
     created_at: datetime | None = None
 
     def is_active(self, now: datetime | None = None) -> bool:
-        now = now or datetime.now(timezone.utc)
+        now = now or datetime.now(UTC)
         if self.revoked_at is not None:
             return False
         expires = self.expires_at
         if expires.tzinfo is None:
-            expires = expires.replace(tzinfo=timezone.utc)
+            expires = expires.replace(tzinfo=UTC)
         return expires > now
 
     def revoke(self, now: datetime | None = None) -> None:
-        self.revoked_at = now or datetime.now(timezone.utc)
+        self.revoked_at = now or datetime.now(UTC)
 
     @property
     def safe_id(self) -> UUID:

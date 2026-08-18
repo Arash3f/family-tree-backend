@@ -1,5 +1,5 @@
 from datetime import date
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -8,7 +8,7 @@ from app.application.dto.person.person_create_dto import ParentLinkDTO
 from app.domain.entities.person import Gender, Person
 
 
-class PersonUpdateField(str, Enum):
+class PersonUpdateField(StrEnum):
     NAME = "name"
     GENDER = "gender"
     BIRTH_DATE = "birth_date"
@@ -30,7 +30,7 @@ class _PersonUpdateDataDTO(BaseModel):
     family_name: str | None = None
     birth_place: str | None = None
     death_place: str | None = None
-    notes: str | None = None
+    notes: str | None = Field(default=None, max_length=5_000)
     parents: list[ParentLinkDTO] | None = None
     marriage_id: UUID | None = None
     photo_object_key: str | None = None

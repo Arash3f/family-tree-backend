@@ -23,7 +23,7 @@ async def test_health_ok_returns_200():
         patch("app.main.get_uow", return_value=_uow_mock()),
         patch("app.main.neo4j_client") as neo4j,
     ):
-        neo4j.execute_read.return_value = [{"ok": 1}]
+        neo4j.execute_read = AsyncMock(return_value=[{"ok": 1}])
         response = await health()
 
     assert response.status_code == 200
@@ -39,7 +39,7 @@ async def test_health_degraded_returns_503_when_postgres_fails():
         patch("app.main.get_uow", return_value=_uow_mock(fail_execute=True)),
         patch("app.main.neo4j_client") as neo4j,
     ):
-        neo4j.execute_read.return_value = [{"ok": 1}]
+        neo4j.execute_read = AsyncMock(return_value=[{"ok": 1}])
         response = await health()
 
     assert response.status_code == 503
@@ -55,7 +55,7 @@ async def test_health_degraded_returns_503_when_neo4j_fails():
         patch("app.main.get_uow", return_value=_uow_mock()),
         patch("app.main.neo4j_client") as neo4j,
     ):
-        neo4j.execute_read.side_effect = RuntimeError("neo4j down")
+        neo4j.execute_read = AsyncMock(side_effect=RuntimeError("neo4j down"))
         response = await health()
 
     assert response.status_code == 503

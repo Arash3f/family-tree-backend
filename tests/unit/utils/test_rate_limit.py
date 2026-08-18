@@ -91,8 +91,8 @@ async def test_rate_limit_fails_closed_in_production_when_redis_is_down(broken_r
     with (
         patch.object(rate_limit_module.settings, "ENVIRONMENT", "production"),
         patch.object(rate_limit_module.settings, "AUTH_RATE_LIMIT_PER_MINUTE", 1),
+        pytest.raises(HTTPException) as exc,
     ):
-        with pytest.raises(HTTPException) as exc:
-            await rate_limit_auth(request)
+        await rate_limit_auth(request)
 
     assert exc.value.status_code == 503

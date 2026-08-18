@@ -12,7 +12,7 @@ from app.domain.entities.ticket_message import TicketMessage
 class TicketAddMessageDTO(BaseModel):
     ticket_id: UUID
     author_user_id: UUID
-    body: str = Field(min_length=1)
+    body: str = Field(min_length=1, max_length=10_000)
     can_manage: bool = False
 
 

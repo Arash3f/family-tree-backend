@@ -51,7 +51,7 @@ class TicketDetailModel(BaseModel):
 
 class TicketCreateRequest(BaseModel):
     title: str = Field(min_length=1, max_length=200)
-    body: str = Field(min_length=1)
+    body: str = Field(min_length=1, max_length=10_000)
     category: TicketCategory
     family_tree_id: UUID | None = None
 
@@ -65,7 +65,7 @@ class TicketGetResponse(TicketDetailModel):
 
 
 class TicketMessageCreateRequest(BaseModel):
-    body: str = Field(min_length=1)
+    body: str = Field(min_length=1, max_length=10_000)
 
 
 class TicketMessageCreateResponse(TicketMessageModel):

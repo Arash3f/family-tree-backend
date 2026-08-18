@@ -1,8 +1,6 @@
 from strawberry.types import Info
 
-from app.application.use_cases.permission.get_permission_list_by_filter_use_case import (
-    GetPermissionListByFilterUseCase,
-)
+from app.application.use_cases.permission import get_permission_list_by_filter_use_case
 from app.domain.shared.permissions import Permissions
 from app.presentation.graphql.auth import require_permission
 from app.presentation.graphql.types.common import (
@@ -48,7 +46,9 @@ async def resolve_permissions(
     info: Info, data: PermissionListInput | None = None
 ) -> PermissionPage:
     await require_permission(info, Permissions.PERMISSION_READ)
-    usecase = GetPermissionListByFilterUseCase(info.context.uow)
+    usecase = get_permission_list_by_filter_use_case.GetPermissionListByFilterUseCase(
+        info.context.uow
+    )
     res = await usecase.execute(
         PermissionApiMapper.to_get_list_permission_dto(_permission_list_request(data))
     )

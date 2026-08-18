@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from app.domain.entities.role import Role
 
 
-class RoleUpdateField(str, Enum):
+class RoleUpdateField(StrEnum):
     NAME = "name"
     PERMISSION_IDS = "permission_ids"
 

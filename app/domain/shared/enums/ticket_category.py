@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class TicketCategory(str, Enum):
+class TicketCategory(StrEnum):
     GENERAL = "general"
     ACCOUNT = "account"
     TECHNICAL = "technical"

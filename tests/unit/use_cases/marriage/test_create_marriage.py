@@ -1,19 +1,21 @@
-from uuid import UUID
-import pytest
 from datetime import date
 from unittest.mock import AsyncMock, MagicMock, patch
-from app.application.use_cases.marriage.create_marriage_use_case import (
-    CreateMarriageUseCase,
-)
+from uuid import UUID
+
+import pytest
+
 from app.application.dto.marriage.marriage_create_dto import (
     MarriageCreateDTO,
     MarriageCreateMapper,
     MarriageCreateResponseDTO,
 )
+from app.application.use_cases.marriage.create_marriage_use_case import (
+    CreateMarriageUseCase,
+)
 from app.domain.entities.marriage import Marriage
 from app.domain.entities.person import Gender
-from app.domain.exceptions.person_exceptions import PersonNotFoundException
 from app.domain.exceptions.marriage_exceptions import UnderageMarriageException
+from app.domain.exceptions.person_exceptions import PersonNotFoundException
 
 
 @pytest.mark.asyncio

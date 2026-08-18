@@ -1,6 +1,7 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID
+
+import pytest
 
 from app.application.dto.user.user_get_dto import UserGetMapper
 from app.application.use_cases.user.get_user_use_case import GetUserUseCase
@@ -38,9 +39,11 @@ async def test_get_user_propagates_exception(mock_uow):
 
     use_case = GetUserUseCase(mock_uow)
 
-    with patch.object(UserGetMapper, "to_response") as mapper_mock:
-        with pytest.raises(UserNotFoundException):
-            await use_case.execute(dto)
+    with (
+        patch.object(UserGetMapper, "to_response") as mapper_mock,
+        pytest.raises(UserNotFoundException),
+    ):
+        await use_case.execute(dto)
 
     mock_uow.users.get_or_raise.assert_awaited_once_with(user_id=UUID(int=1))
     mapper_mock.assert_not_called()

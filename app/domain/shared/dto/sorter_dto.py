@@ -1,10 +1,10 @@
-from enum import Enum
+from enum import StrEnum
 from typing import Generic, TypeVar
 
 from pydantic import BaseModel
 
 
-class SortOrderField(str, Enum):
+class SortOrderField(StrEnum):
     DESC = "desc"
     ASC = "asc"
 

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from app.application.interfaces.unit_of_work import UnitOfWork
@@ -17,7 +17,7 @@ class LogoutUseCase:
                 raise InvalidCredentialsException()
 
             if session.revoked_at is None:
-                await self.uow.sessions.revoke(session_id, datetime.now(timezone.utc))
+                await self.uow.sessions.revoke(session_id, datetime.now(UTC))
                 await self.uow.commit()
 
             return ResultDTO(result="Logged out successfully")
@@ -30,7 +30,7 @@ class LogoutAllUseCase:
     async def execute(self, user_id: UUID) -> ResultDTO:
         async with self.uow:
             count = await self.uow.sessions.revoke_all_for_user(
-                user_id, datetime.now(timezone.utc)
+                user_id, datetime.now(UTC)
             )
             await self.uow.commit()
             return ResultDTO(result=f"Revoked {count} session(s)")

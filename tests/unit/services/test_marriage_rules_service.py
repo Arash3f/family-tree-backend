@@ -1,5 +1,5 @@
-from uuid import UUID
 from datetime import date
+from uuid import UUID
 
 import pytest
 
@@ -10,7 +10,6 @@ from app.domain.exceptions.marriage_exceptions import (
     UnderageMarriageException,
 )
 from app.domain.services.marriage_rules import MarriageRulesService
-
 
 TEST_TREE_ID = UUID(int=1)
 

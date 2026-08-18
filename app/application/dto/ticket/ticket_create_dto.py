@@ -13,7 +13,7 @@ from app.domain.shared.enums.ticket_category import TicketCategory
 
 class TicketCreateDTO(BaseModel):
     title: str = Field(min_length=1, max_length=200)
-    body: str = Field(min_length=1)
+    body: str = Field(min_length=1, max_length=10_000)
     category: TicketCategory
     created_by_user_id: UUID
     family_tree_id: UUID | None = None

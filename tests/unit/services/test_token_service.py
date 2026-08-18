@@ -1,4 +1,5 @@
 from uuid import UUID
+
 import pytest
 from jose import jwt
 from jose.exceptions import JWTError

@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import date, datetime
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from app.domain.exceptions.common_exceptions import UnExpectedIdException
@@ -12,12 +12,12 @@ from app.domain.exceptions.person_exceptions import (
 )
 
 
-class Gender(str, Enum):
+class Gender(StrEnum):
     MALE = "male"
     FEMALE = "female"
 
 
-class ParentRelationshipType(str, Enum):
+class ParentRelationshipType(StrEnum):
     BIOLOGICAL = "biological"
     ADOPTIVE = "adoptive"
     STEP = "step"
