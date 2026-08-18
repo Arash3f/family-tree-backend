@@ -66,7 +66,9 @@ class SQLRoleRepository(RoleRepository):
 
         if filters:
             if filters.name:
-                stmt = stmt.where(RoleModel.name.contains(filters.name, autoescape=True))
+                stmt = stmt.where(
+                    RoleModel.name.contains(filters.name, autoescape=True)
+                )
 
             if filters.id:
                 stmt = stmt.where(RoleModel.id == filters.id)
@@ -155,7 +157,10 @@ class SQLRoleRepository(RoleRepository):
             .group_by(UserModel.role_id)
         )
         result = await self.session.execute(stmt)
-        counts = {role_id: count for role_id, count in result.all()}
+        # dict(result.all()) loses mypy's per-element Row unpacking and needs
+        # a hand-written annotation instead; the comprehension keeps typing
+        # exact for free.
+        counts = {role_id: count for role_id, count in result.all()}  # noqa: C416
 
         for role in roles:
             if role.id is not None:

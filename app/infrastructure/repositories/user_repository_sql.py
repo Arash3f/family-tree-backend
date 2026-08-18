@@ -10,6 +10,7 @@ from sqlalchemy.orm import joinedload
 from app.domain.entities.user import User
 from app.domain.exceptions.user_exceptions import UserNotFoundException
 from app.domain.repositories.user_repository import UserRepository
+from app.domain.shared.account_type import AccountType
 from app.domain.shared.dto.pagination_dto import PaginatedResult
 from app.domain.shared.dto.user_filter_dto import FilterUserQuery, UserSortField
 from app.domain.shared.dto.user_with_detail_dto import UserGetWithDetailResponseDTO
@@ -107,7 +108,9 @@ class SQLUserRepository(UserRepository):
 
         if filters:
             if filters.username:
-                stmt = stmt.where(UserModel.username.contains(filters.username, autoescape=True))
+                stmt = stmt.where(
+                    UserModel.username.contains(filters.username, autoescape=True)
+                )
 
             if filters.id:
                 stmt = stmt.where(UserModel.id == filters.id)
@@ -157,7 +160,10 @@ class SQLUserRepository(UserRepository):
             .group_by(UserSessionModel.user_id)
         )
         rows = await self.session.execute(stmt)
-        last_by_user = {user_id: created_at for user_id, created_at in rows.all()}
+        # dict(rows.all()) loses mypy's per-element Row unpacking and needs a
+        # hand-written annotation instead; the comprehension keeps typing
+        # exact for free.
+        last_by_user = {user_id: created_at for user_id, created_at in rows.all()}  # noqa: C416
 
         for user in users:
             if user.id is not None:
@@ -195,7 +201,7 @@ class SQLUserRepository(UserRepository):
             fullname=model.fullname,
             password_hash=model.password_hash,
             role_id=model.role_id,
-            account_type=model.account_type,
+            account_type=AccountType(model.account_type),
         )
 
     def _to_model(self, entity: User) -> UserModel:
