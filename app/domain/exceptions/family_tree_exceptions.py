@@ -78,7 +78,7 @@ class MarriageTreeMismatchException(AppException):
     def __init__(self, detail: list[str] | None = None):
         super().__init__(
             code=ErrorCode.MARRIAGE_TREE_MISMATCH,
-            status_code=422,
+            status_code=404,
             detail=detail or [],
         )
 
