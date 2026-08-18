@@ -1,14 +1,13 @@
+from unittest.mock import AsyncMock
 from uuid import UUID
 
 import pytest
-from unittest.mock import AsyncMock
 
 from app.application.services.account_limit_service import AccountLimitService
 from app.domain.entities.family_tree import FamilyTree
 from app.domain.entities.user import User
 from app.domain.exceptions.family_tree_exceptions import FreeAccountLimitException
 from app.domain.shared.account_type import AccountType
-
 
 TREE_ID = UUID(int=11)
 OWNER_ID = UUID(int=22)
