@@ -15,7 +15,7 @@ Seed order matches the current domain model:
 
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from typing import NotRequired, TypedDict
 from uuid import UUID
 
@@ -75,7 +75,8 @@ async def get_or_create_sample_tree(uow: UnitOfWork) -> FamilyTree:
     admin = await uow.users.get_by_username(settings.ADMIN_USERNAME)
     if not admin:
         raise RuntimeError(
-            f"Admin user {settings.ADMIN_USERNAME!r} not found; run seed_initial_user first"
+            f"Admin user {settings.ADMIN_USERNAME!r} not found; "
+            "run seed_initial_user first"
         )
 
     for tree in await uow.family_trees.list_for_user(admin.safe_id):
@@ -121,7 +122,7 @@ async def get_or_create_person(
     *,
     tree_id: UUID,
 ) -> Person:
-    now_utc = datetime.now(timezone.utc)
+    now_utc = datetime.now(UTC)
     created_at: datetime | None = None
 
     find_person = await uow.persons.get_by_name(
@@ -135,7 +136,7 @@ async def get_or_create_person(
         person = await uow.persons.create(person=person)
         created_at = now_utc
 
-    neo_repo.upsert_person(
+    await neo_repo.upsert_person(
         PersonUpsertDTO(
             id=person.safe_id,
             tree_id=tree_id,
@@ -149,7 +150,7 @@ async def get_or_create_person(
     )
 
     for parent_id in person.parent_ids:
-        neo_repo.create_parent_relationship(
+        await neo_repo.create_parent_relationship(
             ParentRelationshipDTO(
                 child_id=person.safe_id,
                 parent_id=parent_id,
@@ -178,7 +179,7 @@ async def get_or_create_marriage(
     else:
         marriage = await uow.marriages.create(marriage=marriage)
 
-    neo_repo.create_spouse_relationship(
+    await neo_repo.create_spouse_relationship(
         SpouseRelationshipDTO(
             person_id_1=marriage.spouse_a_id,
             person_id_2=marriage.spouse_b_id,
@@ -379,10 +380,7 @@ def _can_seed_person(
             return False
 
     origin_key = item.get("origin_marriage")
-    if origin_key is not None and origin_key not in marriages_map:
-        return False
-
-    return True
+    return not (origin_key is not None and origin_key not in marriages_map)
 
 
 def _can_seed_marriage(

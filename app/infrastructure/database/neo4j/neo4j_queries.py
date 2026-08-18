@@ -39,6 +39,22 @@ WHERE $tree_id IS NULL OR p.tree_id = $tree_id
 RETURN p LIMIT 1
 """
 
+LIST_PERSON_IDS_IN_TREE: LiteralString = """
+MATCH (p:Person {tree_id: $tree_id})
+RETURN p.id AS id
+"""
+
+LIST_SPOUSE_PAIRS_IN_TREE: LiteralString = """
+MATCH (a:Person {tree_id: $tree_id})-[:SPOUSE_OF]-(b:Person {tree_id: $tree_id})
+WHERE a.id < b.id
+RETURN a.id AS person_id_1, b.id AS person_id_2
+"""
+
+LIST_PARENT_PAIRS_IN_TREE: LiteralString = """
+MATCH (p:Person {tree_id: $tree_id})-[:PARENT_OF]->(c:Person {tree_id: $tree_id})
+RETURN p.id AS parent_id, c.id AS child_id
+"""
+
 # ============================
 # RELATIONSHIPS
 # ============================

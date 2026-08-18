@@ -1,3 +1,4 @@
+import asyncio
 from uuid import UUID
 
 from app.application.interfaces.unit_of_work import UnitOfWork
@@ -31,21 +32,26 @@ class GetClosestRelationshipUseCase:
                     person_id=to_person_id, tree_id=tree_id
                 )
 
-        if not self.family_tree_repo.person_exists(
-            PersonIdDTO(id=from_person_id), tree_id=tree_id
-        ):
+        from_exists, to_exists = await asyncio.gather(
+            self.family_tree_repo.person_exists(
+                PersonIdDTO(id=from_person_id), tree_id=tree_id
+            ),
+            self.family_tree_repo.person_exists(
+                PersonIdDTO(id=to_person_id), tree_id=tree_id
+            ),
+        )
+
+        if not from_exists:
             raise PersonNotFoundException(
                 detail=[f"person {from_person_id} not found in graph"]
             )
 
-        if not self.family_tree_repo.person_exists(
-            PersonIdDTO(id=to_person_id), tree_id=tree_id
-        ):
+        if not to_exists:
             raise PersonNotFoundException(
                 detail=[f"person {to_person_id} not found in graph"]
             )
 
-        return self.family_tree_repo.find_shortest_relationship_path(
+        return await self.family_tree_repo.find_shortest_relationship_path(
             from_person_id=from_person_id,
             to_person_id=to_person_id,
             tree_id=tree_id,

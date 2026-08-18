@@ -5,19 +5,18 @@ import subprocess  # nosec B404
 from pathlib import Path
 
 from celery import shared_task
+from neo4j import GraphDatabase
 from neo4j_backup import Extractor
 
 from app.core.config import settings
-from app.infrastructure.database.neo4j.neo4j import neo4j_client
 
 logger = logging.getLogger(__name__)
 backup_dir = Path(settings.BACKUP_DIR)
 
 
-def backup_postgres():
+def backup_postgres(timestamp: str):
     env = os.environ.copy()
     env["PGPASSWORD"] = settings.POSTGRES_PASSWORD
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
 
     os.makedirs(settings.BACKUP_DIR, exist_ok=True)
 
@@ -54,42 +53,60 @@ def backup_postgres():
     except subprocess.CalledProcessError as e:
         logger.error(f"Backup failed with exit code {e.returncode}: {e.stderr}")
         raise RuntimeError(f"Backup failed: {e.stderr}")
-    except (OSError, IOError) as e:
+    except OSError as e:
         logger.error(f"Unexpected error during backup: {e}")
         raise
 
 
-def backup_neo4j():
-    # Create timestamped backup directory
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+def backup_neo4j(timestamp: str):
+    # Reuses the Postgres backup's timestamp so both dumps carry the same
+    # nominal instant, keeping restores as close to consistent as two
+    # independently-snapshotted databases can get (see M4 in REVIEW.md — a
+    # real point-in-time-consistent snapshot would need write-pausing or WAL
+    # coordination across both stores).
     neo_backup_dir = str(backup_dir) + f"/neo_{timestamp}"
+
+    # neo4j_backup's Extractor only supports the SYNC driver API, so we open
+    # a small dedicated sync driver here rather than reusing the app's
+    # request-path `neo4j_client` (which now wraps an ASYNC driver since the
+    # sync-to-async Neo4j migration). This keeps backup/restore fully
+    # decoupled from the async request-path driver.
+    driver = GraphDatabase.driver(
+        settings.NEO4J_URI,
+        auth=(settings.NEO4J_USER, settings.NEO4J_PASSWORD),
+        max_connection_lifetime=1000,
+        connection_timeout=5,
+    )
 
     try:
         # Extract all data
         extractor = Extractor(
             project_dir=neo_backup_dir,
-            driver=neo4j_client._driver,
+            driver=driver,
             database="neo4j",
             input_yes=True,
             compress=True,
             pull_uniqueness_constraints=True,
         )
 
-        logger.info(f"Starting backup neo4j to {backup_dir}...")
+        logger.info(f"Starting backup neo4j to {neo_backup_dir}...")
         extractor.extract_data()
-        logger.info(f"Backup neo4j completed successfully! Saved to: {backup_dir}")
+        logger.info(f"Backup neo4j completed successfully! Saved to: {neo_backup_dir}")
 
-        return backup_dir
+        return neo_backup_dir
 
     except (OSError, RuntimeError) as e:
         logger.error(f"Unexpected error during backup Neo4j: {e}")
         raise
+    finally:
+        driver.close()
 
 
 @shared_task(name="backup.database", bind=True, max_retries=5, retry_backoff=True)
 def create_postgres_backup(self):
-    backup_file = backup_postgres()
-    backup_neo4j_file = backup_neo4j()
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    backup_file = backup_postgres(timestamp)
+    backup_neo4j_file = backup_neo4j(timestamp)
     return {
         "postgres": f"success to {backup_file}",
         "neo4j": f"success to {backup_neo4j_file}",

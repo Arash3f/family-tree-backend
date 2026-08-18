@@ -1,5 +1,5 @@
+from unittest.mock import AsyncMock
 from uuid import UUID, uuid4
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -16,7 +16,7 @@ TREE_ID = UUID(int=7)
 async def test_get_closest_relationship_success():
     from_id = uuid4()
     to_id = uuid4()
-    repo = MagicMock()
+    repo = AsyncMock()
     repo.person_exists.return_value = True
     repo.find_shortest_relationship_path.return_value = RelationshipPathDTO(
         from_person_id=from_id,
@@ -42,7 +42,7 @@ async def test_get_closest_relationship_success():
 
 @pytest.mark.asyncio
 async def test_get_closest_relationship_missing_person():
-    repo = MagicMock()
+    repo = AsyncMock()
     repo.person_exists.return_value = False
 
     with pytest.raises(PersonNotFoundException):
