@@ -87,19 +87,6 @@ class PersonPhotoService:
         if not await self.storage.exists(key):
             raise MediaObjectNotFoundException(detail=[f"object not found: {key}"])
 
-    def public_url(self, key: str | None) -> str | None:
-        """Same-origin API path the browser can load without reaching MinIO."""
-        if not key:
-            return None
-        return f"/media/{key}"
-
-    async def get_person_photo(self, key: str) -> tuple[bytes, str]:
-        self.validate_person_key(key)
-        stored = await self.storage.get(key)
-        if stored is None:
-            raise MediaObjectNotFoundException(detail=[f"object not found: {key}"])
-        return stored
-
     async def presign(self, key: str | None) -> str | None:
         if not key:
             return None

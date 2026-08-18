@@ -1,6 +1,7 @@
-import pytest
-from uuid import UUID
 from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import UUID
+
+import pytest
 
 from app.application.dto.person.person_get_dto import PersonGetMapper
 from app.application.use_cases.person.get_person_list_by_filter_use_case import (
@@ -21,7 +22,7 @@ async def test_get_person_list_by_filter_success(mock_uow):
     mock_uow.persons.get_list_by_filter = AsyncMock(return_value=page)
 
     photo_service = MagicMock()
-    photo_service.public_url = MagicMock(return_value=None)
+    photo_service.presign = AsyncMock(return_value=None)
     mapped = MagicMock()
 
     with patch.object(PersonGetMapper, "to_response", return_value=mapped) as mapper:
@@ -34,4 +35,4 @@ async def test_get_person_list_by_filter_success(mock_uow):
     assert result.page_size == 10
     mock_uow.persons.get_list_by_filter.assert_awaited_once_with(query=query)
     mapper.assert_called_once_with(person, photo_url=None)
-    photo_service.public_url.assert_called_once_with(None)
+    photo_service.presign.assert_awaited_once_with(None)

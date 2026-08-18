@@ -1,10 +1,8 @@
-from datetime import date
-from uuid import UUID
+from datetime import date, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import UUID
 
 import pytest
-
-from datetime import timedelta
 
 from app.application.dto.person.person_update_dto import PersonUpdateMapper
 from app.application.use_cases.person.update_person_use_case import UpdatePersonUseCase
@@ -15,8 +13,8 @@ from app.domain.exceptions.person_exceptions import InvalidBirthDateException
 def _photo_service():
     service = MagicMock()
     service.ensure_object_exists = AsyncMock()
-    service.public_url = MagicMock(
-        side_effect=lambda key: f"/media/{key}" if key else None
+    service.presign = AsyncMock(
+        side_effect=lambda key: f"https://minio.example/{key}" if key else None
     )
     service.delete_quiet = AsyncMock()
     return service

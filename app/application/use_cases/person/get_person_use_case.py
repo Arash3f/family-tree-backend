@@ -19,5 +19,5 @@ class GetPersonUseCase:
             person = await self.uow.persons.get_in_tree_or_raise(
                 person_id=dto.id, tree_id=tree_id
             )
-            photo_url = self.photo_service.public_url(person.photo_object_key)
+            photo_url = await self.photo_service.presign(person.photo_object_key)
             return PersonGetMapper.to_response(person=person, photo_url=photo_url)

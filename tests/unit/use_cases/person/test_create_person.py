@@ -1,8 +1,9 @@
-from uuid import UUID
 from datetime import date
+from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import UUID
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+
 from app.application.dto.person.person_create_dto import (
     ParentLinkDTO,
     PersonCreateMapper,
@@ -14,8 +15,8 @@ from app.domain.entities.person import Gender, ParentRelationshipType
 def _photo_service():
     service = MagicMock()
     service.ensure_object_exists = AsyncMock()
-    service.public_url = MagicMock(
-        side_effect=lambda key: f"/media/{key}" if key else None
+    service.presign = AsyncMock(
+        side_effect=lambda key: f"https://minio.example/{key}" if key else None
     )
     return service
 
@@ -184,6 +185,8 @@ async def test_create_person_with_photo(mock_uow):
         await use_case.execute(dto, tree_id=UUID(int=7))
 
     photo_service.ensure_object_exists.assert_awaited_once_with(key)
-    mapper_mock.assert_called_once_with(created_person, photo_url=f"/media/{key}")
+    mapper_mock.assert_called_once_with(
+        created_person, photo_url=f"https://minio.example/{key}"
+    )
     created_entity = mock_uow.persons.create.await_args.args[0]
     assert created_entity.photo_object_key == key

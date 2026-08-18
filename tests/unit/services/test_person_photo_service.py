@@ -1,7 +1,7 @@
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock
 
 from app.application.services.person_photo_service import (
     MAX_UPLOAD_BYTES,
@@ -14,7 +14,6 @@ from app.domain.exceptions.media_exceptions import (
     MediaObjectNotFoundException,
     MediaTooLargeException,
 )
-
 
 JPEG_BYTES = b"\xff\xd8\xff\xe0" + b"\x00" * 16
 PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"\x00" * 16
@@ -127,41 +126,20 @@ async def test_upload_person_photo_rejects_disguised_payload():
     storage.upload.assert_not_awaited()
 
 
-def test_public_url_builds_api_path():
+@pytest.mark.asyncio
+async def test_presign_returns_none_for_missing_key():
     service = _service()
-    key = f"persons/{uuid4()}.jpg"
-    assert service.public_url(key) == f"/media/{key}"
-    assert service.public_url(None) is None
+    assert await service.presign(None) is None
 
 
 @pytest.mark.asyncio
-async def test_get_person_photo_returns_bytes():
+async def test_presign_delegates_to_storage():
     storage = MagicMock()
-    storage.get = AsyncMock(return_value=(JPEG_BYTES, "image/jpeg"))
+    storage.presign_get = AsyncMock(return_value="https://minio.example/signed-url")
     service = _service(storage)
     key = f"persons/{uuid4()}.jpg"
 
-    body, content_type = await service.get_person_photo(key)
+    url = await service.presign(key)
 
-    assert body == JPEG_BYTES
-    assert content_type == "image/jpeg"
-    storage.get.assert_awaited_once_with(key)
-
-
-@pytest.mark.asyncio
-async def test_get_person_photo_rejects_invalid_key():
-    storage = MagicMock()
-    storage.get = AsyncMock()
-    service = _service(storage)
-    with pytest.raises(InvalidMediaObjectKeyException):
-        await service.get_person_photo("../secret.jpg")
-    storage.get.assert_not_awaited()
-
-
-@pytest.mark.asyncio
-async def test_get_person_photo_raises_when_missing():
-    storage = MagicMock()
-    storage.get = AsyncMock(return_value=None)
-    service = _service(storage)
-    with pytest.raises(MediaObjectNotFoundException):
-        await service.get_person_photo(f"persons/{uuid4()}.png")
+    assert url == "https://minio.example/signed-url"
+    storage.presign_get.assert_awaited_once_with(key, 60)

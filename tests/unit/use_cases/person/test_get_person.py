@@ -1,6 +1,7 @@
-from uuid import UUID
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import UUID
+
+import pytest
 
 from app.application.dto.person.person_get_dto import PersonGetMapper
 from app.application.use_cases.person.get_person_use_case import GetPersonUseCase
@@ -11,9 +12,6 @@ from app.domain.shared.dto.common_dto import IdDTO
 def _photo_service():
     service = MagicMock()
     service.presign = AsyncMock(return_value=None)
-    service.public_url = MagicMock(
-        side_effect=lambda key: f"/media/{key}" if key else None
-    )
     return service
 
 
@@ -54,9 +52,11 @@ async def test_get_person_propagates_exception(mock_uow):
 
     use_case = GetPersonUseCase(mock_uow, _photo_service())
 
-    with patch.object(PersonGetMapper, "to_response") as mapper_mock:
-        with pytest.raises(PersonNotFoundException):
-            await use_case.execute(dto, tree_id=UUID(int=7))
+    with (
+        patch.object(PersonGetMapper, "to_response") as mapper_mock,
+        pytest.raises(PersonNotFoundException),
+    ):
+        await use_case.execute(dto, tree_id=UUID(int=7))
 
     mock_uow.persons.get_in_tree_or_raise.assert_awaited_once_with(
         person_id=UUID(int=1), tree_id=UUID(int=7)
