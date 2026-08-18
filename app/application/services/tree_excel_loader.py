@@ -3,11 +3,6 @@ from uuid import UUID
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.entities.marriage import Marriage
 from app.domain.entities.person import Person
-from app.domain.shared.dto.marriage_filter_dto import (
-    FilterMarriageDTO,
-    MarriageFilterDataDTO,
-    MarriageSortField,
-)
 from app.domain.shared.dto.pagination_dto import PaginationParams
 from app.domain.shared.dto.person_filter_dto import (
     FilterPersonQuery,

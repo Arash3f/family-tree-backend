@@ -124,6 +124,9 @@ class ImportTreeExcelUseCase:
 
             _fill_duplicate_refs(person_ref_to_id, match.person_duplicate_of)
 
+            persons_by_id = {person.safe_id: person for person in existing_persons}
+            persons_by_id.update((person.safe_id, person) for person in created_persons)
+
             for marriage_row in marriages_to_create:
                 spouse_a_id = person_ref_to_id.get(marriage_row.spouse_a_ref)
                 spouse_b_id = person_ref_to_id.get(marriage_row.spouse_b_ref)
@@ -137,10 +140,14 @@ class ImportTreeExcelUseCase:
                         ]
                     )
 
-                spouse_a = await self.uow.persons.get_in_tree_or_raise(
+                spouse_a = persons_by_id.get(
+                    spouse_a_id
+                ) or await self.uow.persons.get_in_tree_or_raise(
                     person_id=spouse_a_id, tree_id=tree_id
                 )
-                spouse_b = await self.uow.persons.get_in_tree_or_raise(
+                spouse_b = persons_by_id.get(
+                    spouse_b_id
+                ) or await self.uow.persons.get_in_tree_or_raise(
                     person_id=spouse_b_id, tree_id=tree_id
                 )
                 self.marriage_rules_service.validate_marriage(
@@ -163,14 +170,15 @@ class ImportTreeExcelUseCase:
 
             _fill_duplicate_refs(marriage_ref_to_id, match.marriage_duplicate_of)
 
-            created_ids = {person.safe_id for person in created_persons}
+            created_by_id = {person.safe_id: person for person in created_persons}
+            marriage_cache = {
+                marriage.safe_id: marriage for marriage in created_marriages
+            }
             for row in parsed.persons:
                 person_id = person_ref_to_id.get(row.ref)
-                if person_id is None or person_id not in created_ids:
+                if person_id is None or person_id not in created_by_id:
                     continue
-                person = await self.uow.persons.get_in_tree_or_raise(
-                    person_id=person_id, tree_id=tree_id
-                )
+                person = created_by_id[person_id]
 
                 parents: list[ParentLink] = []
                 for parent_ref, rel_type in (
@@ -211,10 +219,20 @@ class ImportTreeExcelUseCase:
                 person.marriage_id = marriage_id
 
                 if person.marriage_id is not None:
-                    marriage = await self.uow.marriages.get_in_tree_or_raise(
-                        marriage_id=person.marriage_id, tree_id=tree_id
-                    )
-                    spouse_ids = {marriage.spouse_a_id, marriage.spouse_b_id}
+                    marriage_for_person = marriage_cache.get(person.marriage_id)
+                    if marriage_for_person is None:
+                        marriage_for_person = (
+                            await self.uow.marriages.get_in_tree_or_raise(
+                                marriage_id=person.marriage_id, tree_id=tree_id
+                            )
+                        )
+                        marriage_cache[marriage_for_person.safe_id] = (
+                            marriage_for_person
+                        )
+                    spouse_ids = {
+                        marriage_for_person.spouse_a_id,
+                        marriage_for_person.spouse_b_id,
+                    }
                     for link in person.parents:
                         if (
                             link.relationship_type is ParentRelationshipType.BIOLOGICAL
@@ -229,10 +247,9 @@ class ImportTreeExcelUseCase:
 
                 person.validate()
                 updated = await self.uow.persons.update(person=person)
-                for index, created in enumerate(created_persons):
-                    if created.safe_id == updated.safe_id:
-                        created_persons[index] = updated
-                        break
+                created_by_id[updated.safe_id] = updated
+
+            created_persons = list(created_by_id.values())
 
             if not created_persons and not created_marriages:
                 raise TreeExcelEmptyException()
@@ -270,9 +287,7 @@ def _should_create(
 ) -> bool:
     if already_exists or ref in duplicate_of:
         return False
-    if selected is not None and ref not in selected:
-        return False
-    return True
+    return not (selected is not None and ref not in selected)
 
 
 def _fill_duplicate_refs(
