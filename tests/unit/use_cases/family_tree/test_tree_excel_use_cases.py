@@ -4,15 +4,19 @@ from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID, uuid4
 
 import pytest
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 
 from app.application.services.tree_excel_service import MARRIAGE_HEADERS, PERSON_HEADERS
+from app.application.use_cases.family_tree.export_tree_excel_use_case import (
+    ExportTreeExcelUseCase,
+)
 from app.application.use_cases.family_tree.import_tree_excel_use_case import (
     ImportTreeExcelUseCase,
 )
 from app.application.use_cases.family_tree.preview_tree_excel_use_case import (
     PreviewTreeExcelUseCase,
 )
+from app.domain.entities.family_tree import FamilyTree
 from app.domain.entities.person import Gender, Person
 from app.domain.exceptions.family_tree_exceptions import TreeExcelEmptyException
 from app.domain.services.marriage_rules import MarriageRulesService
@@ -176,3 +180,24 @@ async def test_import_selected_existing_only_is_empty(mock_uow):
             marriage_refs=set(),
         )
     mock_uow.persons.create.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_export_produces_a_readable_workbook(mock_uow):
+    """Regression test: export used to call the nonexistent
+    ``AbstractEventLoop.get_executor()`` and pass keyword-only args
+    positionally into ``run_in_executor``, so every export crashed before
+    producing a single byte."""
+    tree = FamilyTree(id=TREE_ID, name="Sample Tree", owner_user_id=uuid4())
+    mock_uow.family_trees.get_or_raise = AsyncMock(return_value=tree)
+    mock_uow.persons.get_list_by_filter = AsyncMock(
+        return_value=_page([_existing_ali()])
+    )
+    mock_uow.marriages.get_list_by_filter = AsyncMock(return_value=_page([]))
+
+    usecase = ExportTreeExcelUseCase(mock_uow)
+    result = await usecase.execute(tree_id=TREE_ID, lang="en")
+
+    assert result.filename.endswith(".xlsx")
+    workbook = load_workbook(BytesIO(result.content))
+    assert "Persons" in workbook.sheetnames

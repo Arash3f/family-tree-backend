@@ -1,4 +1,5 @@
 import asyncio
+from functools import partial
 from uuid import UUID
 
 from app.application.interfaces.unit_of_work import UnitOfWork
@@ -31,13 +32,14 @@ class ExportTreeExcelUseCase:
             or "family-tree"
         )
 
-        executor = asyncio.get_event_loop().get_executor()
         excel_content = await asyncio.get_event_loop().run_in_executor(
-            executor,
-            build_export_workbook,
-            persons,
-            marriages,
-            locale,
+            None,
+            partial(
+                build_export_workbook,
+                persons=persons,
+                marriages=marriages,
+                lang=locale,
+            ),
         )
 
         return ExcelFileDTO(
