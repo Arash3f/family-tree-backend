@@ -1,5 +1,5 @@
 from collections.abc import Mapping
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 from uuid import UUID
@@ -81,7 +81,9 @@ class SQLPersonRepository(PersonRepository):
                 stmt = stmt.where(PersonModel.tree_id == filters.tree_id)
 
             if filters.name:
-                stmt = stmt.where(PersonModel.name.contains(filters.name, autoescape=True))
+                stmt = stmt.where(
+                    PersonModel.name.contains(filters.name, autoescape=True)
+                )
 
             if filters.id:
                 stmt = stmt.where(PersonModel.id == filters.id)
@@ -156,6 +158,14 @@ class SQLPersonRepository(PersonRepository):
         result = await self.session.execute(stmt)
         return int(result.scalar_one())
 
+    async def get_by_tree_id(self, tree_id: UUID) -> list[Person]:
+        stmt = self._active_person_stmt().where(PersonModel.tree_id == tree_id)
+
+        result = await self.session.execute(stmt)
+        models = result.scalars().unique().all()
+
+        return [self._to_entity(m) for m in models]
+
     async def update(self, person: Person) -> Person:
         stmt = (
             select(PersonModel)
@@ -211,7 +221,7 @@ class SQLPersonRepository(PersonRepository):
         stmt = (
             update(PersonModel)
             .where(PersonModel.id == person_id, PersonModel.deleted_at.is_(None))
-            .values(deleted_at=datetime.now(timezone.utc))
+            .values(deleted_at=datetime.now(UTC))
         )
         await self.session.execute(stmt)
 

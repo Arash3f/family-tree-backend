@@ -19,6 +19,9 @@ class TreeRepository(ABC):
     async def list_for_user(self, user_id: UUID) -> list[FamilyTree]: ...
 
     @abstractmethod
+    async def list_all(self) -> list[FamilyTree]: ...
+
+    @abstractmethod
     async def count_owned_by_user(self, user_id: UUID) -> int: ...
 
     @abstractmethod
@@ -43,6 +46,11 @@ class TreeMembershipRepository(ABC):
 
     @abstractmethod
     async def list_by_tree(self, tree_id: UUID) -> list[TreeMembership]: ...
+
+    @abstractmethod
+    async def list_by_tree_with_usernames(
+        self, tree_id: UUID
+    ) -> list[tuple[TreeMembership, str | None]]: ...
 
     @abstractmethod
     async def count_owners(self, tree_id: UUID) -> int: ...

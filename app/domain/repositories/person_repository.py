@@ -51,6 +51,9 @@ class PersonRepository(ABC):
     async def count_in_tree(self, tree_id: UUID) -> int: ...
 
     @abstractmethod
+    async def get_by_tree_id(self, tree_id: UUID) -> list[Person]: ...
+
+    @abstractmethod
     async def update(self, person: Person) -> Person: ...
 
     @abstractmethod
