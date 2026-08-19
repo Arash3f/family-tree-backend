@@ -143,6 +143,7 @@ async def test_list_tickets_scopes_to_owner(mock_uow):
         return_value=PaginatedResult(items=[ticket], total=1, page=1, page_size=30)
     )
     mock_uow.users.ids_having_permission = AsyncMock(return_value=set())
+    mock_uow.tree_memberships.list_by_user = AsyncMock(return_value=[])
 
     query = FilterTicketQuery(
         pagination=PaginationParams(page=1, page_size=30, offset=0),
@@ -158,7 +159,8 @@ async def test_list_tickets_scopes_to_owner(mock_uow):
     assert result.total == 1
     assert result.items[0].created_by_can_manage is False
     called_query = mock_uow.tickets.get_list_by_filter.await_args.kwargs["query"]
-    assert called_query.filters.created_by_user_id == user_id
+    assert called_query.access_scope.owner_user_id == user_id
+    assert called_query.access_scope.manageable_tree_ids == []
 
 
 @pytest.mark.asyncio
@@ -263,11 +265,42 @@ async def test_update_ticket_status(mock_uow):
     mock_uow.users.ids_having_permission = AsyncMock(return_value=set())
 
     result = await UpdateTicketStatusUseCase(mock_uow).execute(
-        TicketUpdateStatusDTO(ticket_id=ticket_id, status=TicketStatus.IN_PROGRESS)
+        TicketUpdateStatusDTO(
+            ticket_id=ticket_id,
+            status=TicketStatus.IN_PROGRESS,
+            current_user_id=user_id,
+            can_manage=True,
+        )
     )
     assert result.status == TicketStatus.IN_PROGRESS
     assert result.created_by_can_manage is False
     mock_uow.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_update_ticket_status_access_denied(mock_uow):
+    ticket_id = UUID(int=20)
+    owner_id = UUID(int=10)
+    other_id = UUID(int=11)
+    ticket = Ticket(
+        id=ticket_id,
+        title="Help",
+        status=TicketStatus.OPEN,
+        category=TicketCategory.OTHER,
+        created_by_user_id=owner_id,
+    )
+    mock_uow.tickets.get_or_raise = AsyncMock(return_value=ticket)
+    mock_uow.tree_memberships.get = AsyncMock(return_value=None)
+
+    with pytest.raises(TicketAccessDeniedException):
+        await UpdateTicketStatusUseCase(mock_uow).execute(
+            TicketUpdateStatusDTO(
+                ticket_id=ticket_id,
+                status=TicketStatus.IN_PROGRESS,
+                current_user_id=other_id,
+                can_manage=False,
+            )
+        )
 
 
 @pytest.mark.asyncio
