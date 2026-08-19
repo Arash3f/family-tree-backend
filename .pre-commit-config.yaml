@@ -58,7 +58,7 @@ repos:
           - strawberry-graphql>=0.323.0,<0.324.0
           - pydantic>=2
           - pydantic-settings
-        args: ["."]
+        args: ["--exclude", "^generated/", "."]
         pass_filenames: false
         stages: [pre-push]
   - repo: local
