@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -75,6 +75,15 @@ class SQLTicketRepository(TicketRepository):
                 stmt = stmt.where(
                     TicketModel.created_by_user_id == filters.created_by_user_id
                 )
+
+        if query.access_scope is not None:
+            scope = query.access_scope
+            conditions = [TicketModel.created_by_user_id == scope.owner_user_id]
+            if scope.manageable_tree_ids:
+                conditions.append(
+                    TicketModel.family_tree_id.in_(scope.manageable_tree_ids)
+                )
+            stmt = stmt.where(or_(*conditions))
 
         SORTABLE_COLUMNS: Mapping[Enum, Any] = {
             TicketSortField.ID: TicketModel.id,

@@ -20,10 +20,7 @@ from app.presentation.dependencies import (
     get_request_uow,
 )
 from app.presentation.rest.dependencies.auth_dependencies import get_current_user
-from app.presentation.rest.dependencies.permission_guard import (
-    RequireAnyPermission,
-    RequirePermission,
-)
+from app.presentation.rest.dependencies.permission_guard import RequirePermission
 from app.presentation.rest.schemas.dto.common import PaginatedResponse
 from app.presentation.rest.schemas.dto.ticket_schema import (
     FilterTicketRequest,
@@ -66,7 +63,6 @@ async def create_ticket(
 @router.post(
     "/list",
     response_model=PaginatedResponse[TicketSummaryModel],
-    dependencies=[Depends(RequirePermission(Permissions.TICKET_READ))],
 )
 async def list_tickets(
     data: FilterTicketRequest,
@@ -85,7 +81,6 @@ async def list_tickets(
 @router.get(
     "/{ticket_id}",
     response_model=TicketGetResponse,
-    dependencies=[Depends(RequirePermission(Permissions.TICKET_READ))],
 )
 async def get_ticket(
     ticket_id: UUID,
@@ -104,14 +99,6 @@ async def get_ticket(
 @router.post(
     "/{ticket_id}/messages",
     response_model=TicketMessageCreateResponse,
-    dependencies=[
-        Depends(
-            RequireAnyPermission(
-                Permissions.TICKET_REPLY,
-                Permissions.TICKET_CREATE,
-            )
-        )
-    ],
     status_code=201,
 )
 async def add_ticket_message(
@@ -134,13 +121,19 @@ async def add_ticket_message(
 @router.patch(
     "/{ticket_id}/status",
     response_model=TicketUpdateStatusResponse,
-    dependencies=[Depends(RequirePermission(Permissions.TICKET_REPLY))],
 )
 async def update_ticket_status(
     ticket_id: UUID,
     data: TicketUpdateStatusRequest,
+    current_user=Depends(get_current_user),
     uow=Depends(get_request_uow),
+    auth_service: AuthorizationService = Depends(get_authorization_service_request),
 ) -> TicketUpdateStatusResponse:
+    can_manage = await _user_can_manage(current_user.safe_id, auth_service)
     usecase = UpdateTicketStatusUseCase(uow)
-    res = await usecase.execute(TicketApiMapper.to_update_status_dto(ticket_id, data))
+    res = await usecase.execute(
+        TicketApiMapper.to_update_status_dto(
+            ticket_id, data, current_user.safe_id, can_manage
+        )
+    )
     return TicketApiMapper.from_update_status_dto(res)

@@ -27,7 +27,19 @@ class TicketFilterDTO(BaseModel):
     created_by_user_id: UUID | None = None
 
 
+class TicketAccessScopeDTO(BaseModel):
+    """Restricts results to tickets the user owns or manages via tree access.
+
+    Applied as (created_by_user_id == owner_user_id) OR (family_tree_id IN
+    manageable_tree_ids), independent of and in addition to `TicketFilterDTO`.
+    """
+
+    owner_user_id: UUID
+    manageable_tree_ids: list[UUID] = []
+
+
 class FilterTicketQuery(BaseModel):
     pagination: PaginationParams
     filters: TicketFilterDTO | None = None
+    access_scope: TicketAccessScopeDTO | None = None
     sort: SortParams[TicketSortField]

@@ -14,7 +14,7 @@ from app.application.use_cases.ticket.update_ticket_status_use_case import (
     UpdateTicketStatusUseCase,
 )
 from app.domain.shared.permissions import Permissions
-from app.presentation.graphql.auth import require_any_permission, require_permission
+from app.presentation.graphql.auth import get_current_user, require_permission
 from app.presentation.graphql.types.common import pagination_dict, to_sort_order
 from app.presentation.graphql.types.ticket import (
     TicketCreateInput,
@@ -94,7 +94,7 @@ async def resolve_create_ticket(info: Info, data: TicketCreateInput) -> TicketTy
 
 
 async def resolve_ticket(info: Info, ticket_id: UUID) -> TicketType:
-    user = await require_permission(info, Permissions.TICKET_READ)
+    user = await get_current_user(info)
     can_manage = await _can_manage(info, user.safe_id)
     usecase = GetTicketUseCase(info.context.uow)
     res = await usecase.execute(
@@ -107,7 +107,7 @@ async def resolve_ticket(info: Info, ticket_id: UUID) -> TicketType:
 async def resolve_tickets(
     info: Info, data: TicketListInput | None = None
 ) -> TicketPage:
-    user = await require_permission(info, Permissions.TICKET_READ)
+    user = await get_current_user(info)
     can_manage = await _can_manage(info, user.safe_id)
     usecase = GetTicketListByFilterUseCase(info.context.uow)
     res = await usecase.execute(
@@ -127,11 +127,7 @@ async def resolve_tickets(
 async def resolve_add_ticket_message(
     info: Info, ticket_id: UUID, data: TicketMessageCreateInput
 ) -> TicketMessageType:
-    user = await require_any_permission(
-        info,
-        Permissions.TICKET_REPLY,
-        Permissions.TICKET_CREATE,
-    )
+    user = await get_current_user(info)
     can_manage = await _can_manage(info, user.safe_id)
     usecase = AddTicketMessageUseCase(info.context.uow)
     res = await usecase.execute(
@@ -149,12 +145,15 @@ async def resolve_add_ticket_message(
 async def resolve_update_ticket_status(
     info: Info, ticket_id: UUID, data: TicketUpdateStatusInput
 ) -> TicketSummaryType:
-    await require_permission(info, Permissions.TICKET_REPLY)
+    user = await get_current_user(info)
+    can_manage = await _can_manage(info, user.safe_id)
     usecase = UpdateTicketStatusUseCase(info.context.uow)
     res = await usecase.execute(
         TicketApiMapper.to_update_status_dto(
             ticket_id,
             TicketUpdateStatusRequest(status=to_domain_ticket_status(data.status)),
+            user.safe_id,
+            can_manage,
         )
     )
     mapped = TicketApiMapper.from_update_status_dto(res)

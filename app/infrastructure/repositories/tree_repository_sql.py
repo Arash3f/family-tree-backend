@@ -138,6 +138,14 @@ class SQLTreeMembershipRepository(TreeMembershipRepository):
         result = await self.session.execute(stmt)
         return [(self._to_entity(m), username) for m, username in result.all()]
 
+    async def list_by_user(self, user_id: UUID) -> list[TreeMembership]:
+        stmt = select(TreeMembershipModel).where(
+            TreeMembershipModel.user_id == user_id,
+            TreeMembershipModel.deleted_at.is_(None),
+        )
+        result = await self.session.execute(stmt)
+        return [self._to_entity(m) for m in result.scalars().all()]
+
     async def count_owners(self, tree_id: UUID) -> int:
         stmt = (
             select(func.count())

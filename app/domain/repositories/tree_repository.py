@@ -53,6 +53,9 @@ class TreeMembershipRepository(ABC):
     ) -> list[tuple[TreeMembership, str | None]]: ...
 
     @abstractmethod
+    async def list_by_user(self, user_id: UUID) -> list[TreeMembership]: ...
+
+    @abstractmethod
     async def count_owners(self, tree_id: UUID) -> int: ...
 
     @abstractmethod

@@ -13,6 +13,8 @@ from app.domain.shared.enums.ticket_status import TicketStatus
 class TicketUpdateStatusDTO(BaseModel):
     ticket_id: UUID
     status: TicketStatus
+    current_user_id: UUID
+    can_manage: bool = False
 
 
 class TicketUpdateStatusMapper(BaseModel):

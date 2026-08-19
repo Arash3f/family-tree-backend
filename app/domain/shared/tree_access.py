@@ -18,6 +18,7 @@ class TreeAccessPermissions:
     VIEW_BIRTH_DATE = "view_birth_date"
     VIEW_MARRIAGE_DATE = "view_marriage_date"
     VIEW_PHOTO = "view_photo"
+    TICKET_MANAGE = "ticket_manage"
 
     ALL: tuple[str, ...] = (
         VIEW,
@@ -34,6 +35,7 @@ class TreeAccessPermissions:
         VIEW_BIRTH_DATE,
         VIEW_MARRIAGE_DATE,
         VIEW_PHOTO,
+        TICKET_MANAGE,
     )
 
     # Selecting a capability also requires these.
@@ -53,6 +55,7 @@ class TreeAccessPermissions:
         VIEW_BIRTH_DATE: (VIEW,),
         VIEW_MARRIAGE_DATE: (VIEW,),
         VIEW_PHOTO: (VIEW,),
+        TICKET_MANAGE: (VIEW,),
     }
 
     LABELS_FA: dict[str, str] = {
@@ -70,6 +73,7 @@ class TreeAccessPermissions:
         VIEW_BIRTH_DATE: "دیدن تاریخ تولد",
         VIEW_MARRIAGE_DATE: "دیدن تاریخ ازدواج",
         VIEW_PHOTO: "دیدن عکس",
+        TICKET_MANAGE: "مدیریت تیکت‌ها",
     }
 
     LABELS_EN: dict[str, str] = {
@@ -87,6 +91,7 @@ class TreeAccessPermissions:
         VIEW_BIRTH_DATE: "View birth dates",
         VIEW_MARRIAGE_DATE: "View marriage dates",
         VIEW_PHOTO: "View photos",
+        TICKET_MANAGE: "Manage tickets",
     }
 
     @classmethod

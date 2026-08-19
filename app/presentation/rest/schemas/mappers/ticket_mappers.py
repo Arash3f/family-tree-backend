@@ -109,9 +109,17 @@ class TicketApiMapper:
 
     @staticmethod
     def to_update_status_dto(
-        ticket_id: UUID, request: TicketUpdateStatusRequest
+        ticket_id: UUID,
+        request: TicketUpdateStatusRequest,
+        current_user_id: UUID,
+        can_manage: bool,
     ) -> TicketUpdateStatusDTO:
-        return TicketUpdateStatusDTO(ticket_id=ticket_id, status=request.status)
+        return TicketUpdateStatusDTO(
+            ticket_id=ticket_id,
+            status=request.status,
+            current_user_id=current_user_id,
+            can_manage=can_manage,
+        )
 
     @staticmethod
     def from_update_status_dto(
