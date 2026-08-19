@@ -17,6 +17,7 @@ from app.infrastructure.services.security.password_hasher_impl import (
 )
 from app.infrastructure.storage.minio_bootstrap import ensure_minio_buckets
 from app.infrastructure.utils.logging import configure_logging
+from app.presentation.dependencies import get_uow
 from app.presentation.graphql.schema import graphql_router
 from app.presentation.rest.errors.handlers import app_exception_handler
 from app.presentation.rest.routers.auth_router import router as auth_router
@@ -33,7 +34,6 @@ from app.presentation.rest.routers.role_router import router as role_router
 from app.presentation.rest.routers.ticket_router import router as ticket_router
 from app.presentation.rest.routers.tree_excel_router import router as tree_excel_router
 from app.presentation.rest.routers.user_router import router as user_router
-from app.presentation.rest.utils.dependencies import get_uow
 from app.presentation.rest.utils.security_headers import SecurityHeadersMiddleware
 from app.presentation.rest.utils.trace_id import TraceIDMiddleware
 from app.utils.app_exception import AppException
@@ -76,9 +76,6 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_version="3.0.3",
     openapi_url="/openapi.json",
-    # Avoid 307 /tickets → /tickets/ with an absolute upstream Location
-    # (Next.js /backend proxy strips trailing slashes; browsers then drop
-    # Authorization).
     redirect_slashes=False,
 )
 
@@ -112,7 +109,7 @@ def custom_openapi():
     return app.openapi_schema
 
 
-app.openapi = custom_openapi  # type: ignore[method-assign]
+app.openapi = custom_openapi
 
 
 @app.get("/api_docs", include_in_schema=False)

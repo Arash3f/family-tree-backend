@@ -15,6 +15,10 @@ from app.application.use_cases.ticket.update_ticket_status_use_case import (
     UpdateTicketStatusUseCase,
 )
 from app.domain.shared.permissions import Permissions
+from app.presentation.dependencies import (
+    get_authorization_service_request,
+    get_request_uow,
+)
 from app.presentation.rest.dependencies.auth_dependencies import get_current_user
 from app.presentation.rest.dependencies.permission_guard import (
     RequireAnyPermission,
@@ -33,10 +37,6 @@ from app.presentation.rest.schemas.dto.ticket_schema import (
     TicketUpdateStatusResponse,
 )
 from app.presentation.rest.schemas.mappers.ticket_mappers import TicketApiMapper
-from app.presentation.rest.utils.dependencies import (
-    get_authorization_service_request,
-    get_request_uow,
-)
 
 router = APIRouter(prefix="/tickets", tags=["Tickets"])
 

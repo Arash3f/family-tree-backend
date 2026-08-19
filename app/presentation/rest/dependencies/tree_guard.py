@@ -7,8 +7,8 @@ from app.application.services.tree_access_service import TreeAccessService
 from app.domain.entities.family_tree import TreeMembership
 from app.domain.entities.user import User
 from app.domain.shared.tree_access import TreeAccessPermissions
+from app.presentation.dependencies import get_request_uow
 from app.presentation.rest.dependencies.auth_dependencies import get_current_user
-from app.presentation.rest.utils.dependencies import get_request_uow
 
 
 async def require_tree_member(

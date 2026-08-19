@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, File, UploadFile
 
 from app.application.services.person_photo_service import PersonPhotoService
 from app.application.use_cases.media.upload_media_use_case import UploadMediaUseCase
+from app.presentation.dependencies import get_person_photo_service
 from app.presentation.rest.dependencies.tree_guard import require_tree_upload_photo
 from app.presentation.rest.schemas.dto.media_schema import MediaUploadResponse
-from app.presentation.rest.utils.dependencies import get_person_photo_service
 
 upload_router = APIRouter(prefix="/media", tags=["Media"])
 

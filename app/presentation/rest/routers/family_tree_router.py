@@ -27,6 +27,7 @@ from app.application.use_cases.family_tree.update_family_tree_use_case import (
 )
 from app.domain.entities.user import User
 from app.domain.shared.permissions import Permissions
+from app.presentation.dependencies import get_request_uow
 from app.presentation.rest.dependencies.auth_dependencies import get_current_user
 from app.presentation.rest.dependencies.permission_guard import RequirePermission
 from app.presentation.rest.dependencies.tree_guard import (
@@ -42,7 +43,6 @@ from app.presentation.rest.schemas.dto.family_tree_schema import (
     TreeMembershipResponse,
     TreeMemberUpdateRequest,
 )
-from app.presentation.rest.utils.dependencies import get_request_uow
 
 router = APIRouter(prefix="/family-trees", tags=["Family Trees"])
 

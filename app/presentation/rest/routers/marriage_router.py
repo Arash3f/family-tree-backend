@@ -17,6 +17,10 @@ from app.application.use_cases.marriage.update_marriage_use_case import (
     UpdateMarriageUseCase,
 )
 from app.domain.entities.family_tree import TreeMembership
+from app.presentation.dependencies import (
+    get_marriage_rules_service,
+    get_request_uow,
+)
 from app.presentation.rest.dependencies.tree_guard import (
     require_tree_marriage_create,
     require_tree_marriage_delete,
@@ -41,10 +45,6 @@ from app.presentation.rest.schemas.dto.marriage_schema import (
 )
 from app.presentation.rest.schemas.mappers.common_mappers import CommonApiMapper
 from app.presentation.rest.schemas.mappers.marriage_mappers import MarriageApiMapper
-from app.presentation.rest.utils.dependencies import (
-    get_marriage_rules_service,
-    get_request_uow,
-)
 from app.presentation.tree_data_access import redact_marriage_data
 
 router = APIRouter(prefix="/marriages", tags=["Marriages"])

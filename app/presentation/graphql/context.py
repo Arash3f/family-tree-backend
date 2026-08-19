@@ -8,7 +8,7 @@ from app.application.services.person_photo_service import PersonPhotoService
 from app.domain.repositories.family_tree_repository import FamilyTreeRepository
 from app.domain.services.marriage_rules import MarriageRulesService
 from app.domain.services.password_hasher import PasswordHasher
-from app.presentation.rest.utils.dependencies import (
+from app.presentation.dependencies import (
     get_authorization_service_request,
     get_marriage_rules_service,
     get_neo,

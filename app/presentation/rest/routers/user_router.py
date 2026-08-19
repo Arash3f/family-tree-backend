@@ -17,6 +17,10 @@ from app.application.use_cases.user.update_user_use_case import UpdateUserUseCas
 from app.domain.entities.user import User
 from app.domain.services.password_hasher import PasswordHasher
 from app.domain.shared.permissions import Permissions
+from app.presentation.dependencies import (
+    get_password_hasher,
+    get_request_uow,
+)
 from app.presentation.rest.dependencies.auth_dependencies import get_current_session_id
 from app.presentation.rest.dependencies.permission_guard import RequirePermission
 from app.presentation.rest.schemas.dto.auth_schema import SessionResponse
@@ -32,10 +36,6 @@ from app.presentation.rest.schemas.dto.user_schema import (
 )
 from app.presentation.rest.schemas.mappers.common_mappers import CommonApiMapper
 from app.presentation.rest.schemas.mappers.user_mappers import UserApiMapper
-from app.presentation.rest.utils.dependencies import (
-    get_password_hasher,
-    get_request_uow,
-)
 
 router = APIRouter(prefix="/users", tags=["Users"])
 

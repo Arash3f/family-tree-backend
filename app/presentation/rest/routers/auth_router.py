@@ -18,6 +18,11 @@ from app.application.use_cases.session.session_use_cases import (
     RevokeUserSessionUseCase,
 )
 from app.domain.entities.user import User
+from app.presentation.dependencies import (
+    get_password_hasher,
+    get_request_uow,
+    get_token_service,
+)
 from app.presentation.rest.dependencies.auth_dependencies import (
     get_current_session_id,
     get_current_user,
@@ -32,11 +37,6 @@ from app.presentation.rest.schemas.dto.auth_schema import (
 from app.presentation.rest.schemas.dto.common import ResultResponse
 from app.presentation.rest.schemas.mappers.auth_mappers import AuthApiMapper
 from app.presentation.rest.schemas.mappers.common_mappers import CommonApiMapper
-from app.presentation.rest.utils.dependencies import (
-    get_password_hasher,
-    get_request_uow,
-    get_token_service,
-)
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 

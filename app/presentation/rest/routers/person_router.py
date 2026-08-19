@@ -14,6 +14,11 @@ from app.application.use_cases.person.get_person_list_by_filter_use_case import 
 from app.application.use_cases.person.get_person_use_case import GetPersonUseCase
 from app.application.use_cases.person.update_person_use_case import UpdatePersonUseCase
 from app.domain.entities.family_tree import TreeMembership
+from app.presentation.dependencies import (
+    get_neo,
+    get_person_photo_service,
+    get_request_uow,
+)
 from app.presentation.rest.dependencies.tree_guard import (
     require_tree_person_create,
     require_tree_person_delete,
@@ -33,11 +38,6 @@ from app.presentation.rest.schemas.dto.person_schema import (
 )
 from app.presentation.rest.schemas.mappers.common_mappers import CommonApiMapper
 from app.presentation.rest.schemas.mappers.person_mappers import PersonApiMapper
-from app.presentation.rest.utils.dependencies import (
-    get_neo,
-    get_person_photo_service,
-    get_request_uow,
-)
 from app.presentation.tree_data_access import redact_person_data
 
 router = APIRouter(prefix="/persons", tags=["Persons"])

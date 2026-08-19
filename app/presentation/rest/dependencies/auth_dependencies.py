@@ -8,7 +8,7 @@ from app.application.interfaces.token_service import TokenService
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.exceptions.auth_exceptions import InvalidCredentialsException
 from app.domain.exceptions.user_exceptions import UserNotFoundException
-from app.presentation.rest.utils.dependencies import get_request_uow, get_token_service
+from app.presentation.dependencies import get_request_uow, get_token_service
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 

@@ -1,3 +1,10 @@
+"""Composition root: wires infrastructure implementations to application/domain
+interfaces via FastAPI's `Depends`.
+
+Shared by both REST routers (`app/presentation/rest/`) and the GraphQL context
+(`app/presentation/graphql/context.py`) -- it is not REST-specific.
+"""
+
 from fastapi import Depends
 
 from app.application.interfaces.unit_of_work import UnitOfWork

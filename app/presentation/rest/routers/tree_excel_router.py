@@ -18,16 +18,16 @@ from app.application.use_cases.family_tree.preview_tree_excel_use_case import (
     PreviewTreeExcelUseCase,
 )
 from app.domain.exceptions.family_tree_exceptions import TreeExcelInvalidException
+from app.presentation.dependencies import (
+    get_marriage_rules_service,
+    get_request_uow,
+)
 from app.presentation.rest.dependencies.tree_guard import (
     require_tree_marriage_create,
     require_tree_person_create,
     require_tree_view,
     require_tree_view_birth_date,
     require_tree_view_marriage_date,
-)
-from app.presentation.rest.utils.dependencies import (
-    get_marriage_rules_service,
-    get_request_uow,
 )
 from app.presentation.rest.utils.language import detect_language
 
