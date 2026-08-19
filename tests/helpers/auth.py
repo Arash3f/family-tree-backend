@@ -1,7 +1,15 @@
 from dataclasses import dataclass
 from uuid import uuid4
 
-from httpx import AsyncClient
+from family_tree_api_client import AuthenticatedClient, Client
+from family_tree_api_client.api.auth.login_auth_login_post import (
+    asyncio_detailed as login,
+)
+from family_tree_api_client.models.body_login_auth_login_post import (
+    BodyLoginAuthLoginPost,
+)
+from family_tree_api_client.models.login_response import LoginResponse
+from httpx import ASGITransport, AsyncClient
 
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.entities.role import Role
@@ -13,20 +21,21 @@ from app.infrastructure.services.security.password_hasher_impl import (
 
 @dataclass
 class AuthenticatedUser:
-    """A freshly created user plus the headers needed to act as them."""
+    """A freshly created user plus the client needed to act as them."""
 
     user: User
-    headers: dict[str, str]
+    client: AuthenticatedClient
     username: str
     password: str
 
 
 async def create_authenticated_user(
-    client: AsyncClient,
+    client: Client,
     uow: UnitOfWork,
     *,
     permissions: list[str],
     username: str | None = None,
+    asgi_transport: ASGITransport,
 ) -> AuthenticatedUser:
     """Create a user holding exactly `permissions` and log them in.
 
@@ -57,16 +66,29 @@ async def create_authenticated_user(
     )
     await uow.commit()
 
-    login = await client.post(
-        "/auth/login",
-        data={"username": username, "password": password},
+    login_response = await login(
+        client=client,
+        body=BodyLoginAuthLoginPost(username=username, password=password),
     )
-    if login.status_code != 200:
-        raise RuntimeError(f"Login failed for {username!r}: {login.text}")
+    if login_response.status_code != 200:
+        raise RuntimeError(f"Login failed for {username!r}: {login_response.content}")
+
+    assert isinstance(login_response.parsed, LoginResponse)
+    token = login_response.parsed.access_token
+
+    async_httpx = AsyncClient(
+        transport=asgi_transport,
+        base_url="http://testserver",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    authenticated_client = AuthenticatedClient(
+        base_url="http://testserver", token=token
+    )  # noqa: E501
+    authenticated_client.set_async_httpx_client(async_httpx)
 
     return AuthenticatedUser(
         user=user,
-        headers={"Authorization": f"Bearer {login.json()['access_token']}"},
+        client=authenticated_client,
         username=username,
         password=password,
     )

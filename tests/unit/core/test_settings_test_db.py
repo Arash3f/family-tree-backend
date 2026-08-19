@@ -60,7 +60,6 @@ def _strong_secret_kwargs(**overrides: Any) -> dict[str, Any]:
         ADMIN_PASSWORD="Str0ng-Admin-Pass!",  # pragma: allowlist secret
         NEO4J_PASSWORD="Str0ng-Neo4j-Pass!",  # pragma: allowlist secret
         POSTGRES_PASSWORD="Str0ng-Postgres-Pass!",  # pragma: allowlist secret
-        FLOWER_BASIC_AUTH="ops:Str0ng-Flower-Pass!",  # pragma: allowlist secret
         MINIO_ACCESS_KEY="not-minioadmin",  # pragma: allowlist secret
         MINIO_SECRET_KEY="not-minioadmin",  # pragma: allowlist secret
         JWT_SECRET="a-real-production-secret-that-is-long-enough",

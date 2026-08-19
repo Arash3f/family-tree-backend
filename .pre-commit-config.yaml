@@ -9,7 +9,7 @@ repos:
       - id: name-tests-test
         args: [--pytest-test-first]
         # Shared fixtures/utilities are not test modules (hook matches all tests/**/*.py).
-        exclude: ^(tests/helpers/|tests/e2e/auth_headers\.py$)
+        exclude: ^(tests/helpers/|tests/e2e/auth_headers\.py$|tests/e2e/graphql/legacy_auth\.py$)
       - id: check-ast
       - id: check-case-conflict
       - id: check-merge-conflict
@@ -33,7 +33,7 @@ repos:
     rev: v0.15.12
     hooks:
       - id: ruff
-        exclude: .*/models/__init__\.py$
+        exclude: (.*/models/__init__\.py$|^generated/)
       - id: ruff-format
   - repo: https://github.com/commitizen-tools/commitizen
     rev: v4.15.1

@@ -1,5 +1,6 @@
 import pytest
 import pytest_asyncio
+from family_tree_api_client import Client
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
@@ -21,7 +22,7 @@ from app.infrastructure.services.security.password_hasher_impl import (
 )
 from app.infrastructure.services.unit_of_work.sqlalchemy_uow import SQLAlchemyUnitOfWork
 from app.main import app
-from app.presentation.rest.utils.dependencies import get_uow
+from app.presentation.dependencies import get_uow
 from tests.helpers.family_tree import create_family_tree_with_owner, get_admin_user
 from tests.helpers.uow import TreeUnitOfWork
 
@@ -129,8 +130,16 @@ def stub_family_tree_sync(monkeypatch):
         monkeypatch.setattr(FamilyTreeSyncService, method_name, _noop)
 
 
+@pytest.fixture
+def asgi_transport():
+    return ASGITransport(app=app)
+
+
 @pytest_asyncio.fixture
-async def client():
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://testserver") as ac:
-        yield ac
+async def client(asgi_transport):
+    async with AsyncClient(
+        transport=asgi_transport, base_url="http://testserver"
+    ) as ac:
+        api_client = Client(base_url="http://testserver")
+        api_client.set_async_httpx_client(ac)
+        yield api_client

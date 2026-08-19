@@ -6,10 +6,8 @@ import pytest
 from app.domain.entities.person import Gender, Person
 from app.domain.shared.dto.family_tree_dto import RelationshipPathDTO
 from app.main import app
-from app.presentation.rest.utils.dependencies import get_neo
+from app.presentation.dependencies import get_neo
 from app.utils.error_codes import ErrorCode
-from tests.e2e.auth_headers import admin_headers as admin_headers
-from tests.e2e.auth_headers import member_headers as member_headers
 from tests.e2e.graphql.test_person_graphql import gql
 from tests.helpers.uow import TreeUnitOfWork
 

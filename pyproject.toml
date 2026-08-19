@@ -4,6 +4,9 @@ package-mode = false
 [tool.poetry.requires-plugins]
 poetry-plugin-export = ">=1.8"
 
+[tool.poetry.group.dev.dependencies]
+family-tree-api-client = {develop = true}
+
 [project]
 name = "family-tree-backend"
 version = "0.1.0"
@@ -29,7 +32,6 @@ dependencies = [
     "psycopg2-binary (>=2.9.12,<3.0.0)",
     "python-dotenv (>=1.2.2,<2.0.0)",
     "neo4j (>=6.2.0,<7.0.0)",
-    "flower (>=2.0.1,<3.0.0)",
     "neo4j-backup (>=1.0.0,<2.0.0)",
     "strawberry-graphql[fastapi] (>=0.323.0,<0.324.0)",
     "aioboto3 (>=15.5.0,<16.0.0)",
@@ -46,6 +48,7 @@ exclude = [
     "migrations",
     "build",
     "dist",
+    "generated",
     "**/models/__init__.py",
 ]
 
@@ -64,10 +67,10 @@ ignore_missing_imports = true
 warn_unused_configs = true
 disallow_untyped_defs = false
 check_untyped_defs = true
-exclude = "(?x)(^migrations/|^scripts/|^build/|^dist/)"
+exclude = "(?x)(^migrations/|^scripts/|^build/|^dist/|^generated/)"
 
 [tool.bandit]
-exclude_dirs = ["tests", "migrations", "bruno", "scripts"]
+exclude_dirs = ["tests", "migrations", "bruno", "scripts", "generated"]
 skips = ["B101"]
 
 [dependency-groups]
@@ -81,4 +84,6 @@ dev = [
     "bandit (>=1.9.4,<2.0.0)",
     "mypy (>=2.0.0,<3.0.0)",
     "httpx (>=0.28.1,<0.29.0)",
+    "openapi-python-client (>=0.29.0,<0.30.0)",
+    "family-tree-api-client @ file:///D:/projects/ft/family-tree-backend/generated/api_client",
 ]

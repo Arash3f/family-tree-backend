@@ -1,40 +1,70 @@
+import json
 from datetime import date
 from uuid import UUID
 
 import pytest
-from pydantic import TypeAdapter
+from family_tree_api_client import AuthenticatedClient, Client
+from family_tree_api_client.api.marriages.create_marriage_family_trees_tree_id_marriages_post import (  # noqa: E501
+    asyncio_detailed as create_marriage,
+)
+from family_tree_api_client.api.marriages.delete_marriage_family_trees_tree_id_marriages_delete import (  # noqa: E501
+    asyncio_detailed as delete_marriage,
+)
+from family_tree_api_client.api.marriages.divorce_family_trees_tree_id_marriages_divorce_post import (  # noqa: E501
+    asyncio_detailed as divorce,
+)
+from family_tree_api_client.api.marriages.get_marriage_family_trees_tree_id_marriages_marriage_id_get import (  # noqa: E501
+    asyncio_detailed as get_marriage,
+)
+from family_tree_api_client.api.marriages.get_marriage_list_by_filter_family_trees_tree_id_marriages_list_post import (  # noqa: E501
+    asyncio_detailed as get_marriage_list_by_filter,
+)
+from family_tree_api_client.api.marriages.update_marriage_family_trees_tree_id_marriages_put import (  # noqa: E501
+    asyncio_detailed as update_marriage,
+)
+from family_tree_api_client.models.divorce_request import DivorceRequest
+from family_tree_api_client.models.filter_marriage_request import (
+    FilterMarriageRequest,
+)
+from family_tree_api_client.models.id_request import IdRequest
+from family_tree_api_client.models.marriage_create_request import (
+    MarriageCreateRequest,
+)
+from family_tree_api_client.models.marriage_create_response import (
+    MarriageCreateResponse,
+)
+from family_tree_api_client.models.marriage_get_response import MarriageGetResponse
+from family_tree_api_client.models.marriage_sort_field import MarriageSortField
+from family_tree_api_client.models.marriage_update_date_request import (
+    MarriageUpdateDateRequest,
+)
+from family_tree_api_client.models.marriage_update_request import (
+    MarriageUpdateRequest,
+)
+from family_tree_api_client.models.marriage_update_response import (
+    MarriageUpdateResponse,
+)
+from family_tree_api_client.models.marriage_update_where_request import (
+    MarriageUpdateWhereRequest,
+)
+from family_tree_api_client.models.paginated_response_marriage_model import (
+    PaginatedResponseMarriageModel,
+)
+from family_tree_api_client.models.pagination_request_params import (
+    PaginationRequestParams,
+)
+from family_tree_api_client.models.result_response import ResultResponse
+from family_tree_api_client.models.sort_order_field import SortOrderField
+from family_tree_api_client.models.sort_request_params_marriage_sort_field import (
+    SortRequestParamsMarriageSortField,
+)
 
 from app.domain.entities.marriage import Marriage
 from app.domain.entities.person import Gender, Person
-from app.domain.shared.dto.marriage_filter_dto import MarriageSortField
-from app.domain.shared.dto.sorter_dto import SortOrderField
-from app.presentation.rest.schemas.dto.common import (
-    PaginatedResponse,
-    PaginationRequestParams,
-    ResultResponse,
-    SortRequestParams,
-)
-from app.presentation.rest.schemas.dto.marriage_schema import (
-    DivorceRequest,
-    FilterMarriageRequest,
-    MarriageCreateRequest,
-    MarriageCreateResponse,
-    MarriageFilterRequestData,
-    MarriageGetResponse,
-    MarriageModel,
-    MarriageUpdateRequest,
-    MarriageUpdateResponse,
-    _MarriageUpdateDateRequest,
-    _MarriageUpdateWhereRequest,
-)
 from app.utils.error_codes import ERROR_MESSAGES, ErrorCode
-from tests.e2e.auth_headers import admin_headers as admin_headers
-from tests.e2e.auth_headers import member_headers as member_headers
+from tests.e2e.auth_headers import admin_client as admin_client
+from tests.e2e.auth_headers import member_client as member_client
 from tests.helpers.uow import TreeUnitOfWork
-
-
-def marriages_url(tree_id: UUID, suffix: str = "") -> str:
-    return f"/family-trees/{tree_id}/marriages{suffix}"
 
 
 async def _create_spouses(uow: TreeUnitOfWork, suffix: str = ""):
@@ -65,43 +95,38 @@ async def _create_spouses(uow: TreeUnitOfWork, suffix: str = ""):
 
 
 @pytest.mark.asyncio
-async def test_create_marriage_permission_denied(client, tree_id, member_headers):  # noqa: F811
+async def test_create_marriage_permission_denied(
+    tree_id, member_client: AuthenticatedClient
+):
     req = MarriageCreateRequest(
         spouse_a_id=UUID(int=1),
         spouse_b_id=UUID(int=2),
         married_at=date(2020, 1, 1),
     )
-    resp = await client.post(
-        marriages_url(tree_id),
-        json=req.model_dump(mode="json"),
-        headers=member_headers,
-    )
+    resp = await create_marriage(tree_id=tree_id, client=member_client, body=req)
 
     assert resp.status_code == 403
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     assert body["status"] == 403
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.TREE_MEMBERSHIP_DENIED]
 
 
 @pytest.mark.asyncio
-async def test_create_marriage_unauthenticated(client, tree_id):
+async def test_create_marriage_unauthenticated(client: Client, tree_id):
     req = MarriageCreateRequest(
         spouse_a_id=UUID(int=1),
         spouse_b_id=UUID(int=2),
         married_at=date(2020, 1, 1),
     )
-    resp = await client.post(
-        marriages_url(tree_id),
-        json=req.model_dump(mode="json"),
-    )
+    resp = await create_marriage(tree_id=tree_id, client=client, body=req)
 
     assert resp.status_code == 401
-    assert resp.json()["detail"] == "Not authenticated"
+    assert json.loads(resp.content)["detail"] == "Not authenticated"
 
 
 @pytest.mark.asyncio
-async def test_create_marriage_success(client, tree_id, admin_headers, uow):  # noqa: F811
+async def test_create_marriage_success(tree_id, admin_client: AuthenticatedClient, uow):
     husband, wife = await _create_spouses(uow, suffix="_create")
     await uow.commit()
 
@@ -111,15 +136,12 @@ async def test_create_marriage_success(client, tree_id, admin_headers, uow):  # 
         married_at=date(2020, 1, 1),
     )
 
-    resp = await client.post(
-        marriages_url(tree_id),
-        json=req.model_dump(mode="json"),
-        headers=admin_headers,
-    )
+    resp = await create_marriage(tree_id=tree_id, client=admin_client, body=req)
 
     assert resp.status_code == 200
 
-    marriage_data = TypeAdapter(MarriageCreateResponse).validate_python(resp.json())
+    assert isinstance(resp.parsed, MarriageCreateResponse)
+    marriage_data = resp.parsed
     assert marriage_data.id is not None
     assert marriage_data.spouse_a_id == husband.safe_id
     assert marriage_data.spouse_b_id == wife.safe_id
@@ -139,30 +161,31 @@ async def test_create_marriage_success(client, tree_id, admin_headers, uow):  # 
 
 
 @pytest.mark.asyncio
-async def test_get_marriage_permission_denied(client, tree_id, member_headers):  # noqa: F811
-    resp = await client.get(
-        marriages_url(tree_id, f"/{UUID(int=1)}"),
-        headers=member_headers,
+async def test_get_marriage_permission_denied(
+    tree_id, member_client: AuthenticatedClient
+):
+    resp = await get_marriage(
+        tree_id=tree_id, marriage_id=UUID(int=1), client=member_client
     )
 
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     assert body["status"] == 403
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.TREE_MEMBERSHIP_DENIED]
 
 
 @pytest.mark.asyncio
-async def test_get_marriage_unauthenticated(client, tree_id):
-    resp = await client.get(marriages_url(tree_id, f"/{UUID(int=1)}"))
+async def test_get_marriage_unauthenticated(client: Client, tree_id):
+    resp = await get_marriage(tree_id=tree_id, marriage_id=UUID(int=1), client=client)
 
     assert resp.status_code == 401
-    assert resp.json()["detail"] == "Not authenticated"
+    assert json.loads(resp.content)["detail"] == "Not authenticated"
 
 
 @pytest.mark.asyncio
 async def test_get_marriage_success(
-    client, tree_id, admin_headers, uow: TreeUnitOfWork
-):  # noqa: F811
+    tree_id, admin_client: AuthenticatedClient, uow: TreeUnitOfWork
+):
     husband, wife = await _create_spouses(uow, suffix="_get")
     marriage = await uow.marriages.create(
         Marriage(
@@ -175,28 +198,27 @@ async def test_get_marriage_success(
     )
     await uow.commit()
 
-    resp = await client.get(
-        marriages_url(tree_id, f"/{marriage.safe_id}"),
-        headers=admin_headers,
+    resp = await get_marriage(
+        tree_id=tree_id, marriage_id=marriage.safe_id, client=admin_client
     )
 
     assert resp.status_code == 200
 
-    data = TypeAdapter(MarriageGetResponse).validate_python(resp.json())
+    assert isinstance(resp.parsed, MarriageGetResponse)
+    data = resp.parsed
     assert data.id == marriage.safe_id
     assert data.spouse_a_id == husband.safe_id
     assert data.spouse_b_id == wife.safe_id
 
 
 @pytest.mark.asyncio
-async def test_get_marriage_with_invalid_id(client, tree_id, admin_headers):  # noqa: F811
-    resp = await client.get(
-        marriages_url(tree_id, f"/{UUID(int=999999)}"),
-        headers=admin_headers,
+async def test_get_marriage_with_invalid_id(tree_id, admin_client: AuthenticatedClient):
+    resp = await get_marriage(
+        tree_id=tree_id, marriage_id=UUID(int=999999), client=admin_client
     )
 
     assert resp.status_code == 404
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == 1205
     assert body["status"] == 404
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.MARRIAGE_NOT_FOUND]
@@ -208,10 +230,12 @@ async def test_get_marriage_with_invalid_id(client, tree_id, admin_headers):  # 
 
 
 @pytest.mark.asyncio
-async def test_update_marriage_permission_denied(client, tree_id, member_headers):  # noqa: F811
+async def test_update_marriage_permission_denied(
+    tree_id, member_client: AuthenticatedClient
+):
     payload = MarriageUpdateRequest(
-        where=_MarriageUpdateWhereRequest(marriage_id=UUID(int=1)),
-        data=_MarriageUpdateDateRequest(
+        where=MarriageUpdateWhereRequest(marriage_id=UUID(int=1)),
+        data=MarriageUpdateDateRequest(
             spouse_a_id=None,
             spouse_b_id=None,
             married_at=date(2021, 1, 1),
@@ -219,24 +243,19 @@ async def test_update_marriage_permission_denied(client, tree_id, member_headers
         ),
     )
 
-    resp = await client.put(
-        marriages_url(tree_id),
-        json=payload.model_dump(mode="json"),
-        headers=member_headers,
-    )
+    resp = await update_marriage(tree_id=tree_id, client=member_client, body=payload)
 
-    assert resp.status_code == 403
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     assert body["status"] == 403
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.TREE_MEMBERSHIP_DENIED]
 
 
 @pytest.mark.asyncio
-async def test_update_marriage_unauthenticated(client, tree_id):
+async def test_update_marriage_unauthenticated(client: Client, tree_id):
     payload = MarriageUpdateRequest(
-        where=_MarriageUpdateWhereRequest(marriage_id=UUID(int=1)),
-        data=_MarriageUpdateDateRequest(
+        where=MarriageUpdateWhereRequest(marriage_id=UUID(int=1)),
+        data=MarriageUpdateDateRequest(
             spouse_a_id=None,
             spouse_b_id=None,
             married_at=date(2021, 1, 1),
@@ -244,20 +263,16 @@ async def test_update_marriage_unauthenticated(client, tree_id):
         ),
     )
 
-    resp = await client.put(
-        marriages_url(tree_id),
-        json=payload.model_dump(mode="json"),
-    )
+    resp = await update_marriage(tree_id=tree_id, client=client, body=payload)
 
     assert resp.status_code == 401
-    assert resp.json()["detail"] == "Not authenticated"
+    assert json.loads(resp.content)["detail"] == "Not authenticated"
 
 
 @pytest.mark.asyncio
 async def test_update_marriage_success(
-    client,
     tree_id,
-    admin_headers,  # noqa: F811
+    admin_client: AuthenticatedClient,
     uow: TreeUnitOfWork,
 ):
     husband, wife = await _create_spouses(uow, suffix="_update")
@@ -273,20 +288,16 @@ async def test_update_marriage_success(
     await uow.commit()
 
     payload = MarriageUpdateRequest(
-        where=_MarriageUpdateWhereRequest(marriage_id=marriage.safe_id),
-        data=_MarriageUpdateDateRequest(
+        where=MarriageUpdateWhereRequest(marriage_id=marriage.safe_id),
+        data=MarriageUpdateDateRequest(
             married_at=date(2021, 6, 1),
         ),
     )
 
-    resp = await client.put(
-        marriages_url(tree_id),
-        json=payload.model_dump(mode="json", exclude_unset=True),
-        headers=admin_headers,
-    )
+    resp = await update_marriage(tree_id=tree_id, client=admin_client, body=payload)
 
     assert resp.status_code == 200
-    TypeAdapter(MarriageUpdateResponse).validate_python(resp.json())
+    assert isinstance(resp.parsed, MarriageUpdateResponse)
 
     async with uow:
         updated = await uow.marriages.get_or_raise(marriage_id=marriage.safe_id)
@@ -295,22 +306,20 @@ async def test_update_marriage_success(
 
 
 @pytest.mark.asyncio
-async def test_update_marriage_with_invalid_id(client, tree_id, admin_headers):  # noqa: F811
+async def test_update_marriage_with_invalid_id(
+    tree_id, admin_client: AuthenticatedClient
+):
     payload = MarriageUpdateRequest(
-        where=_MarriageUpdateWhereRequest(marriage_id=UUID(int=88888)),
-        data=_MarriageUpdateDateRequest(
+        where=MarriageUpdateWhereRequest(marriage_id=UUID(int=88888)),
+        data=MarriageUpdateDateRequest(
             married_at=date(2021, 1, 1),
         ),
     )
 
-    resp = await client.put(
-        marriages_url(tree_id),
-        json=payload.model_dump(mode="json", exclude_unset=True),
-        headers=admin_headers,
-    )
+    resp = await update_marriage(tree_id=tree_id, client=admin_client, body=payload)
 
     assert resp.status_code == 404
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == 1205
     assert body["status"] == 404
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.MARRIAGE_NOT_FOUND]
@@ -322,37 +331,37 @@ async def test_update_marriage_with_invalid_id(client, tree_id, admin_headers): 
 
 
 @pytest.mark.asyncio
-async def test_delete_marriage_permission_denied(client, tree_id, member_headers):  # noqa: F811
-    resp = await client.request(
-        "DELETE",
-        marriages_url(tree_id),
-        json={"id": str(UUID(int=1))},
-        headers=member_headers,
+async def test_delete_marriage_permission_denied(
+    tree_id, member_client: AuthenticatedClient
+):
+    resp = await delete_marriage(
+        tree_id=tree_id,
+        client=member_client,
+        body=IdRequest(id=UUID(int=1)),
     )
 
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     assert body["status"] == 403
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.TREE_MEMBERSHIP_DENIED]
 
 
 @pytest.mark.asyncio
-async def test_delete_marriage_unauthenticated(client, tree_id):
-    resp = await client.request(
-        "DELETE",
-        marriages_url(tree_id),
-        json={"id": str(UUID(int=1))},
+async def test_delete_marriage_unauthenticated(client: Client, tree_id):
+    resp = await delete_marriage(
+        tree_id=tree_id,
+        client=client,
+        body=IdRequest(id=UUID(int=1)),
     )
 
     assert resp.status_code == 401
-    assert resp.json()["detail"] == "Not authenticated"
+    assert json.loads(resp.content)["detail"] == "Not authenticated"
 
 
 @pytest.mark.asyncio
 async def test_delete_marriage_success(
-    client,
     tree_id,
-    admin_headers,  # noqa: F811
+    admin_client: AuthenticatedClient,
     uow: TreeUnitOfWork,
 ):
     husband, wife = await _create_spouses(uow, suffix="_delete")
@@ -367,15 +376,14 @@ async def test_delete_marriage_success(
     )
     await uow.commit()
 
-    resp = await client.request(
-        "DELETE",
-        marriages_url(tree_id),
-        json={"id": str(marriage.safe_id)},
-        headers=admin_headers,
+    resp = await delete_marriage(
+        tree_id=tree_id,
+        client=admin_client,
+        body=IdRequest(id=marriage.safe_id),
     )
 
     assert resp.status_code == 200
-    TypeAdapter(ResultResponse).validate_python(resp.json())
+    assert isinstance(resp.parsed, ResultResponse)
 
     deleted_marriage_id = marriage.safe_id
     async with uow:
@@ -385,16 +393,17 @@ async def test_delete_marriage_success(
 
 
 @pytest.mark.asyncio
-async def test_delete_marriage_with_invalid_id(client, tree_id, admin_headers):  # noqa: F811
-    resp = await client.request(
-        "DELETE",
-        marriages_url(tree_id),
-        json={"id": str(UUID(int=999999))},
-        headers=admin_headers,
+async def test_delete_marriage_with_invalid_id(
+    tree_id, admin_client: AuthenticatedClient
+):
+    resp = await delete_marriage(
+        tree_id=tree_id,
+        client=admin_client,
+        body=IdRequest(id=UUID(int=999999)),
     )
 
     assert resp.status_code == 404
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == 1205
     assert body["status"] == 404
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.MARRIAGE_NOT_FOUND]
@@ -406,42 +415,37 @@ async def test_delete_marriage_with_invalid_id(client, tree_id, admin_headers): 
 
 
 @pytest.mark.asyncio
-async def test_divorce_permission_denied(client, tree_id, member_headers):  # noqa: F811
+async def test_divorce_permission_denied(tree_id, member_client: AuthenticatedClient):
     req = DivorceRequest(
         marriage_id=UUID(int=1),
         divorced_at=date(2022, 1, 1),
     )
 
-    resp = await client.post(
-        marriages_url(tree_id, "/divorce"),
-        json=req.model_dump(mode="json"),
-        headers=member_headers,
-    )
+    resp = await divorce(tree_id=tree_id, client=member_client, body=req)
 
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     assert body["status"] == 403
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.TREE_MEMBERSHIP_DENIED]
 
 
 @pytest.mark.asyncio
-async def test_divorce_unauthenticated(client, tree_id):
+async def test_divorce_unauthenticated(client: Client, tree_id):
     req = DivorceRequest(
         marriage_id=UUID(int=1),
         divorced_at=date(2022, 1, 1),
     )
 
-    resp = await client.post(
-        marriages_url(tree_id, "/divorce"),
-        json=req.model_dump(mode="json"),
-    )
+    resp = await divorce(tree_id=tree_id, client=client, body=req)
 
     assert resp.status_code == 401
-    assert resp.json()["detail"] == "Not authenticated"
+    assert json.loads(resp.content)["detail"] == "Not authenticated"
 
 
 @pytest.mark.asyncio
-async def test_divorce_success(client, tree_id, admin_headers, uow: TreeUnitOfWork):  # noqa: F811
+async def test_divorce_success(
+    tree_id, admin_client: AuthenticatedClient, uow: TreeUnitOfWork
+):
     husband, wife = await _create_spouses(uow, suffix="_divorce")
     marriage = await uow.marriages.create(
         Marriage(
@@ -459,14 +463,10 @@ async def test_divorce_success(client, tree_id, admin_headers, uow: TreeUnitOfWo
         divorced_at=date(2022, 1, 1),
     )
 
-    resp = await client.post(
-        marriages_url(tree_id, "/divorce"),
-        json=req.model_dump(mode="json"),
-        headers=admin_headers,
-    )
+    resp = await divorce(tree_id=tree_id, client=admin_client, body=req)
 
     assert resp.status_code == 200
-    TypeAdapter(ResultResponse).validate_python(resp.json())
+    assert isinstance(resp.parsed, ResultResponse)
 
     async with uow:
         updated = await uow.marriages.get_or_raise(marriage_id=marriage.safe_id)
@@ -475,20 +475,16 @@ async def test_divorce_success(client, tree_id, admin_headers, uow: TreeUnitOfWo
 
 
 @pytest.mark.asyncio
-async def test_divorce_with_invalid_id(client, tree_id, admin_headers):  # noqa: F811
+async def test_divorce_with_invalid_id(tree_id, admin_client: AuthenticatedClient):
     req = DivorceRequest(
         marriage_id=UUID(int=999999),
         divorced_at=date(2022, 1, 1),
     )
 
-    resp = await client.post(
-        marriages_url(tree_id, "/divorce"),
-        json=req.model_dump(mode="json"),
-        headers=admin_headers,
-    )
+    resp = await divorce(tree_id=tree_id, client=admin_client, body=req)
 
     assert resp.status_code == 404
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == 1205
     assert body["status"] == 404
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.MARRIAGE_NOT_FOUND]
@@ -501,54 +497,46 @@ async def test_divorce_with_invalid_id(client, tree_id, admin_headers):  # noqa:
 
 @pytest.mark.asyncio
 async def test_get_marriage_list_by_filter_permission_denied(
-    client, tree_id, member_headers
-):  # noqa: F811
+    tree_id, member_client: AuthenticatedClient
+):
     req = FilterMarriageRequest(
-        filters=MarriageFilterRequestData(),
         pagination=PaginationRequestParams(offset=0, page=1, page_size=30),
-        sort=SortRequestParams(
+        sort=SortRequestParamsMarriageSortField(
             sort_by=MarriageSortField.ID,
             sort_order=SortOrderField.DESC,
         ),
     )
 
-    resp = await client.post(
-        marriages_url(tree_id, "/list"),
-        json=req.model_dump(mode="json"),
-        headers=member_headers,
+    resp = await get_marriage_list_by_filter(
+        tree_id=tree_id, client=member_client, body=req
     )
 
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     assert body["status"] == 403
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.TREE_MEMBERSHIP_DENIED]
 
 
 @pytest.mark.asyncio
-async def test_get_marriage_list_by_filter_unauthenticated(client, tree_id):
+async def test_get_marriage_list_by_filter_unauthenticated(client: Client, tree_id):
     req = FilterMarriageRequest(
-        filters=MarriageFilterRequestData(),
         pagination=PaginationRequestParams(offset=0, page=1, page_size=30),
-        sort=SortRequestParams(
+        sort=SortRequestParamsMarriageSortField(
             sort_by=MarriageSortField.ID,
             sort_order=SortOrderField.DESC,
         ),
     )
 
-    resp = await client.post(
-        marriages_url(tree_id, "/list"),
-        json=req.model_dump(mode="json"),
-    )
+    resp = await get_marriage_list_by_filter(tree_id=tree_id, client=client, body=req)
 
     assert resp.status_code == 401
-    assert resp.json()["detail"] == "Not authenticated"
+    assert json.loads(resp.content)["detail"] == "Not authenticated"
 
 
 @pytest.mark.asyncio
 async def test_get_marriage_list_by_filter_success(
-    client,
     tree_id,
-    admin_headers,  # noqa: F811
+    admin_client: AuthenticatedClient,
     uow: TreeUnitOfWork,
 ):
     marriages = []
@@ -567,23 +555,21 @@ async def test_get_marriage_list_by_filter_success(
     await uow.commit()
 
     req = FilterMarriageRequest(
-        filters=MarriageFilterRequestData(),
         pagination=PaginationRequestParams(offset=1, page=2, page_size=2),
-        sort=SortRequestParams(
+        sort=SortRequestParamsMarriageSortField(
             sort_by=MarriageSortField.ID,
             sort_order=SortOrderField.ASC,
         ),
     )
 
-    resp = await client.post(
-        marriages_url(tree_id, "/list"),
-        json=req.model_dump(mode="json"),
-        headers=admin_headers,
+    resp = await get_marriage_list_by_filter(
+        tree_id=tree_id, client=admin_client, body=req
     )
 
     assert resp.status_code == 200
 
-    data = TypeAdapter(PaginatedResponse[MarriageModel]).validate_python(resp.json())
+    assert isinstance(resp.parsed, PaginatedResponseMarriageModel)
+    data = resp.parsed
     sorted_marriages = sorted(marriages, key=lambda marriage: marriage.safe_id)
     start = req.pagination.offset + (req.pagination.page - 1) * req.pagination.page_size
     expected = sorted_marriages[start : start + req.pagination.page_size]

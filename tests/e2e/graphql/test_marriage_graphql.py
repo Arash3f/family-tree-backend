@@ -3,7 +3,6 @@ from datetime import date
 import pytest
 
 from app.domain.entities.person import Gender, Person
-from tests.e2e.auth_headers import admin_headers as admin_headers
 
 GRAPHQL_URL = "/graphql"
 

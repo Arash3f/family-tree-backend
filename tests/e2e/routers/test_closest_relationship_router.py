@@ -1,20 +1,24 @@
+import json
 from unittest.mock import MagicMock
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
+from family_tree_api_client import AuthenticatedClient, Client
+from family_tree_api_client.api.persons.get_closest_relationship_family_trees_tree_id_persons_from_person_id_relation_to_person_id_get import (  # noqa: E501
+    asyncio_detailed as get_closest_relationship,
+)
+from family_tree_api_client.models.closest_relationship_response import (
+    ClosestRelationshipResponse,
+)
 
 from app.domain.entities.person import Gender, Person
 from app.domain.shared.dto.family_tree_dto import RelationshipPathDTO
 from app.main import app
-from app.presentation.rest.utils.dependencies import get_neo
+from app.presentation.dependencies import get_neo
 from app.utils.error_codes import ERROR_MESSAGES, ErrorCode
-from tests.e2e.auth_headers import admin_headers as admin_headers
-from tests.e2e.auth_headers import member_headers as member_headers
+from tests.e2e.auth_headers import admin_client as admin_client
+from tests.e2e.auth_headers import member_client as member_client
 from tests.helpers.uow import TreeUnitOfWork
-
-
-def persons_url(tree_id: UUID, suffix: str = "") -> str:
-    return f"/family-trees/{tree_id}/persons{suffix}"
 
 
 @pytest.fixture
@@ -31,35 +35,40 @@ def mock_neo():
 
 @pytest.mark.asyncio
 async def test_closest_relationship_permission_denied(
-    client,
     tree_id,
-    member_headers,
+    member_client: AuthenticatedClient,
     mock_neo,  # noqa: F811
 ):
     from_id, to_id = uuid4(), uuid4()
-    resp = await client.get(
-        persons_url(tree_id, f"/{from_id}/relation/{to_id}"),
-        headers=member_headers,
+    resp = await get_closest_relationship(
+        client=member_client,
+        tree_id=tree_id,
+        from_person_id=from_id,
+        to_person_id=to_id,
     )
     assert resp.status_code == 403
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == 1301
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.PERMISSION_DENIED]
     mock_neo.find_shortest_relationship_path.assert_not_called()
 
 
 @pytest.mark.asyncio
-async def test_closest_relationship_unauthenticated(client, tree_id, mock_neo):
-    resp = await client.get(persons_url(tree_id, f"/{uuid4()}/relation/{uuid4()}"))
+async def test_closest_relationship_unauthenticated(client: Client, tree_id, mock_neo):
+    resp = await get_closest_relationship(
+        client=client,
+        tree_id=tree_id,
+        from_person_id=uuid4(),
+        to_person_id=uuid4(),
+    )
     assert resp.status_code == 401
-    assert resp.json()["detail"] == "Not authenticated"
+    assert json.loads(resp.content)["detail"] == "Not authenticated"
 
 
 @pytest.mark.asyncio
 async def test_closest_relationship_success(
-    client,
     tree_id,
-    admin_headers,
+    admin_client: AuthenticatedClient,
     uow: TreeUnitOfWork,
     mock_neo,  # noqa: F811
 ):
@@ -83,33 +92,37 @@ async def test_closest_relationship_success(
         relationship_types=["PARENT_OF", "PARENT_OF"],
     )
 
-    resp = await client.get(
-        persons_url(tree_id, f"/{from_id}/relation/{to_id}"),
-        headers=admin_headers,
+    resp = await get_closest_relationship(
+        client=admin_client,
+        tree_id=tree_id,
+        from_person_id=from_id,
+        to_person_id=to_id,
     )
-    assert resp.status_code == 200, resp.text
-    body = resp.json()
-    assert body["found"] is True
-    assert body["distance"] == 2
-    assert body["from_person_id"] == str(from_id)
-    assert body["to_person_id"] == str(to_id)
-    assert body["path_person_ids"] == [str(from_id), str(mid), str(to_id)]
-    assert body["relationship_types"] == ["PARENT_OF", "PARENT_OF"]
+    assert resp.status_code == 200, resp.content
+    assert isinstance(resp.parsed, ClosestRelationshipResponse)
+    body = resp.parsed
+    assert body.found is True
+    assert body.distance == 2
+    assert body.from_person_id == from_id
+    assert body.to_person_id == to_id
+    assert body.path_person_ids == [from_id, mid, to_id]
+    assert body.relationship_types == ["PARENT_OF", "PARENT_OF"]
 
 
 @pytest.mark.asyncio
 async def test_closest_relationship_person_missing(
-    client,
     tree_id,
-    admin_headers,
+    admin_client: AuthenticatedClient,
     mock_neo,  # noqa: F811
 ):
     from_id, to_id = uuid4(), uuid4()
     mock_neo.person_exists.return_value = False
 
-    resp = await client.get(
-        persons_url(tree_id, f"/{from_id}/relation/{to_id}"),
-        headers=admin_headers,
+    resp = await get_closest_relationship(
+        client=admin_client,
+        tree_id=tree_id,
+        from_person_id=from_id,
+        to_person_id=to_id,
     )
     assert resp.status_code == 404
-    assert resp.json()["error_code"] == int(ErrorCode.PERSON_NOT_FOUND)
+    assert json.loads(resp.content)["error_code"] == int(ErrorCode.PERSON_NOT_FOUND)

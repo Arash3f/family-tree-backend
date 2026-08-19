@@ -7,7 +7,6 @@ from app.domain.shared.permissions import Permissions
 from app.infrastructure.services.security.password_hasher_impl import (
     Argon2PasswordHasher,
 )
-from tests.e2e.auth_headers import admin_headers as admin_headers
 
 GRAPHQL_URL = "/graphql"
 

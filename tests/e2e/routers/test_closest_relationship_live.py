@@ -1,6 +1,13 @@
 from datetime import date
 
 import pytest
+from family_tree_api_client import AuthenticatedClient
+from family_tree_api_client.api.persons.get_closest_relationship_family_trees_tree_id_persons_from_person_id_relation_to_person_id_get import (  # noqa: E501
+    asyncio_detailed as get_closest_relationship,
+)
+from family_tree_api_client.models.closest_relationship_response import (
+    ClosestRelationshipResponse,
+)
 
 from app.domain.entities.person import Gender, Person
 from app.domain.shared.dto.family_tree_dto import (
@@ -12,12 +19,8 @@ from app.infrastructure.database.neo4j.neo4j import neo4j_client
 from app.infrastructure.repositories.neo4j_family_tree_repository import (
     Neo4jFamilyTreeRepository,
 )
-from tests.e2e.auth_headers import admin_headers as admin_headers
+from tests.e2e.auth_headers import admin_client as admin_client
 from tests.helpers.uow import TreeUnitOfWork
-
-
-def persons_url(tree_id, suffix: str = "") -> str:
-    return f"/family-trees/{tree_id}/persons{suffix}"
 
 
 @pytest.fixture
@@ -33,9 +36,8 @@ async def live_neo():
 
 @pytest.mark.asyncio
 async def test_live_closest_relationship_rest(
-    client,
     tree_id,
-    admin_headers,
+    admin_client: AuthenticatedClient,
     uow: TreeUnitOfWork,
     live_neo,  # noqa: F811
 ):
@@ -88,15 +90,18 @@ async def test_live_closest_relationship_rest(
     )
 
     try:
-        resp = await client.get(
-            persons_url(tree_id, f"/{father_id}/relation/{child_id}"),
-            headers=admin_headers,
+        resp = await get_closest_relationship(
+            tree_id=tree_id,
+            from_person_id=father_id,
+            to_person_id=child_id,
+            client=admin_client,
         )
-        assert resp.status_code == 200, resp.text
-        body = resp.json()
-        assert body["found"] is True
-        assert body["distance"] == 1
-        assert body["relationship_types"] == ["PARENT_OF"]
+        assert resp.status_code == 200, resp.content
+        assert isinstance(resp.parsed, ClosestRelationshipResponse)
+        body = resp.parsed
+        assert body.found is True
+        assert body.distance == 1
+        assert body.relationship_types == ["PARENT_OF"]
     finally:
         await live_neo.delete_person(PersonIdDTO(id=child_id))
         await live_neo.delete_person(PersonIdDTO(id=father_id))

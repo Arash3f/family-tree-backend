@@ -1,39 +1,68 @@
+import json
 from datetime import date
 from uuid import UUID
 
 import pytest
-from pydantic import TypeAdapter
+from family_tree_api_client import AuthenticatedClient, Client
+from family_tree_api_client.api.auth.login_auth_login_post import (
+    asyncio_detailed as login,
+)
+from family_tree_api_client.api.persons.create_person_family_trees_tree_id_persons_post import (  # noqa: E501
+    asyncio_detailed as create_person,
+)
+from family_tree_api_client.api.persons.delete_person_family_trees_tree_id_persons_person_id_delete import (  # noqa: E501
+    asyncio_detailed as delete_person,
+)
+from family_tree_api_client.api.persons.get_person_family_trees_tree_id_persons_person_id_get import (  # noqa: E501
+    asyncio_detailed as get_person,
+)
+from family_tree_api_client.api.persons.get_person_list_by_filter_family_trees_tree_id_persons_list_post import (  # noqa: E501
+    asyncio_detailed as get_person_list_by_filter,
+)
+from family_tree_api_client.api.persons.update_person_family_trees_tree_id_persons_put import (  # noqa: E501
+    asyncio_detailed as update_person,
+)
+from family_tree_api_client.models.body_login_auth_login_post import (
+    BodyLoginAuthLoginPost,
+)
+from family_tree_api_client.models.filter_person_request import FilterPersonRequest
+from family_tree_api_client.models.gender import Gender as ApiGender
+from family_tree_api_client.models.login_response import LoginResponse
+from family_tree_api_client.models.paginated_response_person_model import (
+    PaginatedResponsePersonModel,
+)
+from family_tree_api_client.models.pagination_request_params import (
+    PaginationRequestParams,
+)
+from family_tree_api_client.models.parent_link_request import ParentLinkRequest
+from family_tree_api_client.models.person_create_request import PersonCreateRequest
+from family_tree_api_client.models.person_create_response import PersonCreateResponse
+from family_tree_api_client.models.person_filter_request_data import (
+    PersonFilterRequestData,
+)
+from family_tree_api_client.models.person_get_response import PersonGetResponse
+from family_tree_api_client.models.person_sort_field import PersonSortField
+from family_tree_api_client.models.person_update_date_request import (
+    PersonUpdateDateRequest,
+)
+from family_tree_api_client.models.person_update_request import PersonUpdateRequest
+from family_tree_api_client.models.person_update_response import PersonUpdateResponse
+from family_tree_api_client.models.person_update_where_request import (
+    PersonUpdateWhereRequest,
+)
+from family_tree_api_client.models.result_response import ResultResponse
+from family_tree_api_client.models.sort_order_field import SortOrderField
+from family_tree_api_client.models.sort_request_params_person_sort_field import (
+    SortRequestParamsPersonSortField,
+)
+from httpx import ASGITransport, AsyncClient
 
 from app.domain.entities.person import Gender, Person
-from app.domain.shared.dto.person_filter_dto import PersonSortField
-from app.domain.shared.dto.sorter_dto import SortOrderField
-from app.presentation.rest.schemas.dto.common import (
-    PaginatedResponse,
-    PaginationRequestParams,
-    ResultResponse,
-    SortRequestParams,
-)
-from app.presentation.rest.schemas.dto.person_schema import (
-    FilterPersonRequest,
-    ParentLinkRequest,
-    PersonCreateRequest,
-    PersonCreateResponse,
-    PersonFilterRequestData,
-    PersonModel,
-    PersonUpdateRequest,
-    PersonUpdateResponse,
-    _PersonUpdateDateRequest,
-    _PersonUpdateWhereRequest,
-)
+from app.domain.entities.user import User
 from app.utils.error_codes import ERROR_MESSAGES, ErrorCode
-from tests.e2e.auth_headers import admin_headers as admin_headers
-from tests.e2e.auth_headers import member_headers as member_headers
+from tests.e2e.auth_headers import admin_client as admin_client
+from tests.e2e.auth_headers import member_client as member_client
 from tests.helpers.uow import TreeUnitOfWork
-
-
-def persons_url(tree_id: UUID, suffix: str = "") -> str:
-    return f"/family-trees/{tree_id}/persons{suffix}"
-
 
 # ============================================================
 # CREATE PERSON
@@ -41,41 +70,36 @@ def persons_url(tree_id: UUID, suffix: str = "") -> str:
 
 
 @pytest.mark.asyncio
-async def test_create_person_permission_denied(client, tree_id, member_headers):  # noqa: F811
+async def test_create_person_permission_denied(
+    tree_id, member_client: AuthenticatedClient
+):
     req = PersonCreateRequest(
         name="limited-person",
-        gender=Gender.MALE,
+        gender=ApiGender.MALE,
     )
-    resp = await client.post(
-        persons_url(tree_id),
-        json=req.model_dump(mode="json"),
-        headers=member_headers,
-    )
+    resp = await create_person(tree_id=tree_id, client=member_client, body=req)
 
     assert resp.status_code == 403
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     assert body["status"] == 403
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.TREE_MEMBERSHIP_DENIED]
 
 
 @pytest.mark.asyncio
-async def test_create_person_unauthenticated(client, tree_id):
+async def test_create_person_unauthenticated(client: Client, tree_id):
     req = PersonCreateRequest(
         name="limited-person",
-        gender=Gender.MALE,
+        gender=ApiGender.MALE,
     )
-    resp = await client.post(
-        persons_url(tree_id),
-        json=req.model_dump(mode="json"),
-    )
+    resp = await create_person(tree_id=tree_id, client=client, body=req)
 
     assert resp.status_code == 401
-    assert resp.json()["detail"] == "Not authenticated"
+    assert json.loads(resp.content)["detail"] == "Not authenticated"
 
 
 @pytest.mark.asyncio
-async def test_create_person_success(client, tree_id, admin_headers, uow):  # noqa: F811
+async def test_create_person_success(tree_id, admin_client: AuthenticatedClient, uow):
     father = await uow.persons.create(
         Person(
             tree_id=uow.tree_id,
@@ -98,22 +122,19 @@ async def test_create_person_success(client, tree_id, admin_headers, uow):  # no
 
     req = PersonCreateRequest(
         name="child",
-        gender=Gender.MALE,
+        gender=ApiGender.MALE,
         parents=[
             ParentLinkRequest(parent_id=father.safe_id),
             ParentLinkRequest(parent_id=mother.safe_id),
         ],
     )
 
-    resp = await client.post(
-        persons_url(tree_id),
-        json=req.model_dump(mode="json"),
-        headers=admin_headers,
-    )
+    resp = await create_person(tree_id=tree_id, client=admin_client, body=req)
 
     assert resp.status_code == 200
 
-    person_data = TypeAdapter(PersonCreateResponse).validate_python(resp.json())
+    assert isinstance(resp.parsed, PersonCreateResponse)
+    person_data = resp.parsed
     assert person_data.id is not None
     assert person_data.name == req.name
     assert person_data.gender == req.gender
@@ -136,28 +157,31 @@ async def test_create_person_success(client, tree_id, admin_headers, uow):  # no
 
 
 @pytest.mark.asyncio
-async def test_get_person_permission_denied(client, tree_id, member_headers):  # noqa: F811
-    resp = await client.get(
-        persons_url(tree_id, f"/{UUID(int=1)}"),
-        headers=member_headers,
+async def test_get_person_permission_denied(
+    tree_id, member_client: AuthenticatedClient
+):
+    resp = await get_person(
+        tree_id=tree_id, person_id=UUID(int=1), client=member_client
     )
 
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     assert body["status"] == 403
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.TREE_MEMBERSHIP_DENIED]
 
 
 @pytest.mark.asyncio
-async def test_get_person_unauthenticated(client, tree_id):
-    resp = await client.get(persons_url(tree_id, f"/{UUID(int=1)}"))
+async def test_get_person_unauthenticated(client: Client, tree_id):
+    resp = await get_person(tree_id=tree_id, person_id=UUID(int=1), client=client)
 
     assert resp.status_code == 401
-    assert resp.json()["detail"] == "Not authenticated"
+    assert json.loads(resp.content)["detail"] == "Not authenticated"
 
 
 @pytest.mark.asyncio
-async def test_get_person_success(client, tree_id, admin_headers, uow: TreeUnitOfWork):  # noqa: F811
+async def test_get_person_success(
+    tree_id, admin_client: AuthenticatedClient, uow: TreeUnitOfWork
+):
     person = await uow.persons.create(
         Person(
             tree_id=uow.tree_id,
@@ -169,31 +193,30 @@ async def test_get_person_success(client, tree_id, admin_headers, uow: TreeUnitO
     )
     await uow.commit()
 
-    resp = await client.get(
-        persons_url(tree_id, f"/{person.safe_id}"),
-        headers=admin_headers,
+    resp = await get_person(
+        tree_id=tree_id, person_id=person.safe_id, client=admin_client
     )
 
     assert resp.status_code == 200
 
-    data = resp.json()
-    assert data["id"] == str(person.safe_id)
-    assert data["name"] == person.name
-    assert data["gender"] == person.gender.value
-    assert data["birth_date"] == "1990-01-01"
-    assert data["parents"] == []
-    assert data.get("marriage_id") is None
+    assert isinstance(resp.parsed, PersonGetResponse)
+    data = resp.parsed
+    assert data.id == person.safe_id
+    assert data.name == person.name
+    assert data.gender.value == person.gender.value
+    assert data.birth_date == date(1990, 1, 1)
+    assert data.parents == []
+    assert not data.marriage_id
 
 
 @pytest.mark.asyncio
-async def test_get_person_with_invalid_id(client, tree_id, admin_headers):  # noqa: F811
-    resp = await client.get(
-        persons_url(tree_id, f"/{UUID(int=999999)}"),
-        headers=admin_headers,
+async def test_get_person_with_invalid_id(tree_id, admin_client: AuthenticatedClient):
+    resp = await get_person(
+        tree_id=tree_id, person_id=UUID(int=999999), client=admin_client
     )
 
     assert resp.status_code == 404
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == 1104
     assert body["status"] == 404
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.PERSON_NOT_FOUND]
@@ -205,45 +228,40 @@ async def test_get_person_with_invalid_id(client, tree_id, admin_headers):  # no
 
 
 @pytest.mark.asyncio
-async def test_update_person_permission_denied(client, tree_id, member_headers):  # noqa: F811
+async def test_update_person_permission_denied(
+    tree_id, member_client: AuthenticatedClient
+):
     payload = PersonUpdateRequest(
-        where=_PersonUpdateWhereRequest(person_id=UUID(int=1)),
-        data=_PersonUpdateDateRequest(name="updated"),
+        where=PersonUpdateWhereRequest(person_id=UUID(int=1)),
+        data=PersonUpdateDateRequest(name="updated"),
     )
 
-    resp = await client.put(
-        persons_url(tree_id),
-        json=payload.model_dump(mode="json"),
-        headers=member_headers,
-    )
+    resp = await update_person(tree_id=tree_id, client=member_client, body=payload)
 
     assert resp.status_code == 403
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     assert body["status"] == 403
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.TREE_MEMBERSHIP_DENIED]
 
 
 @pytest.mark.asyncio
-async def test_update_person_unauthenticated(client, tree_id):
+async def test_update_person_unauthenticated(client: Client, tree_id):
     payload = PersonUpdateRequest(
-        where=_PersonUpdateWhereRequest(person_id=UUID(int=1)),
-        data=_PersonUpdateDateRequest(name="updated"),
+        where=PersonUpdateWhereRequest(person_id=UUID(int=1)),
+        data=PersonUpdateDateRequest(name="updated"),
     )
 
-    resp = await client.put(
-        persons_url(tree_id),
-        json=payload.model_dump(mode="json"),
-    )
+    resp = await update_person(tree_id=tree_id, client=client, body=payload)
 
     assert resp.status_code == 401
-    assert resp.json()["detail"] == "Not authenticated"
+    assert json.loads(resp.content)["detail"] == "Not authenticated"
 
 
 @pytest.mark.asyncio
 async def test_update_person_success(
-    client, tree_id, admin_headers, uow: TreeUnitOfWork
-):  # noqa: F811
+    tree_id, admin_client: AuthenticatedClient, uow: TreeUnitOfWork
+):
     person = await uow.persons.create(
         Person(
             tree_id=uow.tree_id,
@@ -256,41 +274,35 @@ async def test_update_person_success(
     await uow.commit()
 
     payload = PersonUpdateRequest(
-        where=_PersonUpdateWhereRequest(person_id=person.safe_id),
-        data=_PersonUpdateDateRequest(name="new-name", gender=Gender.FEMALE),
+        where=PersonUpdateWhereRequest(person_id=person.safe_id),
+        data=PersonUpdateDateRequest(name="new-name", gender=ApiGender.FEMALE),
     )
 
-    resp = await client.put(
-        persons_url(tree_id),
-        json=payload.model_dump(mode="json"),
-        headers=admin_headers,
-    )
+    resp = await update_person(tree_id=tree_id, client=admin_client, body=payload)
 
     assert resp.status_code == 200
-    TypeAdapter(PersonUpdateResponse).validate_python(resp.json())
+    assert isinstance(resp.parsed, PersonUpdateResponse)
 
     async with uow:
         updated = await uow.persons.get_or_raise(person_id=person.safe_id)
 
     assert updated.name == payload.data.name
-    assert updated.gender == payload.data.gender
+    assert updated.gender.value == payload.data.gender.value
 
 
 @pytest.mark.asyncio
-async def test_update_person_with_invalid_id(client, tree_id, admin_headers):  # noqa: F811
+async def test_update_person_with_invalid_id(
+    tree_id, admin_client: AuthenticatedClient
+):
     payload = PersonUpdateRequest(
-        where=_PersonUpdateWhereRequest(person_id=UUID(int=88888)),
-        data=_PersonUpdateDateRequest(name="new-name"),
+        where=PersonUpdateWhereRequest(person_id=UUID(int=88888)),
+        data=PersonUpdateDateRequest(name="new-name"),
     )
 
-    resp = await client.put(
-        persons_url(tree_id),
-        json=payload.model_dump(mode="json"),
-        headers=admin_headers,
-    )
+    resp = await update_person(tree_id=tree_id, client=admin_client, body=payload)
 
     assert resp.status_code == 404
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == 1104
     assert body["status"] == 404
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.PERSON_NOT_FOUND]
@@ -302,30 +314,31 @@ async def test_update_person_with_invalid_id(client, tree_id, admin_headers):  #
 
 
 @pytest.mark.asyncio
-async def test_delete_person_permission_denied(client, tree_id, member_headers):  # noqa: F811
-    resp = await client.delete(
-        persons_url(tree_id, f"/{UUID(int=1)}"),
-        headers=member_headers,
+async def test_delete_person_permission_denied(
+    tree_id, member_client: AuthenticatedClient
+):
+    resp = await delete_person(
+        tree_id=tree_id, person_id=UUID(int=1), client=member_client
     )
 
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     assert body["status"] == 403
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.TREE_MEMBERSHIP_DENIED]
 
 
 @pytest.mark.asyncio
-async def test_delete_person_unauthenticated(client, tree_id):
-    resp = await client.delete(persons_url(tree_id, f"/{UUID(int=1)}"))
+async def test_delete_person_unauthenticated(client: Client, tree_id):
+    resp = await delete_person(tree_id=tree_id, person_id=UUID(int=1), client=client)
 
     assert resp.status_code == 401
-    assert resp.json()["detail"] == "Not authenticated"
+    assert json.loads(resp.content)["detail"] == "Not authenticated"
 
 
 @pytest.mark.asyncio
 async def test_delete_person_success(
-    client, tree_id, admin_headers, uow: TreeUnitOfWork
-):  # noqa: F811
+    tree_id, admin_client: AuthenticatedClient, uow: TreeUnitOfWork
+):
     person = await uow.persons.create(
         Person(
             tree_id=uow.tree_id,
@@ -336,13 +349,12 @@ async def test_delete_person_success(
     )
     await uow.commit()
 
-    resp = await client.delete(
-        persons_url(tree_id, f"/{person.safe_id}"),
-        headers=admin_headers,
+    resp = await delete_person(
+        tree_id=tree_id, person_id=person.safe_id, client=admin_client
     )
 
     assert resp.status_code == 200
-    TypeAdapter(ResultResponse).validate_python(resp.json())
+    assert isinstance(resp.parsed, ResultResponse)
 
     deleted_person_id = person.safe_id
     async with uow:
@@ -352,14 +364,15 @@ async def test_delete_person_success(
 
 
 @pytest.mark.asyncio
-async def test_delete_person_with_invalid_id(client, tree_id, admin_headers):  # noqa: F811
-    resp = await client.delete(
-        persons_url(tree_id, f"/{UUID(int=999999)}"),
-        headers=admin_headers,
+async def test_delete_person_with_invalid_id(
+    tree_id, admin_client: AuthenticatedClient
+):
+    resp = await delete_person(
+        tree_id=tree_id, person_id=UUID(int=999999), client=admin_client
     )
 
     assert resp.status_code == 404
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == 1104
     assert body["status"] == 404
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.PERSON_NOT_FOUND]
@@ -370,56 +383,46 @@ async def test_delete_person_with_invalid_id(client, tree_id, admin_headers):  #
 # ============================================================
 
 
-@pytest.mark.asyncio
-async def test_get_person_list_by_filter_permission_denied(
-    client, tree_id, member_headers
-):  # noqa: F811
-    req = FilterPersonRequest(
-        filters=PersonFilterRequestData(),
+def _person_sort_request() -> FilterPersonRequest:
+    return FilterPersonRequest(
         pagination=PaginationRequestParams(offset=0, page=1, page_size=30),
-        sort=SortRequestParams(
+        sort=SortRequestParamsPersonSortField(
             sort_by=PersonSortField.ID,
             sort_order=SortOrderField.DESC,
         ),
     )
 
-    resp = await client.post(
-        persons_url(tree_id, "/list"),
-        json=req.model_dump(mode="json"),
-        headers=member_headers,
+
+@pytest.mark.asyncio
+async def test_get_person_list_by_filter_permission_denied(
+    tree_id, member_client: AuthenticatedClient
+):
+    req = _person_sort_request()
+
+    resp = await get_person_list_by_filter(
+        tree_id=tree_id, client=member_client, body=req
     )
 
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     assert body["status"] == 403
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.TREE_MEMBERSHIP_DENIED]
 
 
 @pytest.mark.asyncio
-async def test_get_person_list_by_filter_unauthenticated(client, tree_id):
-    req = FilterPersonRequest(
-        filters=PersonFilterRequestData(),
-        pagination=PaginationRequestParams(offset=0, page=1, page_size=30),
-        sort=SortRequestParams(
-            sort_by=PersonSortField.ID,
-            sort_order=SortOrderField.DESC,
-        ),
-    )
+async def test_get_person_list_by_filter_unauthenticated(client: Client, tree_id):
+    req = _person_sort_request()
 
-    resp = await client.post(
-        persons_url(tree_id, "/list"),
-        json=req.model_dump(mode="json"),
-    )
+    resp = await get_person_list_by_filter(tree_id=tree_id, client=client, body=req)
 
     assert resp.status_code == 401
-    assert resp.json()["detail"] == "Not authenticated"
+    assert json.loads(resp.content)["detail"] == "Not authenticated"
 
 
 @pytest.mark.asyncio
 async def test_get_person_list_by_filter_success(
-    client,
     tree_id,
-    admin_headers,  # noqa: F811
+    admin_client: AuthenticatedClient,
     uow: TreeUnitOfWork,
 ):
     person1 = await uow.persons.create(
@@ -442,21 +445,20 @@ async def test_get_person_list_by_filter_success(
     req = FilterPersonRequest(
         filters=PersonFilterRequestData(name="cus_person"),
         pagination=PaginationRequestParams(offset=1, page=2, page_size=2),
-        sort=SortRequestParams(
+        sort=SortRequestParamsPersonSortField(
             sort_by=PersonSortField.ID,
             sort_order=SortOrderField.ASC,
         ),
     )
 
-    resp = await client.post(
-        persons_url(tree_id, "/list"),
-        json=req.model_dump(mode="json"),
-        headers=admin_headers,
+    resp = await get_person_list_by_filter(
+        tree_id=tree_id, client=admin_client, body=req
     )
 
     assert resp.status_code == 200
 
-    data = TypeAdapter(PaginatedResponse[PersonModel]).validate_python(resp.json())
+    assert isinstance(resp.parsed, PaginatedResponsePersonModel)
+    data = resp.parsed
     sorted_persons = sorted(
         [person1, person2, person3, person4, person5],
         key=lambda person: person.safe_id,
@@ -476,8 +478,9 @@ async def test_get_person_list_by_filter_success(
 # ============================================================
 
 
-async def _reader_headers(client, uow):
-    from app.domain.entities.user import User
+async def _reader_client(
+    client: Client, uow, asgi_transport: ASGITransport
+) -> tuple[AuthenticatedClient, User]:
     from app.infrastructure.services.security.password_hasher_impl import (
         Argon2PasswordHasher,
     )
@@ -491,41 +494,46 @@ async def _reader_headers(client, uow):
     )
     await uow.commit()
 
-    login = await client.post(
-        "/auth/login",
-        data={"username": "person_reader", "password": "person_reader"},
+    login_resp = await login(
+        client=client,
+        body=BodyLoginAuthLoginPost(username="person_reader", password="person_reader"),
     )
-    assert login.status_code == 200
-    return {"Authorization": f"Bearer {login.json()['access_token']}"}, reader
+    assert login_resp.status_code == 200
+    assert isinstance(login_resp.parsed, LoginResponse)
+    token = login_resp.parsed.access_token
+
+    async_httpx = AsyncClient(
+        transport=asgi_transport,
+        base_url="http://testserver",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    reader_client = AuthenticatedClient(base_url="http://testserver", token=token)
+    reader_client.set_async_httpx_client(async_httpx)
+    return reader_client, reader
 
 
 @pytest.mark.asyncio
-async def test_list_persons_denied_for_non_member(client, tree_id, uow):
-    headers, _reader = await _reader_headers(client, uow)
+async def test_list_persons_denied_for_non_member(
+    client: Client, tree_id, uow, asgi_transport: ASGITransport
+):
+    reader_client, _reader = await _reader_client(client, uow, asgi_transport)
 
-    req = FilterPersonRequest(
-        filters=PersonFilterRequestData(),
-        pagination=PaginationRequestParams(offset=0, page=1, page_size=30),
-        sort=SortRequestParams(
-            sort_by=PersonSortField.ID,
-            sort_order=SortOrderField.DESC,
-        ),
-    )
+    req = _person_sort_request()
 
-    resp = await client.post(
-        persons_url(tree_id, "/list"),
-        json=req.model_dump(mode="json"),
-        headers=headers,
+    resp = await get_person_list_by_filter(
+        tree_id=tree_id, client=reader_client, body=req
     )
 
     assert resp.status_code == 403
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
 
 
 @pytest.mark.asyncio
-async def test_list_persons_allowed_for_member(client, tree_id, uow):
-    headers, reader = await _reader_headers(client, uow)
+async def test_list_persons_allowed_for_member(
+    client: Client, tree_id, uow, asgi_transport: ASGITransport
+):
+    reader_client, reader = await _reader_client(client, uow, asgi_transport)
     from tests.helpers.family_tree import add_tree_member
 
     await add_tree_member(uow, tree_id=tree_id, user_id=reader.safe_id)
@@ -539,26 +547,27 @@ async def test_list_persons_allowed_for_member(client, tree_id, uow):
     req = FilterPersonRequest(
         filters=PersonFilterRequestData(name="member-visible"),
         pagination=PaginationRequestParams(offset=0, page=1, page_size=30),
-        sort=SortRequestParams(
+        sort=SortRequestParamsPersonSortField(
             sort_by=PersonSortField.ID,
             sort_order=SortOrderField.DESC,
         ),
     )
 
-    resp = await client.post(
-        persons_url(tree_id, "/list"),
-        json=req.model_dump(mode="json"),
-        headers=headers,
+    resp = await get_person_list_by_filter(
+        tree_id=tree_id, client=reader_client, body=req
     )
 
     assert resp.status_code == 200
-    data = TypeAdapter(PaginatedResponse[PersonModel]).validate_python(resp.json())
+    assert isinstance(resp.parsed, PaginatedResponsePersonModel)
+    data = resp.parsed
     assert data.total >= 1
     assert any(item.name == "member-visible" for item in data.items)
 
 
 @pytest.mark.asyncio
-async def test_person_lists_are_isolated_per_tree(client, admin_headers, uow):
+async def test_person_lists_are_isolated_per_tree(
+    admin_client: AuthenticatedClient, uow
+):
     from tests.helpers.family_tree import create_family_tree_with_owner, get_admin_user
 
     admin = await get_admin_user(uow)
@@ -575,24 +584,22 @@ async def test_person_lists_are_isolated_per_tree(client, admin_headers, uow):
     req = FilterPersonRequest(
         filters=PersonFilterRequestData(name="tree-a-only"),
         pagination=PaginationRequestParams(offset=0, page=1, page_size=30),
-        sort=SortRequestParams(
+        sort=SortRequestParamsPersonSortField(
             sort_by=PersonSortField.ID,
             sort_order=SortOrderField.DESC,
         ),
     )
 
-    in_own_tree = await client.post(
-        persons_url(uow.tree_id, "/list"),
-        json=req.model_dump(mode="json"),
-        headers=admin_headers,
+    in_own_tree = await get_person_list_by_filter(
+        tree_id=uow.tree_id, client=admin_client, body=req
     )
     assert in_own_tree.status_code == 200
-    assert in_own_tree.json()["total"] >= 1
+    assert isinstance(in_own_tree.parsed, PaginatedResponsePersonModel)
+    assert in_own_tree.parsed.total >= 1
 
-    in_other_tree = await client.post(
-        persons_url(other_tree.safe_id, "/list"),
-        json=req.model_dump(mode="json"),
-        headers=admin_headers,
+    in_other_tree = await get_person_list_by_filter(
+        tree_id=other_tree.safe_id, client=admin_client, body=req
     )
     assert in_other_tree.status_code == 200
-    assert in_other_tree.json()["total"] == 0
+    assert isinstance(in_other_tree.parsed, PaginatedResponsePersonModel)
+    assert in_other_tree.parsed.total == 0

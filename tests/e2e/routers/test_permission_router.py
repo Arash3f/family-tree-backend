@@ -1,75 +1,73 @@
+import json
+
 import pytest
-from httpx import Response
-from pydantic import TypeAdapter
-
-from app.domain.shared.dto.permission_filter_dto import PermissionSortField
-from app.domain.shared.dto.sorter_dto import SortOrderField
-from app.infrastructure.utils.constants.permissions import Permissions
-from app.presentation.rest.schemas.dto.common import (
-    PaginatedResponse,
-    PaginationRequestParams,
-    SortRequestParams,
+from family_tree_api_client import AuthenticatedClient, Client
+from family_tree_api_client.api.permissions.get_permission_list_by_filter_permissions_list_post import (  # noqa: E501
+    asyncio_detailed as get_permission_list_by_filter,
 )
-from app.presentation.rest.schemas.dto.permission_schema import (
+from family_tree_api_client.models.filter_permission_request import (
     FilterPermissionRequest,
-    PermissionModel,
 )
+from family_tree_api_client.models.paginated_response_permission_model import (
+    PaginatedResponsePermissionModel,
+)
+from family_tree_api_client.models.pagination_request_params import (
+    PaginationRequestParams,
+)
+from family_tree_api_client.models.permission_sort_field import PermissionSortField
+from family_tree_api_client.models.sort_order_field import SortOrderField
+from family_tree_api_client.models.sort_request_params_permission_sort_field import (
+    SortRequestParamsPermissionSortField,
+)
+
+from app.infrastructure.utils.constants.permissions import Permissions
 from app.utils.error_codes import ERROR_MESSAGES, ErrorCode
-from tests.e2e.auth_headers import admin_headers as admin_headers
-from tests.e2e.auth_headers import member_headers as member_headers
+from tests.e2e.auth_headers import admin_client as admin_client
+from tests.e2e.auth_headers import member_client as member_client
 
 
 @pytest.mark.asyncio
-async def test_get_permission_list_by_filter_permission_denied(client, member_headers):  # noqa: F811
-    data: FilterPermissionRequest = FilterPermissionRequest(
+async def test_get_permission_list_by_filter_permission_denied(
+    member_client: AuthenticatedClient,
+):
+    data = FilterPermissionRequest(
         pagination=PaginationRequestParams(offset=0, page=1, page_size=30),
-        sort=SortRequestParams(
+        sort=SortRequestParamsPermissionSortField(
             sort_by=PermissionSortField.ID, sort_order=SortOrderField.DESC
         ),
     )
-    response: Response = await client.post(
-        "/permissions/list",
-        json=data.model_dump(mode="json"),
-        headers=member_headers,
-    )
+    response = await get_permission_list_by_filter(client=member_client, body=data)
     assert response.status_code == 403
-    assert response.json()["error_code"] == 1301
-    assert (
-        response.json()["message"] == ERROR_MESSAGES["en"][ErrorCode.PERMISSION_DENIED]
-    )
-    assert response.json()["status"] == 403
+    body = json.loads(response.content)
+    assert body["error_code"] == 1301
+    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.PERMISSION_DENIED]
+    assert body["status"] == 403
 
 
 @pytest.mark.asyncio
-async def test_get_permission_list_by_filter_not_authenticated(client):
-    data: FilterPermissionRequest = FilterPermissionRequest(
+async def test_get_permission_list_by_filter_not_authenticated(client: Client):
+    data = FilterPermissionRequest(
         pagination=PaginationRequestParams(offset=0, page=1, page_size=30),
-        sort=SortRequestParams(
+        sort=SortRequestParamsPermissionSortField(
             sort_by=PermissionSortField.ID, sort_order=SortOrderField.DESC
         ),
     )
-    response: Response = await client.post(
-        "/permissions/list",
-        json=data.model_dump(mode="json"),
-    )
+    response = await get_permission_list_by_filter(client=client, body=data)
     assert response.status_code == 401
-    assert response.json()["detail"] == "Not authenticated"
+    assert json.loads(response.content)["detail"] == "Not authenticated"
 
 
 @pytest.mark.asyncio
-async def test_get_permission_list_by_filter_success(client, admin_headers):  # noqa: F811
-    data: FilterPermissionRequest = FilterPermissionRequest(
+async def test_get_permission_list_by_filter_success(
+    admin_client: AuthenticatedClient,
+):
+    data = FilterPermissionRequest(
         pagination=PaginationRequestParams(offset=0, page=1, page_size=30),
-        sort=SortRequestParams(
+        sort=SortRequestParamsPermissionSortField(
             sort_by=PermissionSortField.ID, sort_order=SortOrderField.DESC
         ),
     )
-    response = await client.post(
-        "/permissions/list",
-        json=data.model_dump(mode="json"),
-        headers=admin_headers,
-    )
+    response = await get_permission_list_by_filter(client=admin_client, body=data)
     assert response.status_code == 200
-    adapter = TypeAdapter(PaginatedResponse[PermissionModel])
-    response_data = adapter.validate_python(response.json())
-    assert len(response_data.items) == Permissions.get_count()
+    assert isinstance(response.parsed, PaginatedResponsePermissionModel)
+    assert len(response.parsed.items) == Permissions.get_count()

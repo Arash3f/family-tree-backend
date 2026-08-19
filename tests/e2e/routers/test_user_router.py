@@ -1,40 +1,60 @@
+import json
 from uuid import UUID
 
 import pytest
-from pydantic import TypeAdapter
+from family_tree_api_client import AuthenticatedClient, Client
+from family_tree_api_client.api.users.create_user_users_post import (
+    asyncio_detailed as create_user,
+)
+from family_tree_api_client.api.users.delete_user_users_user_id_delete import (
+    asyncio_detailed as delete_user,
+)
+from family_tree_api_client.api.users.get_user_list_by_filter_users_list_post import (
+    asyncio_detailed as get_user_list_by_filter,
+)
+from family_tree_api_client.api.users.get_user_users_user_id_get import (
+    asyncio_detailed as get_user,
+)
+from family_tree_api_client.api.users.update_user_users_put import (
+    asyncio_detailed as update_user,
+)
+from family_tree_api_client.models.filter_user_request import FilterUserRequest
+from family_tree_api_client.models.paginated_response_user_model import (
+    PaginatedResponseUserModel,
+)
+from family_tree_api_client.models.pagination_request_params import (
+    PaginationRequestParams,
+)
+from family_tree_api_client.models.result_response import ResultResponse
+from family_tree_api_client.models.sort_order_field import SortOrderField
+from family_tree_api_client.models.sort_request_params_user_sort_field import (
+    SortRequestParamsUserSortField,
+)
+from family_tree_api_client.models.user_create_request import UserCreateRequest
+from family_tree_api_client.models.user_create_response import UserCreateResponse
+from family_tree_api_client.models.user_filter_request_data import (
+    UserFilterRequestData,
+)
+from family_tree_api_client.models.user_get_response import UserGetResponse
+from family_tree_api_client.models.user_sort_field import UserSortField
+from family_tree_api_client.models.user_update_date_request import (
+    UserUpdateDateRequest,
+)
+from family_tree_api_client.models.user_update_request import UserUpdateRequest
+from family_tree_api_client.models.user_update_response import UserUpdateResponse
+from family_tree_api_client.models.user_update_where_request import (
+    UserUpdateWhereRequest,
+)
 
 from app.domain.entities.role import Role
 from app.domain.entities.user import User
-from app.domain.shared.dto.sorter_dto import SortOrderField
-from app.domain.shared.dto.user_filter_dto import UserSortField
 from app.infrastructure.services.security.password_hasher_impl import (
     Argon2PasswordHasher,
 )
 from app.infrastructure.services.unit_of_work.sqlalchemy_uow import SQLAlchemyUnitOfWork
-from app.presentation.rest.schemas.dto.common import (
-    PaginatedResponse,
-    PaginationRequestParams,
-    ResultResponse,
-    SortRequestParams,
-)
-from app.presentation.rest.schemas.dto.user_schema import (
-    FilterUserRequest,
-    UserCreateRequest,
-    UserCreateResponse,
-    UserFilterRequestData,
-    UserGetResponse,
-    UserModel,
-    UserUpdateRequest,
-    UserUpdateResponse,
-    _UserUpdateDateRequest,
-    _UserUpdateWhereRequest,
-)
 from app.utils.error_codes import ERROR_MESSAGES, ErrorCode
-from tests.e2e.auth_headers import admin_headers as admin_headers
-from tests.e2e.auth_headers import member_headers as member_headers
-
-BASE_URL = "/users"
-
+from tests.e2e.auth_headers import admin_client as admin_client
+from tests.e2e.auth_headers import member_client as member_client
 
 # ============================================================
 # CREATE USER
@@ -42,45 +62,38 @@ BASE_URL = "/users"
 
 
 @pytest.mark.asyncio
-async def test_create_user_permission_denied(client, member_headers):  # noqa: F811
+async def test_create_user_permission_denied(member_client: AuthenticatedClient):
     req = UserCreateRequest(
         username="limited-user",
         fullname="limited-user",
         password="secret",
         re_password="secret",
     )
-    resp = await client.post(
-        BASE_URL,
-        json=req.model_dump(mode="json"),
-        headers=member_headers,
-    )
+    resp = await create_user(client=member_client, body=req)
 
     assert resp.status_code == 403
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == 1301
     assert body["status"] == 403
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.PERMISSION_DENIED]
 
 
 @pytest.mark.asyncio
-async def test_create_user_unauthenticated(client):
+async def test_create_user_unauthenticated(client: Client):
     req = UserCreateRequest(
         username="limited-user",
         fullname="limited-user",
         password="secret",
         re_password="secret",
     )
-    resp = await client.post(
-        BASE_URL,
-        json=req.model_dump(mode="json"),
-    )
+    resp = await create_user(client=client, body=req)
 
     assert resp.status_code == 401
-    assert resp.json()["detail"] == "Not authenticated"
+    assert json.loads(resp.content)["detail"] == "Not authenticated"
 
 
 @pytest.mark.asyncio
-async def test_create_user_success(client, admin_headers, uow):  # noqa: F811
+async def test_create_user_success(admin_client: AuthenticatedClient, uow):
     role = await uow.roles.create(Role(name="custom-role", permission_ids=[]))
     await uow.commit()
 
@@ -92,15 +105,12 @@ async def test_create_user_success(client, admin_headers, uow):  # noqa: F811
         role_id=role.safe_id,
     )
 
-    resp = await client.post(
-        BASE_URL,
-        json=req.model_dump(mode="json"),
-        headers=admin_headers,
-    )
+    resp = await create_user(client=admin_client, body=req)
 
     assert resp.status_code == 200
 
-    user_data = TypeAdapter(UserCreateResponse).validate_python(resp.json())
+    assert isinstance(resp.parsed, UserCreateResponse)
+    user_data = resp.parsed
     assert user_data.id is not None
     assert user_data.username == req.username
     assert user_data.fullname == req.fullname
@@ -121,28 +131,27 @@ async def test_create_user_success(client, admin_headers, uow):  # noqa: F811
 
 
 @pytest.mark.asyncio
-async def test_get_user_permission_denied(client, member_headers):  # noqa: F811
-    resp = await client.get(
-        f"{BASE_URL}/{UUID(int=1)}",
-        headers=member_headers,
-    )
+async def test_get_user_permission_denied(member_client: AuthenticatedClient):
+    resp = await get_user(user_id=UUID(int=1), client=member_client)
 
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == 1301
     assert body["status"] == 403
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.PERMISSION_DENIED]
 
 
 @pytest.mark.asyncio
-async def test_get_user_unauthenticated(client):
-    resp = await client.get(f"{BASE_URL}/{UUID(int=1)}")
+async def test_get_user_unauthenticated(client: Client):
+    resp = await get_user(user_id=UUID(int=1), client=client)
 
     assert resp.status_code == 401
-    assert resp.json()["detail"] == "Not authenticated"
+    assert json.loads(resp.content)["detail"] == "Not authenticated"
 
 
 @pytest.mark.asyncio
-async def test_get_user_success(client, admin_headers, uow: SQLAlchemyUnitOfWork):  # noqa: F811
+async def test_get_user_success(
+    admin_client: AuthenticatedClient, uow: SQLAlchemyUnitOfWork
+):
     hasher = Argon2PasswordHasher()
     user = await uow.users.create(
         User(
@@ -152,27 +161,22 @@ async def test_get_user_success(client, admin_headers, uow: SQLAlchemyUnitOfWork
     )
     await uow.commit()
 
-    resp = await client.get(
-        f"{BASE_URL}/{user.safe_id}",
-        headers=admin_headers,
-    )
+    resp = await get_user(user_id=user.safe_id, client=admin_client)
 
     assert resp.status_code == 200
 
-    data = TypeAdapter(UserGetResponse).validate_python(resp.json())
+    assert isinstance(resp.parsed, UserGetResponse)
+    data = resp.parsed
     assert data.id == user.safe_id
     assert data.username == user.username
 
 
 @pytest.mark.asyncio
-async def test_get_user_with_invalid_id(client, admin_headers):  # noqa: F811
-    resp = await client.get(
-        f"{BASE_URL}/{UUID(int=999999)}",
-        headers=admin_headers,
-    )
+async def test_get_user_with_invalid_id(admin_client: AuthenticatedClient):
+    resp = await get_user(user_id=UUID(int=999999), client=admin_client)
 
     assert resp.status_code == 404
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == 1400
     assert body["status"] == 404
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.USER_NOT_FOUND]
@@ -184,43 +188,38 @@ async def test_get_user_with_invalid_id(client, admin_headers):  # noqa: F811
 
 
 @pytest.mark.asyncio
-async def test_update_user_permission_denied(client, member_headers):  # noqa: F811
+async def test_update_user_permission_denied(member_client: AuthenticatedClient):
     payload = UserUpdateRequest(
-        where=_UserUpdateWhereRequest(user_id=UUID(int=1)),
-        data=_UserUpdateDateRequest(username="updated"),
+        where=UserUpdateWhereRequest(user_id=UUID(int=1)),
+        data=UserUpdateDateRequest(username="updated"),
     )
 
-    resp = await client.put(
-        BASE_URL,
-        json=payload.model_dump(mode="json"),
-        headers=member_headers,
-    )
+    resp = await update_user(client=member_client, body=payload)
 
     assert resp.status_code == 403
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == 1301
     assert body["status"] == 403
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.PERMISSION_DENIED]
 
 
 @pytest.mark.asyncio
-async def test_update_user_unauthenticated(client):
+async def test_update_user_unauthenticated(client: Client):
     payload = UserUpdateRequest(
-        where=_UserUpdateWhereRequest(user_id=UUID(int=1)),
-        data=_UserUpdateDateRequest(username="updated"),
+        where=UserUpdateWhereRequest(user_id=UUID(int=1)),
+        data=UserUpdateDateRequest(username="updated"),
     )
 
-    resp = await client.put(
-        BASE_URL,
-        json=payload.model_dump(mode="json"),
-    )
+    resp = await update_user(client=client, body=payload)
 
     assert resp.status_code == 401
-    assert resp.json()["detail"] == "Not authenticated"
+    assert json.loads(resp.content)["detail"] == "Not authenticated"
 
 
 @pytest.mark.asyncio
-async def test_update_user_success(client, admin_headers, uow: SQLAlchemyUnitOfWork):  # noqa: F811
+async def test_update_user_success(
+    admin_client: AuthenticatedClient, uow: SQLAlchemyUnitOfWork
+):
     hasher = Argon2PasswordHasher()
     role = await uow.roles.create(Role(name="update-role", permission_ids=[]))
     user = await uow.users.create(
@@ -232,21 +231,17 @@ async def test_update_user_success(client, admin_headers, uow: SQLAlchemyUnitOfW
     await uow.commit()
 
     payload = UserUpdateRequest(
-        where=_UserUpdateWhereRequest(user_id=user.safe_id),
-        data=_UserUpdateDateRequest(
+        where=UserUpdateWhereRequest(user_id=user.safe_id),
+        data=UserUpdateDateRequest(
             username="new-username",
             role_id=role.safe_id,
         ),
     )
 
-    resp = await client.put(
-        BASE_URL,
-        json=payload.model_dump(mode="json"),
-        headers=admin_headers,
-    )
+    resp = await update_user(client=admin_client, body=payload)
 
     assert resp.status_code == 200
-    TypeAdapter(UserUpdateResponse).validate_python(resp.json())
+    assert isinstance(resp.parsed, UserUpdateResponse)
 
     async with uow:
         updated = await uow.users.get_or_raise(user_id=user.safe_id)
@@ -256,20 +251,16 @@ async def test_update_user_success(client, admin_headers, uow: SQLAlchemyUnitOfW
 
 
 @pytest.mark.asyncio
-async def test_update_user_with_invalid_id(client, admin_headers):  # noqa: F811
+async def test_update_user_with_invalid_id(admin_client: AuthenticatedClient):
     payload = UserUpdateRequest(
-        where=_UserUpdateWhereRequest(user_id=UUID(int=88888)),
-        data=_UserUpdateDateRequest(username="new-username"),
+        where=UserUpdateWhereRequest(user_id=UUID(int=88888)),
+        data=UserUpdateDateRequest(username="new-username"),
     )
 
-    resp = await client.put(
-        BASE_URL,
-        json=payload.model_dump(mode="json"),
-        headers=admin_headers,
-    )
+    resp = await update_user(client=admin_client, body=payload)
 
     assert resp.status_code == 404
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == 1400
     assert body["status"] == 404
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.USER_NOT_FOUND]
@@ -281,28 +272,27 @@ async def test_update_user_with_invalid_id(client, admin_headers):  # noqa: F811
 
 
 @pytest.mark.asyncio
-async def test_delete_user_permission_denied(client, member_headers):  # noqa: F811
-    resp = await client.delete(
-        f"{BASE_URL}/{UUID(int=1)}",
-        headers=member_headers,
-    )
+async def test_delete_user_permission_denied(member_client: AuthenticatedClient):
+    resp = await delete_user(user_id=UUID(int=1), client=member_client)
 
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == 1301
     assert body["status"] == 403
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.PERMISSION_DENIED]
 
 
 @pytest.mark.asyncio
-async def test_delete_user_unauthenticated(client):
-    resp = await client.delete(f"{BASE_URL}/{UUID(int=1)}")
+async def test_delete_user_unauthenticated(client: Client):
+    resp = await delete_user(user_id=UUID(int=1), client=client)
 
     assert resp.status_code == 401
-    assert resp.json()["detail"] == "Not authenticated"
+    assert json.loads(resp.content)["detail"] == "Not authenticated"
 
 
 @pytest.mark.asyncio
-async def test_delete_user_success(client, admin_headers, uow: SQLAlchemyUnitOfWork):  # noqa: F811
+async def test_delete_user_success(
+    admin_client: AuthenticatedClient, uow: SQLAlchemyUnitOfWork
+):
     hasher = Argon2PasswordHasher()
     user = await uow.users.create(
         User(
@@ -312,13 +302,10 @@ async def test_delete_user_success(client, admin_headers, uow: SQLAlchemyUnitOfW
     )
     await uow.commit()
 
-    resp = await client.delete(
-        f"{BASE_URL}/{user.safe_id}",
-        headers=admin_headers,
-    )
+    resp = await delete_user(user_id=user.safe_id, client=admin_client)
 
     assert resp.status_code == 200
-    TypeAdapter(ResultResponse).validate_python(resp.json())
+    assert isinstance(resp.parsed, ResultResponse)
 
     deleted_user_id = user.safe_id
     async with uow:
@@ -328,14 +315,11 @@ async def test_delete_user_success(client, admin_headers, uow: SQLAlchemyUnitOfW
 
 
 @pytest.mark.asyncio
-async def test_delete_user_with_invalid_id(client, admin_headers):  # noqa: F811
-    resp = await client.delete(
-        f"{BASE_URL}/{UUID(int=999999)}",
-        headers=admin_headers,
-    )
+async def test_delete_user_with_invalid_id(admin_client: AuthenticatedClient):
+    resp = await delete_user(user_id=UUID(int=999999), client=admin_client)
 
     assert resp.status_code == 404
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == 1400
     assert body["status"] == 404
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.USER_NOT_FOUND]
@@ -347,52 +331,46 @@ async def test_delete_user_with_invalid_id(client, admin_headers):  # noqa: F811
 
 
 @pytest.mark.asyncio
-async def test_get_user_list_by_filter_permission_denied(client, member_headers):  # noqa: F811
+async def test_get_user_list_by_filter_permission_denied(
+    member_client: AuthenticatedClient,
+):
     req = FilterUserRequest(
         filters=UserFilterRequestData(),
         pagination=PaginationRequestParams(offset=0, page=1, page_size=30),
-        sort=SortRequestParams(
+        sort=SortRequestParamsUserSortField(
             sort_by=UserSortField.ID,
             sort_order=SortOrderField.DESC,
         ),
     )
 
-    resp = await client.post(
-        f"{BASE_URL}/list",
-        json=req.model_dump(mode="json"),
-        headers=member_headers,
-    )
+    resp = await get_user_list_by_filter(client=member_client, body=req)
 
-    body = resp.json()
+    body = json.loads(resp.content)
     assert body["error_code"] == 1301
     assert body["status"] == 403
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.PERMISSION_DENIED]
 
 
 @pytest.mark.asyncio
-async def test_get_user_list_by_filter_unauthenticated(client):
+async def test_get_user_list_by_filter_unauthenticated(client: Client):
     req = FilterUserRequest(
         filters=UserFilterRequestData(),
         pagination=PaginationRequestParams(offset=0, page=1, page_size=30),
-        sort=SortRequestParams(
+        sort=SortRequestParamsUserSortField(
             sort_by=UserSortField.ID,
             sort_order=SortOrderField.DESC,
         ),
     )
 
-    resp = await client.post(
-        f"{BASE_URL}/list",
-        json=req.model_dump(mode="json"),
-    )
+    resp = await get_user_list_by_filter(client=client, body=req)
 
     assert resp.status_code == 401
-    assert resp.json()["detail"] == "Not authenticated"
+    assert json.loads(resp.content)["detail"] == "Not authenticated"
 
 
 @pytest.mark.asyncio
 async def test_get_user_list_by_filter_success(
-    client,
-    admin_headers,  # noqa: F811
+    admin_client: AuthenticatedClient,
     uow: SQLAlchemyUnitOfWork,
 ):
     hasher = Argon2PasswordHasher()
@@ -416,21 +394,18 @@ async def test_get_user_list_by_filter_success(
     req = FilterUserRequest(
         filters=UserFilterRequestData(username="cus_user"),
         pagination=PaginationRequestParams(offset=1, page=2, page_size=2),
-        sort=SortRequestParams(
+        sort=SortRequestParamsUserSortField(
             sort_by=UserSortField.ID,
             sort_order=SortOrderField.ASC,
         ),
     )
 
-    resp = await client.post(
-        f"{BASE_URL}/list",
-        json=req.model_dump(mode="json"),
-        headers=admin_headers,
-    )
+    resp = await get_user_list_by_filter(client=admin_client, body=req)
 
     assert resp.status_code == 200
 
-    data = TypeAdapter(PaginatedResponse[UserModel]).validate_python(resp.json())
+    assert isinstance(resp.parsed, PaginatedResponseUserModel)
+    data = resp.parsed
     sorted_users = sorted(
         [user1, user2, user3, user4, user5],
         key=lambda user: user.safe_id,

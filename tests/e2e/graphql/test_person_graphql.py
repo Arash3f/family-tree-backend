@@ -4,8 +4,6 @@ import pytest
 
 from app.domain.entities.person import Gender, Person
 from app.utils.error_codes import ErrorCode
-from tests.e2e.auth_headers import admin_headers as admin_headers
-from tests.e2e.auth_headers import member_headers as member_headers
 
 GRAPHQL_URL = "/graphql"
 

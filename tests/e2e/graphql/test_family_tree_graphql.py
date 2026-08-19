@@ -6,8 +6,7 @@ from app.domain.entities.family_tree import TreeMemberRole
 from app.domain.entities.person import Gender, Person
 from app.domain.shared.permissions import Permissions
 from app.utils.error_codes import ErrorCode
-from tests.e2e.auth_headers import admin_headers as admin_headers
-from tests.helpers.auth import create_authenticated_user
+from tests.e2e.graphql.legacy_auth import create_authenticated_user
 from tests.helpers.family_tree import (
     add_tree_member,
     create_family_tree_with_owner,
