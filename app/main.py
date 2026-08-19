@@ -63,10 +63,6 @@ async def lifespan(app: FastAPI):
 
     await seed_initial_user(uow=uow, password_hasher=password_hasher)
 
-    # ? Initial person & marriage data
-    # from seed_items import seed_initial_items
-    # await seed_initial_items(uow=uow)
-
     yield
 
     await neo4j_client.close()
