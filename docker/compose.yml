@@ -1,4 +1,4 @@
-# Full stack: API + Celery + Flower + Postgres + Redis + Neo4j + MinIO
+# Full stack: API + Celery + Postgres + Redis + Neo4j + MinIO
 #
 # From backend repo root:
 #   docker compose -f docker/compose.yml --env-file .env up --build
@@ -90,32 +90,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
-
-  flower:
-    <<: *app-env
-    build: *app-build
-    image: "family-tree-api:${APP_IMAGE_TARGET:-runtime}"
-    container_name: family-tree-flower
-    command: >
-      sh -c "celery -A app.celery.celery_app flower --port=5555
-      --basic_auth=$${FLOWER_BASIC_AUTH:-admin:admin}"
-    networks:
-      - family-tree
-    depends_on:
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "curl -fsS -u \"$${FLOWER_BASIC_AUTH:-admin:admin}\" http://127.0.0.1:5555/ || exit 1",
-        ]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 20s
-    expose:
-      - "5555"
 
   db:
     image: postgres:15.13

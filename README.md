@@ -42,16 +42,16 @@ A **multi-tenant family tree system** where users can:
 
 ### Key Features
 
-✅ **Dual API:** REST + GraphQL (same logic, unified behavior)  
-✅ **Hybrid Storage:** PostgreSQL (ACID, auth, history) + Neo4j (graph traversals)  
-✅ **Multi-Tenancy:** Data never bleeds between family trees  
-✅ **Graph Queries:** Shortest-path relationships computed on Neo4j  
-✅ **Async Throughout:** SQLAlchemy 2 async, Celery workers, Redis queue  
-✅ **Security:** JWT rotation, Argon2 hashing, role-based permissions, rate limiting  
-✅ **Background Jobs:** Automated Neo4j sync, scheduled database backups  
-✅ **File Storage:** MinIO (S3-compatible) for person photos with presigned URLs  
-✅ **High Test Coverage:** 90%+ with unit/integration/e2e suites  
-✅ **Production Hardened:** Health checks, structured logging, error tracking  
+✅ **Dual API:** REST + GraphQL (same logic, unified behavior)
+✅ **Hybrid Storage:** PostgreSQL (ACID, auth, history) + Neo4j (graph traversals)
+✅ **Multi-Tenancy:** Data never bleeds between family trees
+✅ **Graph Queries:** Shortest-path relationships computed on Neo4j
+✅ **Async Throughout:** SQLAlchemy 2 async, Celery workers, Redis queue
+✅ **Security:** JWT rotation, Argon2 hashing, role-based permissions, rate limiting
+✅ **Background Jobs:** Automated Neo4j sync, scheduled database backups
+✅ **File Storage:** MinIO (S3-compatible) for person photos with presigned URLs
+✅ **High Test Coverage:** 90%+ with unit/integration/e2e suites
+✅ **Production Hardened:** Health checks, structured logging, error tracking
 
 ---
 
@@ -132,7 +132,6 @@ A **multi-tenant family tree system** where users can:
 | **Validation** | Pydantic v2 | Runtime validation, serialization, JSON schema |
 | **Queue** | Celery 5.6+ | Task routing, scheduled jobs, failure retry |
 | **Broker** | Redis 8 | In-memory queue, rate limiting, session storage |
-| **Job Monitor** | Flower 2.0+ | Visual task monitoring, retry controls |
 | **File Storage** | MinIO + aioboto3 | S3-compatible, presigned URLs, local or cloud |
 | **Auth** | JWT + Argon2 | Stateless tokens, password hashing, refresh rotation |
 | **Quality** | Ruff + mypy + Bandit | Fast linting, type checking, security scanning |
@@ -163,7 +162,7 @@ cp .env.example .env
 ### 2. Run with Docker (Recommended)
 
 ```bash
-# Full stack: API + Postgres + Redis + Neo4j + MinIO + Celery + Flower
+# Full stack: API + Postgres + Redis + Neo4j + MinIO + Celery
 docker compose -f docker/compose.yml --env-file .env up --build
 ```
 
@@ -175,7 +174,6 @@ docker compose -f docker/compose.yml --env-file .env up --build
 | **Swagger UI** | http://localhost:8001/api_docs |
 | **ReDoc** | http://localhost:8001/redoc |
 | **GraphQL** | http://localhost:8001/graphql |
-| **Flower** | http://localhost:5555 (admin:admin) |
 
 ### 3. First Request
 
@@ -308,9 +306,6 @@ poetry run celery -A app.celery.celery_app worker -l info --pool=solo \
 
 # Terminal 3: Celery Beat (schedule daily backups at 00:00 Tehran time)
 poetry run celery -A app.celery.celery_app beat --loglevel=info
-
-# Terminal 4 (optional): Flower (task monitoring)
-poetry run celery -A app.celery.celery_app flower --port=5555
 ```
 
 **Note:** Without a running worker, Neo4j will not sync (Postgres writes still succeed though).
@@ -554,12 +549,8 @@ AUTH_RATE_LIMIT_PER_MINUTE=30
 # Backups
 BACKUP_DIR=/mnt/backups
 
-# Flower monitoring
-FLOWER_BASIC_AUTH=admin:admin
-
 # Published ports (for Docker)
 API_PORT=8001
-FLOWER_PORT=5555
 ```
 
 **Validation:**
@@ -766,9 +757,6 @@ docker compose exec celery_worker celery -A app.celery.celery_app inspect active
 
 # Restart worker
 docker compose restart celery_worker
-
-# Check Flower for failed tasks
-open http://localhost:5555
 ```
 
 #### 3. **Test Database Won't Delete**
@@ -910,7 +898,7 @@ MIT License — See [LICENSE](LICENSE)
 
 ## Support
 
-**Maintainer:** Arash Alfooneh  
+**Maintainer:** Arash Alfooneh
 **Email:** arash.alfooneh@gmail.com
 
 **Issues:** Create a GitHub issue with reproduction steps and environment details.

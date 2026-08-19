@@ -43,6 +43,7 @@ choices = [
 
   { value = "cli", name = "cli" },
 
+  { value = "docker", name = "docker" },
   { value = "config", name = "config" },
   { value = "docs", name = "docs" },
   { value = "tests", name = "tests" },

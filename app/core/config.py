@@ -61,7 +61,6 @@ class AppSettings(PydanticBaseSettings):
         "http://localhost:8001,http://localhost,http://127.0.0.1,"
         "http://localhost:80,http://127.0.0.1:80"
     )
-    FLOWER_BASIC_AUTH: str = "admin:admin"
     AUTH_RATE_LIMIT_PER_MINUTE: int = 30
 
     # GraphQL hardening. A single query can fan out far more work than a REST
@@ -121,8 +120,6 @@ class AppSettings(PydanticBaseSettings):
             weak.append("NEO4J_PASSWORD")
         if self.POSTGRES_PASSWORD in {"postgres", "password"}:
             weak.append("POSTGRES_PASSWORD")
-        if self.FLOWER_BASIC_AUTH in {"admin:admin", "admin:password"}:
-            weak.append("FLOWER_BASIC_AUTH")
         if (
             self.MINIO_ACCESS_KEY == "minioadmin"  # pragma: allowlist secret
             or self.MINIO_SECRET_KEY == "minioadmin"  # pragma: allowlist secret

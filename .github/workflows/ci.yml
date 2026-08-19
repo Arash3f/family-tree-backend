@@ -95,7 +95,7 @@ jobs:
           fi
 
       - name: Start stack
-        # api + its depends_on (db, redis, neo4j, minio). Celery/Flower not needed for pytest.
+        # api + its depends_on (db, redis, neo4j, minio). Celery not needed for pytest.
         run: docker compose --env-file .env up -d --wait --wait-timeout 180 api
 
       - name: Alembic migration smoke

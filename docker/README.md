@@ -40,7 +40,7 @@ image.
 APP_IMAGE_TARGET=ci docker compose -f docker/compose.yml --env-file .env up -d --build
 ```
 
-By default only **API** (`8001`) and **Flower** (`5555`) are published on the host.
+By default only **API** (`8001`) is published on the host.
 Postgres / Redis / Neo4j / MinIO stay on the Compose network. For host tools
 (psql, Neo4j Browser, MinIO console):
 
@@ -90,12 +90,11 @@ docker compose -f docker/compose.yml --env-file .env exec -T api \
 |---------|------|------------------------|
 | API (REST + GraphQL) | `8001` | yes |
 | GraphQL / GraphiQL | `http://localhost:8001/graphql` | yes |
-| Flower | `5555` | yes |
 | Postgres | `5432` | only with `compose.host-ports.yml` |
 | Redis | `6379` | only with `compose.host-ports.yml` |
 | Neo4j Browser / Bolt | `7474` / `7687` | only with `compose.host-ports.yml` |
 | MinIO API / Console | `9000` / `9001` | only with `compose.host-ports.yml` |
 
-Override mapped host ports with `API_PORT`, `FLOWER_PORT`, `POSTGRES_PUBLISH_PORT`,
+Override mapped host ports with `API_PORT`, `POSTGRES_PUBLISH_PORT`,
 `REDIS_PUBLISH_PORT`, `NEO4J_HTTP_PORT`, `NEO4J_BOLT_PORT`, `MINIO_API_PORT`,
 `MINIO_CONSOLE_PORT` in `.env` or the shell.
