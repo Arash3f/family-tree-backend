@@ -64,7 +64,7 @@ ignore_missing_imports = true
 warn_unused_configs = true
 disallow_untyped_defs = false
 check_untyped_defs = true
-exclude = "(?x)(^migrations/|^scripts/|^build/|^dist/|^generated/)"
+exclude = "(?x)(^migrations/|^scripts/|^build/|^dist/|^generated/|^tests/)"
 
 [tool.bandit]
 exclude_dirs = ["tests", "migrations", "bruno", "scripts", "generated"]

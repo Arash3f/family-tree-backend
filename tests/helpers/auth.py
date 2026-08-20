@@ -71,7 +71,7 @@ async def create_authenticated_user(
         body=BodyLoginAuthLoginPost(username=username, password=password),
     )
     if login_response.status_code != 200:
-        raise RuntimeError(f"Login failed for {username!r}: {login_response.content}")
+        raise RuntimeError(f"Login failed for {username!r}: {login_response.content!r}")
 
     assert isinstance(login_response.parsed, LoginResponse)
     token = login_response.parsed.access_token
