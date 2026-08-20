@@ -1,0 +1,46 @@
+mutation CreateTicket($data: TicketCreateInput!) {
+  createTicket(data: $data) {
+    id
+    title
+    status
+    messages {
+      body
+    }
+  }
+}
+
+query ListTickets {
+  tickets {
+    total
+    items {
+      id
+      title
+      status
+    }
+  }
+}
+
+query GetTicket($id: UUID!) {
+  ticket(ticketId: $id) {
+    id
+    title
+    messages {
+      body
+      authorUserId
+    }
+  }
+}
+
+mutation AddTicketMessage($id: UUID!, $data: TicketMessageCreateInput!) {
+  addTicketMessage(ticketId: $id, data: $data) {
+    id
+    body
+  }
+}
+
+mutation UpdateTicketStatus($id: UUID!, $data: TicketUpdateStatusInput!) {
+  updateTicketStatus(ticketId: $id, data: $data) {
+    id
+    status
+  }
+}

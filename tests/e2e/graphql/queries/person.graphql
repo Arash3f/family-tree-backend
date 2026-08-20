@@ -1,0 +1,42 @@
+mutation CreatePerson($treeId: UUID!, $data: PersonCreateInput!) {
+  createPerson(treeId: $treeId, data: $data) {
+    id
+    name
+    gender
+    parents {
+      parentId
+      relationshipType
+    }
+  }
+}
+
+mutation UpdatePerson($treeId: UUID!, $data: PersonUpdateInput!) {
+  updatePerson(treeId: $treeId, data: $data) {
+    id
+    name
+  }
+}
+
+mutation DeletePerson($treeId: UUID!, $personId: UUID!) {
+  deletePerson(treeId: $treeId, personId: $personId) {
+    result
+  }
+}
+
+query GetPerson($treeId: UUID!, $personId: UUID!) {
+  person(treeId: $treeId, personId: $personId) {
+    id
+    name
+    gender
+  }
+}
+
+query ListPersons($treeId: UUID!, $data: PersonListInput) {
+  persons(treeId: $treeId, data: $data) {
+    total
+    items {
+      id
+      name
+    }
+  }
+}

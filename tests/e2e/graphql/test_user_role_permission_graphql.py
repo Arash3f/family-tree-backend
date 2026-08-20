@@ -1,143 +1,63 @@
 import pytest
+from family_tree_graphql_client import FamilyTreeGraphQLClient
+from family_tree_graphql_client.exceptions import GraphQLClientGraphQLMultiError
+from family_tree_graphql_client.input_types import (
+    RoleCreateInput,
+    UserCreateInput,
+    UserFilterInput,
+    UserListInput,
+)
 
-GRAPHQL_URL = "/graphql"
+from tests.e2e.graphql.graphql_auth import admin_gql_client as admin_gql_client
+from tests.e2e.graphql.graphql_auth import member_gql_client as member_gql_client
 
 
-async def gql(
-    client,
-    query: str,
-    variables: dict | None = None,
-    headers: dict | None = None,
+@pytest.mark.asyncio
+async def test_graphql_users_roles_permissions_flow(
+    admin_gql_client: FamilyTreeGraphQLClient,
 ):
-    payload: dict[str, object] = {"query": query}
-    if variables is not None:
-        payload["variables"] = variables
-    return await client.post(GRAPHQL_URL, json=payload, headers=headers or {})
+    permissions = await admin_gql_client.list_permissions()
+    perm_page = permissions.permissions
+    assert perm_page.total >= 1
+    permission_ids = [item.id for item in perm_page.items[:3]]
+
+    role = await admin_gql_client.create_role(
+        data=RoleCreateInput(name="gql-role", permission_ids=permission_ids)
+    )
+    role_id = role.create_role.id
+
+    user = await admin_gql_client.create_user(
+        data=UserCreateInput(
+            username="gql_user",
+            fullname="GQL User",
+            password="Secret123!",
+            re_password="Secret123!",
+            role_id=role_id,
+        )
+    )
+    user_id = user.create_user.id
+
+    get_user = await admin_gql_client.get_user(id=user_id)
+    assert get_user.user.username == "gql_user"
+
+    get_role = await admin_gql_client.get_role(id=role_id)
+    assert get_role.role.id == role_id
+
+    users = await admin_gql_client.list_users(
+        data=UserListInput(filters=UserFilterInput(username="gql_user"))
+    )
+    assert users.users.total >= 1
+
+    deleted_user = await admin_gql_client.delete_user(id=user_id)
+    assert deleted_user.delete_user.result
+
+    deleted_role = await admin_gql_client.delete_role(id=role_id)
+    assert deleted_role.delete_role.result
 
 
 @pytest.mark.asyncio
-async def test_graphql_users_roles_permissions_flow(client, admin_headers):  # noqa: F811
-    permissions = await gql(
-        client,
-        """
-        query {
-          permissions {
-            total
-            items { id name }
-          }
-        }
-        """,
-        headers=admin_headers,
-    )
-    assert "errors" not in permissions.json(), permissions.json()
-    perm_page = permissions.json()["data"]["permissions"]
-    assert perm_page["total"] >= 1
-    permission_ids = [item["id"] for item in perm_page["items"][:3]]
-
-    role = await gql(
-        client,
-        """
-        mutation ($data: RoleCreateInput!) {
-          createRole(data: $data) { id name permissionIds }
-        }
-        """,
-        {"data": {"name": "gql-role", "permissionIds": permission_ids}},
-        headers=admin_headers,
-    )
-    assert "errors" not in role.json(), role.json()
-    role_id = role.json()["data"]["createRole"]["id"]
-
-    user = await gql(
-        client,
-        """
-        mutation ($data: UserCreateInput!) {
-          createUser(data: $data) { id username fullname roleId }
-        }
-        """,
-        {
-            "data": {
-                "username": "gql_user",
-                "fullname": "GQL User",
-                "password": "Secret123!",
-                "rePassword": "Secret123!",
-                "roleId": role_id,
-            }
-        },
-        headers=admin_headers,
-    )
-    assert "errors" not in user.json(), user.json()
-    user_id = user.json()["data"]["createUser"]["id"]
-
-    get_user = await gql(
-        client,
-        """
-        query ($id: UUID!) {
-          user(userId: $id) { id username roleId }
-        }
-        """,
-        {"id": user_id},
-        headers=admin_headers,
-    )
-    assert "errors" not in get_user.json()
-    assert get_user.json()["data"]["user"]["username"] == "gql_user"
-
-    get_role = await gql(
-        client,
-        """
-        query ($id: UUID!) {
-          role(roleId: $id) { id name }
-        }
-        """,
-        {"id": role_id},
-        headers=admin_headers,
-    )
-    assert "errors" not in get_role.json()
-
-    users = await gql(
-        client,
-        """
-        query {
-          users(data: { filters: { username: "gql_user" } }) {
-            total
-            items { id username }
-          }
-        }
-        """,
-        headers=admin_headers,
-    )
-    assert "errors" not in users.json()
-    assert users.json()["data"]["users"]["total"] >= 1
-
-    deleted_user = await gql(
-        client,
-        """
-        mutation ($id: UUID!) {
-          deleteUser(userId: $id) { result }
-        }
-        """,
-        {"id": user_id},
-        headers=admin_headers,
-    )
-    assert "errors" not in deleted_user.json()
-
-    deleted_role = await gql(
-        client,
-        """
-        mutation ($id: UUID!) {
-          deleteRole(roleId: $id) { result }
-        }
-        """,
-        {"id": role_id},
-        headers=admin_headers,
-    )
-    assert "errors" not in deleted_role.json()
-
-
-@pytest.mark.asyncio
-async def test_graphql_permissions_denied_for_member(client, member_headers):  # noqa: F811
-    resp = await gql(
-        client,
-        "{ permissions { total } }",
-        headers=member_headers,
-    )
-    assert resp.json().get("errors")
+async def test_graphql_permissions_denied_for_member(
+    member_gql_client: FamilyTreeGraphQLClient,
+):
+    with pytest.raises(GraphQLClientGraphQLMultiError):
+        await member_gql_client.list_permissions()

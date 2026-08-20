@@ -1,0 +1,38 @@
+mutation CreateMarriage($treeId: UUID!, $data: MarriageCreateInput!) {
+  createMarriage(treeId: $treeId, data: $data) {
+    id
+    spouseAId
+    spouseBId
+    marriedAt
+    divorcedAt
+  }
+}
+
+query GetMarriage($treeId: UUID!, $marriageId: UUID!) {
+  marriage(treeId: $treeId, marriageId: $marriageId) {
+    id
+    spouseAId
+    spouseBId
+  }
+}
+
+mutation Divorce($treeId: UUID!, $data: DivorceInput!) {
+  divorce(treeId: $treeId, data: $data) {
+    result
+  }
+}
+
+query ListMarriages($treeId: UUID!) {
+  marriages(treeId: $treeId) {
+    total
+    items {
+      id
+    }
+  }
+}
+
+mutation DeleteMarriage($treeId: UUID!, $marriageId: UUID!) {
+  deleteMarriage(treeId: $treeId, marriageId: $marriageId) {
+    result
+  }
+}

@@ -1,127 +1,66 @@
 import pytest
+from family_tree_graphql_client import FamilyTreeGraphQLClient
+from family_tree_graphql_client.exceptions import GraphQLClientGraphQLMultiError
 
 from app.core.config import settings
-
-GRAPHQL_URL = "/graphql"
-
-
-async def gql(
-    client,
-    query: str,
-    variables: dict | None = None,
-    headers: dict | None = None,
-):
-    payload: dict[str, object] = {"query": query}
-    if variables is not None:
-        payload["variables"] = variables
-    return await client.post(GRAPHQL_URL, json=payload, headers=headers or {})
+from tests.e2e.graphql.graphql_auth import admin_gql_client as admin_gql_client
+from tests.e2e.graphql.graphql_auth import gql_client as gql_client
+from tests.e2e.graphql.graphql_auth import member_gql_client as member_gql_client
 
 
 @pytest.mark.asyncio
-async def test_graphql_login_success(client):
-    resp = await gql(
-        client,
-        """
-        mutation Login($username: String!, $password: String!) {
-          login(username: $username, password: $password) {
-            accessToken
-            refreshToken
-            tokenType
-          }
-        }
-        """,
-        {
-            "username": settings.ADMIN_USERNAME,
-            "password": settings.ADMIN_PASSWORD,
-        },
+async def test_graphql_login_success(gql_client: FamilyTreeGraphQLClient):
+    resp = await gql_client.login(
+        username=settings.ADMIN_USERNAME, password=settings.ADMIN_PASSWORD
     )
-    assert resp.status_code == 200
-    body = resp.json()
-    assert "errors" not in body
-    data = body["data"]["login"]
-    assert data["accessToken"]
-    assert data["refreshToken"]
-    assert data["tokenType"] == "bearer"
+    data = resp.login
+    assert data.access_token
+    assert data.refresh_token
+    assert data.token_type == "bearer"
 
 
 @pytest.mark.asyncio
-async def test_graphql_login_invalid_credentials(client):
-    resp = await gql(
-        client,
-        f"""
-        mutation {{
-          login(username: "{settings.ADMIN_USERNAME}", password: "wrong-password") {{
-            accessToken
-          }}
-        }}
-        """,
+async def test_graphql_login_invalid_credentials(gql_client: FamilyTreeGraphQLClient):
+    with pytest.raises(GraphQLClientGraphQLMultiError) as exc_info:
+        await gql_client.login(
+            username=settings.ADMIN_USERNAME, password="wrong-password"
+        )
+
+    error = exc_info.value.errors[0]
+    assert error.extensions["status"] in (401, 422, 400)
+
+
+@pytest.mark.asyncio
+async def test_graphql_me_requires_auth(gql_client: FamilyTreeGraphQLClient):
+    with pytest.raises(GraphQLClientGraphQLMultiError):
+        await gql_client.me()
+
+
+@pytest.mark.asyncio
+async def test_graphql_me_success(admin_gql_client: FamilyTreeGraphQLClient):
+    resp = await admin_gql_client.me()
+    assert resp.me.username == settings.ADMIN_USERNAME
+
+
+@pytest.mark.asyncio
+async def test_graphql_refresh_and_logout(gql_client: FamilyTreeGraphQLClient):
+    login = await gql_client.login(
+        username=settings.ADMIN_USERNAME, password=settings.ADMIN_PASSWORD
     )
-    assert resp.status_code == 200
-    body = resp.json()
-    assert body.get("errors")
-    extensions = body["errors"][0].get("extensions") or {}
-    assert extensions.get("status") in (401, 422, 400)
 
+    refreshed = await gql_client.refresh_token(token=login.login.refresh_token)
+    assert refreshed.refresh_token.refresh_token != login.login.refresh_token
 
-@pytest.mark.asyncio
-async def test_graphql_me_requires_auth(client):
-    resp = await gql(client, "{ me { username } }")
-    assert resp.status_code == 200
-    assert resp.json().get("errors")
-
-
-@pytest.mark.asyncio
-async def test_graphql_me_success(client, admin_headers):  # noqa: F811
-    resp = await gql(client, "{ me { username roleId } }", headers=admin_headers)
-    assert resp.status_code == 200
-    body = resp.json()
-    assert "errors" not in body
-    assert body["data"]["me"]["username"] == settings.ADMIN_USERNAME
-
-
-@pytest.mark.asyncio
-async def test_graphql_refresh_and_logout(client):
-    login = await gql(
-        client,
-        f"""
-        mutation {{
-          login(
-            username: "{settings.ADMIN_USERNAME}"
-            password: "{settings.ADMIN_PASSWORD}"
-          ) {{
-            accessToken
-            refreshToken
-          }}
-        }}
-        """,
+    gql_client.http_client.headers["Authorization"] = (
+        f"Bearer {refreshed.refresh_token.access_token}"
     )
-    tokens = login.json()["data"]["login"]
+    logout = await gql_client.logout()
+    assert logout.logout.result
 
-    refreshed = await gql(
-        client,
-        """
-        mutation Refresh($token: String!) {
-          refreshToken(refreshToken: $token) {
-            accessToken
-            refreshToken
-          }
-        }
-        """,
-        {"token": tokens["refreshToken"]},
-    )
-    assert "errors" not in refreshed.json()
-    new_tokens = refreshed.json()["data"]["refreshToken"]
-    assert new_tokens["refreshToken"] != tokens["refreshToken"]
-
-    headers = {"Authorization": f"Bearer {new_tokens['accessToken']}"}
-    logout = await gql(client, "mutation { logout { result } }", headers=headers)
-    assert "errors" not in logout.json()
-    assert logout.json()["data"]["logout"]["result"]
-
-    me_after = await gql(client, "{ me { username } }", headers=headers)
-    assert me_after.json().get("errors")
+    with pytest.raises(GraphQLClientGraphQLMultiError):
+        await gql_client.me()
 
 
 @pytest.mark.asyncio
-async def test_graphql_member_can_login(client, member_headers):  # noqa: F811
-    assert "Authorization" in member_headers
+async def test_graphql_member_can_login(member_gql_client: FamilyTreeGraphQLClient):
+    assert "Authorization" in member_gql_client.http_client.headers

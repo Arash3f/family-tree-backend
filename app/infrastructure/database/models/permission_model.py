@@ -13,8 +13,12 @@ class PermissionModel(Base):
     __tablename__ = "permissions"
 
     name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
-    description_en: Mapped[str] = mapped_column(String(500), nullable=False, default="")
-    description_fa: Mapped[str] = mapped_column(String(500), nullable=False, default="")
+    description_en: Mapped[str] = mapped_column(
+        String(500), nullable=False, default="", server_default=""
+    )
+    description_fa: Mapped[str] = mapped_column(
+        String(500), nullable=False, default="", server_default=""
+    )
 
     # -------------------------
     # relationships

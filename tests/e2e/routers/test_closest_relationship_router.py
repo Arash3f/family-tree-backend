@@ -1,5 +1,5 @@
 import json
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
@@ -23,7 +23,7 @@ from tests.helpers.uow import TreeUnitOfWork
 
 @pytest.fixture
 def mock_neo():
-    repo = MagicMock()
+    repo = AsyncMock()
     original = app.dependency_overrides.get(get_neo)
     app.dependency_overrides[get_neo] = lambda: repo
     yield repo
@@ -48,8 +48,8 @@ async def test_closest_relationship_permission_denied(
     )
     assert resp.status_code == 403
     body = json.loads(resp.content)
-    assert body["error_code"] == 1301
-    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.PERMISSION_DENIED]
+    assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
+    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.TREE_MEMBERSHIP_DENIED]
     mock_neo.find_shortest_relationship_path.assert_not_called()
 
 

@@ -30,9 +30,9 @@ async def create_authenticated_user(
 ) -> AuthenticatedUser:
     """Create a user holding exactly `permissions` and log them in.
 
-    Raw-httpx variant used only by GraphQL tests, which exercise the REST
-    login endpoint directly and are out of scope for the generated-client
-    migration (GraphQL isn't covered by the generated REST client).
+    Logs in over the REST endpoint directly and returns bearer headers, so
+    callers building custom-permission actors can wrap them into a type-safe
+    GraphQL client via `graphql_auth.gql_client_with_headers`.
     """
     username = username or f"user_{uuid4().hex[:12]}"
     password = f"pw_{uuid4().hex[:16]}"

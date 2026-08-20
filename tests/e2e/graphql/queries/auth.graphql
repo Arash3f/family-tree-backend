@@ -1,0 +1,27 @@
+mutation Login($username: String!, $password: String!) {
+  login(username: $username, password: $password) {
+    accessToken
+    refreshToken
+    tokenType
+  }
+}
+
+query Me {
+  me {
+    username
+    roleId
+  }
+}
+
+mutation RefreshToken($token: String!) {
+  refreshToken(refreshToken: $token) {
+    accessToken
+    refreshToken
+  }
+}
+
+mutation Logout {
+  logout {
+    result
+  }
+}

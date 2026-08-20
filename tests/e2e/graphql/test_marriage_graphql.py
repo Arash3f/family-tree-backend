@@ -1,30 +1,18 @@
 from datetime import date
 
 import pytest
+from family_tree_graphql_client import FamilyTreeGraphQLClient
+from family_tree_graphql_client.input_types import DivorceInput, MarriageCreateInput
 
 from app.domain.entities.person import Gender, Person
-
-GRAPHQL_URL = "/graphql"
-
-
-async def gql(
-    client,
-    query: str,
-    variables: dict | None = None,
-    headers: dict | None = None,
-):
-    payload: dict[str, object] = {"query": query}
-    if variables is not None:
-        payload["variables"] = variables
-    return await client.post(GRAPHQL_URL, json=payload, headers=headers or {})
+from tests.e2e.graphql.graphql_auth import admin_gql_client as admin_gql_client
 
 
 @pytest.mark.asyncio
 async def test_graphql_marriage_crud_and_divorce(
-    client,
     tree_id,
-    admin_headers,
-    uow,  # noqa: F811
+    admin_gql_client: FamilyTreeGraphQLClient,
+    uow,
 ):
     husband = await uow.persons.create(
         Person(
@@ -46,80 +34,31 @@ async def test_graphql_marriage_crud_and_divorce(
     )
     await uow.commit()
 
-    create = await gql(
-        client,
-        """
-        mutation ($treeId: UUID!, $data: MarriageCreateInput!) {
-          createMarriage(treeId: $treeId, data: $data) {
-            id spouseAId spouseBId marriedAt divorcedAt
-          }
-        }
-        """,
-        {
-            "treeId": str(tree_id),
-            "data": {
-                "spouseAId": str(husband.safe_id),
-                "spouseBId": str(wife.safe_id),
-                "marriedAt": "2020-01-01",
-            },
-        },
-        headers=admin_headers,
+    created = await admin_gql_client.create_marriage(
+        tree_id=tree_id,
+        data=MarriageCreateInput(
+            spouse_a_id=husband.safe_id,
+            spouse_b_id=wife.safe_id,
+            married_at="2020-01-01",
+        ),
     )
-    assert "errors" not in create.json(), create.json()
-    marriage = create.json()["data"]["createMarriage"]
-    marriage_id = marriage["id"]
+    marriage_id = created.create_marriage.id
 
-    get_one = await gql(
-        client,
-        """
-        query ($treeId: UUID!, $id: UUID!) {
-          marriage(treeId: $treeId, marriageId: $id) { id spouseAId spouseBId }
-        }
-        """,
-        {"treeId": str(tree_id), "id": marriage_id},
-        headers=admin_headers,
+    fetched = await admin_gql_client.get_marriage(
+        tree_id=tree_id, marriage_id=marriage_id
     )
-    assert "errors" not in get_one.json()
+    assert fetched.marriage.id == marriage_id
 
-    divorce = await gql(
-        client,
-        """
-        mutation ($treeId: UUID!, $data: DivorceInput!) {
-          divorce(treeId: $treeId, data: $data) { result }
-        }
-        """,
-        {
-            "treeId": str(tree_id),
-            "data": {"marriageId": marriage_id, "divorcedAt": "2021-06-01"},
-        },
-        headers=admin_headers,
+    divorced = await admin_gql_client.divorce(
+        tree_id=tree_id,
+        data=DivorceInput(marriage_id=marriage_id, divorced_at="2021-06-01"),
     )
-    assert "errors" not in divorce.json(), divorce.json()
+    assert divorced.divorce.result
 
-    listed = await gql(
-        client,
-        """
-        query ($treeId: UUID!) {
-          marriages(treeId: $treeId) {
-            total
-            items { id }
-          }
-        }
-        """,
-        {"treeId": str(tree_id)},
-        headers=admin_headers,
-    )
-    assert "errors" not in listed.json()
-    assert listed.json()["data"]["marriages"]["total"] >= 1
+    listed = await admin_gql_client.list_marriages(tree_id=tree_id)
+    assert listed.marriages.total >= 1
 
-    deleted = await gql(
-        client,
-        """
-        mutation ($treeId: UUID!, $id: UUID!) {
-          deleteMarriage(treeId: $treeId, marriageId: $id) { result }
-        }
-        """,
-        {"treeId": str(tree_id), "id": marriage_id},
-        headers=admin_headers,
+    deleted = await admin_gql_client.delete_marriage(
+        tree_id=tree_id, marriage_id=marriage_id
     )
-    assert "errors" not in deleted.json()
+    assert deleted.delete_marriage.result

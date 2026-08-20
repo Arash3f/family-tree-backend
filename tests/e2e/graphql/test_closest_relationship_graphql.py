@@ -1,33 +1,23 @@
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
+from family_tree_graphql_client import FamilyTreeGraphQLClient
+from family_tree_graphql_client.exceptions import GraphQLClientGraphQLMultiError
 
 from app.domain.entities.person import Gender, Person
 from app.domain.shared.dto.family_tree_dto import RelationshipPathDTO
 from app.main import app
 from app.presentation.dependencies import get_neo
 from app.utils.error_codes import ErrorCode
-from tests.e2e.graphql.test_person_graphql import gql
+from tests.e2e.graphql.graphql_auth import admin_gql_client as admin_gql_client
+from tests.e2e.graphql.graphql_auth import member_gql_client as member_gql_client
 from tests.helpers.uow import TreeUnitOfWork
-
-CLOSEST = """
-query ClosestRelationship($treeId: UUID!, $fromId: UUID!, $toId: UUID!) {
-  closestRelationship(treeId: $treeId, fromPersonId: $fromId, toPersonId: $toId) {
-    fromPersonId
-    toPersonId
-    found
-    distance
-    pathPersonIds
-    relationshipTypes
-  }
-}
-"""
 
 
 @pytest.fixture
 def mock_neo():
-    repo = MagicMock()
+    repo = AsyncMock()
     original = app.dependency_overrides.get(get_neo)
     app.dependency_overrides[get_neo] = lambda: repo
     yield repo
@@ -39,32 +29,24 @@ def mock_neo():
 
 @pytest.mark.asyncio
 async def test_graphql_closest_relationship_permission_denied(
-    client,
     tree_id,
-    member_headers,
+    member_gql_client: FamilyTreeGraphQLClient,
     mock_neo,  # noqa: F811
 ):
-    resp = await gql(
-        client,
-        CLOSEST,
-        {
-            "treeId": str(tree_id),
-            "fromId": str(uuid4()),
-            "toId": str(uuid4()),
-        },
-        headers=member_headers,
-    )
-    assert resp.status_code == 200
-    errors = resp.json()["errors"]
-    assert errors[0]["extensions"]["error_code"] == int(ErrorCode.PERMISSION_DENIED)
+    with pytest.raises(GraphQLClientGraphQLMultiError) as exc_info:
+        await member_gql_client.closest_relationship(
+            tree_id=tree_id, from_id=uuid4(), to_id=uuid4()
+        )
+
+    error = exc_info.value.errors[0]
+    assert error.extensions["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     mock_neo.find_shortest_relationship_path.assert_not_called()
 
 
 @pytest.mark.asyncio
 async def test_graphql_closest_relationship_success(
-    client,
     tree_id,
-    admin_headers,
+    admin_gql_client: FamilyTreeGraphQLClient,
     uow: TreeUnitOfWork,
     mock_neo,  # noqa: F811
 ):
@@ -88,22 +70,12 @@ async def test_graphql_closest_relationship_success(
         relationship_types=["SPOUSE_OF"],
     )
 
-    resp = await gql(
-        client,
-        CLOSEST,
-        {
-            "treeId": str(tree_id),
-            "fromId": str(from_id),
-            "toId": str(to_id),
-        },
-        headers=admin_headers,
+    resp = await admin_gql_client.closest_relationship(
+        tree_id=tree_id, from_id=from_id, to_id=to_id
     )
-    assert resp.status_code == 200
-    payload = resp.json()
-    assert "errors" not in payload, payload
-    data = payload["data"]["closestRelationship"]
-    assert data["found"] is True
-    assert data["distance"] == 1
-    assert data["fromPersonId"] == str(from_id)
-    assert data["toPersonId"] == str(to_id)
-    assert data["relationshipTypes"] == ["SPOUSE_OF"]
+    data = resp.closest_relationship
+    assert data.found is True
+    assert data.distance == 1
+    assert str(data.from_person_id) == str(from_id)
+    assert str(data.to_person_id) == str(to_id)
+    assert data.relationship_types == ["SPOUSE_OF"]

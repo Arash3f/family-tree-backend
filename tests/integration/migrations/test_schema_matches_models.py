@@ -143,9 +143,7 @@ def test_migrations_install_the_integrity_triggers(migrated_engine):
     """Triggers live in raw DDL, so metadata comparison cannot see them."""
     with migrated_engine.connect() as conn:
         rows = conn.execute(
-            sa.text(
-                "SELECT tgname FROM pg_trigger WHERE NOT tgisinternal"
-            )
+            sa.text("SELECT tgname FROM pg_trigger WHERE NOT tgisinternal")
         ).scalars()
         triggers = set(rows)
 
@@ -157,9 +155,10 @@ def test_parent_links_cannot_span_two_family_trees(migrated_engine):
     with migrated_engine.begin() as conn:
         owner_id = conn.execute(
             sa.text(
-                "INSERT INTO users (id, username, password_hash, created_at, "
-                "updated_at) VALUES (gen_random_uuid(), 'trigger_owner', 'x', "
-                "NOW(), NOW()) RETURNING id"
+                "INSERT INTO users (id, username, fullname, password_hash, "
+                "created_at, updated_at) VALUES (gen_random_uuid(), "
+                "'trigger_owner', 'Trigger Owner', 'x', NOW(), NOW()) "
+                "RETURNING id"
             )
         ).scalar_one()
 

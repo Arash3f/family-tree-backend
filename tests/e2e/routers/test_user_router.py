@@ -100,8 +100,8 @@ async def test_create_user_success(admin_client: AuthenticatedClient, uow):
     req = UserCreateRequest(
         username="new-user",
         fullname="New User",
-        password="secret",
-        re_password="secret",
+        password="secret123",
+        re_password="secret123",
         role_id=role.safe_id,
     )
 

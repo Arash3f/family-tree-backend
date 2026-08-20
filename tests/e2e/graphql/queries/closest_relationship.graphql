@@ -1,0 +1,10 @@
+query ClosestRelationship($treeId: UUID!, $fromId: UUID!, $toId: UUID!) {
+  closestRelationship(treeId: $treeId, fromPersonId: $fromId, toPersonId: $toId) {
+    fromPersonId
+    toPersonId
+    found
+    distance
+    pathPersonIds
+    relationshipTypes
+  }
+}

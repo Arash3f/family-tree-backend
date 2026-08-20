@@ -1,81 +1,57 @@
 from datetime import date
 
 import pytest
+from family_tree_graphql_client import FamilyTreeGraphQLClient
+from family_tree_graphql_client.enums import Gender as ApiGender
+from family_tree_graphql_client.exceptions import GraphQLClientGraphQLMultiError
+from family_tree_graphql_client.input_types import (
+    ParentLinkInput,
+    PersonCreateInput,
+    PersonUpdateDataInput,
+    PersonUpdateInput,
+    PersonUpdateWhereInput,
+)
 
 from app.domain.entities.person import Gender, Person
 from app.utils.error_codes import ErrorCode
+from tests.e2e.graphql.graphql_auth import admin_gql_client as admin_gql_client
+from tests.e2e.graphql.graphql_auth import gql_client as gql_client
+from tests.e2e.graphql.graphql_auth import member_gql_client as member_gql_client
 
-GRAPHQL_URL = "/graphql"
-
-
-async def gql(
-    client,
-    query: str,
-    variables: dict | None = None,
-    headers: dict | None = None,
-):
-    payload: dict[str, object] = {"query": query}
-    if variables is not None:
-        payload["variables"] = variables
-    return await client.post(GRAPHQL_URL, json=payload, headers=headers or {})
-
-
-CREATE_PERSON = """
-mutation CreatePerson($treeId: UUID!, $data: PersonCreateInput!) {
-  createPerson(treeId: $treeId, data: $data) {
-    id
-    name
-    gender
-    parents {
-      parentId
-      relationshipType
-    }
-  }
-}
-"""
+pytestmark = pytest.mark.asyncio
 
 
 @pytest.mark.asyncio
 async def test_graphql_create_person_permission_denied(
-    client,
-    tree_id,
-    member_headers,  # noqa: F811
+    tree_id, member_gql_client: FamilyTreeGraphQLClient
 ):
-    resp = await gql(
-        client,
-        CREATE_PERSON,
-        {
-            "treeId": str(tree_id),
-            "data": {"name": "limited-person", "gender": "MALE"},
-        },
-        headers=member_headers,
-    )
-    assert resp.status_code == 200
-    errors = resp.json()["errors"]
-    assert errors[0]["extensions"]["error_code"] == int(ErrorCode.PERMISSION_DENIED)
-    assert errors[0]["extensions"]["status"] == 403
+    with pytest.raises(GraphQLClientGraphQLMultiError) as exc_info:
+        await member_gql_client.create_person(
+            tree_id=tree_id,
+            data=PersonCreateInput(name="limited-person", gender=ApiGender.MALE),
+        )
+
+    error = exc_info.value.errors[0]
+    assert error.extensions["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
+    assert error.extensions["status"] == 403
 
 
 @pytest.mark.asyncio
-async def test_graphql_create_person_unauthenticated(client, tree_id):
-    resp = await gql(
-        client,
-        CREATE_PERSON,
-        {
-            "treeId": str(tree_id),
-            "data": {"name": "limited-person", "gender": "MALE"},
-        },
-    )
-    assert resp.status_code == 200
-    assert resp.json().get("errors")
+async def test_graphql_create_person_unauthenticated(
+    tree_id, gql_client: FamilyTreeGraphQLClient
+):
+    with pytest.raises(GraphQLClientGraphQLMultiError):
+        await gql_client.create_person(
+            tree_id=tree_id,
+            data=PersonCreateInput(name="limited-person", gender=ApiGender.MALE),
+        )
 
 
 @pytest.mark.asyncio
 async def test_graphql_create_get_list_update_delete_person(
-    client,
     tree_id,
-    admin_headers,  # noqa: F811
-    uow,  # noqa: F811
+    admin_gql_client: FamilyTreeGraphQLClient,
+    uow,
 ):
     father = await uow.persons.create(
         Person(
@@ -97,90 +73,40 @@ async def test_graphql_create_get_list_update_delete_person(
     )
     await uow.commit()
 
-    create = await gql(
-        client,
-        CREATE_PERSON,
-        {
-            "treeId": str(tree_id),
-            "data": {
-                "name": "child",
-                "gender": "MALE",
-                "parents": [
-                    {"parentId": str(father.safe_id), "relationshipType": "BIOLOGICAL"},
-                    {"parentId": str(mother.safe_id), "relationshipType": "BIOLOGICAL"},
-                ],
-            },
-        },
-        headers=admin_headers,
+    created = await admin_gql_client.create_person(
+        tree_id=tree_id,
+        data=PersonCreateInput(
+            name="child",
+            gender=ApiGender.MALE,
+            parents=[
+                ParentLinkInput(parent_id=father.safe_id),
+                ParentLinkInput(parent_id=mother.safe_id),
+            ],
+        ),
     )
-    assert "errors" not in create.json(), create.json()
-    person = create.json()["data"]["createPerson"]
-    person_id = person["id"]
-    assert person["name"] == "child"
-    assert {p["parentId"] for p in person["parents"]} == {
+    person = created.create_person
+    person_id = person.id
+    assert person.name == "child"
+    assert {str(p.parent_id) for p in person.parents} == {
         str(father.safe_id),
         str(mother.safe_id),
     }
 
-    get_one = await gql(
-        client,
-        """
-        query ($treeId: UUID!, $id: UUID!) {
-          person(treeId: $treeId, personId: $id) { id name gender }
-        }
-        """,
-        {"treeId": str(tree_id), "id": person_id},
-        headers=admin_headers,
-    )
-    assert "errors" not in get_one.json()
-    assert get_one.json()["data"]["person"]["name"] == "child"
+    fetched = await admin_gql_client.get_person(tree_id=tree_id, person_id=person_id)
+    assert fetched.person.name == "child"
 
-    listed = await gql(
-        client,
-        """
-        query ($treeId: UUID!) {
-          persons(treeId: $treeId, data: { filters: { name: "child" } }) {
-            total
-            items { id name }
-          }
-        }
-        """,
-        {"treeId": str(tree_id)},
-        headers=admin_headers,
-    )
-    assert "errors" not in listed.json()
-    page = listed.json()["data"]["persons"]
-    assert page["total"] >= 1
-    assert any(item["id"] == person_id for item in page["items"])
+    listed = await admin_gql_client.list_persons(tree_id=tree_id)
+    assert listed.persons.total >= 1
+    assert any(item.id == person_id for item in listed.persons.items)
 
-    updated = await gql(
-        client,
-        """
-        mutation ($treeId: UUID!, $data: PersonUpdateInput!) {
-          updatePerson(treeId: $treeId, data: $data) { id name }
-        }
-        """,
-        {
-            "treeId": str(tree_id),
-            "data": {
-                "data": {"name": "child-updated"},
-                "where": {"personId": person_id},
-            },
-        },
-        headers=admin_headers,
+    updated = await admin_gql_client.update_person(
+        tree_id=tree_id,
+        data=PersonUpdateInput(
+            data=PersonUpdateDataInput(name="child-updated"),
+            where=PersonUpdateWhereInput(person_id=person_id),
+        ),
     )
-    assert "errors" not in updated.json()
-    assert updated.json()["data"]["updatePerson"]["name"] == "child-updated"
+    assert updated.update_person.name == "child-updated"
 
-    deleted = await gql(
-        client,
-        """
-        mutation ($treeId: UUID!, $id: UUID!) {
-          deletePerson(treeId: $treeId, personId: $id) { result }
-        }
-        """,
-        {"treeId": str(tree_id), "id": person_id},
-        headers=admin_headers,
-    )
-    assert "errors" not in deleted.json()
-    assert deleted.json()["data"]["deletePerson"]["result"]
+    deleted = await admin_gql_client.delete_person(tree_id=tree_id, person_id=person_id)
+    assert deleted.delete_person.result

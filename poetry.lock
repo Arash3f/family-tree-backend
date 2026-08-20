@@ -392,6 +392,33 @@ cffi = [
 ]
 
 [[package]]
+name = "ariadne-codegen"
+version = "0.18.0"
+description = "Generate fully typed GraphQL client from schema, queries and mutations!"
+optional = false
+python-versions = ">=3.10"
+groups = ["dev"]
+files = [
+    {file = "ariadne_codegen-0.18.0-py3-none-any.whl", hash = "sha256:03291b30a8777d3a4b3715c538ceefcd91f7f9d5ef7d0f878c6707069887ded7"},
+    {file = "ariadne_codegen-0.18.0.tar.gz", hash = "sha256:13f28e73eb362cd10563aa8f6458fa022f28a8975cb13afa0c3dddb5476c2d59"},
+]
+
+[package.dependencies]
+click = ">=8.3,<9.0"
+graphql-core = ">=3.2.7,<3.3"
+httpx = ">=0.28,<1.0"
+pydantic = ">=2.0.0,<3.0.0"
+ruff = ">=0.15.0,<0.16.0"
+toml = ">=0.10,<1.0"
+
+[package.extras]
+dev = ["ipdb"]
+opentelemetry = ["opentelemetry-api"]
+subscriptions = ["websockets (>=15)"]
+test = ["ariadne", "freezegun", "opentelemetry-api", "pytest", "pytest-asyncio", "pytest-httpx", "pytest-mock", "requests-toolbelt", "types-toml", "websockets (>=14.2)"]
+types = ["ty (>=0.0.20,<0.1.0)"]
+
+[[package]]
 name = "ast-serialize"
 version = "0.3.0"
 description = "Python bindings for mypy AST serialization"
@@ -931,7 +958,7 @@ version = "8.3.3"
 description = "Composable command line interface toolkit"
 optional = false
 python-versions = ">=3.10"
-groups = ["main"]
+groups = ["main", "dev"]
 files = [
     {file = "click-8.3.3-py3-none-any.whl", hash = "sha256:a2bf429bb3033c89fa4936ffb35d5cb471e3719e1f3c8a7c3fff0b8314305613"},
     {file = "click-8.3.3.tar.gz", hash = "sha256:398329ad4837b2ff7cbe1dd166a4c0f8900c3ca3a218de04466f38f6497f18a2"},
@@ -1420,7 +1447,7 @@ version = "3.2.11"
 description = "GraphQL implementation for Python, a port of GraphQL.js, the JavaScript reference implementation for GraphQL."
 optional = false
 python-versions = "<4,>=3.7"
-groups = ["main"]
+groups = ["main", "dev"]
 files = [
     {file = "graphql_core-3.2.11-py3-none-any.whl", hash = "sha256:0b3e35ff41e9adba53021ab0cef475eb18f57c7f53f0f2ca55567fbf3c537ea0"},
     {file = "graphql_core-3.2.11.tar.gz", hash = "sha256:e7e156d10beb127cab5c89ff0da71416fc73d27c484a4757d3b2d35633774802"},
@@ -3417,6 +3444,18 @@ files = [
 tests = ["pytest", "pytest-cov"]
 
 [[package]]
+name = "toml"
+version = "0.10.2"
+description = "Python Library for Tom's Obvious, Minimal Language"
+optional = false
+python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
+groups = ["dev"]
+files = [
+    {file = "toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b"},
+    {file = "toml-0.10.2.tar.gz", hash = "sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f"},
+]
+
+[[package]]
 name = "tomlkit"
 version = "0.15.0"
 description = "Style preserving TOML library"
@@ -3817,4 +3856,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<4.0"
-content-hash = "507f6e8a2421b9be8955a69259d8ad4506829fd573337f91c239603bfbffe9d9"
+content-hash = "6347776199a87d9996060c7aa9193a90579e9d58b4baab2181e06c5b46c87db3"

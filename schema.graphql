@@ -1,0 +1,631 @@
+enum AccountTypeEnum {
+  FREE
+  PAID
+}
+
+type AuthTokensType {
+  accessToken: String!
+  refreshToken: String!
+  tokenType: String!
+}
+
+type ClosestRelationshipType {
+  fromPersonId: UUID!
+  toPersonId: UUID!
+  found: Boolean!
+  distance: Int
+  pathPersonIds: [UUID!]!
+  relationshipTypes: [String!]!
+}
+
+"""Date (isoformat)"""
+scalar Date
+
+input DateRangeInput {
+  min: Date = null
+  max: Date = null
+}
+
+"""Date with time (isoformat)"""
+scalar DateTime
+
+input DivorceInput {
+  marriageId: UUID!
+  divorcedAt: Date!
+}
+
+input FamilyTreeCreateInput {
+  name: String!
+}
+
+type FamilyTreeType {
+  id: UUID!
+  name: String!
+  ownerUserId: UUID!
+  myPermissions: [String!]!
+}
+
+input FamilyTreeUpdateInput {
+  name: String!
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+input MarriageCreateInput {
+  spouseAId: UUID!
+  spouseBId: UUID!
+  marriedAt: Date!
+}
+
+input MarriageFilterInput {
+  id: UUID = null
+  spouseAId: UUID = null
+  spouseBId: UUID = null
+  marriedAt: DateRangeInput = null
+  divorcedAt: DateRangeInput = null
+}
+
+input MarriageListInput {
+  pagination: PaginationInput = null
+  filters: MarriageFilterInput = null
+  sortOrder: SortOrder = null
+  sortBy: MarriageSortBy = null
+}
+
+type MarriagePage {
+  items: [MarriageType!]!
+  total: Int!
+  page: Int!
+  pageSize: Int!
+}
+
+enum MarriageSortBy {
+  ID
+  MARRIED_AT
+  DIVORCED_AT
+}
+
+type MarriageType {
+  id: UUID
+  spouseAId: UUID!
+  spouseBId: UUID!
+  marriedAt: Date
+  divorcedAt: Date
+}
+
+input MarriageUpdateDataInput {
+  spouseAId: UUID = null
+  spouseBId: UUID = null
+  marriedAt: Date = null
+  divorcedAt: Date = null
+}
+
+input MarriageUpdateInput {
+  data: MarriageUpdateDataInput!
+  where: MarriageUpdateWhereInput!
+}
+
+input MarriageUpdateWhereInput {
+  marriageId: UUID!
+}
+
+type Mutation {
+  """Login (REST: POST /auth/login)"""
+  login(username: String!, password: String!): AuthTokensType!
+
+  """Refresh tokens (REST: POST /auth/refresh)"""
+  refreshToken(refreshToken: String!): AuthTokensType!
+
+  """Logout current session (REST: POST /auth/logout)"""
+  logout: ResultType!
+
+  """Logout all sessions (REST: POST /auth/logout-all)"""
+  logoutAll: ResultType!
+
+  """Create family tree (REST: POST /family-trees)"""
+  createFamilyTree(data: FamilyTreeCreateInput!): FamilyTreeType!
+
+  """Update family tree (REST: PATCH /family-trees/{id})"""
+  updateFamilyTree(treeId: UUID!, data: FamilyTreeUpdateInput!): FamilyTreeType!
+
+  """Delete family tree (REST: DELETE /family-trees/{id})"""
+  deleteFamilyTree(treeId: UUID!): ResultType!
+
+  """Add tree member (REST: POST /family-trees/{id}/members)"""
+  addTreeMember(treeId: UUID!, data: TreeMemberAddInput!): TreeMembershipType!
+
+  """
+  Update tree member access (REST: PATCH /family-trees/{id}/members/{user_id})
+  """
+  updateTreeMember(treeId: UUID!, userId: UUID!, data: TreeMemberUpdateInput!): TreeMembershipType!
+
+  """Remove tree member (REST: DELETE /family-trees/{id}/members/{user_id})"""
+  removeTreeMember(treeId: UUID!, userId: UUID!): ResultType!
+
+  """Create person (REST: POST /family-trees/{tree_id}/persons)"""
+  createPerson(treeId: UUID!, data: PersonCreateInput!): PersonType!
+
+  """Update person (REST: PUT /family-trees/{tree_id}/persons/)"""
+  updatePerson(treeId: UUID!, data: PersonUpdateInput!): PersonType!
+
+  """Delete person (REST: DELETE /family-trees/{tree_id}/persons/{id})"""
+  deletePerson(treeId: UUID!, personId: UUID!): ResultType!
+
+  """Create user (REST: POST /users)"""
+  createUser(data: UserCreateInput!): UserType!
+
+  """Update user (REST: PUT /users)"""
+  updateUser(data: UserUpdateInput!): UserType!
+
+  """Delete user (REST: DELETE /users/{id})"""
+  deleteUser(userId: UUID!): ResultType!
+
+  """Create role (REST: POST /roles)"""
+  createRole(data: RoleCreateInput!): RoleType!
+
+  """Update role (REST: PUT /roles)"""
+  updateRole(data: RoleUpdateInput!): RoleType!
+
+  """Delete role (REST: DELETE /roles/{id})"""
+  deleteRole(roleId: UUID!): ResultType!
+
+  """Create marriage (REST: POST /family-trees/{tree_id}/marriages)"""
+  createMarriage(treeId: UUID!, data: MarriageCreateInput!): MarriageType!
+
+  """Update marriage (REST: PUT /family-trees/{tree_id}/marriages/)"""
+  updateMarriage(treeId: UUID!, data: MarriageUpdateInput!): MarriageType!
+
+  """Delete marriage (REST: DELETE /family-trees/{tree_id}/marriages/)"""
+  deleteMarriage(treeId: UUID!, marriageId: UUID!): ResultType!
+
+  """Divorce (REST: POST /family-trees/{tree_id}/marriages/divorce)"""
+  divorce(treeId: UUID!, data: DivorceInput!): ResultType!
+
+  """Create ticket (REST: POST /tickets)"""
+  createTicket(data: TicketCreateInput!): TicketType!
+
+  """Add ticket message (REST: POST /tickets/{id}/messages)"""
+  addTicketMessage(ticketId: UUID!, data: TicketMessageCreateInput!): TicketMessageType!
+
+  """Update ticket status (REST: PATCH /tickets/{id}/status)"""
+  updateTicketStatus(ticketId: UUID!, data: TicketUpdateStatusInput!): TicketSummaryType!
+}
+
+input PaginationInput {
+  page: Int! = 1
+  pageSize: Int! = 30
+  offset: Int! = 0
+}
+
+input ParentLinkInput {
+  parentId: UUID!
+  relationshipType: ParentRelationshipType! = BIOLOGICAL
+}
+
+type ParentLinkType {
+  parentId: UUID!
+  relationshipType: ParentRelationshipType!
+}
+
+enum ParentRelationshipType {
+  BIOLOGICAL
+  ADOPTIVE
+  STEP
+}
+
+input PermissionFilterInput {
+  id: UUID = null
+  name: String = null
+}
+
+input PermissionListInput {
+  pagination: PaginationInput = null
+  filters: PermissionFilterInput = null
+  sortOrder: SortOrder = null
+  sortBy: PermissionSortBy = null
+}
+
+type PermissionPage {
+  items: [PermissionType!]!
+  total: Int!
+  page: Int!
+  pageSize: Int!
+}
+
+enum PermissionSortBy {
+  ID
+  NAME
+}
+
+type PermissionType {
+  id: UUID!
+  name: String!
+  descriptionEn: String!
+  descriptionFa: String!
+}
+
+input PersonCreateInput {
+  name: String!
+  gender: Gender!
+  birthDate: Date = null
+  deathDate: Date = null
+  familyName: String = null
+  birthPlace: String = null
+  deathPlace: String = null
+  notes: String = null
+  parents: [ParentLinkInput!] = null
+  marriageId: UUID = null
+  photoObjectKey: String = null
+}
+
+input PersonFilterInput {
+  id: UUID = null
+  name: String = null
+  gender: Gender = null
+  birthDate: DateRangeInput = null
+  parentId: UUID = null
+  relationshipType: ParentRelationshipType = null
+  marriageId: UUID = null
+}
+
+input PersonListInput {
+  pagination: PaginationInput = null
+  filters: PersonFilterInput = null
+  sortOrder: SortOrder = null
+  sortBy: PersonSortBy = null
+}
+
+type PersonPage {
+  items: [PersonType!]!
+  total: Int!
+  page: Int!
+  pageSize: Int!
+}
+
+enum PersonSortBy {
+  ID
+  NAME
+  BIRTH_DAY
+  GENDER
+}
+
+type PersonType {
+  id: UUID
+  name: String!
+  gender: Gender!
+  birthDate: Date
+  deathDate: Date
+  familyName: String
+  birthPlace: String
+  deathPlace: String
+  notes: String
+  parents: [ParentLinkType!]!
+  marriageId: UUID
+  photoObjectKey: String
+  photoUrl: String
+}
+
+input PersonUpdateDataInput {
+  name: String = null
+  gender: Gender = null
+  birthDate: Date = null
+  deathDate: Date = null
+  familyName: String
+  birthPlace: String
+  deathPlace: String
+  notes: String
+  parents: [ParentLinkInput!]
+  marriageId: UUID
+  photoObjectKey: String
+}
+
+input PersonUpdateInput {
+  data: PersonUpdateDataInput!
+  where: PersonUpdateWhereInput!
+}
+
+input PersonUpdateWhereInput {
+  personId: UUID!
+}
+
+type Query {
+  """Current authenticated user (REST: GET /auth/me)"""
+  me: UserType!
+
+  """List family trees for current user (REST: GET /family-trees)"""
+  familyTrees: [FamilyTreeType!]!
+
+  """Get family tree by id (REST: GET /family-trees/{id})"""
+  familyTree(treeId: UUID!): FamilyTreeType!
+
+  """List tree members (REST: GET /family-trees/{id}/members)"""
+  treeMembers(treeId: UUID!): [TreeMembershipType!]!
+
+  """Get person by id (REST: GET /family-trees/{tree_id}/persons/{id})"""
+  person(treeId: UUID!, personId: UUID!): PersonType!
+
+  """Filtered person list (REST: POST /family-trees/{tree_id}/persons/list)"""
+  persons(treeId: UUID!, data: PersonListInput = null): PersonPage!
+
+  """
+  Closest relationship path (REST: GET /family-trees/{tree_id}/persons/{from}/relation/{to})
+  """
+  closestRelationship(treeId: UUID!, fromPersonId: UUID!, toPersonId: UUID!): ClosestRelationshipType!
+
+  """Get user by id (REST: GET /users/{id})"""
+  user(userId: UUID!): UserType!
+
+  """Filtered user list (REST: POST /users/list)"""
+  users(data: UserListInput = null): UserPage!
+
+  """Get role by id (REST: GET /roles/{id})"""
+  role(roleId: UUID!): RoleType!
+
+  """Filtered role list (REST: POST /roles/list)"""
+  roles(data: RoleListInput = null): RolePage!
+
+  """Filtered permission list (REST: POST /permissions/list)"""
+  permissions(data: PermissionListInput = null): PermissionPage!
+
+  """Get marriage by id (REST: GET /family-trees/{tree_id}/marriages/{id})"""
+  marriage(treeId: UUID!, marriageId: UUID!): MarriageType!
+
+  """
+  Filtered marriage list (REST: POST /family-trees/{tree_id}/marriages/list)
+  """
+  marriages(treeId: UUID!, data: MarriageListInput = null): MarriagePage!
+
+  """Get ticket by id (REST: GET /tickets/{id})"""
+  ticket(ticketId: UUID!): TicketType!
+
+  """Filtered ticket list (REST: POST /tickets/list)"""
+  tickets(data: TicketListInput = null): TicketPage!
+}
+
+type ResultType {
+  result: String!
+}
+
+input RoleCreateInput {
+  name: String = null
+  permissionIds: [UUID!] = null
+}
+
+input RoleFilterInput {
+  id: UUID = null
+  name: String = null
+  permissionId: UUID = null
+}
+
+input RoleListInput {
+  pagination: PaginationInput = null
+  filters: RoleFilterInput = null
+  sortOrder: SortOrder = null
+  sortBy: RoleSortBy = null
+}
+
+type RolePage {
+  items: [RoleType!]!
+  total: Int!
+  page: Int!
+  pageSize: Int!
+}
+
+enum RoleSortBy {
+  ID
+  NAME
+}
+
+type RoleType {
+  id: UUID!
+  name: String!
+  permissionIds: [UUID!]!
+  userCount: Int!
+}
+
+input RoleUpdateDataInput {
+  name: String = null
+  permissionIds: [UUID!] = null
+}
+
+input RoleUpdateInput {
+  data: RoleUpdateDataInput!
+  where: RoleUpdateWhereInput!
+}
+
+input RoleUpdateWhereInput {
+  roleId: UUID!
+}
+
+enum SortOrder {
+  ASC
+  DESC
+}
+
+enum TicketCategory {
+  GENERAL
+  ACCOUNT
+  TECHNICAL
+  BUG
+  FEATURE_REQUEST
+  OTHER
+}
+
+input TicketCreateInput {
+  title: String!
+  body: String!
+  category: TicketCategory!
+  familyTreeId: UUID = null
+}
+
+input TicketFilterInput {
+  id: UUID = null
+  title: String = null
+  status: TicketStatus = null
+  category: TicketCategory = null
+  familyTreeId: UUID = null
+  createdByUserId: UUID = null
+}
+
+input TicketListInput {
+  pagination: PaginationInput = null
+  filters: TicketFilterInput = null
+  sortOrder: SortOrder = null
+  sortBy: TicketSortBy = null
+}
+
+input TicketMessageCreateInput {
+  body: String!
+}
+
+type TicketMessageType {
+  id: UUID!
+  ticketId: UUID!
+  authorUserId: UUID!
+  body: String!
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+type TicketPage {
+  items: [TicketSummaryType!]!
+  total: Int!
+  page: Int!
+  pageSize: Int!
+}
+
+enum TicketSortBy {
+  ID
+  TITLE
+  STATUS
+  CATEGORY
+  CREATED_AT
+  UPDATED_AT
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+}
+
+type TicketSummaryType {
+  id: UUID!
+  title: String!
+  status: TicketStatus!
+  category: TicketCategory!
+  createdByUserId: UUID!
+  createdByCanManage: Boolean!
+  familyTreeId: UUID
+  familyTreeName: String
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+type TicketType {
+  id: UUID!
+  title: String!
+  status: TicketStatus!
+  category: TicketCategory!
+  createdByUserId: UUID!
+  createdByCanManage: Boolean!
+  familyTreeId: UUID
+  familyTreeName: String
+  createdAt: DateTime
+  updatedAt: DateTime
+  messages: [TicketMessageType!]!
+}
+
+input TicketUpdateStatusInput {
+  status: TicketStatus!
+}
+
+input TreeMemberAddInput {
+  username: String!
+  permissions: [String!] = null
+}
+
+enum TreeMemberRole {
+  OWNER
+  MEMBER
+}
+
+input TreeMemberUpdateInput {
+  permissions: [String!]!
+}
+
+type TreeMembershipType {
+  id: UUID!
+  treeId: UUID!
+  userId: UUID!
+  role: TreeMemberRole!
+  permissions: [String!]!
+  username: String
+}
+
+scalar UUID
+
+input UserCreateInput {
+  username: String!
+  fullname: String!
+  password: String!
+  rePassword: String!
+  roleId: UUID = null
+  accountType: AccountTypeEnum = null
+}
+
+input UserFilterInput {
+  id: UUID = null
+  username: String = null
+  roleId: UUID = null
+}
+
+input UserListInput {
+  pagination: PaginationInput = null
+  filters: UserFilterInput = null
+  sortOrder: SortOrder = null
+  sortBy: UserSortBy = null
+}
+
+type UserPage {
+  items: [UserType!]!
+  total: Int!
+  page: Int!
+  pageSize: Int!
+}
+
+enum UserSortBy {
+  ID
+  USERNAME
+  ROLE_ID
+}
+
+type UserType {
+  id: UUID!
+  username: String!
+  fullname: String!
+  roleId: UUID
+  accountType: AccountTypeEnum!
+  lastSessionAt: DateTime
+}
+
+input UserUpdateDataInput {
+  username: String = null
+  fullname: String = null
+  password: String = null
+  rePassword: String = null
+  roleId: UUID = null
+  accountType: AccountTypeEnum = null
+}
+
+input UserUpdateInput {
+  data: UserUpdateDataInput!
+  where: UserUpdateWhereInput!
+}
+
+input UserUpdateWhereInput {
+  userId: UUID!
+}

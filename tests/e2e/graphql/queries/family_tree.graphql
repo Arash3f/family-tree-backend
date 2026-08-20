@@ -1,0 +1,42 @@
+mutation CreateTree($data: FamilyTreeCreateInput!) {
+  createFamilyTree(data: $data) {
+    id
+    name
+    ownerUserId
+  }
+}
+
+query ListTrees {
+  familyTrees {
+    id
+    name
+  }
+}
+
+query GetTree($treeId: UUID!) {
+  familyTree(treeId: $treeId) {
+    id
+    name
+  }
+}
+
+mutation UpdateTree($treeId: UUID!, $data: FamilyTreeUpdateInput!) {
+  updateFamilyTree(treeId: $treeId, data: $data) {
+    id
+    name
+  }
+}
+
+query TreeMembers($treeId: UUID!) {
+  treeMembers(treeId: $treeId) {
+    userId
+    role
+  }
+}
+
+mutation AddMember($treeId: UUID!, $data: TreeMemberAddInput!) {
+  addTreeMember(treeId: $treeId, data: $data) {
+    userId
+    role
+  }
+}

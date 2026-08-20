@@ -18,7 +18,10 @@ class UserModel(Base):
     fullname: Mapped[str] = mapped_column(String(100), nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     account_type: Mapped[str] = mapped_column(
-        String(20), nullable=False, default=AccountType.FREE.value
+        String(20),
+        nullable=False,
+        default=AccountType.FREE.value,
+        server_default=AccountType.FREE.value,
     )
 
     role_id: Mapped[UUID | None] = mapped_column(

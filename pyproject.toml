@@ -40,6 +40,14 @@ dependencies = [
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.ariadne-codegen]
+schema_path = "schema.graphql"
+queries_path = "tests/e2e/graphql/queries"
+target_package_name = "family_tree_graphql_client"
+target_package_path = "generated/graphql_client"
+client_name = "FamilyTreeGraphQLClient"
+async_client = true
+
 [tool.ruff]
 exclude = [
     "migrations",
@@ -82,4 +90,5 @@ dev = [
     "mypy (>=2.0.0,<3.0.0)",
     "httpx (>=0.28.1,<0.29.0)",
     "openapi-python-client (>=0.29.0,<0.30.0)",
+    "ariadne-codegen (>=0.18.0,<0.19.0)",
 ]

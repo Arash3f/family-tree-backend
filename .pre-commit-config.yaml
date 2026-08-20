@@ -9,7 +9,7 @@ repos:
       - id: name-tests-test
         args: [--pytest-test-first]
         # Shared fixtures/utilities are not test modules (hook matches all tests/**/*.py).
-        exclude: ^(tests/helpers/|tests/e2e/auth_headers\.py$|tests/e2e/graphql/legacy_auth\.py$)
+        exclude: ^(tests/helpers/|tests/e2e/auth_headers\.py$|tests/e2e/graphql/legacy_auth\.py$|tests/e2e/graphql/graphql_auth\.py$)
       - id: check-ast
       - id: check-case-conflict
       - id: check-merge-conflict

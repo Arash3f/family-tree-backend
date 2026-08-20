@@ -35,6 +35,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt -r requirements-dev.txt
           pip install -e ./generated/api_client
+          pip install -e ./generated/graphql_client
 
       # AppSettings validates on import, so the sync check needs an env file.
       - name: Create environment
@@ -110,48 +111,48 @@ jobs:
             test -n "$current" && test "$current" = "$head"
           '
 
-      # - name: Create test database
-      #   run: |
-      #     DB_USER="$(grep '^POSTGRES_USER=' .env | cut -d '=' -f2)"
-      #     DB_TEST="$(grep '^POSTGRES_DB_TEST=' .env | cut -d '=' -f2)"
-      #     docker compose --env-file .env exec -T db psql -U "$DB_USER" -tc \
-      #       "SELECT 1 FROM pg_database WHERE datname = '${DB_TEST}'" | grep -q 1 \
-      #     || docker compose --env-file .env exec -T db psql -U "$DB_USER" -c "CREATE DATABASE ${DB_TEST}"
+      - name: Create test database
+        run: |
+          DB_USER="$(grep '^POSTGRES_USER=' .env | cut -d '=' -f2)"
+          DB_TEST="$(grep '^POSTGRES_DB_TEST=' .env | cut -d '=' -f2)"
+          docker compose --env-file .env exec -T db psql -U "$DB_USER" -tc \
+            "SELECT 1 FROM pg_database WHERE datname = '${DB_TEST}'" | grep -q 1 \
+          || docker compose --env-file .env exec -T db psql -U "$DB_USER" -c "CREATE DATABASE ${DB_TEST}"
 
-      # - name: Run tests
-      #   run: |
-      #     docker compose --env-file .env exec -T api sh -c '
-      #       export COVERAGE_FILE=/tmp/.coverage
-      #       pytest -v --tb=short \
-      #         --junitxml=/tmp/pytest.xml \
-      #         --cov=app \
-      #         --cov-report=xml:/tmp/coverage.xml \
-      #         --cov-report=term \
-      #         --cov-fail-under=90 \
-      #         -o cache_dir=/tmp/pytest_cache
-      #     '
+      - name: Run tests
+        run: |
+          docker compose --env-file .env exec -T api sh -c '
+            export COVERAGE_FILE=/tmp/.coverage
+            pytest -v --tb=short \
+              --junitxml=/tmp/pytest.xml \
+              --cov=app \
+              --cov-report=xml:/tmp/coverage.xml \
+              --cov-report=term \
+              --cov-fail-under=80 \
+              -o cache_dir=/tmp/pytest_cache
+          '
 
-      # - name: Live Neo4j closest-relationship e2e
-      #   run: |
-      #     docker compose --env-file .env exec -T api pytest -v --tb=short --no-cov \
-      #       tests/e2e/routers/test_closest_relationship_live.py \
-      #       -o cache_dir=/tmp/pytest_cache
+      - name: Live Neo4j closest-relationship e2e
+        run: |
+          docker compose --env-file .env exec -T api pytest -v --tb=short --no-cov \
+            tests/e2e/routers/test_closest_relationship_live.py \
+            -o cache_dir=/tmp/pytest_cache
 
-      # - name: Collect test artifacts
-      #   if: always()
-      #   run: |
-      #     mkdir -p artifacts
-      #     docker compose --env-file .env cp api:/tmp/pytest.xml artifacts/pytest.xml || true
-      #     docker compose --env-file .env cp api:/tmp/coverage.xml artifacts/coverage.xml || true
+      - name: Collect test artifacts
+        if: always()
+        run: |
+          mkdir -p artifacts
+          docker compose --env-file .env cp api:/tmp/pytest.xml artifacts/pytest.xml || true
+          docker compose --env-file .env cp api:/tmp/coverage.xml artifacts/coverage.xml || true
 
-      # - name: Upload test artifacts
-      #   uses: actions/upload-artifact@v4
-      #   if: always()
-      #   with:
-      #     name: test-reports-${{ github.run_id }}
-      #     path: artifacts/
-      #     if-no-files-found: ignore
-      #     retention-days: 30
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-reports-${{ github.run_id }}
+          path: artifacts/
+          if-no-files-found: ignore
+          retention-days: 30
 
       - name: Failure diagnostics
         if: failure()

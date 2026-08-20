@@ -1,0 +1,63 @@
+query ListPermissions {
+  permissions {
+    total
+    items {
+      id
+      name
+    }
+  }
+}
+
+mutation CreateRole($data: RoleCreateInput!) {
+  createRole(data: $data) {
+    id
+    name
+    permissionIds
+  }
+}
+
+mutation CreateUser($data: UserCreateInput!) {
+  createUser(data: $data) {
+    id
+    username
+    fullname
+    roleId
+  }
+}
+
+query GetUser($id: UUID!) {
+  user(userId: $id) {
+    id
+    username
+    roleId
+  }
+}
+
+query GetRole($id: UUID!) {
+  role(roleId: $id) {
+    id
+    name
+  }
+}
+
+query ListUsers($data: UserListInput) {
+  users(data: $data) {
+    total
+    items {
+      id
+      username
+    }
+  }
+}
+
+mutation DeleteUser($id: UUID!) {
+  deleteUser(userId: $id) {
+    result
+  }
+}
+
+mutation DeleteRole($id: UUID!) {
+  deleteRole(roleId: $id) {
+    result
+  }
+}
