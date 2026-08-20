@@ -1239,24 +1239,6 @@ files = [
 ]
 
 [[package]]
-name = "family-tree-api-client"
-version = "0.1.0"
-description = "A client library for accessing Family Tree API"
-optional = false
-python-versions = "^3.11"
-groups = ["dev"]
-files = []
-develop = true
-
-[package.dependencies]
-attrs = ">=22.2.0"
-httpx = ">=0.23.1,<0.29.0"
-
-[package.source]
-type = "directory"
-url = "generated/api_client"
-
-[[package]]
 name = "fastapi"
 version = "0.136.1"
 description = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
@@ -3835,4 +3817,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<4.0"
-content-hash = "d0aeeb615e833cf64511f825ff94af913c280af740946de24fed9d531d0dd1c8"
+content-hash = "507f6e8a2421b9be8955a69259d8ad4506829fd573337f91c239603bfbffe9d9"

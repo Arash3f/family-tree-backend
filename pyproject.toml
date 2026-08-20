@@ -4,9 +4,6 @@ package-mode = false
 [tool.poetry.requires-plugins]
 poetry-plugin-export = ">=1.8"
 
-[tool.poetry.group.dev.dependencies]
-family-tree-api-client = {develop = true}
-
 [project]
 name = "family-tree-backend"
 version = "0.1.0"
@@ -85,5 +82,4 @@ dev = [
     "mypy (>=2.0.0,<3.0.0)",
     "httpx (>=0.28.1,<0.29.0)",
     "openapi-python-client (>=0.29.0,<0.30.0)",
-    "family-tree-api-client @ file:///D:/projects/ft/family-tree-backend/generated/api_client",
 ]
