@@ -46,7 +46,7 @@ services:
     container_name: family-tree-celery-worker
     command: >
       celery -A app.celery.celery_app worker --loglevel=info
-      -Q celery,sync_person,sync_relationship,backup_database
+      -Q celery,sync_person,sync_relationship,backup_database,reconcile_neo4j
     volumes:
       - backup_data:/mnt/backups
     depends_on:

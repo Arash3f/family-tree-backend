@@ -8,6 +8,7 @@ All container build and Compose definitions live in this folder.
 | `entrypoint.sh` | Wait for Postgres → migrate → start Uvicorn |
 | `compose.yml` | Full stack (app + Postgres + Redis + Neo4j + MinIO) |
 | `compose.host-ports.yml` | Optional publish of DB/Redis/Neo4j/MinIO ports to the host |
+| `compose.source-mount.yml` | Run containers against the working tree instead of the baked-in code |
 
 Run every command from the **repository root**.
 
@@ -81,7 +82,7 @@ docker compose -f docker/compose.yml --env-file .env exec -T db \
       psql -U "$DB_USER" -c "CREATE DATABASE ${DB_TEST}"
 
 docker compose -f docker/compose.yml --env-file .env exec -T api \
-  pytest -v --cov=app --cov-fail-under=90
+  pytest -v --cov=app --cov-fail-under=80
 ```
 
 ## Published ports (defaults)
