@@ -24,8 +24,10 @@ RUN pip install --prefix=/install -r requirements.txt
 FROM base AS builder-ci
 
 COPY requirements.txt requirements-dev.txt ./
+COPY generated ./generated
 RUN pip install --prefix=/install -r requirements.txt \
-    && pip install --prefix=/install -r requirements-dev.txt
+    && pip install --prefix=/install -r requirements-dev.txt \
+    && pip install --prefix=/install --no-deps ./generated/api_client ./generated/graphql_client
 
 # ---------------------------------------------------------------------------
 FROM base AS runtime
