@@ -51,7 +51,6 @@ build/
 !requirements.txt
 
 # Local tooling
-bruno/
 node_modules/
 .pre-commit-config.yaml
 .cz.toml

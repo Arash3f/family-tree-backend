@@ -21,7 +21,8 @@ def _base_kwargs(**overrides: Any) -> dict[str, Any]:
     return data
 
 
-def test_minio_buckets_default_to_minio_bucket():
+def test_minio_buckets_default_to_minio_bucket(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.delenv("MINIO_BUCKETS", raising=False)
     settings = AppSettings(_env_file=None, **_base_kwargs(MINIO_BUCKET="photos"))  # type: ignore[call-arg]
     assert settings.minio_buckets == ["photos"]
 
