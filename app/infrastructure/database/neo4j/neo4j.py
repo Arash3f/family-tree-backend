@@ -197,11 +197,23 @@ class _LazyNeo4jClient:
     lazily-created ``Neo4jClient`` (via ``_get()``) and then awaits the
     requested method on it. Callers still just do
     ``await neo4j_client.execute_read(...)`` as before.
+
+    Celery sync tasks call ``asyncio.run()`` once per task. The async Neo4j
+    driver and ``asyncio.Lock`` bind to that loop; leaving them alive across
+    runs raises ``RuntimeError: ... bound to a different event loop``.
+    ``close()`` clears both so the next task can re-init on its own loop
+    (see ``run_celery_coro``).
     """
 
     def __init__(self) -> None:
         self._client: Neo4jClient | None = None
-        self._init_lock = asyncio.Lock()
+        self._init_lock: asyncio.Lock | None = None
+
+    def _lock(self) -> asyncio.Lock:
+        # Create (or recreate after close) on the currently running loop.
+        if self._init_lock is None:
+            self._init_lock = asyncio.Lock()
+        return self._init_lock
 
     async def _get(self) -> Neo4jClient:
         if self._client is not None:
@@ -211,7 +223,7 @@ class _LazyNeo4jClient:
         # construct its own driver, and one silently overwrite the other's
         # reference -- leaking that driver's connection pool since it's
         # never closed. The lock ensures only one construction wins.
-        async with self._init_lock:
+        async with self._lock():
             if self._client is None:
                 self._client = await Neo4jClient.create()
         return self._client
@@ -228,7 +240,26 @@ class _LazyNeo4jClient:
         if self._client is not None:
             await self._client.close()
             self._client = None
+        # Drop loop-bound lock so the next asyncio.run() can create a fresh one.
+        self._init_lock = None
 
 
 # Lazy singleton — connects on first query, closed in app lifespan
 neo4j_client = _LazyNeo4jClient()
+
+
+def run_celery_coro(coro):
+    """Run an async coroutine from a sync Celery task safely.
+
+    Each Celery task gets its own ``asyncio.run()`` loop. Closing the shared
+    Neo4j client afterward prevents the next task from reusing a driver/lock
+    bound to a dead loop.
+    """
+
+    async def _wrapped():
+        try:
+            return await coro
+        finally:
+            await neo4j_client.close()
+
+    return asyncio.run(_wrapped())

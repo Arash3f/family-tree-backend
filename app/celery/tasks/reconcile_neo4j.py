@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import uuid
 from contextlib import contextmanager, suppress
@@ -13,7 +12,7 @@ from app.domain.entities.marriage import Marriage
 from app.domain.entities.person import Person
 from app.domain.shared.dto.family_tree_dto import PersonUpsertDTO
 from app.infrastructure.database.neo4j import neo4j_queries as q
-from app.infrastructure.database.neo4j.neo4j import neo4j_client
+from app.infrastructure.database.neo4j.neo4j import neo4j_client, run_celery_coro
 from app.infrastructure.database.session import async_session
 from app.infrastructure.repositories.marriage_repository_sql import (
     SQLMarriageRepository,
@@ -202,35 +201,37 @@ def reconcile_neo4j(self):
             )
             return {"skipped": "already running"}
 
-        tree_ids = asyncio.run(_list_tree_ids())
-        totals = {"persons": 0, "parent_rels": 0, "spouse_rels": 0}
-        trees_with_drift = 0
+        async def _run_all() -> dict:
+            tree_ids = await _list_tree_ids()
+            totals = {"persons": 0, "parent_rels": 0, "spouse_rels": 0}
+            trees_with_drift = 0
 
-        async def _reconcile_one_tree(tree_id: UUID) -> dict:
-            persons, marriages = await _load_postgres_state(tree_id)
-            return await _reconcile_tree(tree_id, persons, marriages)
+            for tree_id in tree_ids:
+                persons, marriages = await _load_postgres_state(tree_id)
+                repaired = await _reconcile_tree(tree_id, persons, marriages)
+                if any(repaired.values()):
+                    trees_with_drift += 1
+                for key, value in repaired.items():
+                    totals[key] += value
 
-        for tree_id in tree_ids:
-            repaired = asyncio.run(_reconcile_one_tree(tree_id))
-            if any(repaired.values()):
-                trees_with_drift += 1
-            for key, value in repaired.items():
-                totals[key] += value
+            if trees_with_drift:
+                logger.error(
+                    "Neo4j reconciliation repaired drift in %s tree(s): %s",
+                    trees_with_drift,
+                    totals,
+                )
+            else:
+                logger.info(
+                    "Neo4j reconciliation: no drift found across %s tree(s)",
+                    len(tree_ids),
+                )
 
-        if trees_with_drift:
-            logger.error(
-                "Neo4j reconciliation repaired drift in %s tree(s): %s",
-                trees_with_drift,
-                totals,
-            )
-        else:
-            logger.info(
-                "Neo4j reconciliation: no drift found across %s tree(s)",
-                len(tree_ids),
-            )
+            return {
+                "trees_checked": len(tree_ids),
+                "trees_with_drift": trees_with_drift,
+                **totals,
+            }
 
-        return {
-            "trees_checked": len(tree_ids),
-            "trees_with_drift": trees_with_drift,
-            **totals,
-        }
+        # Single asyncio.run for the whole job (not one per tree) so the
+        # Neo4j/SQLAlchemy async clients stay on one event loop.
+        return run_celery_coro(_run_all())

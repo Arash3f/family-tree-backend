@@ -41,3 +41,44 @@ async def test_get_reuses_already_constructed_client():
 
     assert result is existing
     create_mock.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_close_clears_client_and_lock():
+    lazy = _LazyNeo4jClient()
+    existing = AsyncMock(spec=Neo4jClient)
+    lazy._client = existing
+    lazy._init_lock = asyncio.Lock()
+
+    await lazy.close()
+
+    assert lazy._client is None
+    assert lazy._init_lock is None
+    existing.close.assert_awaited_once()
+
+
+def test_run_celery_coro_closes_client_after_success():
+    from app.infrastructure.database.neo4j import neo4j as neo4j_mod
+
+    async def ok():
+        return 42
+
+    with patch.object(
+        neo4j_mod.neo4j_client, "close", new_callable=AsyncMock
+    ) as close_mock:
+        assert neo4j_mod.run_celery_coro(ok()) == 42
+        close_mock.assert_awaited_once()
+
+
+def test_run_celery_coro_closes_client_after_failure():
+    from app.infrastructure.database.neo4j import neo4j as neo4j_mod
+
+    async def boom():
+        raise ValueError("nope")
+
+    with patch.object(
+        neo4j_mod.neo4j_client, "close", new_callable=AsyncMock
+    ) as close_mock:
+        with pytest.raises(ValueError, match="nope"):
+            neo4j_mod.run_celery_coro(boom())
+        close_mock.assert_awaited_once()
