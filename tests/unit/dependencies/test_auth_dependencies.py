@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID
 
 import pytest
+from jose.exceptions import ExpiredSignatureError, JWTError
 
 from app.domain.exceptions.auth_exceptions import InvalidCredentialsException
 from app.domain.exceptions.user_exceptions import UserNotFoundException
@@ -50,6 +51,26 @@ async def test_get_current_user_rejects_refresh_token(mock_uow):
 async def test_get_current_user_missing_claims(mock_uow):
     token_service = MagicMock()
     token_service.decode_token.return_value = {"type": "access"}
+
+    with pytest.raises(InvalidCredentialsException):
+        await get_current_user("token", mock_uow, token_service)
+
+
+@pytest.mark.asyncio
+async def test_get_current_user_expired_token(mock_uow):
+    token_service = MagicMock()
+    token_service.decode_token.side_effect = ExpiredSignatureError(
+        "Signature has expired."
+    )
+
+    with pytest.raises(InvalidCredentialsException):
+        await get_current_user("token", mock_uow, token_service)
+
+
+@pytest.mark.asyncio
+async def test_get_current_user_invalid_jwt(mock_uow):
+    token_service = MagicMock()
+    token_service.decode_token.side_effect = JWTError("Invalid token")
 
     with pytest.raises(InvalidCredentialsException):
         await get_current_user("token", mock_uow, token_service)

@@ -3,6 +3,7 @@ from uuid import UUID
 
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
+from jose.exceptions import JWTError
 
 from app.application.interfaces.token_service import TokenService
 from app.application.interfaces.unit_of_work import UnitOfWork
@@ -35,7 +36,7 @@ async def get_current_user(
 
     except InvalidCredentialsException:
         raise
-    except (ValueError, KeyError, TypeError) as exc:
+    except (JWTError, ValueError, KeyError, TypeError) as exc:
         raise InvalidCredentialsException() from exc
 
     session = await uow.sessions.get(session_id)

@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID
 
 import pytest
+from jose.exceptions import ExpiredSignatureError
 
 from app.application.use_cases.refresh_token import RefreshTokenUseCase
 from app.domain.entities.user_session import UserSession
@@ -78,3 +79,14 @@ async def test_refresh_reuse_revokes_all(mock_uow):
 
     mock_uow.sessions.revoke_all_for_user.assert_awaited_once()
     mock_uow.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_refresh_expired_jwt_is_invalid_credentials(mock_uow):
+    token_service = MagicMock()
+    token_service.decode_token.side_effect = ExpiredSignatureError(
+        "Signature has expired."
+    )
+
+    with pytest.raises(InvalidCredentialsException):
+        await RefreshTokenUseCase(mock_uow, token_service).execute("expired_refresh")

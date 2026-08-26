@@ -2,6 +2,8 @@ import hmac
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
+from jose.exceptions import JWTError
+
 from app.application.dto.auth_dto import LoginResponseDTO
 from app.application.interfaces.token_service import TokenService
 from app.application.interfaces.unit_of_work import UnitOfWork
@@ -24,7 +26,7 @@ class RefreshTokenUseCase:
     ) -> LoginResponseDTO:
         try:
             payload = self.token_service.decode_token(refresh_token)
-        except (ValueError, KeyError, TypeError) as exc:
+        except (JWTError, ValueError, KeyError, TypeError) as exc:
             raise InvalidCredentialsException() from exc
 
         if payload.get("type") != "refresh":

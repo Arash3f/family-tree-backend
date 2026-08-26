@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import Request
+from jose.exceptions import JWTError
 from strawberry.types import Info
 
 from app.domain.entities.user import User
@@ -55,7 +56,7 @@ async def get_current_user(info: Info) -> User:
         session_id = UUID(str(session_id_raw))
     except InvalidCredentialsException:
         raise
-    except (ValueError, KeyError, TypeError) as exc:
+    except (JWTError, ValueError, KeyError, TypeError) as exc:
         raise InvalidCredentialsException() from exc
 
     async with ctx.uow:
