@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import hashlib
+import hmac
 import logging
 import re
+import time
 from uuid import uuid4
 
 from app.core.config import settings
@@ -21,6 +24,10 @@ ALLOWED_CONTENT_TYPES: dict[str, str] = {
     "image/png": "png",
     "image/webp": "webp",
 }
+# Browsers (especially mobile) often omit a real type or send a generic one.
+_GENERIC_UPLOAD_TYPES = frozenset(
+    {"", "application/octet-stream", "binary/octet-stream"}
+)
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 _PERSON_KEY_RE = re.compile(
     rf"^{re.escape(PERSON_PHOTO_PREFIX)}"
@@ -44,6 +51,27 @@ def sniff_image_content_type(data: bytes) -> str | None:
     return None
 
 
+def _normalize_declared_type(content_type: str | None) -> str:
+    return (content_type or "").split(";")[0].strip().lower()
+
+
+def sign_media_access(object_key: str, expires_at: int) -> str:
+    """HMAC over key + expiry so <img> can load photos without a Bearer header."""
+    payload = f"{object_key}:{expires_at}".encode()
+    return hmac.new(
+        settings.JWT_SECRET.encode("utf-8"),
+        payload,
+        hashlib.sha256,
+    ).hexdigest()
+
+
+def verify_media_access(object_key: str, expires_at: int, signature: str) -> bool:
+    if expires_at < int(time.time()):
+        return False
+    expected = sign_media_access(object_key, expires_at)
+    return hmac.compare_digest(expected, signature)
+
+
 class PersonPhotoService:
     """Upload validation, key rules, and photo lifecycle helpers."""
 
@@ -65,7 +93,14 @@ class PersonPhotoService:
         return f"{PERSON_PHOTO_PREFIX}{uuid4()}.{ext}"
 
     def validate_upload(self, content_type: str | None, size: int) -> str:
-        normalized = (content_type or "").split(";")[0].strip().lower()
+        normalized = _normalize_declared_type(content_type)
+        if normalized in _GENERIC_UPLOAD_TYPES:
+            # Size-only check; bytes validation will sniff the real type.
+            if size > MAX_UPLOAD_BYTES:
+                raise MediaTooLargeException(
+                    detail=[f"max size is {MAX_UPLOAD_BYTES} bytes"]
+                )
+            return normalized
         if normalized not in ALLOWED_CONTENT_TYPES:
             raise InvalidMediaContentTypeException(
                 detail=[f"unsupported content type: {content_type!r}"]
@@ -87,10 +122,24 @@ class PersonPhotoService:
         if not await self.storage.exists(key):
             raise MediaObjectNotFoundException(detail=[f"object not found: {key}"])
 
+    def build_media_url(self, key: str) -> str:
+        """Same-origin API path; browser reaches MinIO only through the API."""
+        self.validate_person_key(key)
+        expires_at = int(time.time()) + self.presign_expire_seconds
+        signature = sign_media_access(key, expires_at)
+        return f"/media/{key}?exp={expires_at}&sig={signature}"
+
     async def presign(self, key: str | None) -> str | None:
         if not key:
             return None
-        return await self.storage.presign_get(key, self.presign_expire_seconds)
+        return self.build_media_url(key)
+
+    async def read_person_photo(self, key: str) -> tuple[bytes, str]:
+        self.validate_person_key(key)
+        result = await self.storage.get(key)
+        if result is None:
+            raise MediaObjectNotFoundException(detail=[f"object not found: {key}"])
+        return result
 
     async def delete_quiet(self, key: str | None) -> None:
         if not key:
@@ -101,7 +150,7 @@ class PersonPhotoService:
             logger.exception("Best-effort delete failed for key=%s: %s", key, e)
 
     def validate_upload_bytes(self, data: bytes, content_type: str | None) -> str:
-        """Validate the declared type, the size, and the actual file signature."""
+        """Validate size and file signature; tolerate missing/generic Content-Type."""
         declared = self.validate_upload(content_type, len(data))
         detected = sniff_image_content_type(data)
 
@@ -109,6 +158,8 @@ class PersonPhotoService:
             raise InvalidMediaContentTypeException(
                 detail=["file content is not a supported image"]
             )
+        if declared in _GENERIC_UPLOAD_TYPES:
+            return detected
         if detected != declared:
             raise InvalidMediaContentTypeException(
                 detail=[f"content type {declared!r} does not match file ({detected})"]

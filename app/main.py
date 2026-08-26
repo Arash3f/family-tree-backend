@@ -26,6 +26,9 @@ from app.presentation.rest.routers.family_tree_router import (
 )
 from app.presentation.rest.routers.marriage_router import router as marriage_router
 from app.presentation.rest.routers.media_router import (
+    serve_router as media_serve_router,
+)
+from app.presentation.rest.routers.media_router import (
     upload_router as media_upload_router,
 )
 from app.presentation.rest.routers.permission_router import router as permission_router
@@ -211,6 +214,7 @@ app.add_exception_handler(AppException, app_exception_handler)
 app.include_router(family_tree_router)
 app.include_router(person_router, prefix="/family-trees/{tree_id}")
 app.include_router(media_upload_router, prefix="/family-trees/{tree_id}")
+app.include_router(media_serve_router)
 app.include_router(marriage_router, prefix="/family-trees/{tree_id}")
 app.include_router(tree_excel_router, prefix="/family-trees/{tree_id}")
 app.include_router(user_router)

@@ -114,6 +114,16 @@ def test_validate_upload_bytes_rejects_mismatched_declaration():
         service.validate_upload_bytes(PNG_BYTES, "image/jpeg")
 
 
+def test_validate_upload_bytes_sniffs_when_type_missing():
+    service = _service()
+    assert service.validate_upload_bytes(PNG_BYTES, None) == "image/png"
+    assert service.validate_upload_bytes(JPEG_BYTES, "") == "image/jpeg"
+    assert (
+        service.validate_upload_bytes(WEBP_BYTES, "application/octet-stream")
+        == "image/webp"
+    )
+
+
 @pytest.mark.asyncio
 async def test_upload_person_photo_rejects_disguised_payload():
     storage = MagicMock()
@@ -133,13 +143,12 @@ async def test_presign_returns_none_for_missing_key():
 
 
 @pytest.mark.asyncio
-async def test_presign_delegates_to_storage():
-    storage = MagicMock()
-    storage.presign_get = AsyncMock(return_value="https://minio.example/signed-url")
-    service = _service(storage)
+async def test_presign_returns_signed_api_path():
+    service = _service()
     key = f"persons/{uuid4()}.jpg"
 
     url = await service.presign(key)
 
-    assert url == "https://minio.example/signed-url"
-    storage.presign_get.assert_awaited_once_with(key, 60)
+    assert url is not None
+    assert url.startswith(f"/media/{key}?exp=")
+    assert "&sig=" in url

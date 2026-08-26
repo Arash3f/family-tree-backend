@@ -677,8 +677,13 @@ docker compose -f docker/compose.yml --env-file .env exec db psql -U postgres -c
 **`503 Authentication is temporarily unavailable`.** Redis is unreachable, and outside development the
 limiter fails closed rather than leaving credential stuffing unmetered. Fix Redis — that is the bug.
 
-**Photo uploads succeed but `photoUrl` is unreachable from the browser.** The presigned URL was signed
-with the internal endpoint. Set `MINIO_PUBLIC_ENDPOINT` to the host clients can actually reach.
+**Photo uploads fail with an unsupported content type on mobile.** Some browsers send an empty or
+`application/octet-stream` type; the API sniffs JPEG/PNG/WebP from the file bytes. HEIC is not
+supported — convert to JPEG/PNG first.
+
+**Photos do not display after upload.** Person photos are served through signed `GET /media/{key}`
+URLs on the API (MinIO stays private). If uploads themselves fail with 5xx, check that the API can
+reach `MINIO_ENDPOINT` and that the bucket in `MINIO_BUCKET` exists.
 
 **Startup fails with a settings error.** Read it literally — `JWT_SECRET` under 32 characters, a weak
 password outside local, or a test database pointing at the application database. All three are

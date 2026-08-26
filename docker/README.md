@@ -52,8 +52,9 @@ docker compose -f docker/compose.yml -f docker/compose.host-ports.yml --env-file
 MinIO buckets listed in `MINIO_BUCKETS` (comma-separated; default follows `MINIO_BUCKET`,
 usually `family-tree`) are created on API startup if missing. `MINIO_BUCKET` is the
 primary bucket for person photos. The API talks to MinIO on the Compose network
-(`MINIO_ENDPOINT`). Person photos are served through `GET /media/{object_key}` so the
-browser never needs MinIO host ports.
+(`MINIO_ENDPOINT`). Person photos are uploaded via
+`POST /family-trees/{tree_id}/media/upload` and served through signed
+`GET /media/{object_key}` URLs so the browser never needs MinIO host ports.
 
 Celery worker/beat run as the image `app` user (uid 1000) and wait until `api` is
 healthy (so Alembic migrations finish first). If an old `backup_data` /
