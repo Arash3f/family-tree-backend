@@ -33,6 +33,7 @@ from app.presentation.graphql.types.person import (
     PersonPage,
     PersonType,
     PersonUpdateInput,
+    RelationshipPathItemType,
     person_from_mapping,
     to_domain_relationship_type,
 )
@@ -243,4 +244,12 @@ async def resolve_closest_relationship(
         distance=data.get("distance"),
         path_person_ids=list(data.get("path_person_ids") or []),
         relationship_types=list(data.get("relationship_types") or []),
+        paths=[
+            RelationshipPathItemType(
+                distance=item["distance"],
+                path_person_ids=list(item.get("path_person_ids") or []),
+                relationship_types=list(item.get("relationship_types") or []),
+            )
+            for item in data.get("paths") or []
+        ],
     )

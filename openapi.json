@@ -907,6 +907,68 @@
         }
       }
     },
+    "/media/{object_key}": {
+      "get": {
+        "tags": [
+          "Media"
+        ],
+        "summary": "Get Media",
+        "description": "Stream a person photo. Auth is the HMAC query (img tags cannot send Bearer).",
+        "operationId": "get_media_media__object_key__get",
+        "parameters": [
+          {
+            "name": "object_key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Object Key"
+            }
+          },
+          {
+            "name": "exp",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "title": "Exp"
+            }
+          },
+          {
+            "name": "sig",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 32,
+              "maxLength": 128,
+              "title": "Sig"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/family-trees/{tree_id}/marriages": {
       "post": {
         "tags": [
@@ -2887,6 +2949,13 @@
             },
             "type": "array",
             "title": "Relationship Types"
+          },
+          "paths": {
+            "items": {
+              "$ref": "#/components/schemas/RelationshipPathItemResponse"
+            },
+            "type": "array",
+            "title": "Paths"
           }
         },
         "type": "object",
@@ -4741,6 +4810,34 @@
           "refresh_token"
         ],
         "title": "RefreshTokenRequest"
+      },
+      "RelationshipPathItemResponse": {
+        "properties": {
+          "distance": {
+            "type": "integer",
+            "title": "Distance"
+          },
+          "path_person_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Path Person Ids"
+          },
+          "relationship_types": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Relationship Types"
+          }
+        },
+        "type": "object",
+        "required": [
+          "distance"
+        ],
+        "title": "RelationshipPathItemResponse"
       },
       "ResultResponse": {
         "properties": {

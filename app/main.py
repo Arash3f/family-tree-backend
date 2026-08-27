@@ -197,15 +197,25 @@ async def health():
 app.add_middleware(TraceIDMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 
+# Always allow the production frontend, even if CORS_ORIGINS in .env is stale.
+PRODUCTION_FRONTEND_ORIGINS = (
+    "https://family.arash-alfooneh.ir",
+    "http://family.arash-alfooneh.ir",
+)
+
 cors_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
-if cors_origins:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=cors_origins,
-        allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-        allow_headers=["Content-Type", "Authorization"],
-    )
+for origin in PRODUCTION_FRONTEND_ORIGINS:
+    if origin not in cors_origins:
+        cors_origins.append(origin)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Global application exception handler
 app.add_exception_handler(AppException, app_exception_handler)

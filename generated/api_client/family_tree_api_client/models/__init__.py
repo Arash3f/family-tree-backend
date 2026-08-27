@@ -60,6 +60,7 @@ from .person_update_response import PersonUpdateResponse
 from .person_update_where_request import PersonUpdateWhereRequest
 from .range_request import RangeRequest
 from .refresh_token_request import RefreshTokenRequest
+from .relationship_path_item_response import RelationshipPathItemResponse
 from .result_response import ResultResponse
 from .role_create_request import RoleCreateRequest
 from .role_create_response import RoleCreateResponse
@@ -172,6 +173,7 @@ __all__ = (
     "PersonUpdateWhereRequest",
     "RangeRequest",
     "RefreshTokenRequest",
+    "RelationshipPathItemResponse",
     "ResultResponse",
     "RoleCreateRequest",
     "RoleCreateResponse",

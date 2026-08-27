@@ -102,6 +102,8 @@ async def test_live_closest_relationship_rest(
         assert body.found is True
         assert body.distance == 1
         assert body.relationship_types == ["PARENT_OF"]
+        assert body.paths is not None
+        assert len(body.paths) >= 1
     finally:
         await live_neo.delete_person(PersonIdDTO(id=child_id))
         await live_neo.delete_person(PersonIdDTO(id=father_id))

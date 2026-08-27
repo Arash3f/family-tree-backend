@@ -72,3 +72,12 @@ class FamilyTreeRepository(ABC):
         tree_id: UUID | None = None,
     ) -> RelationshipPathDTO:
         pass
+
+    @abstractmethod
+    async def find_diverse_relationship_paths(
+        self,
+        from_person_id: UUID,
+        to_person_id: UUID,
+        tree_id: UUID | None = None,
+    ) -> RelationshipPathDTO:
+        pass

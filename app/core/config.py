@@ -6,7 +6,11 @@ from pydantic_settings import SettingsConfigDict
 
 
 class AppSettings(PydanticBaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
     # local | development | staging | production
     ENVIRONMENT: str = "local"
@@ -59,7 +63,8 @@ class AppSettings(PydanticBaseSettings):
         "http://localhost:5173,http://127.0.0.1:5173,"
         "http://localhost:3000,http://127.0.0.1:3000,"
         "http://localhost:8001,http://localhost,http://127.0.0.1,"
-        "http://localhost:80,http://127.0.0.1:80"
+        "http://localhost:80,http://127.0.0.1:80,"
+        "https://family.arash-alfooneh.ir,http://family.arash-alfooneh.ir"
     )
     AUTH_RATE_LIMIT_PER_MINUTE: int = 30
 

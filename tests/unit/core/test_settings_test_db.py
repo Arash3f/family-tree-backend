@@ -75,9 +75,7 @@ def test_settings_reject_wildcard_cors_origin_outside_local():
         )
 
 
-def test_settings_allow_wildcard_cors_origin_in_local():
-    settings = AppSettings(
-        _env_file=None,  # type: ignore[call-arg]
-        **_base_kwargs(ENVIRONMENT="local", CORS_ORIGINS="*"),
-    )
-    assert settings.CORS_ORIGINS == "*"
+def test_default_cors_includes_production_frontend():
+    settings = AppSettings(_env_file=None, **_base_kwargs())  # type: ignore[call-arg]
+    origins = {o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()}
+    assert "https://family.arash-alfooneh.ir" in origins

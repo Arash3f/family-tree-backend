@@ -7,6 +7,7 @@ from app.domain.shared.dto.family_tree_dto import (
     ParentRelationshipDTO,
     PersonIdDTO,
     PersonUpsertDTO,
+    SpouseRelationshipDTO,
 )
 from app.infrastructure.database.neo4j.neo4j import neo4j_client
 from app.infrastructure.repositories.neo4j_family_tree_repository import (
@@ -132,6 +133,112 @@ async def test_shortest_path_does_not_route_through_a_foreign_tree(neo_repo):
         )
         assert unscoped.found is True
         assert unscoped.distance == 2
+    finally:
+        for person_id in (left, bridge, right):
+            await neo_repo.delete_person(PersonIdDTO(id=person_id))
+
+
+@pytest.mark.asyncio
+async def test_diverse_paths_keep_both_parent_routes(neo_repo):
+    """Two full siblings have two parent routes; both should come back."""
+    tree_id = uuid4()
+    father_id = uuid4()
+    mother_id = uuid4()
+    child_a = uuid4()
+    child_b = uuid4()
+
+    await _upsert(neo_repo, father_id, tree_id, "Father")
+    await _upsert(neo_repo, mother_id, tree_id, "Mother")
+    await _upsert(neo_repo, child_a, tree_id, "Child A")
+    await _upsert(neo_repo, child_b, tree_id, "Child B")
+    await neo_repo.create_parent_relationship(
+        ParentRelationshipDTO(parent_id=father_id, child_id=child_a)
+    )
+    await neo_repo.create_parent_relationship(
+        ParentRelationshipDTO(parent_id=father_id, child_id=child_b)
+    )
+    await neo_repo.create_parent_relationship(
+        ParentRelationshipDTO(parent_id=mother_id, child_id=child_a)
+    )
+    await neo_repo.create_parent_relationship(
+        ParentRelationshipDTO(parent_id=mother_id, child_id=child_b)
+    )
+
+    try:
+        result = await neo_repo.find_diverse_relationship_paths(
+            child_a, child_b, tree_id=tree_id
+        )
+        assert result.found is True
+        assert result.distance == 2
+        assert len(result.paths) == 2
+        intermediates = {frozenset(item.path_person_ids[1:-1]) for item in result.paths}
+        assert frozenset([father_id]) in intermediates
+        assert frozenset([mother_id]) in intermediates
+    finally:
+        for person_id in (child_a, child_b, father_id, mother_id):
+            await neo_repo.delete_person(PersonIdDTO(id=person_id))
+
+
+@pytest.mark.asyncio
+async def test_diverse_paths_include_blood_and_marriage(neo_repo):
+    """Spouses sharing a child: marriage is shortest; alt goes via the child."""
+    tree_id = uuid4()
+    spouse_a = uuid4()
+    spouse_b = uuid4()
+    child_id = uuid4()
+
+    await _upsert(neo_repo, spouse_a, tree_id, "Spouse A")
+    await _upsert(neo_repo, spouse_b, tree_id, "Spouse B")
+    await _upsert(neo_repo, child_id, tree_id, "Child")
+    await neo_repo.create_spouse_relationship(
+        SpouseRelationshipDTO(person_id_1=spouse_a, person_id_2=spouse_b)
+    )
+    await neo_repo.create_parent_relationship(
+        ParentRelationshipDTO(parent_id=spouse_a, child_id=child_id)
+    )
+    await neo_repo.create_parent_relationship(
+        ParentRelationshipDTO(parent_id=spouse_b, child_id=child_id)
+    )
+
+    try:
+        result = await neo_repo.find_diverse_relationship_paths(
+            spouse_a, spouse_b, tree_id=tree_id
+        )
+        assert result.found is True
+        assert result.distance == 1
+        assert result.relationship_types == ["SPOUSE_OF"]
+        assert len(result.paths) == 2
+        via_child = next(item for item in result.paths if item.distance == 2)
+        assert child_id in via_child.path_person_ids
+    finally:
+        for person_id in (child_id, spouse_a, spouse_b):
+            await neo_repo.delete_person(PersonIdDTO(id=person_id))
+
+
+@pytest.mark.asyncio
+async def test_diverse_paths_do_not_route_through_a_foreign_tree(neo_repo):
+    tree_a = uuid4()
+    tree_b = uuid4()
+    left = uuid4()
+    bridge = uuid4()
+    right = uuid4()
+
+    await _upsert(neo_repo, left, tree_a, "Left")
+    await _upsert(neo_repo, bridge, tree_b, "Bridge")
+    await _upsert(neo_repo, right, tree_a, "Right")
+    await neo_repo.create_parent_relationship(
+        ParentRelationshipDTO(parent_id=left, child_id=bridge)
+    )
+    await neo_repo.create_parent_relationship(
+        ParentRelationshipDTO(parent_id=bridge, child_id=right)
+    )
+
+    try:
+        result = await neo_repo.find_diverse_relationship_paths(
+            left, right, tree_id=tree_a
+        )
+        assert result.found is False
+        assert result.paths == []
     finally:
         for person_id in (left, bridge, right):
             await neo_repo.delete_person(PersonIdDTO(id=person_id))

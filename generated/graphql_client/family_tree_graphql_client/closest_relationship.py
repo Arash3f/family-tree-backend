@@ -19,6 +19,14 @@ class ClosestRelationshipClosestRelationship(BaseModel):
     distance: int | None
     path_person_ids: list[Any] = Field(alias="pathPersonIds")
     relationship_types: list[str] = Field(alias="relationshipTypes")
+    paths: list["ClosestRelationshipClosestRelationshipPaths"]
+
+
+class ClosestRelationshipClosestRelationshipPaths(BaseModel):
+    distance: int
+    path_person_ids: list[Any] = Field(alias="pathPersonIds")
+    relationship_types: list[str] = Field(alias="relationshipTypes")
 
 
 ClosestRelationship.model_rebuild()
+ClosestRelationshipClosestRelationship.model_rebuild()

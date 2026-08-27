@@ -99,3 +99,33 @@ RETURN
     AS relationship_types,
   CASE WHEN path IS NULL THEN NULL ELSE length(path) END AS distance
 """
+
+# Same hop cap and tree isolation as SHORTEST_RELATIONSHIP_PATH, but skip
+# people already used as intermediates so the next path shares as little as
+# possible with routes already chosen.
+SHORTEST_RELATIONSHIP_PATH_AVOIDING: LiteralString = """
+MATCH (a:Person {id: $from_id}), (b:Person {id: $to_id})
+WHERE ($tree_id IS NULL OR (a.tree_id = $tree_id AND b.tree_id = $tree_id))
+OPTIONAL MATCH path = shortestPath((a)-[*..15]-(b))
+WHERE ($tree_id IS NULL OR all(n IN nodes(path) WHERE n.tree_id = $tree_id))
+  AND none(n IN nodes(path) WHERE n.id IN $excluded_ids)
+RETURN
+  CASE WHEN path IS NULL THEN [] ELSE [n IN nodes(path) | n.id] END AS person_ids,
+  CASE WHEN path IS NULL THEN [] ELSE [r IN relationships(path) | type(r)] END
+    AS relationship_types,
+  CASE WHEN path IS NULL THEN NULL ELSE length(path) END AS distance
+"""
+
+# Bounded k-shortest pool for when a shared ancestor blocks a fully disjoint
+# route. tree_id is enforced on every hop, not only the endpoints.
+K_SHORTEST_RELATIONSHIP_PATHS: LiteralString = """
+MATCH (a:Person {id: $from_id}), (b:Person {id: $to_id})
+WHERE ($tree_id IS NULL OR (a.tree_id = $tree_id AND b.tree_id = $tree_id))
+MATCH path = SHORTEST 20 PATHS
+  (a)((x)-[r]-(y) WHERE $tree_id IS NULL
+    OR (x.tree_id = $tree_id AND y.tree_id = $tree_id)){1,15}(b)
+RETURN
+  [n IN nodes(path) | n.id] AS person_ids,
+  [rel IN relationships(path) | type(rel)] AS relationship_types,
+  length(path) AS distance
+"""

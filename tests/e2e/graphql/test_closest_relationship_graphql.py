@@ -6,7 +6,10 @@ from family_tree_graphql_client import FamilyTreeGraphQLClient
 from family_tree_graphql_client.exceptions import GraphQLClientGraphQLMultiError
 
 from app.domain.entities.person import Gender, Person
-from app.domain.shared.dto.family_tree_dto import RelationshipPathDTO
+from app.domain.shared.dto.family_tree_dto import (
+    RelationshipPathDTO,
+    RelationshipPathItemDTO,
+)
 from app.main import app
 from app.presentation.dependencies import get_neo
 from app.utils.error_codes import ErrorCode
@@ -40,7 +43,7 @@ async def test_graphql_closest_relationship_permission_denied(
 
     error = exc_info.value.errors[0]
     assert error.extensions["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
-    mock_neo.find_shortest_relationship_path.assert_not_called()
+    mock_neo.find_diverse_relationship_paths.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -61,13 +64,20 @@ async def test_graphql_closest_relationship_success(
 
     from_id, to_id = from_person.safe_id, to_person.safe_id
     mock_neo.person_exists.return_value = True
-    mock_neo.find_shortest_relationship_path.return_value = RelationshipPathDTO(
+    mock_neo.find_diverse_relationship_paths.return_value = RelationshipPathDTO(
         from_person_id=from_id,
         to_person_id=to_id,
         found=True,
         distance=1,
         path_person_ids=[from_id, to_id],
         relationship_types=["SPOUSE_OF"],
+        paths=[
+            RelationshipPathItemDTO(
+                distance=1,
+                path_person_ids=[from_id, to_id],
+                relationship_types=["SPOUSE_OF"],
+            )
+        ],
     )
 
     resp = await admin_gql_client.closest_relationship(
@@ -79,3 +89,6 @@ async def test_graphql_closest_relationship_success(
     assert str(data.from_person_id) == str(from_id)
     assert str(data.to_person_id) == str(to_id)
     assert data.relationship_types == ["SPOUSE_OF"]
+    assert len(data.paths) == 1
+    assert data.paths[0].distance == 1
+    assert data.paths[0].relationship_types == ["SPOUSE_OF"]

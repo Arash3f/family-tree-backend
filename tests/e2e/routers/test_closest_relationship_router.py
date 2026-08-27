@@ -12,7 +12,10 @@ from family_tree_api_client.models.closest_relationship_response import (
 )
 
 from app.domain.entities.person import Gender, Person
-from app.domain.shared.dto.family_tree_dto import RelationshipPathDTO
+from app.domain.shared.dto.family_tree_dto import (
+    RelationshipPathDTO,
+    RelationshipPathItemDTO,
+)
 from app.main import app
 from app.presentation.dependencies import get_neo
 from app.utils.error_codes import ERROR_MESSAGES, ErrorCode
@@ -50,7 +53,7 @@ async def test_closest_relationship_permission_denied(
     body = json.loads(resp.content)
     assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.TREE_MEMBERSHIP_DENIED]
-    mock_neo.find_shortest_relationship_path.assert_not_called()
+    mock_neo.find_diverse_relationship_paths.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -83,13 +86,20 @@ async def test_closest_relationship_success(
 
     from_id, to_id, mid = from_person.safe_id, to_person.safe_id, uuid4()
     mock_neo.person_exists.return_value = True
-    mock_neo.find_shortest_relationship_path.return_value = RelationshipPathDTO(
+    mock_neo.find_diverse_relationship_paths.return_value = RelationshipPathDTO(
         from_person_id=from_id,
         to_person_id=to_id,
         found=True,
         distance=2,
         path_person_ids=[from_id, mid, to_id],
         relationship_types=["PARENT_OF", "PARENT_OF"],
+        paths=[
+            RelationshipPathItemDTO(
+                distance=2,
+                path_person_ids=[from_id, mid, to_id],
+                relationship_types=["PARENT_OF", "PARENT_OF"],
+            )
+        ],
     )
 
     resp = await get_closest_relationship(
@@ -107,6 +117,8 @@ async def test_closest_relationship_success(
     assert body.to_person_id == to_id
     assert body.path_person_ids == [from_id, mid, to_id]
     assert body.relationship_types == ["PARENT_OF", "PARENT_OF"]
+    assert body.paths is not None
+    assert len(body.paths) == 1
 
 
 @pytest.mark.asyncio

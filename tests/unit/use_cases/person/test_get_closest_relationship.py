@@ -7,7 +7,10 @@ from app.application.use_cases.person.get_closest_relationship_use_case import (
     GetClosestRelationshipUseCase,
 )
 from app.domain.exceptions.person_exceptions import PersonNotFoundException
-from app.domain.shared.dto.family_tree_dto import RelationshipPathDTO
+from app.domain.shared.dto.family_tree_dto import (
+    RelationshipPathDTO,
+    RelationshipPathItemDTO,
+)
 
 TREE_ID = UUID(int=7)
 
@@ -18,13 +21,20 @@ async def test_get_closest_relationship_success():
     to_id = uuid4()
     repo = AsyncMock()
     repo.person_exists.return_value = True
-    repo.find_shortest_relationship_path.return_value = RelationshipPathDTO(
+    repo.find_diverse_relationship_paths.return_value = RelationshipPathDTO(
         from_person_id=from_id,
         to_person_id=to_id,
         found=True,
         distance=1,
         path_person_ids=[from_id, to_id],
         relationship_types=["PARENT_OF"],
+        paths=[
+            RelationshipPathItemDTO(
+                distance=1,
+                path_person_ids=[from_id, to_id],
+                relationship_types=["PARENT_OF"],
+            )
+        ],
     )
 
     result = await GetClosestRelationshipUseCase(repo).execute(
@@ -33,7 +43,8 @@ async def test_get_closest_relationship_success():
 
     assert result.found is True
     assert result.distance == 1
-    repo.find_shortest_relationship_path.assert_called_once_with(
+    assert len(result.paths) == 1
+    repo.find_diverse_relationship_paths.assert_called_once_with(
         from_person_id=from_id,
         to_person_id=to_id,
         tree_id=TREE_ID,

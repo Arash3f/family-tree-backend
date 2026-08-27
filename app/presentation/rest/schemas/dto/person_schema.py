@@ -166,6 +166,12 @@ class PersonCreateResponse(BaseModel):
     }
 
 
+class RelationshipPathItemResponse(BaseModel):
+    distance: int
+    path_person_ids: list[UUID] = Field(default_factory=list)
+    relationship_types: list[str] = Field(default_factory=list)
+
+
 class ClosestRelationshipResponse(BaseModel):
     from_person_id: UUID
     to_person_id: UUID
@@ -173,6 +179,7 @@ class ClosestRelationshipResponse(BaseModel):
     distance: int | None = None
     path_person_ids: list[UUID] = Field(default_factory=list)
     relationship_types: list[str] = Field(default_factory=list)
+    paths: list[RelationshipPathItemResponse] = Field(default_factory=list)
 
 
 class PersonFilterRequestData(BaseModel):

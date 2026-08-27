@@ -36,6 +36,7 @@ from app.presentation.graphql.types.person import (
     PersonPage,
     PersonType,
     PersonUpdateInput,
+    RelationshipPathItemType,
 )
 from app.presentation.graphql.types.role import (
     RoleCreateInput,
@@ -84,6 +85,7 @@ __all__ = [
     "PersonSortByEnum",
     "PersonType",
     "PersonUpdateInput",
+    "RelationshipPathItemType",
     "ResultType",
     "RoleCreateInput",
     "RoleFilterInput",

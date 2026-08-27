@@ -62,6 +62,13 @@ class PersonPage:
 
 
 @strawberry.type
+class RelationshipPathItemType:
+    distance: int
+    path_person_ids: list[UUID]
+    relationship_types: list[str]
+
+
+@strawberry.type
 class ClosestRelationshipType:
     from_person_id: UUID
     to_person_id: UUID
@@ -69,6 +76,7 @@ class ClosestRelationshipType:
     distance: int | None = None
     path_person_ids: list[UUID]
     relationship_types: list[str]
+    paths: list[RelationshipPathItemType]
 
 
 @strawberry.input

@@ -8,6 +8,7 @@ from .client import FamilyTreeGraphQLClient
 from .closest_relationship import (
     ClosestRelationship,
     ClosestRelationshipClosestRelationship,
+    ClosestRelationshipClosestRelationshipPaths,
 )
 from .create_marriage import CreateMarriage, CreateMarriageCreateMarriage
 from .create_person import (
@@ -133,6 +134,7 @@ __all__ = [
     "BaseModel",
     "ClosestRelationship",
     "ClosestRelationshipClosestRelationship",
+    "ClosestRelationshipClosestRelationshipPaths",
     "CreateMarriage",
     "CreateMarriageCreateMarriage",
     "CreatePerson",

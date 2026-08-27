@@ -128,6 +128,11 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
                 distance
                 pathPersonIds
                 relationshipTypes
+                paths {
+                  distance
+                  pathPersonIds
+                  relationshipTypes
+                }
               }
             }
             """)

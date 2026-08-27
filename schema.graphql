@@ -16,6 +16,7 @@ type ClosestRelationshipType {
   distance: Int
   pathPersonIds: [UUID!]!
   relationshipTypes: [String!]!
+  paths: [RelationshipPathItemType!]!
 }
 
 """Date (isoformat)"""
@@ -383,6 +384,12 @@ type Query {
 
   """Filtered ticket list (REST: POST /tickets/list)"""
   tickets(data: TicketListInput = null): TicketPage!
+}
+
+type RelationshipPathItemType {
+  distance: Int!
+  pathPersonIds: [UUID!]!
+  relationshipTypes: [String!]!
 }
 
 type ResultType {

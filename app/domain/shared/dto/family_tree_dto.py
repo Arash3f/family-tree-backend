@@ -76,6 +76,12 @@ class SpouseRelationshipResponseDTO(BaseModel):
     person_2: PersonCompleteBaseDTO
 
 
+class RelationshipPathItemDTO(BaseModel):
+    distance: int
+    path_person_ids: list[UUID] = Field(default_factory=list)
+    relationship_types: list[str] = Field(default_factory=list)
+
+
 class RelationshipPathDTO(BaseModel):
     from_person_id: UUID
     to_person_id: UUID
@@ -83,3 +89,4 @@ class RelationshipPathDTO(BaseModel):
     distance: int | None = None
     path_person_ids: list[UUID] = Field(default_factory=list)
     relationship_types: list[str] = Field(default_factory=list)
+    paths: list[RelationshipPathItemDTO] = Field(default_factory=list)

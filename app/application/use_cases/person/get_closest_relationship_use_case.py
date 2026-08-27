@@ -51,7 +51,7 @@ class GetClosestRelationshipUseCase:
                 detail=[f"person {to_person_id} not found in graph"]
             )
 
-        return await self.family_tree_repo.find_shortest_relationship_path(
+        return await self.family_tree_repo.find_diverse_relationship_paths(
             from_person_id=from_person_id,
             to_person_id=to_person_id,
             tree_id=tree_id,
