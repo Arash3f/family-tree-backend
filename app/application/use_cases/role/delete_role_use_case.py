@@ -12,7 +12,10 @@ class DeleteRoleUseCase:
         async with self.uow:
             role = await self.uow.roles.get_or_raise(role_id=dto.id)
 
-            if role.name.strip().lower() == settings.ADMIN_ROLE_NAME.strip().lower():
+            if role.name.strip().lower() in {
+                settings.ADMIN_ROLE_NAME.strip().lower(),
+                settings.MEMBER_ROLE_NAME.strip().lower(),
+            }:
                 raise RoleProtectedException()
 
             await self.uow.roles.delete(role_id=role.safe_id)

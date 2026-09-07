@@ -53,6 +53,8 @@ class AppSettings(PydanticBaseSettings):
     ADMIN_USERNAME: str = "admin"
     ADMIN_PASSWORD: str = "admin"
     ADMIN_ROLE_NAME: str = "Admin"
+    # Assigned to self-registered accounts (tree + ticket access only).
+    MEMBER_ROLE_NAME: str = "Member"
 
     BACKUP_DIR: str = "/mnt/backups"
 

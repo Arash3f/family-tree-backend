@@ -24,6 +24,8 @@ class MeResponse:
         username (str):
         session_id (UUID):
         fullname (str | Unset):  Default: ''.
+        email (None | str | Unset):
+        phone (None | str | Unset):
         role_id (None | Unset | UUID):
         role_name (None | str | Unset):
         permissions (list[str] | Unset):
@@ -35,6 +37,8 @@ class MeResponse:
     username: str
     session_id: UUID
     fullname: str | Unset = ""
+    email: None | str | Unset = UNSET
+    phone: None | str | Unset = UNSET
     role_id: None | Unset | UUID = UNSET
     role_name: None | str | Unset = UNSET
     permissions: list[str] | Unset = UNSET
@@ -50,6 +54,18 @@ class MeResponse:
         session_id = str(self.session_id)
 
         fullname = self.fullname
+
+        email: None | str | Unset
+        if isinstance(self.email, Unset):
+            email = UNSET
+        else:
+            email = self.email
+
+        phone: None | str | Unset
+        if isinstance(self.phone, Unset):
+            phone = UNSET
+        else:
+            phone = self.phone
 
         role_id: None | str | Unset
         if isinstance(self.role_id, Unset):
@@ -89,6 +105,10 @@ class MeResponse:
         )
         if fullname is not UNSET:
             field_dict["fullname"] = fullname
+        if email is not UNSET:
+            field_dict["email"] = email
+        if phone is not UNSET:
+            field_dict["phone"] = phone
         if role_id is not UNSET:
             field_dict["role_id"] = role_id
         if role_name is not UNSET:
@@ -114,6 +134,24 @@ class MeResponse:
         session_id = UUID(d.pop("session_id"))
 
         fullname = d.pop("fullname", UNSET)
+
+        def _parse_email(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        email = _parse_email(d.pop("email", UNSET))
+
+        def _parse_phone(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        phone = _parse_phone(d.pop("phone", UNSET))
 
         def _parse_role_id(data: object) -> None | Unset | UUID:
             if data is None:
@@ -159,6 +197,8 @@ class MeResponse:
             username=username,
             session_id=session_id,
             fullname=fullname,
+            email=email,
+            phone=phone,
             role_id=role_id,
             role_name=role_name,
             permissions=permissions,

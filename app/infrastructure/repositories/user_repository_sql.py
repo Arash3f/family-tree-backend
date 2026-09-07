@@ -102,6 +102,13 @@ class SQLUserRepository(UserRepository):
 
         return self._to_entity(model)
 
+    async def get_by_email(self, email: str) -> User | None:
+        stmt = select(UserModel).where(UserModel.email == email)
+
+        result = await self.session.execute(stmt)
+        model = result.scalar_one_or_none()
+        return self._to_entity(model) if model else None
+
     async def get_list_by_filter(self, query: FilterUserQuery) -> PaginatedResult[User]:
         stmt = select(UserModel)
         filters = query.filters
@@ -180,6 +187,8 @@ class SQLUserRepository(UserRepository):
 
         model.username = user.username
         model.fullname = user.fullname
+        model.email = user.email
+        model.phone = user.phone
         model.role_id = user.role_id
         model.password_hash = user.password_hash
         model.account_type = user.account_type.value
@@ -199,6 +208,8 @@ class SQLUserRepository(UserRepository):
             id=model.id,
             username=model.username,
             fullname=model.fullname,
+            email=model.email,
+            phone=model.phone,
             password_hash=model.password_hash,
             role_id=model.role_id,
             account_type=AccountType(model.account_type),
@@ -209,6 +220,8 @@ class SQLUserRepository(UserRepository):
             id=entity.id,
             username=entity.username,
             fullname=entity.fullname,
+            email=entity.email,
+            phone=entity.phone,
             password_hash=entity.password_hash,
             role_id=entity.role_id,
             account_type=entity.account_type.value,

@@ -55,12 +55,12 @@ async def test_free_owner_blocked_from_second_tree(mock_uow):
 
 
 @pytest.mark.asyncio
-async def test_free_owner_blocked_from_eleventh_person(mock_uow):
+async def test_free_owner_blocked_from_twenty_first_person(mock_uow):
     mock_uow.users.get_for_update = AsyncMock(
         return_value=_owner(account_type=AccountType.FREE)
     )
     mock_uow.family_trees.get_or_raise = AsyncMock(return_value=_tree())
-    mock_uow.persons.count_in_tree = AsyncMock(return_value=10)
+    mock_uow.persons.count_in_tree = AsyncMock(return_value=20)
     service = AccountLimitService()
 
     with pytest.raises(FreeAccountLimitException):
@@ -68,12 +68,12 @@ async def test_free_owner_blocked_from_eleventh_person(mock_uow):
 
 
 @pytest.mark.asyncio
-async def test_free_owner_blocked_from_sixth_marriage(mock_uow):
+async def test_free_owner_blocked_from_ninth_marriage(mock_uow):
     mock_uow.users.get_for_update = AsyncMock(
         return_value=_owner(account_type=AccountType.FREE)
     )
     mock_uow.family_trees.get_or_raise = AsyncMock(return_value=_tree())
-    mock_uow.marriages.count_in_tree = AsyncMock(return_value=5)
+    mock_uow.marriages.count_in_tree = AsyncMock(return_value=8)
     service = AccountLimitService()
 
     with pytest.raises(FreeAccountLimitException):
@@ -88,7 +88,7 @@ async def test_free_owner_allows_person_within_limit(mock_uow):
         return_value=_owner(account_type=AccountType.FREE)
     )
     mock_uow.family_trees.get_or_raise = AsyncMock(return_value=_tree())
-    mock_uow.persons.count_in_tree = AsyncMock(return_value=9)
+    mock_uow.persons.count_in_tree = AsyncMock(return_value=19)
     service = AccountLimitService()
 
     await service.assert_can_create_persons(mock_uow, tree_id=TREE_ID, additional=1)

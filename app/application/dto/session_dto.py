@@ -23,6 +23,8 @@ class MeResponseDTO(BaseModel):
     id: UUID
     username: str
     fullname: str = ""
+    email: str | None = None
+    phone: str | None = None
     role_id: UUID | None
     role_name: str | None
     permissions: list[str]

@@ -1,6 +1,7 @@
 from strawberry.types import Info
 
-from app.application.dto.auth_dto import LoginDTO
+from app.application.dto.auth_dto import LoginDTO, RegisterDTO
+from app.application.use_cases.auth.register_user import RegisterUserUseCase
 from app.application.use_cases.login_user import LoginUserUseCase
 from app.application.use_cases.logout_user import LogoutAllUseCase, LogoutUseCase
 from app.application.use_cases.refresh_token import RefreshTokenUseCase
@@ -31,6 +32,39 @@ async def resolve_login(
     usecase = LoginUserUseCase(ctx.uow, ctx.password_hasher, ctx.token_service)
     tokens = await usecase.execute(
         LoginDTO(username=username, password=password),
+        user_agent=user_agent,
+        ip_address=ip_address,
+    )
+    mapped = AuthApiMapper.from_login_dto(tokens)
+    return AuthTokensType(
+        access_token=mapped.access_token,
+        refresh_token=mapped.refresh_token,
+        token_type=mapped.token_type,
+    )
+
+
+async def resolve_register(
+    info: Info,
+    username: str,
+    password: str,
+    re_password: str,
+    email: str | None = None,
+    phone: str | None = None,
+    country_code: str | None = None,
+) -> AuthTokensType:
+    await enforce_auth_rate_limit(info)
+    ctx = info.context
+    user_agent, ip_address = client_meta(info)
+    usecase = RegisterUserUseCase(ctx.uow, ctx.password_hasher, ctx.token_service)
+    tokens = await usecase.execute(
+        RegisterDTO(
+            username=username,
+            password=password,
+            re_password=re_password,
+            email=email,
+            phone=phone,
+            country_code=country_code,
+        ),
         user_agent=user_agent,
         ip_address=ip_address,
     )

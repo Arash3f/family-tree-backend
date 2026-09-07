@@ -6,6 +6,7 @@ class AccountType(StrEnum):
     PAID = "paid"
 
 
-FREE_MAX_OWNED_TREES = 1
-FREE_MAX_PERSONS_PER_TREE = 10
-FREE_MAX_MARRIAGES_PER_TREE = 5
+# Matches the two starter trees provisioned on self-signup.
+FREE_MAX_OWNED_TREES = 2
+FREE_MAX_PERSONS_PER_TREE = 20
+FREE_MAX_MARRIAGES_PER_TREE = 8

@@ -14,6 +14,7 @@ async def test_delete_role_success(mock_uow):
 
     fake_role = MagicMock()
     fake_role.safe_id = UUID(int=123)
+    fake_role.name = "custom-role"
     mock_uow.roles.get_or_raise.return_value = fake_role
 
     use_case = DeleteRoleUseCase(mock_uow)

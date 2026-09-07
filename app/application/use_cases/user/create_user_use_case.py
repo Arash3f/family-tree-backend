@@ -5,7 +5,10 @@ from app.application.dto.user.user_create_dto import (
 )
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.entities.user import User
-from app.domain.exceptions.user_exceptions import PasswordConfirmationMismatchException
+from app.domain.exceptions.user_exceptions import (
+    PasswordConfirmationMismatchException,
+    UsernameAlreadyExistsException,
+)
 from app.domain.services.password_hasher import PasswordHasher
 
 
@@ -19,6 +22,9 @@ class CreateUserUseCase:
             raise PasswordConfirmationMismatchException()
 
         async with self.uow:
+            if await self.uow.users.get_by_username(dto.username):
+                raise UsernameAlreadyExistsException()
+
             role_id = None
             if dto.role_id:
                 role = await self.uow.roles.get_or_raise(role_id=dto.role_id)

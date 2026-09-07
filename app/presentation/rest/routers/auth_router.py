@@ -4,12 +4,13 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 
-from app.application.dto.auth_dto import LoginDTO
+from app.application.dto.auth_dto import LoginDTO, RegisterDTO
 from app.application.dto.session_dto import ChangePasswordDTO
 from app.application.use_cases.auth.me_and_password import (
     ChangeOwnPasswordUseCase,
     GetMeUseCase,
 )
+from app.application.use_cases.auth.register_user import RegisterUserUseCase
 from app.application.use_cases.login_user import LoginUserUseCase
 from app.application.use_cases.logout_user import LogoutAllUseCase, LogoutUseCase
 from app.application.use_cases.refresh_token import RefreshTokenUseCase
@@ -32,6 +33,7 @@ from app.presentation.rest.schemas.dto.auth_schema import (
     ChangePasswordRequest,
     LoginResponse,
     MeResponse,
+    RegisterRequest,
     SessionResponse,
 )
 from app.presentation.rest.schemas.dto.common import ResultResponse
@@ -72,6 +74,35 @@ async def login(
 
     tokens = await usecase.execute(data, user_agent=user_agent, ip_address=ip_address)
 
+    return AuthApiMapper.from_login_dto(tokens)
+
+
+@router.post(
+    "/register",
+    response_model=LoginResponse,
+    dependencies=[Depends(rate_limit_auth)],
+)
+async def register(
+    request: Request,
+    body: RegisterRequest,
+    uow=Depends(get_request_uow),
+    token_service=Depends(get_token_service),
+    password_hasher=Depends(get_password_hasher),
+) -> LoginResponse:
+    user_agent, ip_address = _client_meta(request)
+    usecase = RegisterUserUseCase(uow, password_hasher, token_service)
+    tokens = await usecase.execute(
+        RegisterDTO(
+            username=body.username,
+            password=body.password,
+            re_password=body.re_password,
+            email=body.email,
+            phone=body.phone,
+            country_code=body.country_code,
+        ),
+        user_agent=user_agent,
+        ip_address=ip_address,
+    )
     return AuthApiMapper.from_login_dto(tokens)
 
 

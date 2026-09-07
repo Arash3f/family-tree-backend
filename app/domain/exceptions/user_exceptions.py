@@ -41,3 +41,21 @@ class PrivilegedUserModificationException(AppException):
             status_code=403,
             detail=detail or ["administrator role changes require an administrator"],
         )
+
+
+class UsernameAlreadyExistsException(AppException):
+    def __init__(self, detail: list[str] | None = None):
+        super().__init__(
+            code=ErrorCode.USERNAME_ALREADY_EXISTS,
+            status_code=409,
+            detail=detail or ["username is already taken"],
+        )
+
+
+class EmailAlreadyExistsException(AppException):
+    def __init__(self, detail: list[str] | None = None):
+        super().__init__(
+            code=ErrorCode.EMAIL_ALREADY_EXISTS,
+            status_code=409,
+            detail=detail or ["email is already registered"],
+        )

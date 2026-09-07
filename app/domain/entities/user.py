@@ -18,6 +18,8 @@ class User:
     username: str
     password_hash: str
     fullname: str = ""
+    email: str | None = None
+    phone: str | None = None
     id: UUID | None = None
     role_id: UUID | None = None
     account_type: AccountType = AccountType.FREE

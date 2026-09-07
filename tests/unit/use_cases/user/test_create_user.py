@@ -32,6 +32,7 @@ async def test_create_user_with_role(mock_uow):
     password_hasher.hash.return_value = "hashed_password"
 
     mock_uow.roles.get_or_raise = AsyncMock(return_value=role)
+    mock_uow.users.get_by_username = AsyncMock(return_value=None)
     mock_uow.users.create = AsyncMock(return_value=created_user)
     mock_uow.commit = AsyncMock()
 
@@ -86,6 +87,7 @@ async def test_create_user_without_role(mock_uow):
     password_hasher.hash.return_value = "hashed_password"
 
     mock_uow.roles.get_or_raise = AsyncMock()
+    mock_uow.users.get_by_username = AsyncMock(return_value=None)
     mock_uow.users.create = AsyncMock(return_value=created_user)
     mock_uow.commit = AsyncMock()
 

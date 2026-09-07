@@ -52,6 +52,8 @@ class ErrorCode(int, Enum):
     PASSWORD_CONFIRMATION_MISMATCH = 1402
     SELF_ROLE_CHANGE = 1403
     PRIVILEGED_USER_MODIFICATION = 1404
+    USERNAME_ALREADY_EXISTS = 1405
+    EMAIL_ALREADY_EXISTS = 1406
     # -----------------------
     # |     Role Person     |
     # -----------------------
@@ -141,6 +143,8 @@ ERROR_MESSAGES = {
         ErrorCode.PRIVILEGED_USER_MODIFICATION: (
             "Only an administrator can grant or modify the administrator role"
         ),
+        ErrorCode.USERNAME_ALREADY_EXISTS: "Username is already taken",
+        ErrorCode.EMAIL_ALREADY_EXISTS: "Email is already registered",
         # Domain Role
         ErrorCode.ROLE_NOT_FOUND: "Role not found",
         ErrorCode.ROLE_NAME_DUPLICATED: "Role name duplicated",
@@ -220,6 +224,8 @@ ERROR_MESSAGES = {
         ErrorCode.PRIVILEGED_USER_MODIFICATION: (
             "فقط مدیر می‌تواند نقش مدیر را بدهد یا تغییر دهد"
         ),
+        ErrorCode.USERNAME_ALREADY_EXISTS: "این نام کاربری قبلاً گرفته شده است",
+        ErrorCode.EMAIL_ALREADY_EXISTS: "این ایمیل قبلاً ثبت شده است",
         # Domain Role
         ErrorCode.ROLE_NOT_FOUND: "نقش پیدا نشد",
         ErrorCode.ROLE_NAME_DUPLICATED: "اسم نقش تکراری است",

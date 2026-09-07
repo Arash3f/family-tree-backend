@@ -9,6 +9,16 @@ from app.infrastructure.services.security.password_hasher_impl import (
     Argon2PasswordHasher,
 )
 
+# Self-serve accounts: manage own trees and open support tickets.
+MEMBER_ROLE_PERMISSIONS: tuple[str, ...] = (
+    Permissions.TREE_CREATE,
+    Permissions.TREE_READ,
+    Permissions.TREE_UPDATE,
+    Permissions.TREE_DELETE,
+    Permissions.TICKET_CREATE,
+    Permissions.TICKET_READ,
+)
+
 
 async def seed_initial_user(uow: UnitOfWork, password_hasher: Argon2PasswordHasher):
     async with uow:
@@ -52,7 +62,26 @@ async def seed_initial_user(uow: UnitOfWork, password_hasher: Argon2PasswordHash
             if changed:
                 await uow.users.update(admin)
 
+        await _ensure_member_role(uow)
         await uow.commit()
+
+
+async def _ensure_member_role(uow: UnitOfWork) -> Role:
+    permission_ids: list = []
+    for name in Permissions.expand_with_requirements(MEMBER_ROLE_PERMISSIONS):
+        permission = await uow.permissions.get_by_name(name)
+        if permission is None:
+            raise RuntimeError(f"Permission {name!r} is not seeded")
+        permission_ids.append(permission.safe_id)
+
+    role = await uow.roles.get_by_name(settings.MEMBER_ROLE_NAME)
+    if not role:
+        return await uow.roles.create(
+            Role(name=settings.MEMBER_ROLE_NAME, permission_ids=permission_ids)
+        )
+
+    role.permission_ids = permission_ids
+    return await uow.roles.update(role)
 
 
 async def seed_initial_permissions(uow: UnitOfWork):
