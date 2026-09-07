@@ -15,7 +15,7 @@ class GetUser(BaseModel):
 class GetUserUser(BaseModel):
     id: Any
     username: str
-    role_id: Any | None = Field(alias="roleId")
+    role_id: Optional[Any] = Field(alias="roleId")
 
 
 GetUser.model_rebuild()

@@ -9,7 +9,9 @@ from .base_model import BaseModel
 
 
 class AddTicketMessage(BaseModel):
-    add_ticket_message: "AddTicketMessageAddTicketMessage" = Field(alias="addTicketMessage")
+    add_ticket_message: "AddTicketMessageAddTicketMessage" = Field(
+        alias="addTicketMessage"
+    )
 
 
 class AddTicketMessageAddTicketMessage(BaseModel):

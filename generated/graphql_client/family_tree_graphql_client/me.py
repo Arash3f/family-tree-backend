@@ -14,7 +14,7 @@ class Me(BaseModel):
 
 class MeMe(BaseModel):
     username: str
-    role_id: Any | None = Field(alias="roleId")
+    role_id: Optional[Any] = Field(alias="roleId")
 
 
 Me.model_rebuild()

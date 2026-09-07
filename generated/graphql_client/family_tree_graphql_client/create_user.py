@@ -16,7 +16,7 @@ class CreateUserCreateUser(BaseModel):
     id: Any
     username: str
     fullname: str
-    role_id: Any | None = Field(alias="roleId")
+    role_id: Optional[Any] = Field(alias="roleId")
 
 
 CreateUser.model_rebuild()

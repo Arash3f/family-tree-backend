@@ -9,14 +9,16 @@ from .base_model import BaseModel
 
 
 class ClosestRelationship(BaseModel):
-    closest_relationship: "ClosestRelationshipClosestRelationship" = Field(alias="closestRelationship")
+    closest_relationship: "ClosestRelationshipClosestRelationship" = Field(
+        alias="closestRelationship"
+    )
 
 
 class ClosestRelationshipClosestRelationship(BaseModel):
     from_person_id: Any = Field(alias="fromPersonId")
     to_person_id: Any = Field(alias="toPersonId")
     found: bool
-    distance: int | None
+    distance: Optional[int]
     path_person_ids: list[Any] = Field(alias="pathPersonIds")
     relationship_types: list[str] = Field(alias="relationshipTypes")
     paths: list["ClosestRelationshipClosestRelationshipPaths"]

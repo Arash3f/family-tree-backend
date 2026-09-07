@@ -2,6 +2,11 @@
 
 from .add_member import AddMember, AddMemberAddTreeMember
 from .add_ticket_message import AddTicketMessage, AddTicketMessageAddTicketMessage
+from .alternative_relationship_paths import (
+    AlternativeRelationshipPaths,
+    AlternativeRelationshipPathsAlternativeRelationshipPaths,
+    AlternativeRelationshipPathsAlternativeRelationshipPathsPaths,
+)
 from .async_base_client import AsyncBaseClient
 from .base_model import BaseModel, Upload
 from .client import FamilyTreeGraphQLClient
@@ -130,6 +135,9 @@ __all__ = [
     "AddMemberAddTreeMember",
     "AddTicketMessage",
     "AddTicketMessageAddTicketMessage",
+    "AlternativeRelationshipPaths",
+    "AlternativeRelationshipPathsAlternativeRelationshipPaths",
+    "AlternativeRelationshipPathsAlternativeRelationshipPathsPaths",
     "AsyncBaseClient",
     "BaseModel",
     "ClosestRelationship",

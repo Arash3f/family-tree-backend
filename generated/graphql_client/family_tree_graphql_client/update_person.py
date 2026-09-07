@@ -13,7 +13,7 @@ class UpdatePerson(BaseModel):
 
 
 class UpdatePersonUpdatePerson(BaseModel):
-    id: Any | None
+    id: Optional[Any]
     name: str
 
 

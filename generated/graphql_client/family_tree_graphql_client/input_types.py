@@ -23,8 +23,8 @@ from .enums import (
 
 
 class DateRangeInput(BaseModel):
-    min: Any | None = None
-    max: Any | None = None
+    min: Optional[Any] = None
+    max: Optional[Any] = None
 
 
 class DivorceInput(BaseModel):
@@ -47,9 +47,9 @@ class MarriageCreateInput(BaseModel):
 
 
 class MarriageFilterInput(BaseModel):
-    id: Any | None = None
-    spouse_a_id: Any | None = Field(alias="spouseAId", default=None)
-    spouse_b_id: Any | None = Field(alias="spouseBId", default=None)
+    id: Optional[Any] = None
+    spouse_a_id: Optional[Any] = Field(alias="spouseAId", default=None)
+    spouse_b_id: Optional[Any] = Field(alias="spouseBId", default=None)
     married_at: Optional["DateRangeInput"] = Field(alias="marriedAt", default=None)
     divorced_at: Optional["DateRangeInput"] = Field(alias="divorcedAt", default=None)
 
@@ -57,15 +57,15 @@ class MarriageFilterInput(BaseModel):
 class MarriageListInput(BaseModel):
     pagination: Optional["PaginationInput"] = None
     filters: Optional["MarriageFilterInput"] = None
-    sort_order: SortOrder | None = Field(alias="sortOrder", default=None)
-    sort_by: MarriageSortBy | None = Field(alias="sortBy", default=None)
+    sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
+    sort_by: Optional[MarriageSortBy] = Field(alias="sortBy", default=None)
 
 
 class MarriageUpdateDataInput(BaseModel):
-    spouse_a_id: Any | None = Field(alias="spouseAId", default=None)
-    spouse_b_id: Any | None = Field(alias="spouseBId", default=None)
-    married_at: Any | None = Field(alias="marriedAt", default=None)
-    divorced_at: Any | None = Field(alias="divorcedAt", default=None)
+    spouse_a_id: Optional[Any] = Field(alias="spouseAId", default=None)
+    spouse_b_id: Optional[Any] = Field(alias="spouseBId", default=None)
+    married_at: Optional[Any] = Field(alias="marriedAt", default=None)
+    divorced_at: Optional[Any] = Field(alias="divorcedAt", default=None)
 
 
 class MarriageUpdateInput(BaseModel):
@@ -91,60 +91,62 @@ class ParentLinkInput(BaseModel):
 
 
 class PermissionFilterInput(BaseModel):
-    id: Any | None = None
-    name: str | None = None
+    id: Optional[Any] = None
+    name: Optional[str] = None
 
 
 class PermissionListInput(BaseModel):
     pagination: Optional["PaginationInput"] = None
     filters: Optional["PermissionFilterInput"] = None
-    sort_order: SortOrder | None = Field(alias="sortOrder", default=None)
-    sort_by: PermissionSortBy | None = Field(alias="sortBy", default=None)
+    sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
+    sort_by: Optional[PermissionSortBy] = Field(alias="sortBy", default=None)
 
 
 class PersonCreateInput(BaseModel):
     name: str
     gender: Gender
-    birth_date: Any | None = Field(alias="birthDate", default=None)
-    death_date: Any | None = Field(alias="deathDate", default=None)
-    family_name: str | None = Field(alias="familyName", default=None)
-    birth_place: str | None = Field(alias="birthPlace", default=None)
-    death_place: str | None = Field(alias="deathPlace", default=None)
-    notes: str | None = None
-    parents: list["ParentLinkInput"] | None = None
-    marriage_id: Any | None = Field(alias="marriageId", default=None)
-    photo_object_key: str | None = Field(alias="photoObjectKey", default=None)
+    birth_date: Optional[Any] = Field(alias="birthDate", default=None)
+    death_date: Optional[Any] = Field(alias="deathDate", default=None)
+    family_name: Optional[str] = Field(alias="familyName", default=None)
+    birth_place: Optional[str] = Field(alias="birthPlace", default=None)
+    death_place: Optional[str] = Field(alias="deathPlace", default=None)
+    notes: Optional[str] = None
+    parents: Optional[list["ParentLinkInput"]] = None
+    marriage_id: Optional[Any] = Field(alias="marriageId", default=None)
+    photo_object_key: Optional[str] = Field(alias="photoObjectKey", default=None)
 
 
 class PersonFilterInput(BaseModel):
-    id: Any | None = None
-    name: str | None = None
-    gender: Gender | None = None
+    id: Optional[Any] = None
+    name: Optional[str] = None
+    gender: Optional[Gender] = None
     birth_date: Optional["DateRangeInput"] = Field(alias="birthDate", default=None)
-    parent_id: Any | None = Field(alias="parentId", default=None)
-    relationship_type: ParentRelationshipType | None = Field(alias="relationshipType", default=None)
-    marriage_id: Any | None = Field(alias="marriageId", default=None)
+    parent_id: Optional[Any] = Field(alias="parentId", default=None)
+    relationship_type: Optional[ParentRelationshipType] = Field(
+        alias="relationshipType", default=None
+    )
+    marriage_id: Optional[Any] = Field(alias="marriageId", default=None)
 
 
 class PersonListInput(BaseModel):
     pagination: Optional["PaginationInput"] = None
     filters: Optional["PersonFilterInput"] = None
-    sort_order: SortOrder | None = Field(alias="sortOrder", default=None)
-    sort_by: PersonSortBy | None = Field(alias="sortBy", default=None)
+    sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
+    sort_by: Optional[PersonSortBy] = Field(alias="sortBy", default=None)
 
 
 class PersonUpdateDataInput(BaseModel):
-    name: str | None = None
-    gender: Gender | None = None
-    birth_date: Any | None = Field(alias="birthDate", default=None)
-    death_date: Any | None = Field(alias="deathDate", default=None)
-    family_name: str | None = Field(alias="familyName", default=None)
-    birth_place: str | None = Field(alias="birthPlace", default=None)
-    death_place: str | None = Field(alias="deathPlace", default=None)
-    notes: str | None = None
-    parents: list["ParentLinkInput"] | None = None
-    marriage_id: Any | None = Field(alias="marriageId", default=None)
-    photo_object_key: str | None = Field(alias="photoObjectKey", default=None)
+    name: Optional[str] = None
+    gender: Optional[Gender] = None
+    birth_date: Optional[Any] = Field(alias="birthDate", default=None)
+    death_date: Optional[Any] = Field(alias="deathDate", default=None)
+    family_name: Optional[str] = Field(alias="familyName", default=None)
+    birth_place: Optional[str] = Field(alias="birthPlace", default=None)
+    death_place: Optional[str] = Field(alias="deathPlace", default=None)
+    notes: Optional[str] = None
+    parents: Optional[list["ParentLinkInput"]] = None
+    marriage_id: Optional[Any] = Field(alias="marriageId", default=None)
+    photo_object_key: Optional[str] = Field(alias="photoObjectKey", default=None)
 
 
 class PersonUpdateInput(BaseModel):
@@ -157,26 +159,26 @@ class PersonUpdateWhereInput(BaseModel):
 
 
 class RoleCreateInput(BaseModel):
-    name: str | None = None
-    permission_ids: list[Any] | None = Field(alias="permissionIds", default=None)
+    name: Optional[str] = None
+    permission_ids: Optional[list[Any]] = Field(alias="permissionIds", default=None)
 
 
 class RoleFilterInput(BaseModel):
-    id: Any | None = None
-    name: str | None = None
-    permission_id: Any | None = Field(alias="permissionId", default=None)
+    id: Optional[Any] = None
+    name: Optional[str] = None
+    permission_id: Optional[Any] = Field(alias="permissionId", default=None)
 
 
 class RoleListInput(BaseModel):
     pagination: Optional["PaginationInput"] = None
     filters: Optional["RoleFilterInput"] = None
-    sort_order: SortOrder | None = Field(alias="sortOrder", default=None)
-    sort_by: RoleSortBy | None = Field(alias="sortBy", default=None)
+    sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
+    sort_by: Optional[RoleSortBy] = Field(alias="sortBy", default=None)
 
 
 class RoleUpdateDataInput(BaseModel):
-    name: str | None = None
-    permission_ids: list[Any] | None = Field(alias="permissionIds", default=None)
+    name: Optional[str] = None
+    permission_ids: Optional[list[Any]] = Field(alias="permissionIds", default=None)
 
 
 class RoleUpdateInput(BaseModel):
@@ -192,23 +194,23 @@ class TicketCreateInput(BaseModel):
     title: str
     body: str
     category: TicketCategory
-    family_tree_id: Any | None = Field(alias="familyTreeId", default=None)
+    family_tree_id: Optional[Any] = Field(alias="familyTreeId", default=None)
 
 
 class TicketFilterInput(BaseModel):
-    id: Any | None = None
-    title: str | None = None
-    status: TicketStatus | None = None
-    category: TicketCategory | None = None
-    family_tree_id: Any | None = Field(alias="familyTreeId", default=None)
-    created_by_user_id: Any | None = Field(alias="createdByUserId", default=None)
+    id: Optional[Any] = None
+    title: Optional[str] = None
+    status: Optional[TicketStatus] = None
+    category: Optional[TicketCategory] = None
+    family_tree_id: Optional[Any] = Field(alias="familyTreeId", default=None)
+    created_by_user_id: Optional[Any] = Field(alias="createdByUserId", default=None)
 
 
 class TicketListInput(BaseModel):
     pagination: Optional["PaginationInput"] = None
     filters: Optional["TicketFilterInput"] = None
-    sort_order: SortOrder | None = Field(alias="sortOrder", default=None)
-    sort_by: TicketSortBy | None = Field(alias="sortBy", default=None)
+    sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
+    sort_by: Optional[TicketSortBy] = Field(alias="sortBy", default=None)
 
 
 class TicketMessageCreateInput(BaseModel):
@@ -221,7 +223,7 @@ class TicketUpdateStatusInput(BaseModel):
 
 class TreeMemberAddInput(BaseModel):
     username: str
-    permissions: list[str] | None = None
+    permissions: Optional[list[str]] = None
 
 
 class TreeMemberUpdateInput(BaseModel):
@@ -233,30 +235,30 @@ class UserCreateInput(BaseModel):
     fullname: str
     password: str
     re_password: str = Field(alias="rePassword")
-    role_id: Any | None = Field(alias="roleId", default=None)
-    account_type: AccountTypeEnum | None = Field(alias="accountType", default=None)
+    role_id: Optional[Any] = Field(alias="roleId", default=None)
+    account_type: Optional[AccountTypeEnum] = Field(alias="accountType", default=None)
 
 
 class UserFilterInput(BaseModel):
-    id: Any | None = None
-    username: str | None = None
-    role_id: Any | None = Field(alias="roleId", default=None)
+    id: Optional[Any] = None
+    username: Optional[str] = None
+    role_id: Optional[Any] = Field(alias="roleId", default=None)
 
 
 class UserListInput(BaseModel):
     pagination: Optional["PaginationInput"] = None
     filters: Optional["UserFilterInput"] = None
-    sort_order: SortOrder | None = Field(alias="sortOrder", default=None)
-    sort_by: UserSortBy | None = Field(alias="sortBy", default=None)
+    sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
+    sort_by: Optional[UserSortBy] = Field(alias="sortBy", default=None)
 
 
 class UserUpdateDataInput(BaseModel):
-    username: str | None = None
-    fullname: str | None = None
-    password: str | None = None
-    re_password: str | None = Field(alias="rePassword", default=None)
-    role_id: Any | None = Field(alias="roleId", default=None)
-    account_type: AccountTypeEnum | None = Field(alias="accountType", default=None)
+    username: Optional[str] = None
+    fullname: Optional[str] = None
+    password: Optional[str] = None
+    re_password: Optional[str] = Field(alias="rePassword", default=None)
+    role_id: Optional[Any] = Field(alias="roleId", default=None)
+    account_type: Optional[AccountTypeEnum] = Field(alias="accountType", default=None)
 
 
 class UserUpdateInput(BaseModel):

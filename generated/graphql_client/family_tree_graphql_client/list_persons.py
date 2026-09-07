@@ -16,7 +16,7 @@ class ListPersonsPersons(BaseModel):
 
 
 class ListPersonsPersonsItems(BaseModel):
-    id: Any | None
+    id: Optional[Any]
     name: str
 
 

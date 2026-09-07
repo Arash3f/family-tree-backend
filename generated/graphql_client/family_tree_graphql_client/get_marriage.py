@@ -13,7 +13,7 @@ class GetMarriage(BaseModel):
 
 
 class GetMarriageMarriage(BaseModel):
-    id: Any | None
+    id: Optional[Any]
     spouse_a_id: Any = Field(alias="spouseAId")
     spouse_b_id: Any = Field(alias="spouseBId")
 

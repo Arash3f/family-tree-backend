@@ -13,11 +13,11 @@ class CreateMarriage(BaseModel):
 
 
 class CreateMarriageCreateMarriage(BaseModel):
-    id: Any | None
+    id: Optional[Any]
     spouse_a_id: Any = Field(alias="spouseAId")
     spouse_b_id: Any = Field(alias="spouseBId")
-    married_at: Any | None = Field(alias="marriedAt")
-    divorced_at: Any | None = Field(alias="divorcedAt")
+    married_at: Optional[Any] = Field(alias="marriedAt")
+    divorced_at: Optional[Any] = Field(alias="divorcedAt")
 
 
 CreateMarriage.model_rebuild()

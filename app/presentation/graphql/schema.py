@@ -136,7 +136,7 @@ class Query:
 
     @strawberry.field(
         description=(
-            "Closest relationship path "
+            "Closest (shortest) relationship path "
             "(REST: GET /family-trees/{tree_id}/persons/{from}/relation/{to})"
         )
     )
@@ -149,6 +149,24 @@ class Query:
     ) -> ClosestRelationshipType:
 
         return await person_resolvers.resolve_closest_relationship(
+            info, tree_id, from_person_id, to_person_id
+        )
+
+    @strawberry.field(
+        description=(
+            "Diverse alternative relationship paths (REST: GET "
+            ".../persons/{from}/relation/{to}/alternatives)"
+        )
+    )
+    async def alternative_relationship_paths(
+        self,
+        info: strawberry.Info,
+        tree_id: UUID,
+        from_person_id: UUID,
+        to_person_id: UUID,
+    ) -> ClosestRelationshipType:
+
+        return await person_resolvers.resolve_alternative_relationship_paths(
             info, tree_id, from_person_id, to_person_id
         )
 
@@ -242,6 +260,28 @@ class Mutation:
     ) -> AuthTokensType:
 
         return await auth_resolvers.resolve_login(info, username, password)
+
+    @strawberry.mutation(description="Public sign-up (REST: POST /auth/register)")
+    async def register(
+        self,
+        info: strawberry.Info,
+        username: str,
+        password: str,
+        re_password: str,
+        email: str | None = None,
+        phone: str | None = None,
+        country_code: str | None = None,
+    ) -> AuthTokensType:
+
+        return await auth_resolvers.resolve_register(
+            info,
+            username=username,
+            password=password,
+            re_password=re_password,
+            email=email,
+            phone=phone,
+            country_code=country_code,
+        )
 
     @strawberry.mutation(description="Refresh tokens (REST: POST /auth/refresh)")
     async def refresh_token(

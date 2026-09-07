@@ -14,7 +14,7 @@ class CreatePerson(BaseModel):
 
 
 class CreatePersonCreatePerson(BaseModel):
-    id: Any | None
+    id: Optional[Any]
     name: str
     gender: Gender
     parents: list["CreatePersonCreatePersonParents"]

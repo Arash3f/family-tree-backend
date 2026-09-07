@@ -289,8 +289,8 @@ poetry run python scripts/check_graphql_client_sync.py
 
 ## API reference
 
-Base path is `/` — there is no `/api` prefix. All routes except `/auth/login`, `/health` and
-`/health/neo4j` require `Authorization: Bearer <access_token>`.
+Base path is `/` — there is no `/api` prefix. All routes except `/auth/login`,
+`/auth/register`, `/health` and `/health/neo4j` require `Authorization: Bearer <access_token>`.
 
 List endpoints are **`POST .../list`**, not `GET`. They take pagination, filters and sorting in the
 body, which keeps complex filters expressible without unwieldy query strings:
@@ -309,6 +309,7 @@ import/export, where the spreadsheets are read by Persian-speaking users.
 | Method | Path | Purpose |
 |--------|------|---------|
 | `POST` | `/auth/login` | OAuth2 password form → access + refresh tokens |
+| `POST` | `/auth/register` | Public sign-up (free `Member` account) → access + refresh tokens |
 | `POST` | `/auth/refresh` | Rotate the refresh token |
 | `POST` | `/auth/logout` | Revoke the current session |
 | `POST` | `/auth/logout-all` | Revoke every session for the user |
@@ -316,6 +317,9 @@ import/export, where the spreadsheets are read by Persian-speaking users.
 | `PUT` | `/auth/password` | Change own password |
 | `GET` | `/auth/sessions` | List own active sessions |
 | `DELETE` | `/auth/sessions/{session_id}` | Revoke one of your sessions |
+
+Free accounts may own **2** trees, with at most **20** people and **8** marriages per owned tree.
+Paid accounts are unlimited. Exceeding a free quota returns `error_code` **1711**.
 
 ### Family trees and membership
 
@@ -333,7 +337,8 @@ import/export, where the spreadsheets are read by Persian-speaking users.
 | `POST` `PUT` | `/family-trees/{tree_id}/persons` | Create · update |
 | `POST` | `/family-trees/{tree_id}/persons/list` | Filtered, paginated list |
 | `GET` `DELETE` | `/family-trees/{tree_id}/persons/{person_id}` | Read · delete |
-| `GET` | `/family-trees/{tree_id}/persons/{from_person_id}/relation/{to_person_id}` | Closest relationship path |
+| `GET` | `/family-trees/{tree_id}/persons/{from_person_id}/relation/{to_person_id}` | Closest (shortest) relationship path |
+| `GET` | `/family-trees/{tree_id}/persons/{from_person_id}/relation/{to_person_id}/alternatives` | Diverse alternative relationship paths |
 
 ### Marriages
 
@@ -405,6 +410,13 @@ query {
 query {
   closestRelationship(treeId: "...", fromPersonId: "...", toPersonId: "...") {
     found distance pathPersonIds relationshipTypes
+  }
+  alternativeRelationshipPaths(
+    treeId: "..."
+    fromPersonId: "..."
+    toPersonId: "..."
+  ) {
+    found distance paths { distance pathPersonIds relationshipTypes }
   }
 }
 ```

@@ -10,7 +10,9 @@ from .enums import TicketStatus
 
 
 class UpdateTicketStatus(BaseModel):
-    update_ticket_status: "UpdateTicketStatusUpdateTicketStatus" = Field(alias="updateTicketStatus")
+    update_ticket_status: "UpdateTicketStatusUpdateTicketStatus" = Field(
+        alias="updateTicketStatus"
+    )
 
 
 class UpdateTicketStatusUpdateTicketStatus(BaseModel):

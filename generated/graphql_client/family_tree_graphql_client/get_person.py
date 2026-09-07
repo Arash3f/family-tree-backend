@@ -12,7 +12,7 @@ class GetPerson(BaseModel):
 
 
 class GetPersonPerson(BaseModel):
-    id: Any | None
+    id: Optional[Any]
     name: str
     gender: Gender
 

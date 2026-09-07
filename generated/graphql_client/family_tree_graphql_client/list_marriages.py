@@ -16,7 +16,7 @@ class ListMarriagesMarriages(BaseModel):
 
 
 class ListMarriagesMarriagesItems(BaseModel):
-    id: Any | None
+    id: Optional[Any]
 
 
 ListMarriages.model_rebuild()
