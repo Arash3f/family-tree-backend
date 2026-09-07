@@ -7,6 +7,7 @@ from app.application.dto.person.person_update_dto import PersonUpdateDTO
 from app.application.use_cases.person.create_person_use_case import CreatePersonUseCase
 from app.application.use_cases.person.delete_person_use_case import DeletePersonUseCase
 from app.application.use_cases.person.get_closest_relationship_use_case import (
+    GetAlternativeRelationshipPathsUseCase,
     GetClosestRelationshipUseCase,
 )
 from app.application.use_cases.person.get_person_list_by_filter_use_case import (
@@ -236,7 +237,24 @@ async def resolve_closest_relationship(
     await _require_tree_member(info, tree_id, TreeAccessPermissions.VIEW)
     usecase = GetClosestRelationshipUseCase(info.context.neo, info.context.uow)
     result = await usecase.execute(from_person_id, to_person_id, tree_id=tree_id)
-    data = result.model_dump()
+    return _relationship_path_to_type(result.model_dump())
+
+
+async def resolve_alternative_relationship_paths(
+    info: Info,
+    tree_id: UUID,
+    from_person_id: UUID,
+    to_person_id: UUID,
+) -> ClosestRelationshipType:
+    await _require_tree_member(info, tree_id, TreeAccessPermissions.VIEW)
+    usecase = GetAlternativeRelationshipPathsUseCase(
+        info.context.neo, info.context.uow
+    )
+    result = await usecase.execute(from_person_id, to_person_id, tree_id=tree_id)
+    return _relationship_path_to_type(result.model_dump())
+
+
+def _relationship_path_to_type(data: dict) -> ClosestRelationshipType:
     return ClosestRelationshipType(
         from_person_id=data["from_person_id"],
         to_person_id=data["to_person_id"],

@@ -1,12 +1,22 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
+from math import log10
 from uuid import UUID
 
-MAX_DIVERSE_PATHS = 4
-MAX_PATH_HOPS = 15
-LENGTH_SLACK = 8
+MAX_DIVERSE_PATHS = 3
+# Soft default when tree size is unknown; prefer path_hops_for_tree_size().
+DEFAULT_PATH_HOPS = 10
+MIN_PATH_HOPS = 8
+MAX_PATH_HOPS_CAP = 24
+LENGTH_SLACK = 4
 MAX_INTERMEDIATE_JACCARD = 0.35
-K_SHORTEST_POOL = 20
+K_SHORTEST_POOL = 6
+# Only run the expensive k-shortest fallback when avoiding did not yield
+# at least one route distinct from the shortest.
+MIN_PATHS_BEFORE_K_SHORTEST = 2
+
+# Keep for callers/tests that still import the old name as "ceiling for selection".
+MAX_PATH_HOPS = MAX_PATH_HOPS_CAP
 
 
 @dataclass(frozen=True)
@@ -14,6 +24,29 @@ class PathRecord:
     person_ids: tuple[UUID, ...]
     relationship_types: tuple[str, ...]
     distance: int
+
+
+def path_hops_for_tree_size(person_count: int) -> int:
+    """Scale Neo4j path depth with how many people are in the tree.
+
+    Kinship diameters grow slowly with population (extra generations, not
+    linearly with n). ``6 + 4·log10(n)`` stays near 10 for small trees and
+    climbs toward the safety cap for very large pedigrees:
+
+    - ~10 people → 10 hops
+    - ~100 people → 14 hops
+    - ~1_000 people → 18 hops
+    - ~10_000 people → 22 hops (capped at 24)
+    """
+    n = max(0, int(person_count))
+    if n <= 1:
+        return MIN_PATH_HOPS
+    raw = 6.0 + 4.0 * log10(n)
+    return int(min(MAX_PATH_HOPS_CAP, max(MIN_PATH_HOPS, round(raw))))
+
+
+def clamp_path_hops(max_hops: int) -> int:
+    return int(min(MAX_PATH_HOPS_CAP, max(MIN_PATH_HOPS, int(max_hops))))
 
 
 def intermediate_ids(path: PathRecord) -> frozenset[UUID]:
@@ -54,7 +87,7 @@ def select_diverse_paths(
     k: int = MAX_DIVERSE_PATHS,
     max_jaccard: float = MAX_INTERMEDIATE_JACCARD,
     length_slack: int = LENGTH_SLACK,
-    max_hops: int = MAX_PATH_HOPS,
+    max_hops: int = DEFAULT_PATH_HOPS,
 ) -> list[PathRecord]:
     """Keep the shortest path, then greedily add paths with the least overlap.
 

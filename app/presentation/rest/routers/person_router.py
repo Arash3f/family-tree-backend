@@ -6,6 +6,7 @@ from app.application.services.person_photo_service import PersonPhotoService
 from app.application.use_cases.person.create_person_use_case import CreatePersonUseCase
 from app.application.use_cases.person.delete_person_use_case import DeletePersonUseCase
 from app.application.use_cases.person.get_closest_relationship_use_case import (
+    GetAlternativeRelationshipPathsUseCase,
     GetClosestRelationshipUseCase,
 )
 from app.application.use_cases.person.get_person_list_by_filter_use_case import (
@@ -99,6 +100,23 @@ async def update_person(
     return PersonUpdateResponse.model_validate(
         redact_person_data(response.model_dump(), membership)
     )
+
+
+@router.get(
+    "/{from_person_id}/relation/{to_person_id}/alternatives",
+    response_model=ClosestRelationshipResponse,
+    dependencies=[Depends(require_tree_view)],
+)
+async def get_alternative_relationship_paths(
+    tree_id: UUID,
+    from_person_id: UUID,
+    to_person_id: UUID,
+    neo=Depends(get_neo),
+    uow=Depends(get_request_uow),
+) -> ClosestRelationshipResponse:
+    usecase = GetAlternativeRelationshipPathsUseCase(neo, uow)
+    result = await usecase.execute(from_person_id, to_person_id, tree_id=tree_id)
+    return ClosestRelationshipResponse.model_validate(result.model_dump())
 
 
 @router.get(

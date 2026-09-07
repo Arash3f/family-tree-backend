@@ -13,3 +13,23 @@ query ClosestRelationship($treeId: UUID!, $fromId: UUID!, $toId: UUID!) {
     }
   }
 }
+
+query AlternativeRelationshipPaths($treeId: UUID!, $fromId: UUID!, $toId: UUID!) {
+  alternativeRelationshipPaths(
+    treeId: $treeId
+    fromPersonId: $fromId
+    toPersonId: $toId
+  ) {
+    fromPersonId
+    toPersonId
+    found
+    distance
+    pathPersonIds
+    relationshipTypes
+    paths {
+      distance
+      pathPersonIds
+      relationshipTypes
+    }
+  }
+}

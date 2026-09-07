@@ -70,6 +70,9 @@ class FamilyTreeRepository(ABC):
         from_person_id: UUID,
         to_person_id: UUID,
         tree_id: UUID | None = None,
+        *,
+        max_hops: int | None = None,
+        person_count: int | None = None,
     ) -> RelationshipPathDTO:
         pass
 
@@ -79,5 +82,8 @@ class FamilyTreeRepository(ABC):
         from_person_id: UUID,
         to_person_id: UUID,
         tree_id: UUID | None = None,
+        *,
+        max_hops: int | None = None,
+        person_count: int | None = None,
     ) -> RelationshipPathDTO:
         pass

@@ -4,8 +4,13 @@ from pydantic import BaseModel, Field
 
 from app.domain.repositories.family_tree_repository import FamilyTreeRepository
 from app.domain.services.relationship_path_diversity import (
+    DEFAULT_PATH_HOPS,
+    K_SHORTEST_POOL,
     MAX_DIVERSE_PATHS,
+    MIN_PATHS_BEFORE_K_SHORTEST,
     PathRecord,
+    clamp_path_hops,
+    path_hops_for_tree_size,
     select_diverse_paths,
 )
 from app.domain.shared.dto.family_tree_dto import (
@@ -146,9 +151,15 @@ class Neo4jFamilyTreeRepository(FamilyTreeRepository):
         from_person_id: UUID,
         to_person_id: UUID,
         tree_id: UUID | None = None,
+        *,
+        max_hops: int | None = None,
+        person_count: int | None = None,
     ) -> RelationshipPathDTO:
+        hops = await self._resolve_max_hops(
+            tree_id, max_hops=max_hops, person_count=person_count
+        )
         records = await neo4j_client.execute_read(
-            query=q.SHORTEST_RELATIONSHIP_PATH,
+            query=q.shortest_relationship_path_query(hops),
             params=_PathParams(
                 from_id=from_person_id, to_id=to_person_id, tree_id=tree_id
             ),
@@ -164,14 +175,29 @@ class Neo4jFamilyTreeRepository(FamilyTreeRepository):
         row = records[0]
         distance = row.get("distance")
         person_ids = [UUID(str(pid)) for pid in (row.get("person_ids") or [])]
+        relationship_types = list(row.get("relationship_types") or [])
+        found = distance is not None and len(person_ids) >= 2
+
+        paths = (
+            [
+                RelationshipPathItemDTO(
+                    distance=int(distance),
+                    path_person_ids=person_ids,
+                    relationship_types=relationship_types,
+                )
+            ]
+            if found
+            else []
+        )
 
         return RelationshipPathDTO(
             from_person_id=from_person_id,
             to_person_id=to_person_id,
-            found=distance is not None,
-            distance=distance,
-            path_person_ids=person_ids,
-            relationship_types=list(row.get("relationship_types") or []),
+            found=found,
+            distance=distance if found else None,
+            path_person_ids=person_ids if found else [],
+            relationship_types=relationship_types if found else [],
+            paths=paths,
         )
 
     async def find_diverse_relationship_paths(
@@ -179,9 +205,18 @@ class Neo4jFamilyTreeRepository(FamilyTreeRepository):
         from_person_id: UUID,
         to_person_id: UUID,
         tree_id: UUID | None = None,
+        *,
+        max_hops: int | None = None,
+        person_count: int | None = None,
     ) -> RelationshipPathDTO:
+        hops = await self._resolve_max_hops(
+            tree_id, max_hops=max_hops, person_count=person_count
+        )
         shortest = await self.find_shortest_relationship_path(
-            from_person_id, to_person_id, tree_id=tree_id
+            from_person_id,
+            to_person_id,
+            tree_id=tree_id,
+            max_hops=hops,
         )
         if not shortest.found or shortest.distance is None:
             return shortest
@@ -193,20 +228,53 @@ class Neo4jFamilyTreeRepository(FamilyTreeRepository):
         if excluded:
             for _ in range(MAX_DIVERSE_PATHS - 1):
                 avoided = await self._shortest_path_avoiding(
-                    from_person_id, to_person_id, tree_id, excluded
+                    from_person_id, to_person_id, tree_id, excluded, hops
                 )
                 if avoided is None:
                     break
                 candidates.append(avoided)
                 excluded.extend(avoided.person_ids[1:-1])
 
-        if 1 + _unique_candidate_count(shortest_record, candidates) < MAX_DIVERSE_PATHS:
+        # k-shortest is a fallback only when avoiding failed to produce another
+        # distinct route (e.g. marriage edge with a via-child alternative).
+        if (
+            1 + _unique_candidate_count(shortest_record, candidates)
+            < MIN_PATHS_BEFORE_K_SHORTEST
+        ):
             candidates.extend(
-                await self._k_shortest_paths(from_person_id, to_person_id, tree_id)
+                await self._k_shortest_paths(
+                    from_person_id, to_person_id, tree_id, hops
+                )
             )
 
-        selected = select_diverse_paths(shortest_record, candidates)
+        selected = select_diverse_paths(
+            shortest_record, candidates, max_hops=hops
+        )
         return _records_to_dto(from_person_id, to_person_id, selected)
+
+    async def _resolve_max_hops(
+        self,
+        tree_id: UUID | None,
+        *,
+        max_hops: int | None,
+        person_count: int | None,
+    ) -> int:
+        if max_hops is not None:
+            return clamp_path_hops(max_hops)
+        if person_count is not None:
+            return path_hops_for_tree_size(person_count)
+        if tree_id is not None:
+            return path_hops_for_tree_size(await self._count_persons_in_tree(tree_id))
+        return DEFAULT_PATH_HOPS
+
+    async def _count_persons_in_tree(self, tree_id: UUID) -> int:
+        records = await neo4j_client.execute_read(
+            query=q.COUNT_PERSONS_IN_TREE,
+            params={"tree_id": str(tree_id)},
+        )
+        if not records:
+            return 0
+        return int(records[0].get("n") or 0)
 
     async def _shortest_path_avoiding(
         self,
@@ -214,9 +282,10 @@ class Neo4jFamilyTreeRepository(FamilyTreeRepository):
         to_person_id: UUID,
         tree_id: UUID | None,
         excluded_ids: list[UUID],
+        max_hops: int,
     ) -> PathRecord | None:
         records = await neo4j_client.execute_read(
-            query=q.SHORTEST_RELATIONSHIP_PATH_AVOIDING,
+            query=q.shortest_relationship_path_avoiding_query(max_hops),
             params=_PathAvoidParams(
                 from_id=from_person_id,
                 to_id=to_person_id,
@@ -233,9 +302,12 @@ class Neo4jFamilyTreeRepository(FamilyTreeRepository):
         from_person_id: UUID,
         to_person_id: UUID,
         tree_id: UUID | None,
+        max_hops: int,
     ) -> list[PathRecord]:
         records = await neo4j_client.execute_read(
-            query=q.K_SHORTEST_RELATIONSHIP_PATHS,
+            query=q.k_shortest_relationship_paths_query(
+                max_hops, pool=K_SHORTEST_POOL
+            ),
             params=_PathParams(
                 from_id=from_person_id, to_id=to_person_id, tree_id=tree_id
             ),

@@ -44,6 +44,7 @@ async def test_graphql_closest_relationship_permission_denied(
     error = exc_info.value.errors[0]
     assert error.extensions["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     mock_neo.find_diverse_relationship_paths.assert_not_called()
+    mock_neo.find_shortest_relationship_path.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -64,7 +65,7 @@ async def test_graphql_closest_relationship_success(
 
     from_id, to_id = from_person.safe_id, to_person.safe_id
     mock_neo.person_exists.return_value = True
-    mock_neo.find_diverse_relationship_paths.return_value = RelationshipPathDTO(
+    mock_neo.find_shortest_relationship_path.return_value = RelationshipPathDTO(
         from_person_id=from_id,
         to_person_id=to_id,
         found=True,
@@ -92,3 +93,5 @@ async def test_graphql_closest_relationship_success(
     assert len(data.paths) == 1
     assert data.paths[0].distance == 1
     assert data.paths[0].relationship_types == ["SPOUSE_OF"]
+    mock_neo.find_shortest_relationship_path.assert_called_once()
+    mock_neo.find_diverse_relationship_paths.assert_not_called()

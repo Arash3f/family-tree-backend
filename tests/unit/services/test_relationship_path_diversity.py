@@ -1,7 +1,10 @@
 from uuid import UUID, uuid4
 
 from app.domain.services.relationship_path_diversity import (
+    MAX_PATH_HOPS_CAP,
+    MIN_PATH_HOPS,
     PathRecord,
+    path_hops_for_tree_size,
     select_diverse_paths,
 )
 
@@ -14,6 +17,24 @@ def _path(*names: str, distance: int | None = None) -> PathRecord:
         relationship_types=rels,
         distance=distance if distance is not None else len(ids) - 1,
     )
+
+
+def test_path_hops_scales_with_tree_size():
+    assert path_hops_for_tree_size(0) == MIN_PATH_HOPS
+    assert path_hops_for_tree_size(1) == MIN_PATH_HOPS
+    assert path_hops_for_tree_size(10) == 10
+    assert path_hops_for_tree_size(100) == 14
+    assert path_hops_for_tree_size(1_000) == 18
+    assert path_hops_for_tree_size(10_000) == 22
+    assert path_hops_for_tree_size(1_000_000) == MAX_PATH_HOPS_CAP
+
+
+def test_path_hops_is_monotonic_nondecreasing():
+    previous = 0
+    for n in (1, 10, 50, 100, 500, 1_000, 5_000, 10_000, 50_000):
+        hops = path_hops_for_tree_size(n)
+        assert hops >= previous
+        previous = hops
 
 
 def test_diamond_keeps_both_parent_routes():

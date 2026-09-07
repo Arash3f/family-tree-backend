@@ -4,6 +4,9 @@ from uuid import uuid4
 
 import pytest
 from family_tree_api_client import AuthenticatedClient, Client
+from family_tree_api_client.api.persons.get_alternative_relationship_paths_family_trees_tree_id_persons_from_person_id_relation_to_person_id_alternatives_get import (  # noqa: E501
+    asyncio_detailed as get_alternative_relationship_paths,
+)
 from family_tree_api_client.api.persons.get_closest_relationship_family_trees_tree_id_persons_from_person_id_relation_to_person_id_get import (  # noqa: E501
     asyncio_detailed as get_closest_relationship,
 )
@@ -54,6 +57,7 @@ async def test_closest_relationship_permission_denied(
     assert body["error_code"] == int(ErrorCode.TREE_MEMBERSHIP_DENIED)
     assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.TREE_MEMBERSHIP_DENIED]
     mock_neo.find_diverse_relationship_paths.assert_not_called()
+    mock_neo.find_shortest_relationship_path.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -86,7 +90,7 @@ async def test_closest_relationship_success(
 
     from_id, to_id, mid = from_person.safe_id, to_person.safe_id, uuid4()
     mock_neo.person_exists.return_value = True
-    mock_neo.find_diverse_relationship_paths.return_value = RelationshipPathDTO(
+    mock_neo.find_shortest_relationship_path.return_value = RelationshipPathDTO(
         from_person_id=from_id,
         to_person_id=to_id,
         found=True,
@@ -119,6 +123,61 @@ async def test_closest_relationship_success(
     assert body.relationship_types == ["PARENT_OF", "PARENT_OF"]
     assert body.paths is not None
     assert len(body.paths) == 1
+    mock_neo.find_shortest_relationship_path.assert_called_once()
+    mock_neo.find_diverse_relationship_paths.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_alternative_relationship_paths_success(
+    tree_id,
+    admin_client: AuthenticatedClient,
+    uow: TreeUnitOfWork,
+    mock_neo,  # noqa: F811
+):
+    from_person = await uow.persons.create(
+        Person(id=None, tree_id=tree_id, name="From", gender=Gender.MALE)
+    )
+    to_person = await uow.persons.create(
+        Person(id=None, tree_id=tree_id, name="To", gender=Gender.FEMALE)
+    )
+    await uow.commit()
+
+    from_id, to_id, mid = from_person.safe_id, to_person.safe_id, uuid4()
+    mock_neo.person_exists.return_value = True
+    mock_neo.find_diverse_relationship_paths.return_value = RelationshipPathDTO(
+        from_person_id=from_id,
+        to_person_id=to_id,
+        found=True,
+        distance=1,
+        path_person_ids=[from_id, to_id],
+        relationship_types=["SPOUSE_OF"],
+        paths=[
+            RelationshipPathItemDTO(
+                distance=1,
+                path_person_ids=[from_id, to_id],
+                relationship_types=["SPOUSE_OF"],
+            ),
+            RelationshipPathItemDTO(
+                distance=2,
+                path_person_ids=[from_id, mid, to_id],
+                relationship_types=["PARENT_OF", "PARENT_OF"],
+            ),
+        ],
+    )
+
+    resp = await get_alternative_relationship_paths(
+        client=admin_client,
+        tree_id=tree_id,
+        from_person_id=from_id,
+        to_person_id=to_id,
+    )
+    assert resp.status_code == 200, resp.content
+    assert isinstance(resp.parsed, ClosestRelationshipResponse)
+    body = resp.parsed
+    assert body.found is True
+    assert len(body.paths) == 2
+    mock_neo.find_diverse_relationship_paths.assert_called_once()
+    mock_neo.find_shortest_relationship_path.assert_not_called()
 
 
 @pytest.mark.asyncio

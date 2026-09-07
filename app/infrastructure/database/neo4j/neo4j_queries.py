@@ -1,4 +1,4 @@
-from typing import LiteralString
+from typing import LiteralString, cast
 
 CONSTRAINT_PERSON_ID: LiteralString = """
 CREATE CONSTRAINT person_id_unique IF NOT EXISTS
@@ -55,6 +55,11 @@ MATCH (p:Person {tree_id: $tree_id})-[:PARENT_OF]->(c:Person {tree_id: $tree_id}
 RETURN p.id AS parent_id, c.id AS child_id
 """
 
+COUNT_PERSONS_IN_TREE: LiteralString = """
+MATCH (p:Person {tree_id: $tree_id})
+RETURN count(p) AS n
+"""
+
 # ============================
 # RELATIONSHIPS
 # ============================
@@ -85,47 +90,85 @@ DELETE r
 RETURN COUNT(r) > 0 AS deleted
 """
 
-# Every node on the path is checked, not just the endpoints: a person shared
-# between two trees would otherwise act as a bridge and expose relatives the
-# caller has no access to.
-SHORTEST_RELATIONSHIP_PATH: LiteralString = """
-MATCH (a:Person {id: $from_id}), (b:Person {id: $to_id})
-WHERE ($tree_id IS NULL OR (a.tree_id = $tree_id AND b.tree_id = $tree_id))
-OPTIONAL MATCH path = shortestPath((a)-[*..15]-(b))
-WHERE $tree_id IS NULL OR all(n IN nodes(path) WHERE n.tree_id = $tree_id)
-RETURN
-  CASE WHEN path IS NULL THEN [] ELSE [n IN nodes(path) | n.id] END AS person_ids,
-  CASE WHEN path IS NULL THEN [] ELSE [r IN relationships(path) | type(r)] END
-    AS relationship_types,
-  CASE WHEN path IS NULL THEN NULL ELSE length(path) END AS distance
-"""
 
-# Same hop cap and tree isolation as SHORTEST_RELATIONSHIP_PATH, but skip
-# people already used as intermediates so the next path shares as little as
-# possible with routes already chosen.
-SHORTEST_RELATIONSHIP_PATH_AVOIDING: LiteralString = """
-MATCH (a:Person {id: $from_id}), (b:Person {id: $to_id})
-WHERE ($tree_id IS NULL OR (a.tree_id = $tree_id AND b.tree_id = $tree_id))
-OPTIONAL MATCH path = shortestPath((a)-[*..15]-(b))
-WHERE ($tree_id IS NULL OR all(n IN nodes(path) WHERE n.tree_id = $tree_id))
-  AND none(n IN nodes(path) WHERE n.id IN $excluded_ids)
-RETURN
-  CASE WHEN path IS NULL THEN [] ELSE [n IN nodes(path) | n.id] END AS person_ids,
-  CASE WHEN path IS NULL THEN [] ELSE [r IN relationships(path) | type(r)] END
-    AS relationship_types,
-  CASE WHEN path IS NULL THEN NULL ELSE length(path) END AS distance
-"""
+def _clamp_hops(max_hops: int) -> int:
+    # Local clamp so this module does not import domain (keeps infra leaf-ish).
+    return int(min(24, max(8, int(max_hops))))
 
-# Bounded k-shortest pool for when a shared ancestor blocks a fully disjoint
-# route. tree_id is enforced on every hop, not only the endpoints.
-K_SHORTEST_RELATIONSHIP_PATHS: LiteralString = """
-MATCH (a:Person {id: $from_id}), (b:Person {id: $to_id})
-WHERE ($tree_id IS NULL OR (a.tree_id = $tree_id AND b.tree_id = $tree_id))
-MATCH path = SHORTEST 20 PATHS
-  (a)((x)-[r]-(y) WHERE $tree_id IS NULL
-    OR (x.tree_id = $tree_id AND y.tree_id = $tree_id)){1,15}(b)
-RETURN
-  [n IN nodes(path) | n.id] AS person_ids,
-  [rel IN relationships(path) | type(rel)] AS relationship_types,
-  length(path) AS distance
-"""
+
+def shortest_relationship_path_query(max_hops: int) -> LiteralString:
+    """Shortest kinship path; hop bound is size-scaled by the caller."""
+    hops = _clamp_hops(max_hops)
+    return cast(
+        LiteralString,
+        (
+            "MATCH (a:Person {id: $from_id}), (b:Person {id: $to_id})\n"
+            "WHERE ($tree_id IS NULL OR "
+            "(a.tree_id = $tree_id AND b.tree_id = $tree_id))\n"
+            "MATCH path = SHORTEST 1 PATHS\n"
+            "  (a)((x)-[:PARENT_OF|SPOUSE_OF]-(y)\n"
+            "    WHERE $tree_id IS NULL\n"
+            "      OR (x.tree_id = $tree_id AND y.tree_id = $tree_id)\n"
+            f"  ){{1,{hops}}}(b)\n"
+            "RETURN\n"
+            "  [n IN nodes(path) | n.id] AS person_ids,\n"
+            "  [r IN relationships(path) | type(r)] AS relationship_types,\n"
+            "  length(path) AS distance\n"
+        ),
+    )
+
+
+def shortest_relationship_path_avoiding_query(max_hops: int) -> LiteralString:
+    """Next shortest path that skips already-used intermediate people."""
+    hops = _clamp_hops(max_hops)
+    return cast(
+        LiteralString,
+        (
+            "MATCH (a:Person {id: $from_id}), (b:Person {id: $to_id})\n"
+            "WHERE ($tree_id IS NULL OR "
+            "(a.tree_id = $tree_id AND b.tree_id = $tree_id))\n"
+            "MATCH path = SHORTEST 1 PATHS\n"
+            "  (a)((x)-[:PARENT_OF|SPOUSE_OF]-(y)\n"
+            "    WHERE ($tree_id IS NULL\n"
+            "      OR (x.tree_id = $tree_id AND y.tree_id = $tree_id))\n"
+            "      AND NOT y.id IN $excluded_ids\n"
+            f"  ){{1,{hops}}}(b)\n"
+            "RETURN\n"
+            "  [n IN nodes(path) | n.id] AS person_ids,\n"
+            "  [r IN relationships(path) | type(r)] AS relationship_types,\n"
+            "  length(path) AS distance\n"
+        ),
+    )
+
+
+def k_shortest_relationship_paths_query(
+    max_hops: int, *, pool: int = 6
+) -> LiteralString:
+    """Bounded k-shortest fallback when avoiding cannot diversify."""
+    hops = _clamp_hops(max_hops)
+    k = int(min(20, max(1, int(pool))))
+    return cast(
+        LiteralString,
+        (
+            "MATCH (a:Person {id: $from_id}), (b:Person {id: $to_id})\n"
+            "WHERE ($tree_id IS NULL OR "
+            "(a.tree_id = $tree_id AND b.tree_id = $tree_id))\n"
+            f"MATCH path = SHORTEST {k} PATHS\n"
+            "  (a)((x)-[:PARENT_OF|SPOUSE_OF]-(y)\n"
+            "    WHERE $tree_id IS NULL\n"
+            "      OR (x.tree_id = $tree_id AND y.tree_id = $tree_id)\n"
+            f"  ){{1,{hops}}}(b)\n"
+            "RETURN\n"
+            "  [n IN nodes(path) | n.id] AS person_ids,\n"
+            "  [rel IN relationships(path) | type(rel)] AS relationship_types,\n"
+            "  length(path) AS distance\n"
+        ),
+    )
+
+
+# Backward-compatible aliases for the previous fixed-bound queries (default 10).
+SHORTEST_RELATIONSHIP_PATH: LiteralString = shortest_relationship_path_query(10)
+SHORTEST_RELATIONSHIP_PATH_AVOIDING: LiteralString = (
+    shortest_relationship_path_avoiding_query(10)
+)
+K_SHORTEST_RELATIONSHIP_PATHS: LiteralString = k_shortest_relationship_paths_query(10)

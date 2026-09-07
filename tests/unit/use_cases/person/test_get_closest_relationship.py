@@ -4,6 +4,7 @@ from uuid import UUID, uuid4
 import pytest
 
 from app.application.use_cases.person.get_closest_relationship_use_case import (
+    GetAlternativeRelationshipPathsUseCase,
     GetClosestRelationshipUseCase,
 )
 from app.domain.exceptions.person_exceptions import PersonNotFoundException
@@ -21,7 +22,7 @@ async def test_get_closest_relationship_success():
     to_id = uuid4()
     repo = AsyncMock()
     repo.person_exists.return_value = True
-    repo.find_diverse_relationship_paths.return_value = RelationshipPathDTO(
+    repo.find_shortest_relationship_path.return_value = RelationshipPathDTO(
         from_person_id=from_id,
         to_person_id=to_id,
         found=True,
@@ -44,11 +45,58 @@ async def test_get_closest_relationship_success():
     assert result.found is True
     assert result.distance == 1
     assert len(result.paths) == 1
+    repo.find_shortest_relationship_path.assert_called_once_with(
+        from_person_id=from_id,
+        to_person_id=to_id,
+        tree_id=TREE_ID,
+        max_hops=None,
+        person_count=None,
+    )
+    repo.find_diverse_relationship_paths.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_get_alternative_relationship_paths_success():
+    from_id = uuid4()
+    to_id = uuid4()
+    mid = uuid4()
+    repo = AsyncMock()
+    repo.person_exists.return_value = True
+    repo.find_diverse_relationship_paths.return_value = RelationshipPathDTO(
+        from_person_id=from_id,
+        to_person_id=to_id,
+        found=True,
+        distance=1,
+        path_person_ids=[from_id, to_id],
+        relationship_types=["SPOUSE_OF"],
+        paths=[
+            RelationshipPathItemDTO(
+                distance=1,
+                path_person_ids=[from_id, to_id],
+                relationship_types=["SPOUSE_OF"],
+            ),
+            RelationshipPathItemDTO(
+                distance=2,
+                path_person_ids=[from_id, mid, to_id],
+                relationship_types=["PARENT_OF", "PARENT_OF"],
+            ),
+        ],
+    )
+
+    result = await GetAlternativeRelationshipPathsUseCase(repo).execute(
+        from_id, to_id, tree_id=TREE_ID
+    )
+
+    assert result.found is True
+    assert len(result.paths) == 2
     repo.find_diverse_relationship_paths.assert_called_once_with(
         from_person_id=from_id,
         to_person_id=to_id,
         tree_id=TREE_ID,
+        max_hops=None,
+        person_count=None,
     )
+    repo.find_shortest_relationship_path.assert_not_called()
 
 
 @pytest.mark.asyncio
