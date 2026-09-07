@@ -11,7 +11,7 @@ from app.infrastructure.database.models import (
 
 
 @pytest.mark.asyncio
-async def test_unique_constraint_same_name_under_same_marriage(uow):
+async def test_same_name_under_same_marriage_is_allowed(uow):
     husband = PersonModel(tree_id=uow.tree_id, name="Ali", gender="male")
     wife = PersonModel(tree_id=uow.tree_id, name="Sara", gender="female")
     uow.session.add_all([husband, wife])
@@ -36,9 +36,7 @@ async def test_unique_constraint_same_name_under_same_marriage(uow):
         tree_id=uow.tree_id, name="Reza", gender="male", marriage_id=marriage.id
     )
     uow.session.add(child2)
-
-    with pytest.raises(IntegrityError):
-        await uow.session.flush()
+    await uow.session.flush()
 
 
 @pytest.mark.asyncio
@@ -233,7 +231,7 @@ async def test_divorce_before_marriage_rejected(uow):
 
 
 @pytest.mark.asyncio
-async def test_soft_deleted_person_frees_name_under_marriage(uow):
+async def test_soft_deleted_person_can_be_replaced_under_marriage(uow):
     from datetime import datetime
 
     spouse_a = PersonModel(tree_id=uow.tree_id, name="Ali", gender="male")

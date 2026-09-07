@@ -101,6 +101,7 @@ class ImportTreeExcelUseCase:
 
             person_ref_to_id.update(match.person_existing_id)
             marriage_ref_to_id.update(match.marriage_existing_id)
+            created_person_refs: set[str] = set()
 
             for row in persons_to_create:
                 person = Person(
@@ -120,6 +121,7 @@ class ImportTreeExcelUseCase:
                 )
                 person = await self.uow.persons.create(person)
                 person_ref_to_id[row.ref] = person.safe_id
+                created_person_refs.add(row.ref)
                 created_persons.append(person)
 
             _fill_duplicate_refs(person_ref_to_id, match.person_duplicate_of)
@@ -175,6 +177,10 @@ class ImportTreeExcelUseCase:
                 marriage.safe_id: marriage for marriage in created_marriages
             }
             for row in parsed.persons:
+                # Only the row that created the person may set parents/marriage.
+                # Namesake rows must never overwrite each other's links.
+                if row.ref not in created_person_refs:
+                    continue
                 person_id = person_ref_to_id.get(row.ref)
                 if person_id is None or person_id not in created_by_id:
                     continue

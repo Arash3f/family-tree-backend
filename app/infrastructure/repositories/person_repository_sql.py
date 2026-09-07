@@ -63,7 +63,8 @@ class SQLPersonRepository(PersonRepository):
             PersonModel.tree_id == tree_id,
         )
         result = await self.session.execute(stmt)
-        model = result.unique().scalar_one_or_none()
+        # Namesakes under the same marriage are allowed; return the first hit.
+        model = result.unique().scalars().first()
 
         if not model:
             return None

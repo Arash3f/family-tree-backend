@@ -340,8 +340,10 @@ _SAMPLE_INSTRUCTIONS: dict[str, list[str]] = {
         "5) parent types: biological | adoptive | step",
         "6) Dates: Gregorian YYYY-MM-DD (Jalali YYYY/MM/DD is also accepted)",
         "7) Marriage dates use the same formats as person dates.",
-        "8) Do not include an id column. Matching uses name, family name, "
-        "gender, and birth date.",
+        "8) Each distinct person needs a distinct ref — even if names match. "
+        "Re-import prefers UUID refs from an export; otherwise it matches an "
+        "existing person only when name+family+gender+birth_date is unique "
+        "in the tree.",
         "9) Import lets you pick rows; people/marriages already in the tree "
         "are skipped.",
     ],
@@ -356,8 +358,9 @@ _SAMPLE_INSTRUCTIONS: dict[str, list[str]] = {
         "۵) نوع والد: بیولوژیک | فرزندخواندگی | ناتنی",
         "۶) تاریخ‌ها شمسی با قالب YYYY/MM/DD (میلادی YYYY-MM-DD هم پذیرفته می‌شود)",
         "۷) تاریخ ازدواج هم با همان قالب‌ها وارد شود.",
-        "۸) ستون id لازم نیست. افراد تکراری با نام، نام خانوادگی، جنسیت و "
-        "تاریخ تولد تشخیص داده می‌شوند.",
+        "۸) حتی افراد هم‌نام باید شناسه جدا داشته باشند. ورود مجدد ترجیحاً "
+        "با شناسه UUID خروجی است؛ در غیر این صورت فقط وقتی نام+فامیل+جنسیت+"
+        "تاریخ تولد در درخت یکتا باشد تطبیق می‌شود.",
         "۹) هنگام ورود می‌توانید ردیف‌ها را انتخاب کنید؛ افراد/ازدواج‌های "
         "موجود در درخت نادیده گرفته می‌شوند.",
         "۱۰) فایل‌های انگلیسی (Persons / Marriages و ستون‌های انگلیسی) هم "
@@ -370,15 +373,15 @@ _EXPORT_INSTRUCTIONS: dict[str, list[str]] = {
         "Exported family tree data",
         "All dates are Gregorian YYYY-MM-DD. Jalali YYYY/MM/DD is also "
         "accepted on import.",
-        "Re-import matches existing people by name, family name, gender, "
-        "and birth date.",
+        "Person and marriage refs are stable UUIDs. Re-import matches by "
+        "those refs first; name identity is only used when unique in the tree.",
     ],
     "fa": [
         "داده‌های خروجی شجره‌نامه",
         "همه تاریخ‌ها شمسی با قالب YYYY/MM/DD هستند. میلادی YYYY-MM-DD هم "
         "هنگام ورود پذیرفته می‌شود.",
-        "ورود مجدد افراد موجود را با نام، نام خانوادگی، جنسیت و تاریخ تولد "
-        "تطبیق می‌دهد.",
+        "شناسه افراد و ازدواج‌ها UUID پایدار است. ورود مجدد اول با همان "
+        "شناسه تطبیق می‌دهد؛ هویت نامی فقط وقتی در درخت یکتا باشد استفاده می‌شود.",
     ],
 }
 
@@ -608,12 +611,10 @@ def build_export_workbook(
         instructions.cell(row=index, column=1, value=line)
     instructions.column_dimensions["A"].width = 90
 
-    person_ref_by_id = {
-        person.safe_id: f"P{index}" for index, person in enumerate(persons, start=1)
-    }
+    # Stable UUID refs so re-import does not collapse namesakes.
+    person_ref_by_id = {person.safe_id: str(person.safe_id) for person in persons}
     marriage_ref_by_id = {
-        marriage.safe_id: f"M{index}"
-        for index, marriage in enumerate(marriages, start=1)
+        marriage.safe_id: str(marriage.safe_id) for marriage in marriages
     }
 
     persons_ws = wb.create_sheet(persons_title)
@@ -829,6 +830,11 @@ PersonIdentityKey = tuple[str, str, str, date | None]
 MarriageFileKey = tuple[frozenset[str], date]
 MarriageExistingKey = tuple[frozenset[UUID], date]
 
+PERSON_AMBIGUOUS_IDENTITY_WARNING = (
+    "Multiple people in this tree share this name identity; not auto-matched. "
+    "Use the UUID ref from an export to update the correct person."
+)
+
 
 def person_identity_key(
     name: str,
@@ -855,6 +861,23 @@ def person_display_label(person: Person) -> str:
     return label
 
 
+def person_namesake_warning(other_ref: str) -> str:
+    return (
+        f"Same name identity as '{other_ref}' in this file; "
+        "imported as a separate person."
+    )
+
+
+def try_parse_excel_uuid(value: str) -> UUID | None:
+    text = value.strip()
+    if len(text) != 36:
+        return None
+    try:
+        return UUID(text)
+    except ValueError:
+        return None
+
+
 def canonical_excel_ref(ref: str, duplicate_of: dict[str, str]) -> str:
     seen: set[str] = set()
     current = ref
@@ -868,7 +891,10 @@ def canonical_excel_ref(ref: str, duplicate_of: dict[str, str]) -> str:
 class TreeExcelMatch:
     person_existing_id: dict[str, UUID] = field(default_factory=dict)
     person_existing_label: dict[str, str] = field(default_factory=dict)
+    # Kept for API compatibility; in-file person rows are never auto-merged.
     person_duplicate_of: dict[str, str] = field(default_factory=dict)
+    person_namesake_of: dict[str, str] = field(default_factory=dict)
+    person_ambiguous_identity: set[str] = field(default_factory=set)
     marriage_existing_id: dict[str, UUID] = field(default_factory=dict)
     marriage_duplicate_of: dict[str, str] = field(default_factory=dict)
 
@@ -878,32 +904,71 @@ class TreeExcelMatch:
     def marriage_already_in_tree(self, ref: str) -> bool:
         return ref in self.marriage_existing_id
 
+    def person_warning(self, ref: str) -> str | None:
+        if ref in self.person_ambiguous_identity:
+            return PERSON_AMBIGUOUS_IDENTITY_WARNING
+        namesake = self.person_namesake_of.get(ref)
+        if namesake is not None:
+            return person_namesake_warning(namesake)
+        return None
+
 
 def match_tree_excel(
     parsed: ParsedTreeExcel,
     existing_persons: list[Person],
     existing_marriages: list[Marriage],
 ) -> TreeExcelMatch:
-    existing_by_key: dict[PersonIdentityKey, Person] = {}
+    existing_by_id = {person.safe_id: person for person in existing_persons}
+    existing_by_key: dict[PersonIdentityKey, list[Person]] = {}
     for person in existing_persons:
         key = person_identity_key(
             person.name, person.family_name, person.gender, person.birth_date
         )
-        existing_by_key.setdefault(key, person)
+        existing_by_key.setdefault(key, []).append(person)
+
+    def consume_existing(person: Person) -> None:
+        key = person_identity_key(
+            person.name, person.family_name, person.gender, person.birth_date
+        )
+        bucket = existing_by_key.get(key)
+        if not bucket:
+            return
+        remaining = [item for item in bucket if item.safe_id != person.safe_id]
+        if remaining:
+            existing_by_key[key] = remaining
+        else:
+            existing_by_key.pop(key, None)
 
     match = TreeExcelMatch()
     file_key_to_ref: dict[PersonIdentityKey, str] = {}
     for row in parsed.persons:
         key = person_identity_key(row.name, row.family_name, row.gender, row.birth_date)
         if key in file_key_to_ref:
-            match.person_duplicate_of[row.ref] = file_key_to_ref[key]
+            # Namesakes stay separate people; only surface a preview warning.
+            match.person_namesake_of[row.ref] = file_key_to_ref[key]
         else:
             file_key_to_ref[key] = row.ref
-        existing = existing_by_key.get(key)
-        if existing is not None:
+
+        ref_uuid = try_parse_excel_uuid(row.ref)
+        if ref_uuid is not None and ref_uuid in existing_by_id:
+            existing = existing_by_id[ref_uuid]
             match.person_existing_id[row.ref] = existing.safe_id
             match.person_existing_label[row.ref] = person_display_label(existing)
+            consume_existing(existing)
+            continue
 
+        candidates = existing_by_key.get(key, [])
+        if len(candidates) == 1:
+            existing = candidates[0]
+            match.person_existing_id[row.ref] = existing.safe_id
+            match.person_existing_label[row.ref] = person_display_label(existing)
+            consume_existing(existing)
+        elif len(candidates) > 1:
+            match.person_ambiguous_identity.add(row.ref)
+
+    existing_marriage_by_id = {
+        marriage.safe_id: marriage for marriage in existing_marriages
+    }
     existing_marriage_by_key: dict[MarriageExistingKey, Marriage] = {}
     for marriage in existing_marriages:
         marriage_key = (
@@ -925,8 +990,21 @@ def match_tree_excel(
         else:
             file_marriage_key_to_ref[file_key] = marriage_row.ref
 
+        marriage_uuid = try_parse_excel_uuid(marriage_row.ref)
+        if marriage_uuid is not None and marriage_uuid in existing_marriage_by_id:
+            match.marriage_existing_id[marriage_row.ref] = marriage_uuid
+            continue
+
         id_a = match.person_existing_id.get(marriage_row.spouse_a_ref)
         id_b = match.person_existing_id.get(marriage_row.spouse_b_ref)
+        if id_a is None:
+            spouse_a_uuid = try_parse_excel_uuid(marriage_row.spouse_a_ref)
+            if spouse_a_uuid is not None and spouse_a_uuid in existing_by_id:
+                id_a = spouse_a_uuid
+        if id_b is None:
+            spouse_b_uuid = try_parse_excel_uuid(marriage_row.spouse_b_ref)
+            if spouse_b_uuid is not None and spouse_b_uuid in existing_by_id:
+                id_b = spouse_b_uuid
         if id_a is None or id_b is None:
             continue
         existing_marriage = existing_marriage_by_key.get(

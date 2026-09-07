@@ -28,6 +28,7 @@ class TreeExcelPreviewPerson:
         already_exists (bool | Unset):  Default: False.
         existing_label (None | str | Unset):
         duplicate_of_ref (None | str | Unset):
+        warning (None | str | Unset):
     """
 
     ref: str
@@ -43,6 +44,7 @@ class TreeExcelPreviewPerson:
     already_exists: bool | Unset = False
     existing_label: None | str | Unset = UNSET
     duplicate_of_ref: None | str | Unset = UNSET
+    warning: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -104,6 +106,12 @@ class TreeExcelPreviewPerson:
         else:
             duplicate_of_ref = self.duplicate_of_ref
 
+        warning: None | str | Unset
+        if isinstance(self.warning, Unset):
+            warning = UNSET
+        else:
+            warning = self.warning
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -132,6 +140,8 @@ class TreeExcelPreviewPerson:
             field_dict["existing_label"] = existing_label
         if duplicate_of_ref is not UNSET:
             field_dict["duplicate_of_ref"] = duplicate_of_ref
+        if warning is not UNSET:
+            field_dict["warning"] = warning
 
         return field_dict
 
@@ -220,6 +230,15 @@ class TreeExcelPreviewPerson:
 
         duplicate_of_ref = _parse_duplicate_of_ref(d.pop("duplicate_of_ref", UNSET))
 
+        def _parse_warning(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        warning = _parse_warning(d.pop("warning", UNSET))
+
         tree_excel_preview_person = cls(
             ref=ref,
             name=name,
@@ -234,6 +253,7 @@ class TreeExcelPreviewPerson:
             already_exists=already_exists,
             existing_label=existing_label,
             duplicate_of_ref=duplicate_of_ref,
+            warning=warning,
         )
 
         tree_excel_preview_person.additional_properties = d

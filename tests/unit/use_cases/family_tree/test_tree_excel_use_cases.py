@@ -164,6 +164,41 @@ async def test_import_without_selection_skips_existing_people(mock_uow):
 
 
 @pytest.mark.asyncio
+async def test_import_creates_separate_people_for_in_file_namesakes(mock_uow):
+    mock_uow.persons.get_list_by_filter = AsyncMock(return_value=_page([]))
+    mock_uow.marriages.get_list_by_filter = AsyncMock(return_value=_page([]))
+    created: dict[UUID, Person] = {}
+
+    async def create_person(person: Person) -> Person:
+        person.id = uuid4()
+        created[person.safe_id] = person
+        return person
+
+    mock_uow.persons.create = AsyncMock(side_effect=create_person)
+    mock_uow.persons.get_in_tree_or_raise = AsyncMock(
+        side_effect=lambda person_id, tree_id: created[person_id]
+    )
+    mock_uow.persons.update = AsyncMock(side_effect=lambda person: person)
+
+    usecase = ImportTreeExcelUseCase(
+        mock_uow, MarriageRulesService(), sync_service=MagicMock()
+    )
+    result = await usecase.execute(
+        tree_id=TREE_ID,
+        content=_xlsx(
+            people=[
+                ["P1", "Ali", "Karimi", "male"],
+                ["P2", "Ali", "Karimi", "male"],
+            ]
+        ),
+    )
+
+    assert result.persons_created == 2
+    assert mock_uow.persons.create.await_count == 2
+    assert len(created) == 2
+
+
+@pytest.mark.asyncio
 async def test_import_selected_existing_only_is_empty(mock_uow):
     existing = _existing_ali()
     mock_uow.persons.get_list_by_filter = AsyncMock(return_value=_page([existing]))

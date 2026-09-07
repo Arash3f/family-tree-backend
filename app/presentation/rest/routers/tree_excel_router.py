@@ -58,6 +58,7 @@ class TreeExcelPreviewPerson(BaseModel):
     already_exists: bool = False
     existing_label: str | None = None
     duplicate_of_ref: str | None = None
+    warning: str | None = None
 
 
 class TreeExcelPreviewMarriage(BaseModel):

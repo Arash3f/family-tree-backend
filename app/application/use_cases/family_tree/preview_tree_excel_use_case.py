@@ -41,6 +41,7 @@ class PreviewPersonDTO:
     already_exists: bool = False
     existing_label: str | None = None
     duplicate_of_ref: str | None = None
+    warning: str | None = None
 
 
 @dataclass
@@ -154,6 +155,7 @@ class PreviewTreeExcelUseCase:
             preview_person.duplicate_of_ref = match.person_duplicate_of.get(
                 preview_person.ref
             )
+            preview_person.warning = match.person_warning(preview_person.ref)
 
         for preview_marriage_item in marriages_out:
             preview_marriage_item.already_exists = match.marriage_already_in_tree(

@@ -48,14 +48,8 @@ class PersonModel(Base):
     )
 
     __table_args__ = (
-        Index(
-            "uq_person_tree_name_marriage",
-            "tree_id",
-            "name",
-            "marriage_id",
-            unique=True,
-            postgresql_where=text("marriage_id IS NOT NULL AND deleted_at IS NULL"),
-        ),
+        # Namesake siblings under the same marriage are allowed; identity is
+        # the person UUID, not (name, marriage_id).
         CheckConstraint(
             "death_date IS NULL OR birth_date IS NULL OR death_date >= birth_date",
             name="ck_person_death_after_birth",

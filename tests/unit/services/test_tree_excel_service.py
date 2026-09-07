@@ -114,7 +114,7 @@ def test_export_workbook_fa_uses_persian_headers_and_jalali_dates():
     assert parsed.persons[0].gender == Gender.MALE
 
 
-def test_match_tree_excel_detects_existing_and_in_file_duplicates():
+def test_match_tree_excel_keeps_in_file_namesakes_separate():
     tree_id = uuid4()
     existing_id = uuid4()
     existing = Person(
@@ -155,10 +155,89 @@ def test_match_tree_excel_detects_existing_and_in_file_duplicates():
     match = match_tree_excel(parsed, [existing], [])
 
     assert match.person_existing_id["P1"] == existing_id
-    assert match.person_existing_id["P2"] == existing_id
-    assert match.person_duplicate_of["P2"] == "P1"
+    # First row consumes the unique existing match; the in-file namesake stays new.
+    assert "P2" not in match.person_existing_id
+    assert "P2" not in match.person_duplicate_of
+    assert match.person_namesake_of["P2"] == "P1"
     assert "P3" not in match.person_existing_id
-    assert "P3" not in match.person_duplicate_of
+    assert "P3" not in match.person_namesake_of
+
+
+def test_match_tree_excel_skips_ambiguous_existing_identity():
+    tree_id = uuid4()
+    first = Person(
+        id=uuid4(),
+        name="Ali",
+        family_name="Karimi",
+        gender=Gender.MALE,
+        tree_id=tree_id,
+        birth_date=None,
+    )
+    second = Person(
+        id=uuid4(),
+        name="Ali",
+        family_name="Karimi",
+        gender=Gender.MALE,
+        tree_id=tree_id,
+        birth_date=None,
+    )
+    parsed = ParsedTreeExcel(
+        persons=[
+            ExcelPersonRow(
+                ref="P1",
+                name="Ali",
+                family_name="Karimi",
+                gender=Gender.MALE,
+                birth_date=None,
+                row_number=2,
+            ),
+        ]
+    )
+
+    match = match_tree_excel(parsed, [first, second], [])
+
+    assert "P1" not in match.person_existing_id
+    assert "P1" in match.person_ambiguous_identity
+    assert match.person_warning("P1") is not None
+
+
+def test_match_tree_excel_prefers_uuid_ref_over_name_identity():
+    tree_id = uuid4()
+    target_id = uuid4()
+    other_id = uuid4()
+    target = Person(
+        id=target_id,
+        name="Ali",
+        family_name="Karimi",
+        gender=Gender.MALE,
+        tree_id=tree_id,
+        birth_date=None,
+    )
+    other = Person(
+        id=other_id,
+        name="Ali",
+        family_name="Karimi",
+        gender=Gender.MALE,
+        tree_id=tree_id,
+        birth_date=None,
+    )
+    parsed = ParsedTreeExcel(
+        persons=[
+            ExcelPersonRow(
+                ref=str(target_id),
+                name="Ali",
+                family_name="Karimi",
+                gender=Gender.MALE,
+                birth_date=None,
+                row_number=2,
+            ),
+        ]
+    )
+
+    match = match_tree_excel(parsed, [target, other], [])
+
+    assert match.person_existing_id[str(target_id)] == target_id
+    assert str(target_id) not in match.person_ambiguous_identity
 
 
 def test_match_tree_excel_detects_existing_marriage():
