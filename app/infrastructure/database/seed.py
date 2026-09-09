@@ -20,70 +20,6 @@ MEMBER_ROLE_PERMISSIONS: tuple[str, ...] = (
 )
 
 
-async def seed_initial_user(uow: UnitOfWork, password_hasher: Argon2PasswordHasher):
-    async with uow:
-        admin = await uow.users.get_by_username(settings.ADMIN_USERNAME)
-        role = await uow.roles.get_by_name(settings.ADMIN_ROLE_NAME)
-        permissions = await uow.permissions.get_list()
-
-        if not role:
-            role = Role(
-                name=settings.ADMIN_ROLE_NAME,
-                permission_ids=[perm.safe_id for perm in permissions],
-            )
-            role = await uow.roles.create(role)
-        else:
-            role.permission_ids = [perm.safe_id for perm in permissions]
-            await uow.roles.update(role)
-
-        if not admin:
-            hashed_password = password_hasher.hash(settings.ADMIN_PASSWORD)
-
-            user = User(
-                username=settings.ADMIN_USERNAME,
-                role_id=role.safe_id,
-                password_hash=hashed_password,
-                account_type=AccountType.PAID,
-            )
-            await uow.users.create(user)
-        else:
-            changed = False
-            if admin.role_id:
-                admin_role = await uow.roles.get_or_raise(role_id=admin.role_id)
-                if admin_role.name != settings.ADMIN_ROLE_NAME:
-                    admin.role_id = role.safe_id
-                    changed = True
-            else:
-                admin.role_id = role.safe_id
-                changed = True
-            if admin.account_type is not AccountType.PAID:
-                admin.account_type = AccountType.PAID
-                changed = True
-            if changed:
-                await uow.users.update(admin)
-
-        await _ensure_member_role(uow)
-        await uow.commit()
-
-
-async def _ensure_member_role(uow: UnitOfWork) -> Role:
-    permission_ids: list = []
-    for name in Permissions.expand_with_requirements(MEMBER_ROLE_PERMISSIONS):
-        permission = await uow.permissions.get_by_name(name)
-        if permission is None:
-            raise RuntimeError(f"Permission {name!r} is not seeded")
-        permission_ids.append(permission.safe_id)
-
-    role = await uow.roles.get_by_name(settings.MEMBER_ROLE_NAME)
-    if not role:
-        return await uow.roles.create(
-            Role(name=settings.MEMBER_ROLE_NAME, permission_ids=permission_ids)
-        )
-
-    role.permission_ids = permission_ids
-    return await uow.roles.update(role)
-
-
 async def seed_initial_permissions(uow: UnitOfWork):
     async with uow:
         catalog = set(Permissions.get_all_permissions())
@@ -111,3 +47,87 @@ async def seed_initial_permissions(uow: UnitOfWork):
                 await uow.permissions.delete(permission.safe_id)
 
         await uow.commit()
+
+
+async def seed_initial_roles(uow: UnitOfWork) -> tuple[Role, Role]:
+    """Ensure built-in Admin (all perms) and Member (self-serve) roles always exist."""
+    async with uow:
+        admin_role = await _ensure_admin_role(uow)
+        member_role = await _ensure_member_role(uow)
+        await uow.commit()
+        return admin_role, member_role
+
+
+async def seed_initial_user(uow: UnitOfWork, password_hasher: Argon2PasswordHasher):
+    """Seed the bootstrap admin user. Requires seed_initial_roles first."""
+    async with uow:
+        admin_role = await uow.roles.get_by_name(settings.ADMIN_ROLE_NAME)
+        if admin_role is None:
+            raise RuntimeError(
+                f"Built-in role {settings.ADMIN_ROLE_NAME!r} missing; "
+                "run seed_initial_roles before seed_initial_user"
+            )
+
+        admin = await uow.users.get_by_username(settings.ADMIN_USERNAME)
+
+        if not admin:
+            hashed_password = password_hasher.hash(settings.ADMIN_PASSWORD)
+
+            user = User(
+                username=settings.ADMIN_USERNAME,
+                role_id=admin_role.safe_id,
+                password_hash=hashed_password,
+                account_type=AccountType.PAID,
+            )
+            await uow.users.create(user)
+        else:
+            changed = False
+            if admin.role_id:
+                current_role = await uow.roles.get_or_raise(role_id=admin.role_id)
+                if current_role.name != settings.ADMIN_ROLE_NAME:
+                    admin.role_id = admin_role.safe_id
+                    changed = True
+            else:
+                admin.role_id = admin_role.safe_id
+                changed = True
+            if admin.account_type is not AccountType.PAID:
+                admin.account_type = AccountType.PAID
+                changed = True
+            if changed:
+                await uow.users.update(admin)
+
+        await uow.commit()
+
+
+async def _ensure_admin_role(uow: UnitOfWork) -> Role:
+    """Admin always has every seeded permission."""
+    permissions = await uow.permissions.get_list()
+    permission_ids = [perm.safe_id for perm in permissions]
+
+    role = await uow.roles.get_by_name(settings.ADMIN_ROLE_NAME)
+    if not role:
+        return await uow.roles.create(
+            Role(name=settings.ADMIN_ROLE_NAME, permission_ids=permission_ids)
+        )
+
+    role.permission_ids = permission_ids
+    return await uow.roles.update(role)
+
+
+async def _ensure_member_role(uow: UnitOfWork) -> Role:
+    """Member is the default role assigned on public registration."""
+    permission_ids: list = []
+    for name in Permissions.expand_with_requirements(MEMBER_ROLE_PERMISSIONS):
+        permission = await uow.permissions.get_by_name(name)
+        if permission is None:
+            raise RuntimeError(f"Permission {name!r} is not seeded")
+        permission_ids.append(permission.safe_id)
+
+    role = await uow.roles.get_by_name(settings.MEMBER_ROLE_NAME)
+    if not role:
+        return await uow.roles.create(
+            Role(name=settings.MEMBER_ROLE_NAME, permission_ids=permission_ids)
+        )
+
+    role.permission_ids = permission_ids
+    return await uow.roles.update(role)

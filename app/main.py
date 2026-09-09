@@ -11,7 +11,11 @@ from swagger_ui_bundle import swagger_ui_path
 
 from app.core.config import settings
 from app.infrastructure.database.neo4j.neo4j import neo4j_client
-from app.infrastructure.database.seed import seed_initial_permissions, seed_initial_user
+from app.infrastructure.database.seed import (
+    seed_initial_permissions,
+    seed_initial_roles,
+    seed_initial_user,
+)
 from app.infrastructure.services.security.password_hasher_impl import (
     Argon2PasswordHasher,
 )
@@ -53,6 +57,7 @@ async def lifespan(app: FastAPI):
     Startup tasks:
         - Ensure configured MinIO buckets exist.
         - Seed default permissions into the database if they do not exist.
+        - Seed built-in Admin (all permissions) and Member (self-serve) roles.
         - Seed the initial administrative user.
     """
     await ensure_minio_buckets()
@@ -63,6 +68,8 @@ async def lifespan(app: FastAPI):
     await seed_initial_permissions(
         uow=uow,
     )
+
+    await seed_initial_roles(uow=uow)
 
     await seed_initial_user(uow=uow, password_hasher=password_hasher)
 

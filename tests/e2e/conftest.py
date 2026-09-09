@@ -12,11 +12,16 @@ from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
 from app.domain.entities.user import User
+from app.domain.shared.account_type import AccountType
 from app.infrastructure.database.base import Base
 from app.infrastructure.database.parent_integrity_ddl import (
     install_parent_integrity_ddl,
 )
-from app.infrastructure.database.seed import seed_initial_permissions, seed_initial_user
+from app.infrastructure.database.seed import (
+    seed_initial_permissions,
+    seed_initial_roles,
+    seed_initial_user,
+)
 from app.infrastructure.services.security.password_hasher_impl import (
     Argon2PasswordHasher,
 )
@@ -61,18 +66,24 @@ async def prepare_database(db_engine):
             password_hasher = Argon2PasswordHasher()
 
             await seed_initial_permissions(uow=uow)
+            await seed_initial_roles(uow=uow)
             await seed_initial_user(uow=uow, password_hasher=password_hasher)
             username = "member_user"
             password = "member_user"
 
             hasher = Argon2PasswordHasher()
             hashed_password = hasher.hash(password)
+            member_role = await uow.roles.get_by_name(settings.MEMBER_ROLE_NAME)
+            assert member_role is not None
 
             user = User(
                 username=username,
                 password_hash=hashed_password,
+                role_id=member_role.safe_id,
+                account_type=AccountType.FREE,
             )
             await uow.users.create(user)
+            await uow.commit()
 
     yield
 
