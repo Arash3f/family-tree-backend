@@ -1,6 +1,7 @@
 from datetime import date
 from io import BytesIO
 from json import dumps
+from urllib.parse import quote
 from uuid import UUID
 
 import pytest
@@ -147,9 +148,12 @@ async def test_sample_excel_uses_accept_language(
         tree_id, admin_client, headers={"Accept-Language": "fa-IR"}
     )
     assert resp.status_code == 200
-    assert "family-tree-sample-fa.xlsx" in resp.headers.get("content-disposition", "")
+    disposition = resp.headers.get("content-disposition", "")
+    # The Persian name rides along encoded; the ASCII part stays a usable name.
+    assert quote("شجره‌نامه-نمونه.xlsx", safe="") in disposition
+    assert 'filename="family-tree.xlsx"' in disposition
     workbook = load_workbook(BytesIO(resp.content), data_only=True)
-    assert workbook["راهنما"]["A1"].value == "قالب اکسل شجره‌نامه"
+    assert workbook["راهنما"]["A1"].value == "شجره‌نامه — قالب اکسل"
     assert workbook["افراد"]["B2"].value == "علی"
     person_headers = [
         cell.value for cell in workbook["افراد"][1] if cell.value is not None
@@ -158,11 +162,11 @@ async def test_sample_excel_uses_accept_language(
 
     resp_en = await _download_sample(tree_id, admin_client)
     assert resp_en.status_code == 200
-    assert "family-tree-sample-en.xlsx" in resp_en.headers.get(
+    assert "family-tree-sample.xlsx" in resp_en.headers.get(
         "content-disposition", ""
     )
     workbook_en = load_workbook(BytesIO(resp_en.content), data_only=True)
-    assert workbook_en["Instructions"]["A1"].value == "Family Tree Excel template"
+    assert workbook_en["Instructions"]["A1"].value == "Family tree — Excel template"
     assert workbook_en["Persons"]["B2"].value == "Ali"
 
 
@@ -199,6 +203,81 @@ async def test_preview_marks_people_already_in_the_tree(
     assert "Ali Karimi" in (by_ref["P1"].existing_label or "")
     assert by_ref["P2"].already_exists is False
     assert body.valid is True
+
+
+@pytest.mark.asyncio
+async def test_preview_spells_out_the_names_behind_each_code(
+    tree_id, admin_client: AuthenticatedClient
+):
+    content = _workbook(
+        people=[
+            ["P1", "Ali", "Karimi", "male", "1950-01-01"],
+            ["P2", "Zahra", "Karimi", "female", "1955-01-01"],
+            # ref, name, family, gender, birth, death, birthplace, deathplace,
+            # notes, parent1_ref, parent1_name, parent1_type, parent2_ref
+            [
+                "P3",
+                "Reza",
+                "Karimi",
+                "male",
+                "1980-01-01",
+                "",
+                "",
+                "",
+                "",
+                "P1",
+                "",
+                "biological",
+                "P2",
+            ],
+        ],
+        marriages=[["M1", "P1", "", "P2", "", "1975-01-01"]],
+    )
+    resp = await preview_excel_import(
+        tree_id=tree_id, client=admin_client, body=_preview_body(content)
+    )
+    assert resp.status_code == 200, resp.content
+    assert isinstance(resp.parsed, TreeExcelPreviewResponse)
+    child = next(person for person in resp.parsed.persons if person.ref == "P3")
+    assert child.parent1_label == "Ali Karimi"
+    assert child.parent2_label == "Zahra Karimi"
+    union = resp.parsed.marriages[0]
+    assert union.spouse_a_label == "Ali Karimi"
+    assert union.spouse_b_label == "Zahra Karimi"
+
+
+@pytest.mark.asyncio
+async def test_preview_returns_every_bad_cell_in_persian(
+    tree_id, admin_client: AuthenticatedClient
+):
+    content = _workbook(
+        people=[
+            ["P1", "Ali", "Karimi", "wizard"],
+            ["P2", "Reza", "Karimi", "male", "not-a-date"],
+        ]
+    )
+    httpx_client = admin_client.get_async_httpx_client()
+    resp = await httpx_client.post(
+        f"/family-trees/{tree_id}/excel/import/preview",
+        files={
+            "file": (
+                "tree.xlsx",
+                content,
+                "application/vnd.openxmlformats-officedocument"
+                ".spreadsheetml.sheet",
+            )
+        },
+        headers={"Accept-Language": "fa-IR"},
+    )
+    assert resp.status_code == 200, resp.content
+    body = resp.json()
+    assert body["valid"] is False
+    # Both bad cells in one round trip, worded in the user's language.
+    assert len(body["errors"]) == 2
+    joined = " ".join(body["errors"])
+    assert "برگهٔ «افراد»" in joined
+    assert "جنسیت" in joined
+    assert "تاریخ تولد" in joined
 
 
 @pytest.mark.asyncio

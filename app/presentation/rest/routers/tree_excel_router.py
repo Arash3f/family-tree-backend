@@ -1,4 +1,6 @@
 import asyncio
+import json
+from urllib.parse import quote
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
@@ -59,6 +61,9 @@ class TreeExcelPreviewPerson(BaseModel):
     existing_label: str | None = None
     duplicate_of_ref: str | None = None
     warning: str | None = None
+    parent1_label: str | None = None
+    parent2_label: str | None = None
+    marriage_label: str | None = None
 
 
 class TreeExcelPreviewMarriage(BaseModel):
@@ -71,6 +76,8 @@ class TreeExcelPreviewMarriage(BaseModel):
     already_exists: bool = False
     duplicate_of_ref: str | None = None
     warning: str | None = None
+    spouse_a_label: str | None = None
+    spouse_b_label: str | None = None
 
 
 class TreeExcelPreviewResponse(BaseModel):
@@ -80,13 +87,29 @@ class TreeExcelPreviewResponse(BaseModel):
     errors: list[str]
 
 
+def _ascii_fallback_name(filename: str) -> str:
+    """A plain-ASCII name for clients that ignore RFC 5987 encoding.
+
+    A fully Persian name has nothing to transliterate, so it falls back to a
+    generic label rather than to a string of separators.
+    """
+    base = filename[: -len(".xlsx")] if filename.lower().endswith(".xlsx") else filename
+    kept = [
+        ch if (ch.isascii() and (ch.isalnum() or ch in ("-", "_"))) else "-"
+        for ch in base
+    ]
+    collapsed = "-".join(part for part in "".join(kept).split("-") if part)
+    return f"{collapsed or 'family-tree'}.xlsx"
+
+
 def _xlsx_response(*, filename: str, content: bytes) -> Response:
-    ascii_name = "".join(
-        ch if (ch.isascii() and (ch.isalnum() or ch in ("-", "_", "."))) else "-"
-        for ch in filename
-    ).strip("-.")
-    if not ascii_name.lower().endswith(".xlsx"):
-        ascii_name = f"{ascii_name or 'family-tree'}.xlsx"
+    if not filename.lower().endswith(".xlsx"):
+        filename = f"{filename}.xlsx"
+    ascii_name = _ascii_fallback_name(filename)
+
+    # RFC 5987: the ASCII name is a fallback, the encoded one is what a modern
+    # browser saves, so a Persian tree name survives the download.
+    encoded_name = quote(filename, safe="")
 
     return Response(
         content=content,
@@ -94,19 +117,87 @@ def _xlsx_response(*, filename: str, content: bytes) -> Response:
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         ),
         headers={
-            "Content-Disposition": f'attachment; filename="{ascii_name}"',
+            "Content-Disposition": (
+                f'attachment; filename="{ascii_name}"; '
+                f"filename*=UTF-8''{encoded_name}"
+            ),
         },
     )
 
 
-def _parse_include(raw: str | None) -> TreeExcelImportInclude | None:
+_UPLOAD_MESSAGES: dict[str, dict[str, str]] = {
+    "en": {
+        "not_xlsx": (
+            "Only Excel .xlsx files can be imported. In Excel choose "
+            "“Save as” and pick the .xlsx format."
+        ),
+        "empty_file": "The uploaded file is empty.",
+        "preview_timeout": (
+            "Checking this file took longer than 60 seconds. Try splitting it "
+            "into smaller files."
+        ),
+        "import_timeout": (
+            "The import took longer than 5 minutes and was stopped. Try "
+            "importing fewer rows at a time."
+        ),
+        "export_timeout": "The export took longer than 5 minutes and was stopped.",
+        "bad_selection": "The list of selected rows could not be read.",
+    },
+    "fa": {
+        "not_xlsx": (
+            "فقط فایل اکسل با پسوند xlsx. قابل ورود است. در اکسل «ذخیره "
+            "به‌نام» را بزنید و قالب xlsx. را انتخاب کنید."
+        ),
+        "empty_file": "فایلی که بارگذاری شد خالی است.",
+        "preview_timeout": (
+            "بررسی این فایل بیش از ۶۰ ثانیه طول کشید. آن را به فایل‌های کوچک‌تر "
+            "تقسیم کنید."
+        ),
+        "import_timeout": (
+            "ورود اطلاعات بیش از ۵ دقیقه طول کشید و متوقف شد. هر بار ردیف‌های "
+            "کمتری را وارد کنید."
+        ),
+        "export_timeout": "خروجی گرفتن بیش از ۵ دقیقه طول کشید و متوقف شد.",
+        "bad_selection": "فهرست ردیف‌های انتخاب‌شده خوانده نشد.",
+    },
+}
+
+
+def _timeout_response(lang: str, key: str) -> Response:
+    return Response(
+        content=json.dumps(
+            {"detail": _upload_message(lang, key)}, ensure_ascii=False
+        ),
+        status_code=504,
+        media_type="application/json",
+    )
+
+
+def _upload_message(lang: str, key: str) -> str:
+    catalog = _UPLOAD_MESSAGES.get(lang) or _UPLOAD_MESSAGES["en"]
+    return catalog[key]
+
+
+def _not_xlsx_message(lang: str) -> str:
+    return _upload_message(lang, "not_xlsx")
+
+
+def _empty_file_message(lang: str) -> str:
+    return _upload_message(lang, "empty_file")
+
+
+def _preview_timeout_message(lang: str) -> str:
+    return _upload_message(lang, "preview_timeout")
+
+
+def _parse_include(raw: str | None, lang: str) -> TreeExcelImportInclude | None:
     if raw is None or not raw.strip():
         return None
     try:
         return TreeExcelImportInclude.model_validate_json(raw)
     except ValidationError as exc:
         raise TreeExcelInvalidException(
-            detail=["Invalid include payload for Excel import"]
+            detail=[_upload_message(lang, "bad_selection")]
         ) from exc
 
 
@@ -137,19 +228,16 @@ async def export_excel(
     tree_id: UUID,
     uow=Depends(get_request_uow),
 ) -> Response:
+    lang = detect_language(request)
     try:
         usecase = ExportTreeExcelUseCase(uow)
         result = await asyncio.wait_for(
-            usecase.execute(tree_id=tree_id, lang=detect_language(request)),
+            usecase.execute(tree_id=tree_id, lang=lang),
             timeout=300.0,
         )
         return _xlsx_response(filename=result.filename, content=result.content)
     except TimeoutError:
-        return Response(
-            content='{"detail": "Excel export timed out after 5 minutes"}',
-            status_code=504,
-            media_type="application/json",
-        )
+        return _timeout_response(lang, "export_timeout")
 
 
 @router.post(
@@ -161,23 +249,25 @@ async def export_excel(
     ],
 )
 async def preview_excel_import(
+    request: Request,
     tree_id: UUID,
     file: UploadFile = File(...),
     uow=Depends(get_request_uow),
     marriage_rule_service=Depends(get_marriage_rules_service),
 ) -> TreeExcelPreviewResponse:
+    lang = detect_language(request)
     filename = (file.filename or "").lower()
     if not filename.endswith(".xlsx"):
-        raise TreeExcelInvalidException(detail=["Only .xlsx Excel files are supported"])
+        raise TreeExcelInvalidException(detail=[_not_xlsx_message(lang)])
 
     content = await file.read()
     if not content:
-        raise TreeExcelInvalidException(detail=["Uploaded file is empty"])
+        raise TreeExcelInvalidException(detail=[_empty_file_message(lang)])
 
     try:
         usecase = PreviewTreeExcelUseCase(uow, marriage_rule_service)
         result = await asyncio.wait_for(
-            usecase.execute(tree_id=tree_id, content=content),
+            usecase.execute(tree_id=tree_id, content=content, lang=lang),
             timeout=60.0,
         )
         return TreeExcelPreviewResponse(
@@ -196,7 +286,7 @@ async def preview_excel_import(
             valid=False,
             persons=[],
             marriages=[],
-            errors=["Excel preview timed out after 60 seconds"],
+            errors=[_preview_timeout_message(lang)],
         )
 
 
@@ -209,21 +299,23 @@ async def preview_excel_import(
     ],
 )
 async def import_excel(
+    request: Request,
     tree_id: UUID,
     file: UploadFile = File(...),
     include: str | None = Form(default=None),
     uow=Depends(get_request_uow),
     marriage_rule_service=Depends(get_marriage_rules_service),
 ) -> TreeExcelImportResponse | Response:
+    lang = detect_language(request)
     filename = (file.filename or "").lower()
     if not filename.endswith(".xlsx"):
-        raise TreeExcelInvalidException(detail=["Only .xlsx Excel files are supported"])
+        raise TreeExcelInvalidException(detail=[_not_xlsx_message(lang)])
 
     content = await file.read()
     if not content:
-        raise TreeExcelInvalidException(detail=["Uploaded file is empty"])
+        raise TreeExcelInvalidException(detail=[_empty_file_message(lang)])
 
-    selection = _parse_include(include)
+    selection = _parse_include(include, lang)
     try:
         usecase = ImportTreeExcelUseCase(uow, marriage_rule_service)
         result = await asyncio.wait_for(
@@ -232,6 +324,7 @@ async def import_excel(
                 content=content,
                 person_refs=set(selection.person_refs) if selection else None,
                 marriage_refs=set(selection.marriage_refs) if selection else None,
+                lang=lang,
             ),
             timeout=300.0,
         )
@@ -240,8 +333,4 @@ async def import_excel(
             marriages_created=result.marriages_created,
         )
     except TimeoutError:
-        return Response(
-            content='{"detail": "Excel import timed out after 5 minutes"}',
-            status_code=504,
-            media_type="application/json",
-        )
+        return _timeout_response(lang, "import_timeout")

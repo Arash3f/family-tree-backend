@@ -24,13 +24,9 @@ class ExportTreeExcelUseCase:
             persons = await load_all_tree_persons(self.uow, tree_id)
             marriages = await load_all_tree_marriages(self.uow, tree_id)
 
-        safe_name = (
-            "".join(
-                ch if (ch.isascii() and (ch.isalnum() or ch in ("-", "_"))) else "-"
-                for ch in tree.name
-            ).strip("-")
-            or "family-tree"
-        )
+        # The tree name is kept as the user typed it; the router adds an ASCII
+        # fallback next to the UTF-8 filename for older download clients.
+        display_name = " ".join(tree.name.split()) or "family-tree"
 
         excel_content = await asyncio.get_event_loop().run_in_executor(
             None,
@@ -42,7 +38,8 @@ class ExportTreeExcelUseCase:
             ),
         )
 
+        suffix = "شجره‌نامه" if locale == "fa" else "export"
         return ExcelFileDTO(
-            filename=f"{safe_name}-export-{locale}.xlsx",
+            filename=f"{display_name}-{suffix}.xlsx",
             content=excel_content,
         )

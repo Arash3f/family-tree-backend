@@ -367,7 +367,22 @@ Set the returned `photoObjectKey` on a person. Reads return a time-limited presi
 | `POST` | `/family-trees/{tree_id}/excel/import` | Import |
 | `GET` | `/family-trees/{tree_id}/excel/export` | Export the tree |
 
-Always preview first — it reports row-level validation errors while the tree is untouched.
+Always preview first — it reports every row-level validation error in one pass while the tree is
+untouched, so a spreadsheet with a dozen typos takes one upload to diagnose rather than a dozen.
+Error text follows `Accept-Language` and names the sheet, the localised column header, and the row
+number as the user sees them.
+
+Workbooks are written for people rather than for machines:
+
+- The visible `code` column holds short references (`P1`, `M1`) that a reader can follow. It is
+  optional on import; a blank one is generated.
+- Stable UUIDs live in a separate `system id` column. Re-import matches on it first, then on a
+  UUID typed into `code` (how older exports carried it), then on name identity when that is unique
+  in the tree.
+- Grey columns next to each reference spell out the name behind the code. They are never read back,
+  so editing them cannot corrupt an import.
+- Persian workbooks get right-to-left sheets, Jalali dates, and an `Instructions` sheet whose
+  legend documents every column.
 
 ### Administration
 

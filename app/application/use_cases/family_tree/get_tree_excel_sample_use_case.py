@@ -22,7 +22,8 @@ class GetTreeExcelSampleUseCase:
         locale = "fa" if lang == "fa" else "en"
         async with self.uow:
             await self.uow.family_trees.get_or_raise(tree_id)
+        name = "شجره‌نامه-نمونه" if locale == "fa" else "family-tree-sample"
         return ExcelFileDTO(
-            filename=f"family-tree-sample-{locale}.xlsx",
+            filename=f"{name}.xlsx",
             content=build_sample_workbook(lang=locale),
         )

@@ -29,6 +29,9 @@ class TreeExcelPreviewPerson:
         existing_label (None | str | Unset):
         duplicate_of_ref (None | str | Unset):
         warning (None | str | Unset):
+        parent1_label (None | str | Unset):
+        parent2_label (None | str | Unset):
+        marriage_label (None | str | Unset):
     """
 
     ref: str
@@ -45,6 +48,9 @@ class TreeExcelPreviewPerson:
     existing_label: None | str | Unset = UNSET
     duplicate_of_ref: None | str | Unset = UNSET
     warning: None | str | Unset = UNSET
+    parent1_label: None | str | Unset = UNSET
+    parent2_label: None | str | Unset = UNSET
+    marriage_label: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -112,6 +118,24 @@ class TreeExcelPreviewPerson:
         else:
             warning = self.warning
 
+        parent1_label: None | str | Unset
+        if isinstance(self.parent1_label, Unset):
+            parent1_label = UNSET
+        else:
+            parent1_label = self.parent1_label
+
+        parent2_label: None | str | Unset
+        if isinstance(self.parent2_label, Unset):
+            parent2_label = UNSET
+        else:
+            parent2_label = self.parent2_label
+
+        marriage_label: None | str | Unset
+        if isinstance(self.marriage_label, Unset):
+            marriage_label = UNSET
+        else:
+            marriage_label = self.marriage_label
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -142,6 +166,12 @@ class TreeExcelPreviewPerson:
             field_dict["duplicate_of_ref"] = duplicate_of_ref
         if warning is not UNSET:
             field_dict["warning"] = warning
+        if parent1_label is not UNSET:
+            field_dict["parent1_label"] = parent1_label
+        if parent2_label is not UNSET:
+            field_dict["parent2_label"] = parent2_label
+        if marriage_label is not UNSET:
+            field_dict["marriage_label"] = marriage_label
 
         return field_dict
 
@@ -239,6 +269,33 @@ class TreeExcelPreviewPerson:
 
         warning = _parse_warning(d.pop("warning", UNSET))
 
+        def _parse_parent1_label(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        parent1_label = _parse_parent1_label(d.pop("parent1_label", UNSET))
+
+        def _parse_parent2_label(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        parent2_label = _parse_parent2_label(d.pop("parent2_label", UNSET))
+
+        def _parse_marriage_label(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        marriage_label = _parse_marriage_label(d.pop("marriage_label", UNSET))
+
         tree_excel_preview_person = cls(
             ref=ref,
             name=name,
@@ -254,6 +311,9 @@ class TreeExcelPreviewPerson:
             existing_label=existing_label,
             duplicate_of_ref=duplicate_of_ref,
             warning=warning,
+            parent1_label=parent1_label,
+            parent2_label=parent2_label,
+            marriage_label=marriage_label,
         )
 
         tree_excel_preview_person.additional_properties = d

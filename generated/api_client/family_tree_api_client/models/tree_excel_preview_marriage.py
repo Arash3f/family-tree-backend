@@ -24,6 +24,8 @@ class TreeExcelPreviewMarriage:
         already_exists (bool | Unset):  Default: False.
         duplicate_of_ref (None | str | Unset):
         warning (None | str | Unset):
+        spouse_a_label (None | str | Unset):
+        spouse_b_label (None | str | Unset):
     """
 
     ref: str
@@ -35,6 +37,8 @@ class TreeExcelPreviewMarriage:
     already_exists: bool | Unset = False
     duplicate_of_ref: None | str | Unset = UNSET
     warning: None | str | Unset = UNSET
+    spouse_a_label: None | str | Unset = UNSET
+    spouse_b_label: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -68,6 +72,18 @@ class TreeExcelPreviewMarriage:
         else:
             warning = self.warning
 
+        spouse_a_label: None | str | Unset
+        if isinstance(self.spouse_a_label, Unset):
+            spouse_a_label = UNSET
+        else:
+            spouse_a_label = self.spouse_a_label
+
+        spouse_b_label: None | str | Unset
+        if isinstance(self.spouse_b_label, Unset):
+            spouse_b_label = UNSET
+        else:
+            spouse_b_label = self.spouse_b_label
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -87,6 +103,10 @@ class TreeExcelPreviewMarriage:
             field_dict["duplicate_of_ref"] = duplicate_of_ref
         if warning is not UNSET:
             field_dict["warning"] = warning
+        if spouse_a_label is not UNSET:
+            field_dict["spouse_a_label"] = spouse_a_label
+        if spouse_b_label is not UNSET:
+            field_dict["spouse_b_label"] = spouse_b_label
 
         return field_dict
 
@@ -132,6 +152,24 @@ class TreeExcelPreviewMarriage:
 
         warning = _parse_warning(d.pop("warning", UNSET))
 
+        def _parse_spouse_a_label(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        spouse_a_label = _parse_spouse_a_label(d.pop("spouse_a_label", UNSET))
+
+        def _parse_spouse_b_label(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        spouse_b_label = _parse_spouse_b_label(d.pop("spouse_b_label", UNSET))
+
         tree_excel_preview_marriage = cls(
             ref=ref,
             spouse_a_ref=spouse_a_ref,
@@ -142,6 +180,8 @@ class TreeExcelPreviewMarriage:
             already_exists=already_exists,
             duplicate_of_ref=duplicate_of_ref,
             warning=warning,
+            spouse_a_label=spouse_a_label,
+            spouse_b_label=spouse_b_label,
         )
 
         tree_excel_preview_marriage.additional_properties = d

@@ -10,6 +10,7 @@ from app.application.services.tree_excel_loader import (
 )
 from app.application.services.tree_excel_service import (
     canonical_excel_ref,
+    excel_text,
     match_tree_excel,
     parse_tree_excel,
 )
@@ -49,8 +50,12 @@ class ImportTreeExcelUseCase:
         content: bytes,
         person_refs: set[str] | None = None,
         marriage_refs: set[str] | None = None,
+        lang: str = "en",
     ) -> ImportTreeExcelResultDTO:
-        parsed = parse_tree_excel(content)
+        text = excel_text(lang)
+        parsed = parse_tree_excel(content, lang=text.lang)
+        if parsed.errors:
+            raise TreeExcelInvalidException(detail=parsed.errors)
         if not parsed.persons and not parsed.marriages:
             raise TreeExcelEmptyException()
 
@@ -133,12 +138,20 @@ class ImportTreeExcelUseCase:
                 spouse_a_id = person_ref_to_id.get(marriage_row.spouse_a_ref)
                 spouse_b_id = person_ref_to_id.get(marriage_row.spouse_b_ref)
                 if spouse_a_id is None or spouse_b_id is None:
+                    missing_column, missing_ref = (
+                        ("spouse_a_ref", marriage_row.spouse_a_ref)
+                        if spouse_a_id is None
+                        else ("spouse_b_ref", marriage_row.spouse_b_ref)
+                    )
                     raise TreeExcelInvalidException(
                         detail=[
-                            f"Marriages row {marriage_row.row_number}: unknown "
-                            f"spouse ref ('{marriage_row.spouse_a_ref}' / "
-                            f"'{marriage_row.spouse_b_ref}'). Select those people "
-                            "or make sure they already exist."
+                            text.marriages_row(
+                                marriage_row.row_number,
+                                "unknown_spouse",
+                                column=text.marriage_header(missing_column),
+                                ref=missing_ref,
+                                sheet=text.persons_sheet,
+                            )
                         ]
                     )
 
@@ -187,9 +200,9 @@ class ImportTreeExcelUseCase:
                 person = created_by_id[person_id]
 
                 parents: list[ParentLink] = []
-                for parent_ref, rel_type in (
-                    (row.parent1_ref, row.parent1_type),
-                    (row.parent2_ref, row.parent2_type),
+                for column_key, parent_ref, rel_type in (
+                    ("parent1_ref", row.parent1_ref, row.parent1_type),
+                    ("parent2_ref", row.parent2_ref, row.parent2_type),
                 ):
                     if not parent_ref:
                         continue
@@ -197,9 +210,13 @@ class ImportTreeExcelUseCase:
                     if parent_id is None:
                         raise TreeExcelInvalidException(
                             detail=[
-                                f"Persons row {row.row_number}: unknown parent ref "
-                                f"'{parent_ref}'. Select that person or make sure "
-                                "they already exist."
+                                text.persons_row(
+                                    row.row_number,
+                                    "unknown_parent",
+                                    column=text.person_header(column_key),
+                                    ref=parent_ref,
+                                    sheet=text.persons_sheet,
+                                )
                             ]
                         )
                     parents.append(
@@ -212,9 +229,13 @@ class ImportTreeExcelUseCase:
                     if marriage_id is None:
                         raise TreeExcelInvalidException(
                             detail=[
-                                f"Persons row {row.row_number}: unknown marriage_ref "
-                                f"'{row.marriage_ref}'. Select that marriage or make "
-                                "sure it already exists."
+                                text.persons_row(
+                                    row.row_number,
+                                    "unknown_marriage",
+                                    column=text.person_header("marriage_ref"),
+                                    ref=row.marriage_ref,
+                                    sheet=text.marriages_sheet,
+                                )
                             ]
                         )
 
@@ -246,8 +267,11 @@ class ImportTreeExcelUseCase:
                         ):
                             raise InvalidParentMarriageException(
                                 detail=[
-                                    f"Persons row {row.row_number}: biological parents "
-                                    "must match marriage_ref spouses"
+                                    text.persons_row(
+                                        row.row_number,
+                                        "bio_parents_marriage",
+                                        column=text.person_header("marriage_ref"),
+                                    )
                                 ]
                             )
 
