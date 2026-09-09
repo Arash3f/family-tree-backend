@@ -146,9 +146,7 @@ class StarterTreeProvisioner:
             if not parent_links and linked_marriage is None:
                 continue
             person.set_parents(parent_links)
-            person.marriage_id = (
-                linked_marriage.safe_id if linked_marriage else None
-            )
+            person.marriage_id = linked_marriage.safe_id if linked_marriage else None
             person.validate()
             updated = await uow.persons.update(person=person)
             person_by_ref[person_row.ref] = updated
