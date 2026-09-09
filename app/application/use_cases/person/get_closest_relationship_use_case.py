@@ -33,9 +33,7 @@ async def _ensure_persons_and_max_hops(
             person_count = await uow.persons.count_in_tree(tree_id)
 
     from_exists, to_exists = await asyncio.gather(
-        family_tree_repo.person_exists(
-            PersonIdDTO(id=from_person_id), tree_id=tree_id
-        ),
+        family_tree_repo.person_exists(PersonIdDTO(id=from_person_id), tree_id=tree_id),
         family_tree_repo.person_exists(PersonIdDTO(id=to_person_id), tree_id=tree_id),
     )
 

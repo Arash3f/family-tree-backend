@@ -247,9 +247,7 @@ async def resolve_alternative_relationship_paths(
     to_person_id: UUID,
 ) -> ClosestRelationshipType:
     await _require_tree_member(info, tree_id, TreeAccessPermissions.VIEW)
-    usecase = GetAlternativeRelationshipPathsUseCase(
-        info.context.neo, info.context.uow
-    )
+    usecase = GetAlternativeRelationshipPathsUseCase(info.context.neo, info.context.uow)
     result = await usecase.execute(from_person_id, to_person_id, tree_id=tree_id)
     return _relationship_path_to_type(result.model_dump())
 

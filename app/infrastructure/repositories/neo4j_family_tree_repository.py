@@ -247,9 +247,7 @@ class Neo4jFamilyTreeRepository(FamilyTreeRepository):
                 )
             )
 
-        selected = select_diverse_paths(
-            shortest_record, candidates, max_hops=hops
-        )
+        selected = select_diverse_paths(shortest_record, candidates, max_hops=hops)
         return _records_to_dto(from_person_id, to_person_id, selected)
 
     async def _resolve_max_hops(
@@ -305,9 +303,7 @@ class Neo4jFamilyTreeRepository(FamilyTreeRepository):
         max_hops: int,
     ) -> list[PathRecord]:
         records = await neo4j_client.execute_read(
-            query=q.k_shortest_relationship_paths_query(
-                max_hops, pool=K_SHORTEST_POOL
-            ),
+            query=q.k_shortest_relationship_paths_query(max_hops, pool=K_SHORTEST_POOL),
             params=_PathParams(
                 from_id=from_person_id, to_id=to_person_id, tree_id=tree_id
             ),

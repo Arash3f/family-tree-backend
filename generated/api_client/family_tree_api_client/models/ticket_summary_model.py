@@ -1,45 +1,36 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import Any, TypeVar, cast
+from uuid import UUID
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..types import UNSET, Unset
-
 from ..models.ticket_category import TicketCategory
 from ..models.ticket_status import TicketStatus
 from ..types import UNSET, Unset
-from typing import cast
-from uuid import UUID
-import datetime
-
-
-
-
-
 
 T = TypeVar("T", bound="TicketSummaryModel")
 
 
-
 @_attrs_define
 class TicketSummaryModel:
-    """ 
-        Attributes:
-            id (UUID):
-            title (str):
-            status (TicketStatus):
-            category (TicketCategory):
-            created_by_user_id (UUID):
-            created_by_can_manage (bool | Unset):  Default: False.
-            viewer_can_manage (bool | Unset):  Default: False.
-            family_tree_id (None | Unset | UUID):
-            family_tree_name (None | str | Unset):
-            created_at (datetime.datetime | None | Unset):
-            updated_at (datetime.datetime | None | Unset):
-     """
+    """
+    Attributes:
+        id (UUID):
+        title (str):
+        status (TicketStatus):
+        category (TicketCategory):
+        created_by_user_id (UUID):
+        created_by_can_manage (bool | Unset):  Default: False.
+        viewer_can_manage (bool | Unset):  Default: False.
+        family_tree_id (None | Unset | UUID):
+        family_tree_name (None | str | Unset):
+        created_at (datetime.datetime | None | Unset):
+        updated_at (datetime.datetime | None | Unset):
+    """
 
     id: UUID
     title: str
@@ -53,10 +44,6 @@ class TicketSummaryModel:
     created_at: datetime.datetime | None | Unset = UNSET
     updated_at: datetime.datetime | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
-
-
-
 
     def to_dict(self) -> dict[str, Any]:
         id = str(self.id)
@@ -103,16 +90,17 @@ class TicketSummaryModel:
         else:
             updated_at = self.updated_at
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-            "id": id,
-            "title": title,
-            "status": status,
-            "category": category,
-            "created_by_user_id": created_by_user_id,
-        })
+        field_dict.update(
+            {
+                "id": id,
+                "title": title,
+                "status": status,
+                "category": category,
+                "created_by_user_id": created_by_user_id,
+            }
+        )
         if created_by_can_manage is not UNSET:
             field_dict["created_by_can_manage"] = created_by_can_manage
         if viewer_can_manage is not UNSET:
@@ -128,32 +116,18 @@ class TicketSummaryModel:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
         id = UUID(d.pop("id"))
 
-
-
-
         title = d.pop("title")
 
         status = TicketStatus(d.pop("status"))
 
-
-
-
         category = TicketCategory(d.pop("category"))
 
-
-
-
         created_by_user_id = UUID(d.pop("created_by_user_id"))
-
-
-
 
         created_by_can_manage = d.pop("created_by_can_manage", UNSET)
 
@@ -169,15 +143,12 @@ class TicketSummaryModel:
                     raise TypeError()
                 family_tree_id_type_0 = UUID(data)
 
-
-
                 return family_tree_id_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(None | Unset | UUID, data)
 
         family_tree_id = _parse_family_tree_id(d.pop("family_tree_id", UNSET))
-
 
         def _parse_family_tree_name(data: object) -> None | str | Unset:
             if data is None:
@@ -187,7 +158,6 @@ class TicketSummaryModel:
             return cast(None | str | Unset, data)
 
         family_tree_name = _parse_family_tree_name(d.pop("family_tree_name", UNSET))
-
 
         def _parse_created_at(data: object) -> datetime.datetime | None | Unset:
             if data is None:
@@ -199,15 +169,12 @@ class TicketSummaryModel:
                     raise TypeError()
                 created_at_type_0 = datetime.datetime.fromisoformat(data)
 
-
-
                 return created_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(datetime.datetime | None | Unset, data)
 
         created_at = _parse_created_at(d.pop("created_at", UNSET))
-
 
         def _parse_updated_at(data: object) -> datetime.datetime | None | Unset:
             if data is None:
@@ -219,15 +186,12 @@ class TicketSummaryModel:
                     raise TypeError()
                 updated_at_type_0 = datetime.datetime.fromisoformat(data)
 
-
-
                 return updated_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(datetime.datetime | None | Unset, data)
 
         updated_at = _parse_updated_at(d.pop("updated_at", UNSET))
-
 
         ticket_summary_model = cls(
             id=id,
@@ -242,7 +206,6 @@ class TicketSummaryModel:
             created_at=created_at,
             updated_at=updated_at,
         )
-
 
         ticket_summary_model.additional_properties = d
         return ticket_summary_model
