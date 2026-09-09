@@ -25,6 +25,7 @@ class TicketDetailResponseDTO(BaseModel):
     category: TicketCategory
     created_by_user_id: UUID
     created_by_can_manage: bool = False
+    viewer_can_manage: bool = False
     family_tree_id: UUID | None = None
     family_tree_name: str | None = None
     created_at: datetime | None = None
@@ -39,6 +40,7 @@ class TicketSummaryResponseDTO(BaseModel):
     category: TicketCategory
     created_by_user_id: UUID
     created_by_can_manage: bool = False
+    viewer_can_manage: bool = False
     family_tree_id: UUID | None = None
     family_tree_name: str | None = None
     created_at: datetime | None = None
@@ -60,6 +62,7 @@ def ticket_to_detail_dto(
     ticket: Ticket,
     messages: list[TicketMessage],
     created_by_can_manage: bool = False,
+    viewer_can_manage: bool = False,
 ) -> TicketDetailResponseDTO:
     return TicketDetailResponseDTO(
         id=ticket.safe_id,
@@ -68,6 +71,7 @@ def ticket_to_detail_dto(
         category=ticket.category,
         created_by_user_id=ticket.created_by_user_id,
         created_by_can_manage=created_by_can_manage,
+        viewer_can_manage=viewer_can_manage,
         family_tree_id=ticket.family_tree_id,
         family_tree_name=ticket.family_tree_name,
         created_at=ticket.created_at,
@@ -77,7 +81,9 @@ def ticket_to_detail_dto(
 
 
 def ticket_to_summary_dto(
-    ticket: Ticket, created_by_can_manage: bool = False
+    ticket: Ticket,
+    created_by_can_manage: bool = False,
+    viewer_can_manage: bool = False,
 ) -> TicketSummaryResponseDTO:
     return TicketSummaryResponseDTO(
         id=ticket.safe_id,
@@ -86,6 +92,7 @@ def ticket_to_summary_dto(
         category=ticket.category,
         created_by_user_id=ticket.created_by_user_id,
         created_by_can_manage=created_by_can_manage,
+        viewer_can_manage=viewer_can_manage,
         family_tree_id=ticket.family_tree_id,
         family_tree_name=ticket.family_tree_name,
         created_at=ticket.created_at,

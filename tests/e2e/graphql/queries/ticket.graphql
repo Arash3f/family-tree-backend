@@ -3,6 +3,7 @@ mutation CreateTicket($data: TicketCreateInput!) {
     id
     title
     status
+    viewerCanManage
     messages {
       body
     }
@@ -16,6 +17,7 @@ query ListTickets {
       id
       title
       status
+      viewerCanManage
     }
   }
 }
@@ -24,6 +26,7 @@ query GetTicket($id: UUID!) {
   ticket(ticketId: $id) {
     id
     title
+    viewerCanManage
     messages {
       body
       authorUserId
@@ -42,5 +45,6 @@ mutation UpdateTicketStatus($id: UUID!, $data: TicketUpdateStatusInput!) {
   updateTicketStatus(ticketId: $id, data: $data) {
     id
     status
+    viewerCanManage
   }
 }

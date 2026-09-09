@@ -5508,6 +5508,11 @@
             "title": "Created By Can Manage",
             "default": false
           },
+          "viewer_can_manage": {
+            "type": "boolean",
+            "title": "Viewer Can Manage",
+            "default": false
+          },
           "family_tree_id": {
             "anyOf": [
               {
@@ -5671,6 +5676,11 @@
           "created_by_can_manage": {
             "type": "boolean",
             "title": "Created By Can Manage",
+            "default": false
+          },
+          "viewer_can_manage": {
+            "type": "boolean",
+            "title": "Viewer Can Manage",
             "default": false
           },
           "family_tree_id": {
@@ -5911,6 +5921,11 @@
             "title": "Created By Can Manage",
             "default": false
           },
+          "viewer_can_manage": {
+            "type": "boolean",
+            "title": "Viewer Can Manage",
+            "default": false
+          },
           "family_tree_id": {
             "anyOf": [
               {
@@ -6006,6 +6021,11 @@
           "created_by_can_manage": {
             "type": "boolean",
             "title": "Created By Can Manage",
+            "default": false
+          },
+          "viewer_can_manage": {
+            "type": "boolean",
+            "title": "Viewer Can Manage",
             "default": false
           },
           "family_tree_id": {
@@ -6143,6 +6163,28 @@
               }
             ],
             "title": "Warning"
+          },
+          "spouse_a_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spouse A Label"
+          },
+          "spouse_b_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spouse B Label"
           }
         },
         "type": "object",
@@ -6265,6 +6307,50 @@
               }
             ],
             "title": "Duplicate Of Ref"
+          },
+          "warning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warning"
+          },
+          "parent1_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent1 Label"
+          },
+          "parent2_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent2 Label"
+          },
+          "marriage_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marriage Label"
           }
         },
         "type": "object",

@@ -3,6 +3,8 @@
 
 from typing import Any
 
+from pydantic import Field
+
 from .base_model import BaseModel
 from .enums import TicketStatus
 
@@ -20,6 +22,7 @@ class ListTicketsTicketsItems(BaseModel):
     id: Any
     title: str
     status: TicketStatus
+    viewer_can_manage: bool = Field(alias="viewerCanManage")
 
 
 ListTickets.model_rebuild()

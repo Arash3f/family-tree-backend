@@ -57,6 +57,7 @@ class TicketType:
     category: TicketCategoryEnum
     created_by_user_id: UUID
     created_by_can_manage: bool
+    viewer_can_manage: bool
     family_tree_id: UUID | None = None
     family_tree_name: str | None = None
     created_at: datetime | None = None
@@ -72,6 +73,7 @@ class TicketSummaryType:
     category: TicketCategoryEnum
     created_by_user_id: UUID
     created_by_can_manage: bool
+    viewer_can_manage: bool
     family_tree_id: UUID | None = None
     family_tree_name: str | None = None
     created_at: datetime | None = None
@@ -174,6 +176,7 @@ def ticket_from_mapping(data: dict) -> TicketType:
         category=to_ticket_category_enum(data["category"]),
         created_by_user_id=data["created_by_user_id"],
         created_by_can_manage=bool(data.get("created_by_can_manage", False)),
+        viewer_can_manage=bool(data.get("viewer_can_manage", False)),
         family_tree_id=data.get("family_tree_id"),
         family_tree_name=data.get("family_tree_name"),
         created_at=data.get("created_at"),
@@ -190,6 +193,7 @@ def ticket_summary_from_mapping(data: dict) -> TicketSummaryType:
         category=to_ticket_category_enum(data["category"]),
         created_by_user_id=data["created_by_user_id"],
         created_by_can_manage=bool(data.get("created_by_can_manage", False)),
+        viewer_can_manage=bool(data.get("viewer_can_manage", False)),
         family_tree_id=data.get("family_tree_id"),
         family_tree_name=data.get("family_tree_name"),
         created_at=data.get("created_at"),

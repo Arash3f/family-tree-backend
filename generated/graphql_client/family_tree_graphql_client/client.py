@@ -502,6 +502,7 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
                 id
                 title
                 status
+                viewerCanManage
                 messages {
                   body
                 }
@@ -524,6 +525,7 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
                   id
                   title
                   status
+                  viewerCanManage
                 }
               }
             }
@@ -541,6 +543,7 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
               ticket(ticketId: $id) {
                 id
                 title
+                viewerCanManage
                 messages {
                   body
                   authorUserId
@@ -584,6 +587,7 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
               updateTicketStatus(ticketId: $id, data: $data) {
                 id
                 status
+                viewerCanManage
               }
             }
             """)

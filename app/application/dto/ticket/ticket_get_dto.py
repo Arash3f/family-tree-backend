@@ -22,5 +22,8 @@ class TicketGetMapper(BaseModel):
         ticket: Ticket,
         messages: list[TicketMessage],
         created_by_can_manage: bool = False,
+        viewer_can_manage: bool = False,
     ) -> TicketDetailResponseDTO:
-        return ticket_to_detail_dto(ticket, messages, created_by_can_manage)
+        return ticket_to_detail_dto(
+            ticket, messages, created_by_can_manage, viewer_can_manage
+        )

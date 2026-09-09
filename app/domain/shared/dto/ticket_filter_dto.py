@@ -28,14 +28,20 @@ class TicketFilterDTO(BaseModel):
 
 
 class TicketAccessScopeDTO(BaseModel):
-    """Restricts results to tickets the user owns or manages via tree access.
+    """Restricts results to tickets the user may see.
 
-    Applied as (created_by_user_id == owner_user_id) OR (family_tree_id IN
-    manageable_tree_ids), independent of and in addition to `TicketFilterDTO`.
+    Applied as:
+      (created_by_user_id == owner_user_id)
+      OR (family_tree_id IN manageable_tree_ids)
+      OR (include_unlinked AND family_tree_id IS NULL)
+
+    ``include_unlinked`` is for system ``ticket_reply`` (global support queue).
+    Tree-linked tickets are never opened by that flag alone.
     """
 
     owner_user_id: UUID
     manageable_tree_ids: list[UUID] = []
+    include_unlinked: bool = False
 
 
 class FilterTicketQuery(BaseModel):

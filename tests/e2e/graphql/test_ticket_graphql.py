@@ -78,6 +78,7 @@ async def test_graphql_ticket_flow(
     ticket_id = ticket.id
     assert ticket.title == "GraphQL help"
     assert ticket.status == TicketStatus.OPEN
+    assert ticket.viewer_can_manage is False
     assert len(ticket.messages) == 1
 
     listed = await owner_client.list_tickets()
@@ -85,6 +86,7 @@ async def test_graphql_ticket_flow(
 
     detail = await owner_client.get_ticket(id=ticket_id)
     assert detail.ticket.id == ticket_id
+    assert detail.ticket.viewer_can_manage is False
 
     reply = await owner_client.add_ticket_message(
         id=ticket_id, data=TicketMessageCreateInput(body="Follow up")
@@ -96,3 +98,4 @@ async def test_graphql_ticket_flow(
         data=TicketUpdateStatusInput(status=TicketStatus.IN_PROGRESS),
     )
     assert status.update_ticket_status.status == TicketStatus.IN_PROGRESS
+    assert status.update_ticket_status.viewer_can_manage is True

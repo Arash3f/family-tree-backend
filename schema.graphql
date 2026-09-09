@@ -534,6 +534,7 @@ type TicketSummaryType {
   category: TicketCategory!
   createdByUserId: UUID!
   createdByCanManage: Boolean!
+  viewerCanManage: Boolean!
   familyTreeId: UUID
   familyTreeName: String
   createdAt: DateTime
@@ -547,6 +548,7 @@ type TicketType {
   category: TicketCategory!
   createdByUserId: UUID!
   createdByCanManage: Boolean!
+  viewerCanManage: Boolean!
   familyTreeId: UUID
   familyTreeName: String
   createdAt: DateTime

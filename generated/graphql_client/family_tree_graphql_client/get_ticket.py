@@ -15,6 +15,7 @@ class GetTicket(BaseModel):
 class GetTicketTicket(BaseModel):
     id: Any
     title: str
+    viewer_can_manage: bool = Field(alias="viewerCanManage")
     messages: list["GetTicketTicketMessages"]
 
 

@@ -2,7 +2,7 @@ from app.application.dto.ticket.ticket_get_dto import TicketGetDTO, TicketGetMap
 from app.application.dto.ticket.ticket_response_dto import TicketDetailResponseDTO
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.application.services.ticket_support_queue import users_can_manage_tickets
-from app.application.services.tree_ticket_access import user_can_manage_tree_ticket
+from app.application.services.tree_ticket_access import user_can_manage_ticket
 from app.domain.exceptions.ticket_exceptions import TicketAccessDeniedException
 
 
@@ -14,8 +14,11 @@ class GetTicketUseCase:
         async with self.uow:
             ticket = await self.uow.tickets.get_or_raise(ticket_id=dto.ticket_id)
 
-            can_manage = dto.can_manage or await user_can_manage_tree_ticket(
-                self.uow, dto.current_user_id, ticket.family_tree_id
+            can_manage = await user_can_manage_ticket(
+                self.uow,
+                dto.current_user_id,
+                ticket.family_tree_id,
+                has_system_reply=dto.can_manage,
             )
             if not can_manage and not ticket.is_owned_by(dto.current_user_id):
                 raise TicketAccessDeniedException(
@@ -33,4 +36,5 @@ class GetTicketUseCase:
                 ticket,
                 messages,
                 flags.get(ticket.created_by_user_id, False),
+                can_manage,
             )

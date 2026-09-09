@@ -18,6 +18,7 @@ class UpdateTicketStatus(BaseModel):
 class UpdateTicketStatusUpdateTicketStatus(BaseModel):
     id: Any
     status: TicketStatus
+    viewer_can_manage: bool = Field(alias="viewerCanManage")
 
 
 UpdateTicketStatus.model_rebuild()

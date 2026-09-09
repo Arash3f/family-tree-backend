@@ -1,40 +1,48 @@
 from __future__ import annotations
 
-import datetime
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar, cast
-from uuid import UUID
+from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET, Unset
+
 from ..models.ticket_category import TicketCategory
 from ..models.ticket_status import TicketStatus
 from ..types import UNSET, Unset
+from typing import cast
+from uuid import UUID
+import datetime
 
 if TYPE_CHECKING:
-    from ..models.ticket_message_model import TicketMessageModel
+  from ..models.ticket_message_model import TicketMessageModel
+
+
+
 
 
 T = TypeVar("T", bound="TicketCreateResponse")
 
 
+
 @_attrs_define
 class TicketCreateResponse:
-    """
-    Attributes:
-        id (UUID):
-        title (str):
-        status (TicketStatus):
-        category (TicketCategory):
-        created_by_user_id (UUID):
-        created_by_can_manage (bool | Unset):  Default: False.
-        family_tree_id (None | Unset | UUID):
-        family_tree_name (None | str | Unset):
-        created_at (datetime.datetime | None | Unset):
-        updated_at (datetime.datetime | None | Unset):
-        messages (list[TicketMessageModel] | Unset):
-    """
+    """ 
+        Attributes:
+            id (UUID):
+            title (str):
+            status (TicketStatus):
+            category (TicketCategory):
+            created_by_user_id (UUID):
+            created_by_can_manage (bool | Unset):  Default: False.
+            viewer_can_manage (bool | Unset):  Default: False.
+            family_tree_id (None | Unset | UUID):
+            family_tree_name (None | str | Unset):
+            created_at (datetime.datetime | None | Unset):
+            updated_at (datetime.datetime | None | Unset):
+            messages (list[TicketMessageModel] | Unset):
+     """
 
     id: UUID
     title: str
@@ -42,6 +50,7 @@ class TicketCreateResponse:
     category: TicketCategory
     created_by_user_id: UUID
     created_by_can_manage: bool | Unset = False
+    viewer_can_manage: bool | Unset = False
     family_tree_id: None | Unset | UUID = UNSET
     family_tree_name: None | str | Unset = UNSET
     created_at: datetime.datetime | None | Unset = UNSET
@@ -49,7 +58,12 @@ class TicketCreateResponse:
     messages: list[TicketMessageModel] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
+
+
+
+
     def to_dict(self) -> dict[str, Any]:
+        from ..models.ticket_message_model import TicketMessageModel
         id = str(self.id)
 
         title = self.title
@@ -61,6 +75,8 @@ class TicketCreateResponse:
         created_by_user_id = str(self.created_by_user_id)
 
         created_by_can_manage = self.created_by_can_manage
+
+        viewer_can_manage = self.viewer_can_manage
 
         family_tree_id: None | str | Unset
         if isinstance(self.family_tree_id, Unset):
@@ -99,19 +115,22 @@ class TicketCreateResponse:
                 messages_item = messages_item_data.to_dict()
                 messages.append(messages_item)
 
+
+
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update(
-            {
-                "id": id,
-                "title": title,
-                "status": status,
-                "category": category,
-                "created_by_user_id": created_by_user_id,
-            }
-        )
+        field_dict.update({
+            "id": id,
+            "title": title,
+            "status": status,
+            "category": category,
+            "created_by_user_id": created_by_user_id,
+        })
         if created_by_can_manage is not UNSET:
             field_dict["created_by_can_manage"] = created_by_can_manage
+        if viewer_can_manage is not UNSET:
+            field_dict["viewer_can_manage"] = viewer_can_manage
         if family_tree_id is not UNSET:
             field_dict["family_tree_id"] = family_tree_id
         if family_tree_name is not UNSET:
@@ -125,22 +144,37 @@ class TicketCreateResponse:
 
         return field_dict
 
+
+
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         from ..models.ticket_message_model import TicketMessageModel
-
         d = dict(src_dict)
         id = UUID(d.pop("id"))
+
+
+
 
         title = d.pop("title")
 
         status = TicketStatus(d.pop("status"))
 
+
+
+
         category = TicketCategory(d.pop("category"))
+
+
+
 
         created_by_user_id = UUID(d.pop("created_by_user_id"))
 
+
+
+
         created_by_can_manage = d.pop("created_by_can_manage", UNSET)
+
+        viewer_can_manage = d.pop("viewer_can_manage", UNSET)
 
         def _parse_family_tree_id(data: object) -> None | Unset | UUID:
             if data is None:
@@ -152,12 +186,15 @@ class TicketCreateResponse:
                     raise TypeError()
                 family_tree_id_type_0 = UUID(data)
 
+
+
                 return family_tree_id_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(None | Unset | UUID, data)
 
         family_tree_id = _parse_family_tree_id(d.pop("family_tree_id", UNSET))
+
 
         def _parse_family_tree_name(data: object) -> None | str | Unset:
             if data is None:
@@ -167,6 +204,7 @@ class TicketCreateResponse:
             return cast(None | str | Unset, data)
 
         family_tree_name = _parse_family_tree_name(d.pop("family_tree_name", UNSET))
+
 
         def _parse_created_at(data: object) -> datetime.datetime | None | Unset:
             if data is None:
@@ -178,12 +216,15 @@ class TicketCreateResponse:
                     raise TypeError()
                 created_at_type_0 = datetime.datetime.fromisoformat(data)
 
+
+
                 return created_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(datetime.datetime | None | Unset, data)
 
         created_at = _parse_created_at(d.pop("created_at", UNSET))
+
 
         def _parse_updated_at(data: object) -> datetime.datetime | None | Unset:
             if data is None:
@@ -195,12 +236,15 @@ class TicketCreateResponse:
                     raise TypeError()
                 updated_at_type_0 = datetime.datetime.fromisoformat(data)
 
+
+
                 return updated_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(datetime.datetime | None | Unset, data)
 
         updated_at = _parse_updated_at(d.pop("updated_at", UNSET))
+
 
         _messages = d.pop("messages", UNSET)
         messages: list[TicketMessageModel] | Unset = UNSET
@@ -209,7 +253,10 @@ class TicketCreateResponse:
             for messages_item_data in _messages:
                 messages_item = TicketMessageModel.from_dict(messages_item_data)
 
+
+
                 messages.append(messages_item)
+
 
         ticket_create_response = cls(
             id=id,
@@ -218,12 +265,14 @@ class TicketCreateResponse:
             category=category,
             created_by_user_id=created_by_user_id,
             created_by_can_manage=created_by_can_manage,
+            viewer_can_manage=viewer_can_manage,
             family_tree_id=family_tree_id,
             family_tree_name=family_tree_name,
             created_at=created_at,
             updated_at=updated_at,
             messages=messages,
         )
+
 
         ticket_create_response.additional_properties = d
         return ticket_create_response

@@ -83,6 +83,8 @@ class SQLTicketRepository(TicketRepository):
                 conditions.append(
                     TicketModel.family_tree_id.in_(scope.manageable_tree_ids)
                 )
+            if scope.include_unlinked:
+                conditions.append(TicketModel.family_tree_id.is_(None))
             stmt = stmt.where(or_(*conditions))
 
         SORTABLE_COLUMNS: Mapping[Enum, Any] = {

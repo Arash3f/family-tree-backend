@@ -6,6 +6,7 @@ from app.application.dto.ticket.ticket_response_dto import TicketDetailResponseD
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.application.services.ticket_support_queue import users_can_manage_tickets
 from app.application.services.tree_access_service import TreeAccessService
+from app.application.services.tree_ticket_access import user_can_manage_ticket
 from app.domain.entities.ticket import Ticket
 from app.domain.entities.ticket_message import TicketMessage
 from app.domain.shared.enums.ticket_status import TicketStatus
@@ -42,10 +43,18 @@ class CreateTicketUseCase:
             message = await self.uow.ticket_messages.create(message)
 
             flags = await users_can_manage_tickets(self.uow, [dto.created_by_user_id])
+            has_system_reply = flags.get(dto.created_by_user_id, False)
+            viewer_can_manage = await user_can_manage_ticket(
+                self.uow,
+                dto.created_by_user_id,
+                family_tree_id,
+                has_system_reply=has_system_reply,
+            )
             await self.uow.commit()
 
             return TicketCreateMapper.to_response(
                 ticket,
                 [message],
-                flags.get(dto.created_by_user_id, False),
+                has_system_reply,
+                viewer_can_manage,
             )

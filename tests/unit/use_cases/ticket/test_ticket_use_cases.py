@@ -20,6 +20,7 @@ from app.application.use_cases.ticket.get_ticket_use_case import GetTicketUseCas
 from app.application.use_cases.ticket.update_ticket_status_use_case import (
     UpdateTicketStatusUseCase,
 )
+from app.domain.entities.family_tree import TreeMembership, TreeMemberRole
 from app.domain.entities.ticket import Ticket
 from app.domain.entities.ticket_message import TicketMessage
 from app.domain.exceptions.ticket_exceptions import (
@@ -35,6 +36,7 @@ from app.domain.shared.dto.ticket_filter_dto import (
 )
 from app.domain.shared.enums.ticket_category import TicketCategory
 from app.domain.shared.enums.ticket_status import TicketStatus
+from app.domain.shared.tree_access import TreeAccessPermissions
 
 
 @pytest.mark.asyncio
@@ -81,6 +83,7 @@ async def test_create_ticket(mock_uow):
     assert len(result.messages) == 1
     assert result.messages[0].body == "I need help"
     assert result.created_by_can_manage is False
+    assert result.viewer_can_manage is False
     mock_uow.commit.assert_awaited_once()
 
 
@@ -105,6 +108,7 @@ async def test_get_ticket_owner_ok(mock_uow):
 
     assert result.id == ticket_id
     assert result.created_by_can_manage is False
+    assert result.viewer_can_manage is False
 
 
 @pytest.mark.asyncio
@@ -127,6 +131,69 @@ async def test_get_ticket_access_denied(mock_uow):
                 ticket_id=ticket_id, current_user_id=other_id, can_manage=False
             )
         )
+
+
+@pytest.mark.asyncio
+async def test_system_reply_cannot_get_unrelated_tree_ticket(mock_uow):
+    owner_id = UUID(int=10)
+    staff_id = UUID(int=11)
+    tree_id = UUID(int=50)
+    ticket_id = UUID(int=20)
+    ticket = Ticket(
+        id=ticket_id,
+        title="Tree issue",
+        status=TicketStatus.OPEN,
+        category=TicketCategory.GENERAL,
+        created_by_user_id=owner_id,
+        family_tree_id=tree_id,
+    )
+    mock_uow.tickets.get_or_raise = AsyncMock(return_value=ticket)
+    mock_uow.tree_memberships.get = AsyncMock(return_value=None)
+
+    with pytest.raises(TicketAccessDeniedException):
+        await GetTicketUseCase(mock_uow).execute(
+            TicketGetDTO(
+                ticket_id=ticket_id, current_user_id=staff_id, can_manage=True
+            )
+        )
+
+
+@pytest.mark.asyncio
+async def test_tree_manager_can_get_tree_ticket(mock_uow):
+    owner_id = UUID(int=10)
+    manager_id = UUID(int=11)
+    tree_id = UUID(int=50)
+    ticket_id = UUID(int=20)
+    ticket = Ticket(
+        id=ticket_id,
+        title="Tree issue",
+        status=TicketStatus.OPEN,
+        category=TicketCategory.GENERAL,
+        created_by_user_id=owner_id,
+        family_tree_id=tree_id,
+    )
+    membership = TreeMembership(
+        id=UUID(int=99),
+        tree_id=tree_id,
+        user_id=manager_id,
+        role=TreeMemberRole.MEMBER,
+        permissions=[
+            TreeAccessPermissions.VIEW,
+            TreeAccessPermissions.TICKET_MANAGE,
+        ],
+    )
+    mock_uow.tickets.get_or_raise = AsyncMock(return_value=ticket)
+    mock_uow.ticket_messages.get_by_ticket_id = AsyncMock(return_value=[])
+    mock_uow.tree_memberships.get = AsyncMock(return_value=membership)
+    mock_uow.users.ids_having_permission = AsyncMock(return_value=set())
+
+    result = await GetTicketUseCase(mock_uow).execute(
+        TicketGetDTO(
+            ticket_id=ticket_id, current_user_id=manager_id, can_manage=False
+        )
+    )
+
+    assert result.viewer_can_manage is True
 
 
 @pytest.mark.asyncio
@@ -161,6 +228,39 @@ async def test_list_tickets_scopes_to_owner(mock_uow):
     called_query = mock_uow.tickets.get_list_by_filter.await_args.kwargs["query"]
     assert called_query.access_scope.owner_user_id == user_id
     assert called_query.access_scope.manageable_tree_ids == []
+    assert called_query.access_scope.include_unlinked is False
+
+
+@pytest.mark.asyncio
+async def test_list_tickets_system_reply_includes_unlinked_only(mock_uow):
+    staff_id = UUID(int=10)
+    ticket = Ticket(
+        id=UUID(int=20),
+        title="Support",
+        status=TicketStatus.OPEN,
+        category=TicketCategory.ACCOUNT,
+        created_by_user_id=UUID(int=99),
+    )
+    mock_uow.tickets.get_list_by_filter = AsyncMock(
+        return_value=PaginatedResult(items=[ticket], total=1, page=1, page_size=30)
+    )
+    mock_uow.users.ids_having_permission = AsyncMock(return_value=set())
+    mock_uow.tree_memberships.list_by_user = AsyncMock(return_value=[])
+
+    query = FilterTicketQuery(
+        pagination=PaginationParams(page=1, page_size=30, offset=0),
+        filters=TicketFilterDTO(),
+        sort=SortParams(
+            sort_order=SortOrderField.DESC, sort_by=TicketSortField.CREATED_AT
+        ),
+    )
+    result = await GetTicketListByFilterUseCase(mock_uow).execute(
+        TicketListDTO(query=query, current_user_id=staff_id, can_manage=True)
+    )
+
+    called_query = mock_uow.tickets.get_list_by_filter.await_args.kwargs["query"]
+    assert called_query.access_scope.include_unlinked is True
+    assert result.items[0].viewer_can_manage is True
 
 
 @pytest.mark.asyncio
@@ -274,7 +374,36 @@ async def test_update_ticket_status(mock_uow):
     )
     assert result.status == TicketStatus.IN_PROGRESS
     assert result.created_by_can_manage is False
+    assert result.viewer_can_manage is True
     mock_uow.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_update_tree_ticket_status_denied_for_system_reply(mock_uow):
+    ticket_id = UUID(int=20)
+    owner_id = UUID(int=10)
+    staff_id = UUID(int=11)
+    tree_id = UUID(int=50)
+    ticket = Ticket(
+        id=ticket_id,
+        title="Help",
+        status=TicketStatus.OPEN,
+        category=TicketCategory.OTHER,
+        created_by_user_id=owner_id,
+        family_tree_id=tree_id,
+    )
+    mock_uow.tickets.get_or_raise = AsyncMock(return_value=ticket)
+    mock_uow.tree_memberships.get = AsyncMock(return_value=None)
+
+    with pytest.raises(TicketAccessDeniedException):
+        await UpdateTicketStatusUseCase(mock_uow).execute(
+            TicketUpdateStatusDTO(
+                ticket_id=ticket_id,
+                status=TicketStatus.IN_PROGRESS,
+                current_user_id=staff_id,
+                can_manage=True,
+            )
+        )
 
 
 @pytest.mark.asyncio
@@ -290,7 +419,6 @@ async def test_update_ticket_status_access_denied(mock_uow):
         created_by_user_id=owner_id,
     )
     mock_uow.tickets.get_or_raise = AsyncMock(return_value=ticket)
-    mock_uow.tree_memberships.get = AsyncMock(return_value=None)
 
     with pytest.raises(TicketAccessDeniedException):
         await UpdateTicketStatusUseCase(mock_uow).execute(
@@ -317,6 +445,7 @@ async def test_list_marks_staff_created_tickets(mock_uow):
         return_value=PaginatedResult(items=[ticket], total=1, page=1, page_size=30)
     )
     mock_uow.users.ids_having_permission = AsyncMock(return_value={staff_id})
+    mock_uow.tree_memberships.list_by_user = AsyncMock(return_value=[])
 
     query = FilterTicketQuery(
         pagination=PaginationParams(page=1, page_size=30, offset=0),
@@ -330,3 +459,4 @@ async def test_list_marks_staff_created_tickets(mock_uow):
     )
 
     assert result.items[0].created_by_can_manage is True
+    assert result.items[0].viewer_can_manage is True

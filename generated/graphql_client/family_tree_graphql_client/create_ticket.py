@@ -17,6 +17,7 @@ class CreateTicketCreateTicket(BaseModel):
     id: Any
     title: str
     status: TicketStatus
+    viewer_can_manage: bool = Field(alias="viewerCanManage")
     messages: list["CreateTicketCreateTicketMessages"]
 
 
