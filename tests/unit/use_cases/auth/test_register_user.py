@@ -4,6 +4,9 @@ from uuid import UUID
 import pytest
 
 from app.application.dto.auth_dto import RegisterDTO
+from app.application.services.starter_tree_provisioner import (
+    StarterProvisioningResult,
+)
 from app.application.use_cases.auth.register_user import (
     RegisterUserUseCase,
     normalize_register_email,
@@ -16,7 +19,6 @@ from app.domain.exceptions.user_exceptions import (
     UsernameAlreadyExistsException,
 )
 from app.domain.shared.account_type import AccountType
-from app.domain.shared.starter_trees import STARTER_TREE_SPECS
 
 
 def test_normalize_register_email_lowercases():
@@ -46,15 +48,9 @@ async def test_register_creates_free_member_and_returns_tokens(mock_uow):
     mock_uow.sessions.create = AsyncMock()
     mock_uow.commit = AsyncMock()
 
-    created_trees = []
-    for i, spec in enumerate(STARTER_TREE_SPECS, start=1):
-        tree = MagicMock()
-        tree.safe_id = UUID(int=100 + i)
-        tree.name = spec.default_name
-        created_trees.append(tree)
-
-    mock_uow.family_trees.create = AsyncMock(side_effect=created_trees)
-    mock_uow.tree_memberships.create = AsyncMock()
+    starter_tree_provisioner = MagicMock()
+    starter_result = StarterProvisioningResult()
+    starter_tree_provisioner.provision_for_user = AsyncMock(return_value=starter_result)
 
     password_hasher = MagicMock()
     password_hasher.hash.return_value = "hashed"
@@ -63,7 +59,12 @@ async def test_register_creates_free_member_and_returns_tokens(mock_uow):
     token_service.create_refresh_token.return_value = "refresh"
     token_service.hash_token.return_value = "refresh-hash"
 
-    usecase = RegisterUserUseCase(mock_uow, password_hasher, token_service)
+    usecase = RegisterUserUseCase(
+        mock_uow,
+        password_hasher,
+        token_service,
+        starter_tree_provisioner=starter_tree_provisioner,
+    )
     result = await usecase.execute(
         RegisterDTO(
             username="newuser",
@@ -89,15 +90,13 @@ async def test_register_creates_free_member_and_returns_tokens(mock_uow):
     assert created.account_type is AccountType.FREE
     assert created.password_hash == "hashed"
 
-    assert mock_uow.family_trees.create.await_count == len(STARTER_TREE_SPECS)
-    tree_names = [
-        call.args[0].name for call in mock_uow.family_trees.create.await_args_list
-    ]
-    assert tree_names == [spec.default_name for spec in STARTER_TREE_SPECS]
-    assert mock_uow.tree_memberships.create.await_count == len(STARTER_TREE_SPECS)
-
+    starter_tree_provisioner.provision_for_user.assert_awaited_once_with(
+        mock_uow,
+        owner_user_id=UUID(int=42),
+    )
     mock_uow.sessions.create.assert_awaited_once()
     mock_uow.commit.assert_awaited_once()
+    starter_tree_provisioner.sync_after_commit.assert_called_once_with(starter_result)
 
 
 @pytest.mark.asyncio

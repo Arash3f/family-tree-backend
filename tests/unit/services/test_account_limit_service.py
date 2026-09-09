@@ -43,11 +43,11 @@ async def test_paid_owner_can_create_without_limits(mock_uow):
 
 
 @pytest.mark.asyncio
-async def test_free_owner_blocked_from_second_tree(mock_uow):
+async def test_free_owner_blocked_from_third_tree(mock_uow):
     mock_uow.users.get_for_update = AsyncMock(
         return_value=_owner(account_type=AccountType.FREE)
     )
-    mock_uow.family_trees.count_owned_by_user = AsyncMock(return_value=1)
+    mock_uow.family_trees.count_owned_by_user = AsyncMock(return_value=2)
     service = AccountLimitService()
 
     with pytest.raises(FreeAccountLimitException):

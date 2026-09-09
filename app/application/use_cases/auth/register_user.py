@@ -95,7 +95,7 @@ class RegisterUserUseCase:
                 )
             )
 
-            await self.starter_tree_provisioner.provision_for_user(
+            starter_trees = await self.starter_tree_provisioner.provision_for_user(
                 self.uow, owner_user_id=user.safe_id
             )
 
@@ -118,4 +118,5 @@ class RegisterUserUseCase:
             )
             await self.uow.commit()
 
+            self.starter_tree_provisioner.sync_after_commit(starter_trees)
             return LoginResponseDTO(access_token=access, refresh_token=refresh)

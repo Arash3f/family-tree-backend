@@ -1,0 +1,54 @@
+meta {
+  name: Register
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{base_url}}/auth/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "username": "new_user",
+    "password": "password123",
+    "re_password": "password123",
+    "email": "new_user@example.com",
+    "phone": null,
+    "country_code": null
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.access_token: isDefined
+  res.body.refresh_token: isDefined
+}
+
+script:post-response {
+  if (res.status === 200 && res.body.access_token) {
+    bru.setEnvVar("access_token", res.body.access_token);
+    bru.setEnvVar("refresh_token", res.body.refresh_token);
+  }
+}
+
+docs {
+  # Register
+
+  Public self-signup. Provisions two starter trees for free accounts.
+
+  ## Input (`application/json`)
+  | Field | Type | Required |
+  |-------|------|----------|
+  | username | string | yes |
+  | password | string | yes |
+  | re_password | string | yes |
+  | email | string | no |
+  | phone | string | no |
+  | country_code | string | no |
+
+  ## Output `200`
+  Same shape as Login (`access_token` + `refresh_token`).
+}
