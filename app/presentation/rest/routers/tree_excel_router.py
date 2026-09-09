@@ -165,9 +165,7 @@ _UPLOAD_MESSAGES: dict[str, dict[str, str]] = {
 
 def _timeout_response(lang: str, key: str) -> Response:
     return Response(
-        content=json.dumps(
-            {"detail": _upload_message(lang, key)}, ensure_ascii=False
-        ),
+        content=json.dumps({"detail": _upload_message(lang, key)}, ensure_ascii=False),
         status_code=504,
         media_type="application/json",
     )

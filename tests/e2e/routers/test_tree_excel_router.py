@@ -162,9 +162,7 @@ async def test_sample_excel_uses_accept_language(
 
     resp_en = await _download_sample(tree_id, admin_client)
     assert resp_en.status_code == 200
-    assert "family-tree-sample.xlsx" in resp_en.headers.get(
-        "content-disposition", ""
-    )
+    assert "family-tree-sample.xlsx" in resp_en.headers.get("content-disposition", "")
     workbook_en = load_workbook(BytesIO(resp_en.content), data_only=True)
     assert workbook_en["Instructions"]["A1"].value == "Family tree — Excel template"
     assert workbook_en["Persons"]["B2"].value == "Ali"
@@ -263,8 +261,7 @@ async def test_preview_returns_every_bad_cell_in_persian(
             "file": (
                 "tree.xlsx",
                 content,
-                "application/vnd.openxmlformats-officedocument"
-                ".spreadsheetml.sheet",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
         },
         headers={"Accept-Language": "fa-IR"},

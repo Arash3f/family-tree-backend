@@ -104,9 +104,7 @@ async def _create_user_with_ticket_perms(
 
 
 @pytest.mark.asyncio
-async def test_create_ticket_permission_denied(
-    client: Client, uow, asgi_transport
-):
+async def test_create_ticket_permission_denied(client: Client, uow, asgi_transport):
     outsider = await _create_user_with_ticket_perms(
         uow,
         username="no_ticket_user",

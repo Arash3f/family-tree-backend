@@ -66,9 +66,7 @@ MARRIAGE_COLUMNS = (
 
 # Written for humans to read, never read back: the codes next to them carry
 # the meaning, so a stale name here can never corrupt an import.
-PERSON_DISPLAY_COLUMNS = frozenset(
-    {"parent1_name", "parent2_name", "marriage_label"}
-)
+PERSON_DISPLAY_COLUMNS = frozenset({"parent1_name", "parent2_name", "marriage_label"})
 MARRIAGE_DISPLAY_COLUMNS = frozenset({"spouse_a_name", "spouse_b_name"})
 
 PERSON_REQUIRED_COLUMNS = ("name", "gender")
@@ -334,8 +332,7 @@ _ERROR_TEXTS: dict[str, dict[str, str]] = {
             "own code."
         ),
         "gender_invalid": (
-            "“{column}” is “{value}”, which is not understood. Write one of: "
-            "{options}."
+            "“{column}” is “{value}”, which is not understood. Write one of: {options}."
         ),
         "gender_required": "“{column}” is empty. Write one of: {options}.",
         "rel_type_invalid": (
@@ -348,16 +345,13 @@ _ERROR_TEXTS: dict[str, dict[str, str]] = {
         ),
         "married_at_required": "“{column}” is empty, and every marriage needs one.",
         "spouse_required": (
-            "“{column_a}” and “{column_b}” are both required, so this row was "
-            "skipped."
+            "“{column_a}” and “{column_b}” are both required, so this row was skipped."
         ),
         "unknown_parent": (
-            "“{column}” points to code “{ref}”, which no row of sheet “{sheet}” "
-            "uses."
+            "“{column}” points to code “{ref}”, which no row of sheet “{sheet}” uses."
         ),
         "unknown_marriage": (
-            "“{column}” points to code “{ref}”, which no row of sheet “{sheet}” "
-            "uses."
+            "“{column}” points to code “{ref}”, which no row of sheet “{sheet}” uses."
         ),
         "unknown_spouse": (
             "“{column}” points to code “{ref}”, which no row of sheet “{sheet}” "
@@ -489,23 +483,17 @@ class ExcelText:
         return [self.gender_label(gender) for gender in Gender]
 
     def rel_type_options(self) -> list[str]:
-        return [
-            self.rel_type_label(rel_type) for rel_type in ParentRelationshipType
-        ]
+        return [self.rel_type_label(rel_type) for rel_type in ParentRelationshipType]
 
     def message(self, key: str, **params: Any) -> str:
         return _ERROR_TEXTS[self.lang][key].format(**params)
 
     def persons_row(self, row_number: int, key: str, **params: Any) -> str:
-        prefix = self.message(
-            "row_prefix", sheet=self.persons_sheet, row=row_number
-        )
+        prefix = self.message("row_prefix", sheet=self.persons_sheet, row=row_number)
         return prefix + self.message(key, **params)
 
     def marriages_row(self, row_number: int, key: str, **params: Any) -> str:
-        prefix = self.message(
-            "row_prefix", sheet=self.marriages_sheet, row=row_number
-        )
+        prefix = self.message("row_prefix", sheet=self.marriages_sheet, row=row_number)
         return prefix + self.message(key, **params)
 
     def persons_row_detail(self, row_number: int, detail: str) -> str:
@@ -754,10 +742,7 @@ def _range_formula(sheet_title: str, columns: tuple[str, ...], key: str) -> str:
     with one as corrupt and offers to repair the workbook.
     """
     letter = _column_letter(columns, key)
-    return (
-        f"{quote_sheetname(sheet_title)}!"
-        f"${letter}$2:${letter}${VALIDATION_LAST_ROW}"
-    )
+    return f"{quote_sheetname(sheet_title)}!${letter}$2:${letter}${VALIDATION_LAST_ROW}"
 
 
 def _add_list_validation(
@@ -791,9 +776,7 @@ def _add_person_validations(ws, *, lang: str = "en") -> None:
         ws,
         formula=f'"{",".join(text.gender_options())}"',
         targets=[f"{gender_letter}2:{gender_letter}{last}"],
-        error=(
-            "از مرد یا زن استفاده کنید" if locale == "fa" else "Use male or female"
-        ),
+        error=("از مرد یا زن استفاده کنید" if locale == "fa" else "Use male or female"),
     )
 
     type_letters = [
@@ -867,8 +850,7 @@ _HOW_TO: dict[str, list[str]] = {
         "Dates accept {hint}. Empty means unknown.",
         "Grey columns are written for you to read. We never read them back, so "
         "editing them changes nothing.",
-        "Two people with the same name stay two people. Give each their own "
-        "code.",
+        "Two people with the same name stay two people. Give each their own code.",
         "On import you get a preview and choose which rows to add. Rows already "
         "in the tree are marked and skipped.",
     ],
@@ -953,8 +935,7 @@ _MARRIAGE_COLUMN_HELP: dict[str, dict[str, str]] = {
         "spouse_b_name": "Read-only. That spouse’s name, for your eyes.",
         "married_at": "Required.",
         "divorced_at": "Optional. Leave empty if still married.",
-        "system_id": "Do not edit. Lets a re-import recognise this exact "
-        "marriage.",
+        "system_id": "Do not edit. Lets a re-import recognise this exact marriage.",
     },
     "fa": {
         "ref": "اختیاری. کد کوتاه این ازدواج (M1، M2…). اگر فرزندی به آن اشاره "
@@ -1205,9 +1186,7 @@ def build_sample_workbook(*, lang: str = "en") -> bytes:
 
     instructions = wb.active
     instructions.title = text.instructions_sheet
-    _write_instructions(
-        instructions, lang=locale, title_key="sample_title", note=None
-    )
+    _write_instructions(instructions, lang=locale, title_key="sample_title", note=None)
 
     names = {
         spec["ref"]: " ".join(
@@ -1335,9 +1314,7 @@ def build_export_workbook(
             "parent2_name": person_name.get(p2.parent_id, "") if p2 else "",
             "parent2_type": text.rel_type_label(p2.relationship_type) if p2 else "",
             "marriage_ref": (
-                marriage_code.get(person.marriage_id, "")
-                if person.marriage_id
-                else ""
+                marriage_code.get(person.marriage_id, "") if person.marriage_id else ""
             ),
             "marriage_label": (
                 marriage_couple.get(person.marriage_id, "")
@@ -1394,9 +1371,7 @@ def _resolve_sheet(wb, aliases: tuple[str, ...], *, label: str, text: ExcelText)
         found = by_key.get(alias.strip().casefold())
         if found is not None:
             return wb[found]
-    raise TreeExcelInvalidException(
-        detail=[text.message("missing_sheet", sheet=label)]
-    )
+    raise TreeExcelInvalidException(detail=[text.message("missing_sheet", sheet=label)])
 
 
 def _header_map(ws, lookup: dict[str, str]) -> dict[str, int]:
@@ -1452,9 +1427,7 @@ def parse_tree_excel(content: bytes, *, lang: str = "en") -> ParsedTreeExcel:
     try:
         wb = load_workbook(BytesIO(content), data_only=True)
     except (OSError, ValueError, KeyError) as exc:
-        raise TreeExcelInvalidException(
-            detail=[text.message("unreadable")]
-        ) from exc
+        raise TreeExcelInvalidException(detail=[text.message("unreadable")]) from exc
 
     persons_ws = _resolve_sheet(
         wb, PERSONS_SHEET_ALIASES, label=text.persons_sheet, text=text
@@ -1858,9 +1831,7 @@ def match_tree_excel(
         else:
             file_marriage_key_to_ref[file_key] = marriage_row.ref
 
-        marriage_uuid = marriage_row.system_id or try_parse_excel_uuid(
-            marriage_row.ref
-        )
+        marriage_uuid = marriage_row.system_id or try_parse_excel_uuid(marriage_row.ref)
         if marriage_uuid is not None and marriage_uuid in existing_marriage_by_id:
             match.marriage_existing_id[marriage_row.ref] = marriage_uuid
             continue

@@ -152,9 +152,7 @@ async def test_system_reply_cannot_get_unrelated_tree_ticket(mock_uow):
 
     with pytest.raises(TicketAccessDeniedException):
         await GetTicketUseCase(mock_uow).execute(
-            TicketGetDTO(
-                ticket_id=ticket_id, current_user_id=staff_id, can_manage=True
-            )
+            TicketGetDTO(ticket_id=ticket_id, current_user_id=staff_id, can_manage=True)
         )
 
 
@@ -188,9 +186,7 @@ async def test_tree_manager_can_get_tree_ticket(mock_uow):
     mock_uow.users.ids_having_permission = AsyncMock(return_value=set())
 
     result = await GetTicketUseCase(mock_uow).execute(
-        TicketGetDTO(
-            ticket_id=ticket_id, current_user_id=manager_id, can_manage=False
-        )
+        TicketGetDTO(ticket_id=ticket_id, current_user_id=manager_id, can_manage=False)
     )
 
     assert result.viewer_can_manage is True
