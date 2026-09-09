@@ -85,7 +85,7 @@ class Permissions:
             "مشاهده تیکت‌های پشتیبانی خودتان.",
         ),
         TICKET_REPLY: (
-            "Reply to and change status of support tickets not linked to a family tree.",
+            "Reply to and change status of support tickets not linked to a tree.",
             "پاسخ و تغییر وضعیت تیکت‌های پشتیبانی که به هیچ شجره‌نامه‌ای وصل نیستند.",
         ),
         TREE_CREATE: (

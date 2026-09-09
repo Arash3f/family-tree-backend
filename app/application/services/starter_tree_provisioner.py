@@ -81,50 +81,50 @@ class StarterTreeProvisioner:
     ) -> tuple[list[Person], list[Marriage]]:
         persons: list[Person] = []
         person_by_ref: dict[str, Person] = {}
-        for row in template.persons:
+        for person_row in template.persons:
             person = await uow.persons.create(
                 Person(
                     id=None,
-                    name=row.name,
-                    family_name=row.family_name,
-                    gender=Gender(row.gender),
+                    name=person_row.name,
+                    family_name=person_row.family_name,
+                    gender=Gender(person_row.gender),
                     tree_id=tree.safe_id,
-                    birth_date=_optional_date(row.birth_date),
-                    death_date=_optional_date(row.death_date),
-                    birth_place=row.birth_place,
-                    death_place=row.death_place,
-                    notes=row.notes,
+                    birth_date=_optional_date(person_row.birth_date),
+                    death_date=_optional_date(person_row.death_date),
+                    birth_place=person_row.birth_place,
+                    death_place=person_row.death_place,
+                    notes=person_row.notes,
                 )
             )
             persons.append(person)
-            person_by_ref[row.ref] = person
+            person_by_ref[person_row.ref] = person
 
         marriages: list[Marriage] = []
         marriage_by_ref: dict[str, Marriage] = {}
-        for row in template.marriages:
-            spouse_a = person_by_ref[row.spouse_a_ref]
-            spouse_b = person_by_ref[row.spouse_b_ref]
-            married_at = date.fromisoformat(row.married_at)
+        for marriage_row in template.marriages:
+            spouse_a = person_by_ref[marriage_row.spouse_a_ref]
+            spouse_b = person_by_ref[marriage_row.spouse_b_ref]
+            married_at = date.fromisoformat(marriage_row.married_at)
             MarriageRulesService.validate_marriage(
                 spouse_a=spouse_a,
                 spouse_b=spouse_b,
                 marriage_date=married_at,
             )
-            marriage = await uow.marriages.create(
+            created_marriage = await uow.marriages.create(
                 Marriage(
                     id=None,
                     tree_id=tree.safe_id,
                     spouse_a_id=spouse_a.safe_id,
                     spouse_b_id=spouse_b.safe_id,
                     married_at=married_at,
-                    divorced_at=_optional_date(row.divorced_at),
+                    divorced_at=_optional_date(marriage_row.divorced_at),
                 )
             )
-            marriages.append(marriage)
-            marriage_by_ref[row.ref] = marriage
+            marriages.append(created_marriage)
+            marriage_by_ref[marriage_row.ref] = created_marriage
 
-        for row in template.persons:
-            person = person_by_ref[row.ref]
+        for person_row in template.persons:
+            person = person_by_ref[person_row.ref]
             parent_links = [
                 ParentLink(
                     parent_id=person_by_ref[parent_ref].safe_id,
@@ -133,19 +133,25 @@ class StarterTreeProvisioner:
                     ),
                 )
                 for parent_ref, relationship_type in (
-                    (row.parent1_ref, row.parent1_type),
-                    (row.parent2_ref, row.parent2_type),
+                    (person_row.parent1_ref, person_row.parent1_type),
+                    (person_row.parent2_ref, person_row.parent2_type),
                 )
                 if parent_ref is not None
             ]
-            marriage = marriage_by_ref[row.marriage_ref] if row.marriage_ref else None
-            if not parent_links and marriage is None:
+            linked_marriage = (
+                marriage_by_ref[person_row.marriage_ref]
+                if person_row.marriage_ref
+                else None
+            )
+            if not parent_links and linked_marriage is None:
                 continue
             person.set_parents(parent_links)
-            person.marriage_id = marriage.safe_id if marriage else None
+            person.marriage_id = (
+                linked_marriage.safe_id if linked_marriage else None
+            )
             person.validate()
             updated = await uow.persons.update(person=person)
-            person_by_ref[row.ref] = updated
+            person_by_ref[person_row.ref] = updated
 
         return list(person_by_ref.values()), marriages
 

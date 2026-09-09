@@ -20,7 +20,7 @@ from app.application.use_cases.ticket.get_ticket_use_case import GetTicketUseCas
 from app.application.use_cases.ticket.update_ticket_status_use_case import (
     UpdateTicketStatusUseCase,
 )
-from app.domain.entities.family_tree import TreeMembership, TreeMemberRole
+from app.domain.entities.family_tree import TreeMemberRole, TreeMembership
 from app.domain.entities.ticket import Ticket
 from app.domain.entities.ticket_message import TicketMessage
 from app.domain.exceptions.ticket_exceptions import (
