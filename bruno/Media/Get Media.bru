@@ -1,0 +1,28 @@
+meta {
+  name: Get Media
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/media/{{photo_object_key}}
+  body: none
+  auth: none
+}
+
+params:query {
+  exp: {{media_exp}}
+  sig: {{media_sig}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  # Get Media
+
+  Stream a person photo. Auth is the HMAC query (`exp` + `sig`); img tags cannot send Bearer.
+
+  Upload first (Upload Media) to populate `photo_object_key`, then set signed `media_exp` / `media_sig`.
+}

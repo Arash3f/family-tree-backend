@@ -144,3 +144,6 @@ temp/
 # SQLite / db
 *.sqlite3
 *.db
+
+# Local knowledge-graph cache (never commit)
+graphify-out/

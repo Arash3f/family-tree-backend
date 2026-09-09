@@ -1,0 +1,32 @@
+meta {
+  name: Alternative Relationship Paths
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{base_url}}/family-trees/{{tree_id}}/persons/:from_person_id/relation/:to_person_id/alternatives
+  body: none
+  auth: inherit
+}
+
+params:path {
+  from_person_id: {{from_person_id}}
+  to_person_id: {{to_person_id}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.from_person_id: isString
+  res.body.to_person_id: isString
+  res.body.found: isDefined
+  res.body.paths: isArray
+}
+
+docs {
+  # Alternative Relationship Paths
+
+  Deferred diverse paths between two persons (same response shape as Closest Relationship).
+
+  Set `from_person_id` and `to_person_id` in the Local environment.
+}
