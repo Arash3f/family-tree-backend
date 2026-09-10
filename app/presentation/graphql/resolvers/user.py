@@ -50,6 +50,9 @@ def _user_create_request(data: UserCreateInput) -> UserCreateRequest:
         fullname=data.fullname,
         password=data.password,
         re_password=data.re_password,
+        email=data.email,
+        phone=data.phone,
+        country_code=data.country_code,
         role_id=data.role_id,
         account_type=(
             AccountType(data.account_type.value)
@@ -69,6 +72,12 @@ def _user_update_dto(data: UserUpdateInput) -> UserUpdateDTO:
         raw["password"] = data.data.password
     if data.data.re_password is not None:
         raw["re_password"] = data.data.re_password
+    if data.data.email is not None:
+        raw["email"] = data.data.email
+    if data.data.phone is not None:
+        raw["phone"] = data.data.phone
+    if data.data.country_code is not None:
+        raw["country_code"] = data.data.country_code
     if data.data.role_id is not None:
         raw["role_id"] = data.data.role_id
     if data.data.account_type is not None:

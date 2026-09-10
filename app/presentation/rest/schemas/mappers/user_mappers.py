@@ -37,7 +37,7 @@ class UserApiMapper:
 
     @staticmethod
     def to_update_user_dto(request: UserUpdateRequest) -> UserUpdateDTO:
-        request_data = request.model_dump()
+        request_data = request.model_dump(exclude_unset=True)
         return UserUpdateDTO.model_validate(request_data)
 
     @staticmethod

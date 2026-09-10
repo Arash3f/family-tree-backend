@@ -30,6 +30,8 @@ class UserType:
     id: UUID
     username: str
     fullname: str
+    email: str | None = None
+    phone: str | None = None
     role_id: UUID | None = None
     account_type: AccountTypeEnum = AccountTypeEnum.FREE
     last_session_at: datetime | None = None
@@ -56,6 +58,9 @@ class UserCreateInput:
     fullname: str
     password: str
     re_password: str
+    email: str | None = None
+    phone: str | None = None
+    country_code: str | None = None
     role_id: UUID | None = None
     account_type: AccountTypeEnum | None = None
 
@@ -66,6 +71,9 @@ class UserUpdateDataInput:
     fullname: str | None = None
     password: str | None = None
     re_password: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    country_code: str | None = None
     role_id: UUID | None = None
     account_type: AccountTypeEnum | None = None
 
@@ -101,6 +109,8 @@ def user_from_mapping(data: dict) -> UserType:
         id=data["id"],
         username=data["username"],
         fullname=data["fullname"],
+        email=data.get("email"),
+        phone=data.get("phone"),
         role_id=data.get("role_id"),
         account_type=_account_type_enum(data.get("account_type")),
         last_session_at=data.get("last_session_at"),

@@ -590,6 +590,9 @@ input UserCreateInput {
   fullname: String!
   password: String!
   rePassword: String!
+  email: String = null
+  phone: String = null
+  countryCode: String = null
   roleId: UUID = null
   accountType: AccountTypeEnum = null
 }
@@ -624,6 +627,8 @@ type UserType {
   id: UUID!
   username: String!
   fullname: String!
+  email: String
+  phone: String
   roleId: UUID
   accountType: AccountTypeEnum!
   lastSessionAt: DateTime
@@ -634,6 +639,9 @@ input UserUpdateDataInput {
   fullname: String = null
   password: String = null
   rePassword: String = null
+  email: String = null
+  phone: String = null
+  countryCode: String = null
   roleId: UUID = null
   accountType: AccountTypeEnum = null
 }
