@@ -7,9 +7,14 @@ from app.application.dto.user.user_update_dto import (
     UserUpdateResponseDTO,
 )
 from app.application.interfaces.unit_of_work import UnitOfWork
+from app.application.use_cases.auth.register_user import (
+    normalize_register_email,
+    normalize_register_phone,
+)
 from app.core.config import settings
 from app.domain.entities.user import User
 from app.domain.exceptions.user_exceptions import (
+    EmailAlreadyExistsException,
     PasswordConfirmationMismatchException,
     PrivilegedUserModificationException,
     SelfRoleChangeException,
@@ -33,6 +38,7 @@ class UpdateUserUseCase:
         async with self.uow:
             user = await self.uow.users.get_or_raise(user_id=dto.where.user_id)
 
+            fields_set = dto.data.model_fields_set
             update_data = dto.data.model_dump(exclude_unset=True, exclude_none=True)
 
             update_data_enum = {
@@ -42,6 +48,9 @@ class UpdateUserUseCase:
             role_id = update_data_enum.pop(UserUpdateField.ROLE_ID, None)
             password = update_data_enum.pop(UserUpdateField.PASSWORD, None)
             re_password = update_data_enum.pop(UserUpdateField.RE_PASSWORD, None)
+            update_data_enum.pop(UserUpdateField.EMAIL, None)
+            update_data_enum.pop(UserUpdateField.PHONE, None)
+            update_data_enum.pop(UserUpdateField.COUNTRY_CODE, None)
 
             if role_id is not None:
                 await self._authorize_role_change(target=user, new_role_id=role_id)
@@ -52,6 +61,23 @@ class UpdateUserUseCase:
                 if password != re_password:
                     raise PasswordConfirmationMismatchException()
                 user.password_hash = self.password_hasher.hash(password)
+
+            if "email" in fields_set:
+                email = normalize_register_email(dto.data.email)
+                if email is not None and email != user.email:
+                    existing = await self.uow.users.get_by_email(email)
+                    if existing is not None and existing.safe_id != user.safe_id:
+                        raise EmailAlreadyExistsException()
+                user.email = email
+
+            if "phone" in fields_set or "country_code" in fields_set:
+                phone_source = (
+                    dto.data.phone if "phone" in fields_set else user.phone
+                )
+                country = (
+                    dto.data.country_code if "country_code" in fields_set else None
+                )
+                user.phone = normalize_register_phone(phone_source, country)
 
             for field, value in update_data_enum.items():
                 if field is UserUpdateField.ACCOUNT_TYPE:

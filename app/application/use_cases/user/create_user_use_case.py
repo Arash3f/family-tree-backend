@@ -4,8 +4,13 @@ from app.application.dto.user.user_create_dto import (
     UserCreateResponseDTO,
 )
 from app.application.interfaces.unit_of_work import UnitOfWork
+from app.application.use_cases.auth.register_user import (
+    normalize_register_email,
+    normalize_register_phone,
+)
 from app.domain.entities.user import User
 from app.domain.exceptions.user_exceptions import (
+    EmailAlreadyExistsException,
     PasswordConfirmationMismatchException,
     UsernameAlreadyExistsException,
 )
@@ -21,9 +26,15 @@ class CreateUserUseCase:
         if dto.password != dto.re_password:
             raise PasswordConfirmationMismatchException()
 
+        email = normalize_register_email(dto.email)
+        phone = normalize_register_phone(dto.phone, dto.country_code)
+
         async with self.uow:
             if await self.uow.users.get_by_username(dto.username):
                 raise UsernameAlreadyExistsException()
+
+            if email is not None and await self.uow.users.get_by_email(email):
+                raise EmailAlreadyExistsException()
 
             role_id = None
             if dto.role_id:
@@ -35,6 +46,8 @@ class CreateUserUseCase:
             user = User(
                 username=dto.username,
                 fullname=dto.fullname,
+                email=email,
+                phone=phone,
                 role_id=role_id,
                 password_hash=hashed_password,
                 account_type=dto.account_type,

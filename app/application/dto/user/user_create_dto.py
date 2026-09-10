@@ -28,6 +28,9 @@ class UserCreateDTO(BaseModel):
         max_length=256,
         description="Password must be 8-256 characters",
     )
+    email: str | None = Field(default=None, max_length=255)
+    phone: str | None = Field(default=None, max_length=32)
+    country_code: str | None = Field(default=None, max_length=8)
     role_id: UUID | None
     account_type: AccountType = AccountType.FREE
 
@@ -36,6 +39,8 @@ class UserCreateResponseDTO(BaseModel):
     id: UUID
     username: str
     fullname: str
+    email: str | None = None
+    phone: str | None = None
     role_id: UUID | None
     account_type: AccountType
 
@@ -47,6 +52,8 @@ class UserCreateMapper(BaseModel):
             id=user.safe_id,
             username=user.username,
             fullname=user.fullname,
+            email=user.email,
+            phone=user.phone,
             role_id=user.role_id,
             account_type=user.account_type,
         )

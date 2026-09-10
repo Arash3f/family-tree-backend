@@ -10,6 +10,8 @@ class UserGetResponseDTO(BaseModel):
     id: UUID
     username: str
     fullname: str
+    email: str | None = None
+    phone: str | None = None
     role_id: UUID | None
     account_type: AccountType
 
@@ -21,6 +23,8 @@ class UserGetMapper(BaseModel):
             id=user.safe_id,
             username=user.username,
             fullname=user.fullname,
+            email=user.email,
+            phone=user.phone,
             role_id=user.role_id,
             account_type=user.account_type,
         )
