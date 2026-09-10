@@ -16,6 +16,7 @@
 
 ## Contents
 
+- [Research / WIP](#research--wip)
 - [What it does](#what-it-does)
 - [Architecture](#architecture)
 - [Quick start](#quick-start)
@@ -30,6 +31,24 @@
 
 ---
 
+## Research / WIP
+
+Ideas and features that are **noted, under investigation, or partially sketched** — not promised for a release date. Use this as a living scratchpad; move items into shipped docs when they land.
+
+| Status | Idea | Notes |
+|--------|------|--------|
+| Research | Richer kinship labels | Map Neo4j edge sequences to human titles (cousin, great-uncle, …) per locale |
+| Research | Profile self-edit for email/phone | Public register stores them; admins can edit; end-user profile edit is still open |
+| Investigating | Path visualization polish | More distinct colors for alternative routes; optional abort of in-flight path queries |
+| Idea | Birthday / anniversary digests | Calendar already exists on the canvas — email or in-app digests not started |
+| Idea | Soft-delete / audit trail for people | Safer undo for accidental deletes in large trees |
+| Idea | Tree templates beyond starter trees | Packaged sample lineages for demos and onboarding |
+| Idea | Mobile-first pedigree gestures | Dedicated pinch/pan affordances and sheet layouts for very small screens |
+
+When you start implementing an item, leave a short note here (owner, branch, or PR). When it ships, delete the row and mention it in the product updates copy on the frontend.
+
+---
+
 ## What it does
 
 A family tree is a tenant. Users are granted access to individual trees, and every query is scoped to
@@ -40,9 +59,9 @@ Within a tree you can:
 - Register **persons** with names, gender, birth/death dates and places, notes and a photo
 - Link **parents** to children, tagged `BIOLOGICAL`, `ADOPTIVE` or `STEP`
 - Record **marriages** and divorces
-- Ask for the **closest relationship path** between any two people, computed in Neo4j
+- Ask for the **closest relationship path** between any two people, then optionally **alternative diverse paths** (Neo4j)
 - **Import and export** whole trees as Excel workbooks
-- Manage **users, roles and permissions**, and raise **support tickets**
+- Manage **users, roles and permissions** (including optional **email** and **phone**), and raise **support tickets**
 
 ### Design notes
 
