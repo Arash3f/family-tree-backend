@@ -237,9 +237,9 @@ poetry run pre-commit install --hook-type commit-msg
 
 | Hook stage | Runs | Roughly |
 |------------|------|---------|
-| `commit` | Ruff, pyupgrade, detect-secrets, YAML/TOML checks, `.env`/requirements sync | ~1s |
+| `commit` | Ruff, mypy, pyupgrade, detect-secrets, YAML/TOML checks, `.env`/requirements sync | ~20s |
 | `commit-msg` | Commitizen format — use `poetry run cz commit` | instant |
-| `pre-push` | mypy, Bandit | ~20s |
+| `pre-push` | Bandit | ~few s |
 
 The test suite is **not** in the pre-push hook (it needs live databases); CI is what enforces it.
 
@@ -742,7 +742,7 @@ deliberate guards.
 1. Branch from `main` (`feat/`, `fix/`, `ref/`)
 2. Commit with `poetry run cz commit` — the `commit-msg` hook enforces the format
 3. Update `openapi.json` / `schema.graphql` and the generated clients when the API changes
-4. Push; the `pre-push` hook runs mypy and Bandit, and CI runs the full suite
+4. Push; the `pre-push` hook runs Bandit, and CI runs the full suite (including mypy)
 
 ---
 

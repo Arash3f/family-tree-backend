@@ -71,9 +71,7 @@ class UpdateUserUseCase:
                 user.email = email
 
             if "phone" in fields_set or "country_code" in fields_set:
-                phone_source = (
-                    dto.data.phone if "phone" in fields_set else user.phone
-                )
+                phone_source = dto.data.phone if "phone" in fields_set else user.phone
                 country = (
                     dto.data.country_code if "country_code" in fields_set else None
                 )

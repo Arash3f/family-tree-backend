@@ -40,7 +40,8 @@ repos:
     hooks:
       - id: commitizen
         stages: [commit-msg]
-  # Heavy checks run on push so day-to-day commits stay fast.
+  # mypy on commit so type errors surface before the commit lands.
+  # Bandit stays on pre-push (heavier; less frequent feedback needed).
   - repo: https://github.com/PyCQA/bandit
     rev: 1.9.4
     hooks:
@@ -60,7 +61,6 @@ repos:
           - pydantic-settings
         args: ["--exclude", "^generated/", "."]
         pass_filenames: false
-        stages: [pre-push]
   - repo: local
     hooks:
       - id: env-example-sync
