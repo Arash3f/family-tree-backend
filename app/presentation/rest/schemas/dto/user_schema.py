@@ -20,6 +20,7 @@ class UserModel(BaseModel):
     phone: str | None = None
     role_id: UUID | None = None
     account_type: AccountType = AccountType.FREE
+    is_active: bool = True
     last_session_at: datetime | None = None
 
 
@@ -63,6 +64,7 @@ class UserUpdateResponse(BaseModel):
     phone: str | None = None
     role_id: UUID | None
     account_type: AccountType
+    is_active: bool = True
 
 
 class UserGetResponse(BaseModel):
@@ -73,6 +75,7 @@ class UserGetResponse(BaseModel):
     phone: str | None = None
     role_id: UUID | None
     account_type: AccountType
+    is_active: bool = True
 
 
 class UserCreateRequest(BaseModel):
@@ -106,6 +109,7 @@ class UserCreateResponse(BaseModel):
     phone: str | None = None
     role_id: UUID | None
     account_type: AccountType
+    is_active: bool = True
 
 
 class UserFilterRequestData(BaseModel):

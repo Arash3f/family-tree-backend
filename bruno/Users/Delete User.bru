@@ -20,7 +20,10 @@ assert {
 }
 
 docs {
-  # Delete User
+  # Delete User (soft-delete)
+
+  Sets `is_active=false`, detaches tree memberships (and all members of owned
+  trees). Tickets and sessions are kept.
 
   ## Input (path)
   | Param | Type | Required |

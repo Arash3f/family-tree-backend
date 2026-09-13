@@ -631,6 +631,7 @@ type UserType {
   phone: String
   roleId: UUID
   accountType: AccountTypeEnum!
+  isActive: Boolean!
   lastSessionAt: DateTime
 }
 

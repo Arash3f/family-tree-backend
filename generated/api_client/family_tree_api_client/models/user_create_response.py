@@ -8,6 +8,7 @@ from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..models.account_type import AccountType
+from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="UserCreateResponse")
 
@@ -21,6 +22,8 @@ class UserCreateResponse:
         fullname (str):
         role_id (None | UUID):
         account_type (AccountType):
+        email (None | str | Unset):
+        phone (None | str | Unset):
     """
 
     id: UUID
@@ -28,6 +31,8 @@ class UserCreateResponse:
     fullname: str
     role_id: None | UUID
     account_type: AccountType
+    email: None | str | Unset = UNSET
+    phone: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -45,6 +50,18 @@ class UserCreateResponse:
 
         account_type = self.account_type.value
 
+        email: None | str | Unset
+        if isinstance(self.email, Unset):
+            email = UNSET
+        else:
+            email = self.email
+
+        phone: None | str | Unset
+        if isinstance(self.phone, Unset):
+            phone = UNSET
+        else:
+            phone = self.phone
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -56,6 +73,10 @@ class UserCreateResponse:
                 "account_type": account_type,
             }
         )
+        if email is not UNSET:
+            field_dict["email"] = email
+        if phone is not UNSET:
+            field_dict["phone"] = phone
 
         return field_dict
 
@@ -85,12 +106,32 @@ class UserCreateResponse:
 
         account_type = AccountType(d.pop("account_type"))
 
+        def _parse_email(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        email = _parse_email(d.pop("email", UNSET))
+
+        def _parse_phone(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        phone = _parse_phone(d.pop("phone", UNSET))
+
         user_create_response = cls(
             id=id,
             username=username,
             fullname=fullname,
             role_id=role_id,
             account_type=account_type,
+            email=email,
+            phone=phone,
         )
 
         user_create_response.additional_properties = d

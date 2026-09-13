@@ -192,6 +192,7 @@ class SQLUserRepository(UserRepository):
         model.role_id = user.role_id
         model.password_hash = user.password_hash
         model.account_type = user.account_type.value
+        model.is_active = user.is_active
 
         await self.session.flush()
         await self.session.refresh(model)
@@ -213,6 +214,7 @@ class SQLUserRepository(UserRepository):
             password_hash=model.password_hash,
             role_id=model.role_id,
             account_type=AccountType(model.account_type),
+            is_active=model.is_active,
         )
 
     def _to_model(self, entity: User) -> UserModel:
@@ -225,6 +227,7 @@ class SQLUserRepository(UserRepository):
             password_hash=entity.password_hash,
             role_id=entity.role_id,
             account_type=entity.account_type.value,
+            is_active=entity.is_active,
         )
 
         return model

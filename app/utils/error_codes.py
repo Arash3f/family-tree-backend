@@ -54,6 +54,7 @@ class ErrorCode(int, Enum):
     PRIVILEGED_USER_MODIFICATION = 1404
     USERNAME_ALREADY_EXISTS = 1405
     EMAIL_ALREADY_EXISTS = 1406
+    ACCOUNT_DEACTIVATED = 1407
     # -----------------------
     # |     Role Person     |
     # -----------------------
@@ -145,6 +146,9 @@ ERROR_MESSAGES = {
         ),
         ErrorCode.USERNAME_ALREADY_EXISTS: "Username is already taken",
         ErrorCode.EMAIL_ALREADY_EXISTS: "Email is already registered",
+        ErrorCode.ACCOUNT_DEACTIVATED: (
+            "Your account has been deactivated. Please contact support."
+        ),
         # Domain Role
         ErrorCode.ROLE_NOT_FOUND: "Role not found",
         ErrorCode.ROLE_NAME_DUPLICATED: "Role name duplicated",
@@ -226,6 +230,9 @@ ERROR_MESSAGES = {
         ),
         ErrorCode.USERNAME_ALREADY_EXISTS: "این نام کاربری قبلاً گرفته شده است",
         ErrorCode.EMAIL_ALREADY_EXISTS: "این ایمیل قبلاً ثبت شده است",
+        ErrorCode.ACCOUNT_DEACTIVATED: (
+            "حساب شما غیرفعال شده است. لطفاً با پشتیبانی تماس بگیرید."
+        ),
         # Domain Role
         ErrorCode.ROLE_NOT_FOUND: "نقش پیدا نشد",
         ErrorCode.ROLE_NAME_DUPLICATED: "اسم نقش تکراری است",

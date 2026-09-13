@@ -7,6 +7,7 @@ from app.application.interfaces.unit_of_work import UnitOfWork
 from app.core.config import settings
 from app.domain.entities.user_session import UserSession
 from app.domain.exceptions.auth_exceptions import InvalidCredentialsException
+from app.domain.exceptions.user_exceptions import AccountDeactivatedException
 from app.domain.services.password_hasher import PasswordHasher
 
 
@@ -36,6 +37,9 @@ class LoginUserUseCase:
 
             if not self.password_hasher.verify(data.password, user.password_hash):
                 raise InvalidCredentialsException()
+
+            if not user.is_active:
+                raise AccountDeactivatedException()
 
             session_id = uuid4()
             expires_at = datetime.now(UTC) + timedelta(

@@ -8,7 +8,10 @@ from strawberry.types import Info
 from app.domain.entities.user import User
 from app.domain.exceptions.auth_exceptions import InvalidCredentialsException
 from app.domain.exceptions.permission_exceptions import PermissionDeniedException
-from app.domain.exceptions.user_exceptions import UserNotFoundException
+from app.domain.exceptions.user_exceptions import (
+    AccountDeactivatedException,
+    UserNotFoundException,
+)
 from app.presentation.graphql.context import GraphQLContext
 from app.presentation.rest.dependencies.rate_limit import rate_limit_auth
 
@@ -71,6 +74,9 @@ async def get_current_user(info: Info) -> User:
         user = await ctx.uow.users.get(user_id)
         if not user:
             raise UserNotFoundException()
+
+        if not user.is_active:
+            raise AccountDeactivatedException()
 
         user._active_session_id = session_id  # type: ignore[attr-defined]
         return user

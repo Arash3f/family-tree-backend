@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import Boolean, ForeignKey, String, true
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.domain.shared.account_type import AccountType
@@ -24,6 +24,12 @@ class UserModel(Base):
         nullable=False,
         default=AccountType.FREE.value,
         server_default=AccountType.FREE.value,
+    )
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default=true(),
     )
 
     role_id: Mapped[UUID | None] = mapped_column(

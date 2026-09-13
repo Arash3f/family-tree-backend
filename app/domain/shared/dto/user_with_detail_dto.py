@@ -26,4 +26,5 @@ class UserGetWithDetailResponseDTO(BaseModel):
     phone: str | None = None
     role_id: UUID | None
     account_type: AccountType
+    is_active: bool = True
     role: _RoleData | None

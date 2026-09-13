@@ -25,6 +25,9 @@ class TreeRepository(ABC):
     async def count_owned_by_user(self, user_id: UUID) -> int: ...
 
     @abstractmethod
+    async def list_owned_by_user(self, user_id: UUID) -> list[FamilyTree]: ...
+
+    @abstractmethod
     async def update(self, tree: FamilyTree) -> FamilyTree: ...
 
     @abstractmethod
@@ -63,6 +66,12 @@ class TreeMembershipRepository(ABC):
 
     @abstractmethod
     async def delete(self, tree_id: UUID, user_id: UUID) -> None: ...
+
+    @abstractmethod
+    async def delete_all_for_user(self, user_id: UUID) -> None: ...
+
+    @abstractmethod
+    async def delete_all_for_tree(self, tree_id: UUID) -> None: ...
 
     async def get_or_raise(self, tree_id: UUID, user_id: UUID) -> TreeMembership:
         membership = await self.get(tree_id=tree_id, user_id=user_id)

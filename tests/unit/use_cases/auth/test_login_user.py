@@ -6,6 +6,7 @@ import pytest
 from app.application.dto.auth_dto import LoginDTO
 from app.application.use_cases.login_user import LoginUserUseCase
 from app.domain.exceptions.auth_exceptions import InvalidCredentialsException
+from app.domain.exceptions.user_exceptions import AccountDeactivatedException
 
 
 @pytest.mark.asyncio
@@ -15,6 +16,7 @@ async def test_login_user_success(mock_uow):
     user = MagicMock()
     user.password_hash = "hashed"
     user.safe_id = UUID(int=1)
+    user.is_active = True
 
     mock_uow.users.get_by_username = AsyncMock(return_value=user)
     mock_uow.sessions.create = AsyncMock()
@@ -68,6 +70,7 @@ async def test_login_user_invalid_password(mock_uow):
 
     user = MagicMock()
     user.password_hash = "hashed"
+    user.is_active = True
 
     mock_uow.users.get_by_username = AsyncMock(return_value=user)
 
@@ -85,3 +88,27 @@ async def test_login_user_invalid_password(mock_uow):
 
     token_service.create_access_token.assert_not_called()
     token_service.create_refresh_token.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_login_user_deactivated(mock_uow):
+    dto = LoginDTO(username="arash", password="1234")
+
+    user = MagicMock()
+    user.password_hash = "hashed"
+    user.is_active = False
+
+    mock_uow.users.get_by_username = AsyncMock(return_value=user)
+
+    password_hasher = MagicMock()
+    password_hasher.verify.return_value = True
+
+    token_service = MagicMock()
+
+    use_case = LoginUserUseCase(mock_uow, password_hasher, token_service)
+
+    with pytest.raises(AccountDeactivatedException):
+        await use_case.execute(dto)
+
+    token_service.create_access_token.assert_not_called()
+    mock_uow.sessions.create.assert_not_awaited()

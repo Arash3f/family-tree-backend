@@ -43,6 +43,7 @@ class UserCreateResponseDTO(BaseModel):
     phone: str | None = None
     role_id: UUID | None
     account_type: AccountType
+    is_active: bool = True
 
 
 class UserCreateMapper(BaseModel):
@@ -56,4 +57,5 @@ class UserCreateMapper(BaseModel):
             phone=user.phone,
             role_id=user.role_id,
             account_type=user.account_type,
+            is_active=user.is_active,
         )

@@ -10,6 +10,7 @@ from app.application.interfaces.unit_of_work import UnitOfWork
 from app.core.config import settings
 from app.domain.entities.user_session import UserSession
 from app.domain.exceptions.auth_exceptions import InvalidCredentialsException
+from app.domain.exceptions.user_exceptions import AccountDeactivatedException
 
 
 class RefreshTokenUseCase:
@@ -66,6 +67,8 @@ class RefreshTokenUseCase:
             user = await self.uow.users.get(user_id)
             if not user:
                 raise InvalidCredentialsException()
+            if not user.is_active:
+                raise AccountDeactivatedException()
 
             new_session_id = uuid4()
             expires_at = datetime.now(UTC) + timedelta(

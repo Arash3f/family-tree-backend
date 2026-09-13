@@ -14,6 +14,7 @@ class UserGetResponseDTO(BaseModel):
     phone: str | None = None
     role_id: UUID | None
     account_type: AccountType
+    is_active: bool = True
 
 
 class UserGetMapper(BaseModel):
@@ -27,4 +28,5 @@ class UserGetMapper(BaseModel):
             phone=user.phone,
             role_id=user.role_id,
             account_type=user.account_type,
+            is_active=user.is_active,
         )

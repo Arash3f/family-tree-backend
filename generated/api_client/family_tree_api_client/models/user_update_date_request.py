@@ -21,6 +21,9 @@ class UserUpdateDateRequest:
         fullname (None | str | Unset):
         password (None | str | Unset):
         re_password (None | str | Unset):
+        email (None | str | Unset):
+        phone (None | str | Unset):
+        country_code (None | str | Unset):
         role_id (None | Unset | UUID):
         account_type (AccountType | None | Unset):
     """
@@ -29,6 +32,9 @@ class UserUpdateDateRequest:
     fullname: None | str | Unset = UNSET
     password: None | str | Unset = UNSET
     re_password: None | str | Unset = UNSET
+    email: None | str | Unset = UNSET
+    phone: None | str | Unset = UNSET
+    country_code: None | str | Unset = UNSET
     role_id: None | Unset | UUID = UNSET
     account_type: AccountType | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -58,6 +64,24 @@ class UserUpdateDateRequest:
         else:
             re_password = self.re_password
 
+        email: None | str | Unset
+        if isinstance(self.email, Unset):
+            email = UNSET
+        else:
+            email = self.email
+
+        phone: None | str | Unset
+        if isinstance(self.phone, Unset):
+            phone = UNSET
+        else:
+            phone = self.phone
+
+        country_code: None | str | Unset
+        if isinstance(self.country_code, Unset):
+            country_code = UNSET
+        else:
+            country_code = self.country_code
+
         role_id: None | str | Unset
         if isinstance(self.role_id, Unset):
             role_id = UNSET
@@ -85,6 +109,12 @@ class UserUpdateDateRequest:
             field_dict["password"] = password
         if re_password is not UNSET:
             field_dict["re_password"] = re_password
+        if email is not UNSET:
+            field_dict["email"] = email
+        if phone is not UNSET:
+            field_dict["phone"] = phone
+        if country_code is not UNSET:
+            field_dict["country_code"] = country_code
         if role_id is not UNSET:
             field_dict["role_id"] = role_id
         if account_type is not UNSET:
@@ -132,6 +162,33 @@ class UserUpdateDateRequest:
 
         re_password = _parse_re_password(d.pop("re_password", UNSET))
 
+        def _parse_email(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        email = _parse_email(d.pop("email", UNSET))
+
+        def _parse_phone(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        phone = _parse_phone(d.pop("phone", UNSET))
+
+        def _parse_country_code(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        country_code = _parse_country_code(d.pop("country_code", UNSET))
+
         def _parse_role_id(data: object) -> None | Unset | UUID:
             if data is None:
                 return data
@@ -171,6 +228,9 @@ class UserUpdateDateRequest:
             fullname=fullname,
             password=password,
             re_password=re_password,
+            email=email,
+            phone=phone,
+            country_code=country_code,
             role_id=role_id,
             account_type=account_type,
         )

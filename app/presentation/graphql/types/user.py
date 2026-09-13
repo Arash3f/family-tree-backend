@@ -34,6 +34,7 @@ class UserType:
     phone: str | None = None
     role_id: UUID | None = None
     account_type: AccountTypeEnum = AccountTypeEnum.FREE
+    is_active: bool = True
     last_session_at: datetime | None = None
 
 
@@ -113,5 +114,6 @@ def user_from_mapping(data: dict) -> UserType:
         phone=data.get("phone"),
         role_id=data.get("role_id"),
         account_type=_account_type_enum(data.get("account_type")),
+        is_active=bool(data.get("is_active", True)),
         last_session_at=data.get("last_session_at"),
     )

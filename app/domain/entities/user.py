@@ -23,6 +23,7 @@ class User:
     id: UUID | None = None
     role_id: UUID | None = None
     account_type: AccountType = AccountType.FREE
+    is_active: bool = True
     # Populated only on list queries (max session created_at); not persisted on User.
     last_session_at: datetime | None = None
 

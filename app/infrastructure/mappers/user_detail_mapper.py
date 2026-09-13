@@ -32,5 +32,6 @@ def user_model_to_detail_dto(model: UserModel) -> UserGetWithDetailResponseDTO:
         phone=model.phone,
         role_id=model.role_id,
         account_type=AccountType(model.account_type),
+        is_active=model.is_active,
         role=role,
     )

@@ -21,6 +21,8 @@ class UserModel:
         id (UUID):
         username (str):
         fullname (str):
+        email (None | str | Unset):
+        phone (None | str | Unset):
         role_id (None | Unset | UUID):
         account_type (AccountType | Unset):
         last_session_at (datetime.datetime | None | Unset):
@@ -29,6 +31,8 @@ class UserModel:
     id: UUID
     username: str
     fullname: str
+    email: None | str | Unset = UNSET
+    phone: None | str | Unset = UNSET
     role_id: None | Unset | UUID = UNSET
     account_type: AccountType | Unset = UNSET
     last_session_at: datetime.datetime | None | Unset = UNSET
@@ -40,6 +44,18 @@ class UserModel:
         username = self.username
 
         fullname = self.fullname
+
+        email: None | str | Unset
+        if isinstance(self.email, Unset):
+            email = UNSET
+        else:
+            email = self.email
+
+        phone: None | str | Unset
+        if isinstance(self.phone, Unset):
+            phone = UNSET
+        else:
+            phone = self.phone
 
         role_id: None | str | Unset
         if isinstance(self.role_id, Unset):
@@ -70,6 +86,10 @@ class UserModel:
                 "fullname": fullname,
             }
         )
+        if email is not UNSET:
+            field_dict["email"] = email
+        if phone is not UNSET:
+            field_dict["phone"] = phone
         if role_id is not UNSET:
             field_dict["role_id"] = role_id
         if account_type is not UNSET:
@@ -87,6 +107,24 @@ class UserModel:
         username = d.pop("username")
 
         fullname = d.pop("fullname")
+
+        def _parse_email(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        email = _parse_email(d.pop("email", UNSET))
+
+        def _parse_phone(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        phone = _parse_phone(d.pop("phone", UNSET))
 
         def _parse_role_id(data: object) -> None | Unset | UUID:
             if data is None:
@@ -133,6 +171,8 @@ class UserModel:
             id=id,
             username=username,
             fullname=fullname,
+            email=email,
+            phone=phone,
             role_id=role_id,
             account_type=account_type,
             last_session_at=last_session_at,

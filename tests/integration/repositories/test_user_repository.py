@@ -272,6 +272,23 @@ async def test_delete_user(uow: UnitOfWork):
 
 
 @pytest.mark.asyncio
+async def test_deactivate_user_via_update(uow: UnitOfWork):
+    async with uow:
+        user = await uow.users.create(
+            User(username="soft_delete_me", password_hash="hash")
+        )
+        assert user.is_active is True
+
+        user.is_active = False
+        updated = await uow.users.update(user)
+
+        assert updated.is_active is False
+        fetched = await uow.users.get(user_id=updated.safe_id)
+        assert fetched is not None
+        assert fetched.is_active is False
+
+
+@pytest.mark.asyncio
 async def test_ids_having_permission(uow: UnitOfWork):
     from app.domain.entities.permission import Permission
 

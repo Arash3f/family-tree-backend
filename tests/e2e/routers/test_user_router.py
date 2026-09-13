@@ -311,7 +311,8 @@ async def test_delete_user_success(
     async with uow:
         deleted = await uow.users.get(user_id=deleted_user_id)
 
-    assert deleted is None
+    assert deleted is not None
+    assert deleted.is_active is False
 
 
 @pytest.mark.asyncio

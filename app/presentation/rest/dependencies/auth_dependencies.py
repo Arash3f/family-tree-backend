@@ -8,7 +8,10 @@ from jose.exceptions import JWTError
 from app.application.interfaces.token_service import TokenService
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.exceptions.auth_exceptions import InvalidCredentialsException
-from app.domain.exceptions.user_exceptions import UserNotFoundException
+from app.domain.exceptions.user_exceptions import (
+    AccountDeactivatedException,
+    UserNotFoundException,
+)
 from app.presentation.dependencies import get_request_uow, get_token_service
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -51,6 +54,9 @@ async def get_current_user(
 
     if not user:
         raise UserNotFoundException()
+
+    if not user.is_active:
+        raise AccountDeactivatedException()
 
     # Attach session id for logout handlers
     user._active_session_id = session_id  # type: ignore[attr-defined]

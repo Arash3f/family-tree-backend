@@ -61,6 +61,15 @@ class SQLTreeRepository(TreeRepository):
         result = await self.session.execute(stmt)
         return int(result.scalar_one())
 
+    async def list_owned_by_user(self, user_id: UUID) -> list[FamilyTree]:
+        stmt = (
+            select(FamilyTreeModel)
+            .where(FamilyTreeModel.owner_user_id == user_id)
+            .order_by(FamilyTreeModel.created_at.desc())
+        )
+        result = await self.session.execute(stmt)
+        return [self._to_entity(m) for m in result.scalars().all()]
+
     async def update(self, tree: FamilyTree) -> FamilyTree:
         stmt = select(FamilyTreeModel).where(FamilyTreeModel.id == tree.id)
         result = await self.session.execute(stmt)
@@ -179,6 +188,28 @@ class SQLTreeMembershipRepository(TreeMembershipRepository):
             .where(
                 TreeMembershipModel.tree_id == tree_id,
                 TreeMembershipModel.user_id == user_id,
+                TreeMembershipModel.deleted_at.is_(None),
+            )
+            .values(deleted_at=datetime.now(UTC))
+        )
+        await self.session.execute(stmt)
+
+    async def delete_all_for_user(self, user_id: UUID) -> None:
+        stmt = (
+            update(TreeMembershipModel)
+            .where(
+                TreeMembershipModel.user_id == user_id,
+                TreeMembershipModel.deleted_at.is_(None),
+            )
+            .values(deleted_at=datetime.now(UTC))
+        )
+        await self.session.execute(stmt)
+
+    async def delete_all_for_tree(self, tree_id: UUID) -> None:
+        stmt = (
+            update(TreeMembershipModel)
+            .where(
+                TreeMembershipModel.tree_id == tree_id,
                 TreeMembershipModel.deleted_at.is_(None),
             )
             .values(deleted_at=datetime.now(UTC))
