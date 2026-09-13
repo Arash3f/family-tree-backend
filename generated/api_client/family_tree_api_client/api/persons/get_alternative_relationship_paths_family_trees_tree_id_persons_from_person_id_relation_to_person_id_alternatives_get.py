@@ -9,14 +9,22 @@ from ... import errors
 from ...client import AuthenticatedClient, Client
 from ...models.closest_relationship_response import ClosestRelationshipResponse
 from ...models.http_validation_error import HTTPValidationError
-from ...types import Response
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
     tree_id: UUID,
     from_person_id: UUID,
     to_person_id: UUID,
+    *,
+    male_only: bool | Unset = False,
 ) -> dict[str, Any]:
+
+    params: dict[str, Any] = {}
+
+    params["male_only"] = male_only
+
+    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
     _kwargs: dict[str, Any] = {
         "method": "get",
@@ -25,6 +33,7 @@ def _get_kwargs(
             from_person_id=quote(str(from_person_id), safe=""),
             to_person_id=quote(str(to_person_id), safe=""),
         ),
+        "params": params,
     }
 
     return _kwargs
@@ -66,6 +75,7 @@ def sync_detailed(
     to_person_id: UUID,
     *,
     client: AuthenticatedClient,
+    male_only: bool | Unset = False,
 ) -> Response[ClosestRelationshipResponse | HTTPValidationError]:
     """Get Alternative Relationship Paths
 
@@ -73,6 +83,7 @@ def sync_detailed(
         tree_id (UUID):
         from_person_id (UUID):
         to_person_id (UUID):
+        male_only (bool | Unset):  Default: False.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -86,6 +97,7 @@ def sync_detailed(
         tree_id=tree_id,
         from_person_id=from_person_id,
         to_person_id=to_person_id,
+        male_only=male_only,
     )
 
     response = client.get_httpx_client().request(
@@ -101,6 +113,7 @@ def sync(
     to_person_id: UUID,
     *,
     client: AuthenticatedClient,
+    male_only: bool | Unset = False,
 ) -> ClosestRelationshipResponse | HTTPValidationError | None:
     """Get Alternative Relationship Paths
 
@@ -108,6 +121,7 @@ def sync(
         tree_id (UUID):
         from_person_id (UUID):
         to_person_id (UUID):
+        male_only (bool | Unset):  Default: False.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -122,6 +136,7 @@ def sync(
         from_person_id=from_person_id,
         to_person_id=to_person_id,
         client=client,
+        male_only=male_only,
     ).parsed
 
 
@@ -131,6 +146,7 @@ async def asyncio_detailed(
     to_person_id: UUID,
     *,
     client: AuthenticatedClient,
+    male_only: bool | Unset = False,
 ) -> Response[ClosestRelationshipResponse | HTTPValidationError]:
     """Get Alternative Relationship Paths
 
@@ -138,6 +154,7 @@ async def asyncio_detailed(
         tree_id (UUID):
         from_person_id (UUID):
         to_person_id (UUID):
+        male_only (bool | Unset):  Default: False.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -151,6 +168,7 @@ async def asyncio_detailed(
         tree_id=tree_id,
         from_person_id=from_person_id,
         to_person_id=to_person_id,
+        male_only=male_only,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -164,6 +182,7 @@ async def asyncio(
     to_person_id: UUID,
     *,
     client: AuthenticatedClient,
+    male_only: bool | Unset = False,
 ) -> ClosestRelationshipResponse | HTTPValidationError | None:
     """Get Alternative Relationship Paths
 
@@ -171,6 +190,7 @@ async def asyncio(
         tree_id (UUID):
         from_person_id (UUID):
         to_person_id (UUID):
+        male_only (bool | Unset):  Default: False.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -186,5 +206,6 @@ async def asyncio(
             from_person_id=from_person_id,
             to_person_id=to_person_id,
             client=client,
+            male_only=male_only,
         )
     ).parsed

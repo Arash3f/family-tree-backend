@@ -137,7 +137,8 @@ class Query:
     @strawberry.field(
         description=(
             "Closest (shortest) relationship path "
-            "(REST: GET /family-trees/{tree_id}/persons/{from}/relation/{to})"
+            "(REST: GET /family-trees/{tree_id}/persons/{from}/relation/{to}). "
+            "When maleOnly is true, intermediate people on the path must be male."
         )
     )
     async def closest_relationship(
@@ -146,16 +147,18 @@ class Query:
         tree_id: UUID,
         from_person_id: UUID,
         to_person_id: UUID,
+        male_only: bool = False,
     ) -> ClosestRelationshipType:
 
         return await person_resolvers.resolve_closest_relationship(
-            info, tree_id, from_person_id, to_person_id
+            info, tree_id, from_person_id, to_person_id, male_only=male_only
         )
 
     @strawberry.field(
         description=(
             "Diverse alternative relationship paths (REST: GET "
-            ".../persons/{from}/relation/{to}/alternatives)"
+            ".../persons/{from}/relation/{to}/alternatives). "
+            "When maleOnly is true, intermediate people on each path must be male."
         )
     )
     async def alternative_relationship_paths(
@@ -164,10 +167,11 @@ class Query:
         tree_id: UUID,
         from_person_id: UUID,
         to_person_id: UUID,
+        male_only: bool = False,
     ) -> ClosestRelationshipType:
 
         return await person_resolvers.resolve_alternative_relationship_paths(
-            info, tree_id, from_person_id, to_person_id
+            info, tree_id, from_person_id, to_person_id, male_only=male_only
         )
 
     @strawberry.field(description="Get user by id (REST: GET /users/{id})")

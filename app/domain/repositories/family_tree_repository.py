@@ -73,6 +73,7 @@ class FamilyTreeRepository(ABC):
         *,
         max_hops: int | None = None,
         person_count: int | None = None,
+        male_only: bool = False,
     ) -> RelationshipPathDTO:
         pass
 
@@ -85,5 +86,6 @@ class FamilyTreeRepository(ABC):
         *,
         max_hops: int | None = None,
         person_count: int | None = None,
+        male_only: bool = False,
     ) -> RelationshipPathDTO:
         pass

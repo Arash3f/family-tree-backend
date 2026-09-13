@@ -233,10 +233,14 @@ async def resolve_closest_relationship(
     tree_id: UUID,
     from_person_id: UUID,
     to_person_id: UUID,
+    *,
+    male_only: bool = False,
 ) -> ClosestRelationshipType:
     await _require_tree_member(info, tree_id, TreeAccessPermissions.VIEW)
     usecase = GetClosestRelationshipUseCase(info.context.neo, info.context.uow)
-    result = await usecase.execute(from_person_id, to_person_id, tree_id=tree_id)
+    result = await usecase.execute(
+        from_person_id, to_person_id, tree_id=tree_id, male_only=male_only
+    )
     return _relationship_path_to_type(result.model_dump())
 
 
@@ -245,10 +249,14 @@ async def resolve_alternative_relationship_paths(
     tree_id: UUID,
     from_person_id: UUID,
     to_person_id: UUID,
+    *,
+    male_only: bool = False,
 ) -> ClosestRelationshipType:
     await _require_tree_member(info, tree_id, TreeAccessPermissions.VIEW)
     usecase = GetAlternativeRelationshipPathsUseCase(info.context.neo, info.context.uow)
-    result = await usecase.execute(from_person_id, to_person_id, tree_id=tree_id)
+    result = await usecase.execute(
+        from_person_id, to_person_id, tree_id=tree_id, male_only=male_only
+    )
     return _relationship_path_to_type(result.model_dump())
 
 

@@ -69,6 +69,7 @@ class GetClosestRelationshipUseCase:
         to_person_id: UUID,
         *,
         tree_id: UUID,
+        male_only: bool = False,
     ) -> RelationshipPathDTO:
         person_count, max_hops = await _ensure_persons_and_max_hops(
             self.family_tree_repo,
@@ -83,6 +84,7 @@ class GetClosestRelationshipUseCase:
             tree_id=tree_id,
             max_hops=max_hops,
             person_count=person_count,
+            male_only=male_only,
         )
 
 
@@ -103,6 +105,7 @@ class GetAlternativeRelationshipPathsUseCase:
         to_person_id: UUID,
         *,
         tree_id: UUID,
+        male_only: bool = False,
     ) -> RelationshipPathDTO:
         person_count, max_hops = await _ensure_persons_and_max_hops(
             self.family_tree_repo,
@@ -117,4 +120,5 @@ class GetAlternativeRelationshipPathsUseCase:
             tree_id=tree_id,
             max_hops=max_hops,
             person_count=person_count,
+            male_only=male_only,
         )

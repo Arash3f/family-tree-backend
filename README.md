@@ -35,15 +35,7 @@
 
 Ideas and features that are **noted, under investigation, or partially sketched** — not promised for a release date. Use this as a living scratchpad; move items into shipped docs when they land.
 
-| Status | Idea | Notes |
-|--------|------|--------|
-| Research | Richer kinship labels | Map Neo4j edge sequences to human titles (cousin, great-uncle, …) per locale |
-| Research | Profile self-edit for email/phone | Public register stores them; admins can edit; end-user profile edit is still open |
-| Investigating | Path visualization polish | More distinct colors for alternative routes; optional abort of in-flight path queries |
-| Idea | Birthday / anniversary digests | Calendar already exists on the canvas — email or in-app digests not started |
-| Idea | Soft-delete / audit trail for people | Safer undo for accidental deletes in large trees |
-| Idea | Tree templates beyond starter trees | Packaged sample lineages for demos and onboarding |
-| Idea | Mobile-first pedigree gestures | Dedicated pinch/pan affordances and sheet layouts for very small screens |
+_Nothing listed yet — add rows here when research notes are ready._
 
 When you start implementing an item, leave a short note here (owner, branch, or PR). When it ships, delete the row and mention it in the product updates copy on the frontend.
 
@@ -208,6 +200,10 @@ Ask how two people are related — this one goes through Neo4j:
 ```bash
 curl "http://localhost:8001/family-trees/$TREE_ID/persons/$FROM_ID/relation/$TO_ID" \
   -H "Authorization: Bearer $TOKEN"
+
+# Same request, but only walk through male intermediate people:
+curl "http://localhost:8001/family-trees/$TREE_ID/persons/$FROM_ID/relation/$TO_ID?male_only=true" \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ```json
@@ -356,8 +352,8 @@ Paid accounts are unlimited. Exceeding a free quota returns `error_code` **1711*
 | `POST` `PUT` | `/family-trees/{tree_id}/persons` | Create · update |
 | `POST` | `/family-trees/{tree_id}/persons/list` | Filtered, paginated list |
 | `GET` `DELETE` | `/family-trees/{tree_id}/persons/{person_id}` | Read · delete |
-| `GET` | `/family-trees/{tree_id}/persons/{from_person_id}/relation/{to_person_id}` | Closest (shortest) relationship path |
-| `GET` | `/family-trees/{tree_id}/persons/{from_person_id}/relation/{to_person_id}/alternatives` | Diverse alternative relationship paths |
+| `GET` | `/family-trees/{tree_id}/persons/{from_person_id}/relation/{to_person_id}` | Closest (shortest) relationship path (`male_only=true` keeps only male intermediates) |
+| `GET` | `/family-trees/{tree_id}/persons/{from_person_id}/relation/{to_person_id}/alternatives` | Diverse alternative relationship paths (same `male_only` flag) |
 
 ### Marriages
 
@@ -442,13 +438,14 @@ query {
 }
 
 query {
-  closestRelationship(treeId: "...", fromPersonId: "...", toPersonId: "...") {
+  closestRelationship(treeId: "...", fromPersonId: "...", toPersonId: "...", maleOnly: true) {
     found distance pathPersonIds relationshipTypes
   }
   alternativeRelationshipPaths(
     treeId: "..."
     fromPersonId: "..."
     toPersonId: "..."
+    maleOnly: true
   ) {
     found distance paths { distance pathPersonIds relationshipTypes }
   }

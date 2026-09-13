@@ -139,6 +139,67 @@ async def test_shortest_path_does_not_route_through_a_foreign_tree(neo_repo):
 
 
 @pytest.mark.asyncio
+async def test_male_only_path_skips_female_intermediates(neo_repo):
+    """With male_only, a mother bridge is rejected; a father bridge is kept."""
+    tree_id = uuid4()
+    father_id = uuid4()
+    mother_id = uuid4()
+    child_a = uuid4()
+    child_b = uuid4()
+
+    async def upsert(person_id, name, gender):
+        await neo_repo.upsert_person(
+            PersonUpsertDTO(
+                id=person_id,
+                tree_id=tree_id,
+                full_name=name,
+                gender=gender,
+                birth_date=date(1970, 1, 1),
+            )
+        )
+
+    await upsert(father_id, "Father", "MALE")
+    await upsert(mother_id, "Mother", "FEMALE")
+    await upsert(child_a, "Child A", "MALE")
+    await upsert(child_b, "Child B", "MALE")
+    await neo_repo.create_parent_relationship(
+        ParentRelationshipDTO(parent_id=mother_id, child_id=child_a)
+    )
+    await neo_repo.create_parent_relationship(
+        ParentRelationshipDTO(parent_id=mother_id, child_id=child_b)
+    )
+    await neo_repo.create_parent_relationship(
+        ParentRelationshipDTO(parent_id=father_id, child_id=child_a)
+    )
+    await neo_repo.create_parent_relationship(
+        ParentRelationshipDTO(parent_id=father_id, child_id=child_b)
+    )
+
+    try:
+        via_anyone = await neo_repo.find_shortest_relationship_path(
+            child_a, child_b, tree_id=tree_id
+        )
+        assert via_anyone.found is True
+        assert via_anyone.distance == 2
+
+        via_males = await neo_repo.find_shortest_relationship_path(
+            child_a, child_b, tree_id=tree_id, male_only=True
+        )
+        assert via_males.found is True
+        assert via_males.distance == 2
+        assert via_males.path_person_ids == [child_a, father_id, child_b]
+
+        await neo_repo.delete_person(PersonIdDTO(id=father_id))
+        only_mother = await neo_repo.find_shortest_relationship_path(
+            child_a, child_b, tree_id=tree_id, male_only=True
+        )
+        assert only_mother.found is False
+    finally:
+        for person_id in (child_a, child_b, father_id, mother_id):
+            await neo_repo.delete_person(PersonIdDTO(id=person_id))
+
+
+@pytest.mark.asyncio
 async def test_diverse_paths_keep_both_parent_routes(neo_repo):
     """Two full siblings have two parent routes; both should come back."""
     tree_id = uuid4()

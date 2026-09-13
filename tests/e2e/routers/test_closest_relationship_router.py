@@ -125,6 +125,46 @@ async def test_closest_relationship_success(
     assert len(body.paths) == 1
     mock_neo.find_shortest_relationship_path.assert_called_once()
     mock_neo.find_diverse_relationship_paths.assert_not_called()
+    call_kwargs = mock_neo.find_shortest_relationship_path.await_args.kwargs
+    assert call_kwargs.get("male_only") is False
+
+
+@pytest.mark.asyncio
+async def test_closest_relationship_male_only_flag(
+    tree_id,
+    admin_client: AuthenticatedClient,
+    uow: TreeUnitOfWork,
+    mock_neo,  # noqa: F811
+):
+    from_person = await uow.persons.create(
+        Person(id=None, tree_id=tree_id, name="From", gender=Gender.MALE)
+    )
+    to_person = await uow.persons.create(
+        Person(id=None, tree_id=tree_id, name="To", gender=Gender.FEMALE)
+    )
+    await uow.commit()
+
+    from_id, to_id = from_person.safe_id, to_person.safe_id
+    mock_neo.person_exists.return_value = True
+    mock_neo.find_shortest_relationship_path.return_value = RelationshipPathDTO(
+        from_person_id=from_id,
+        to_person_id=to_id,
+        found=False,
+    )
+
+    resp = await get_closest_relationship(
+        client=admin_client,
+        tree_id=tree_id,
+        from_person_id=from_id,
+        to_person_id=to_id,
+        male_only=True,
+    )
+    assert resp.status_code == 200, resp.content
+    assert isinstance(resp.parsed, ClosestRelationshipResponse)
+    assert resp.parsed.found is False
+    call_kwargs = mock_neo.find_shortest_relationship_path.await_args.kwargs
+    assert call_kwargs.get("male_only") is True
+    mock_neo.find_diverse_relationship_paths.assert_not_called()
 
 
 @pytest.mark.asyncio

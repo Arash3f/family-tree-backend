@@ -355,14 +355,14 @@ type Query {
   persons(treeId: UUID!, data: PersonListInput = null): PersonPage!
 
   """
-  Closest (shortest) relationship path (REST: GET /family-trees/{tree_id}/persons/{from}/relation/{to})
+  Closest (shortest) relationship path (REST: GET /family-trees/{tree_id}/persons/{from}/relation/{to}). When maleOnly is true, intermediate people on the path must be male.
   """
-  closestRelationship(treeId: UUID!, fromPersonId: UUID!, toPersonId: UUID!): ClosestRelationshipType!
+  closestRelationship(treeId: UUID!, fromPersonId: UUID!, toPersonId: UUID!, maleOnly: Boolean! = false): ClosestRelationshipType!
 
   """
-  Diverse alternative relationship paths (REST: GET .../persons/{from}/relation/{to}/alternatives)
+  Diverse alternative relationship paths (REST: GET .../persons/{from}/relation/{to}/alternatives). When maleOnly is true, intermediate people on each path must be male.
   """
-  alternativeRelationshipPaths(treeId: UUID!, fromPersonId: UUID!, toPersonId: UUID!): ClosestRelationshipType!
+  alternativeRelationshipPaths(treeId: UUID!, fromPersonId: UUID!, toPersonId: UUID!, maleOnly: Boolean! = false): ClosestRelationshipType!
 
   """Get user by id (REST: GET /users/{id})"""
   user(userId: UUID!): UserType!

@@ -119,47 +119,21 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
         data = self.get_data(response)
         return Logout.model_validate(data)
 
-    async def closest_relationship(self, tree_id: Any, from_id: Any, to_id: Any, **kwargs: Any) -> ClosestRelationship:
+    async def closest_relationship(
+        self,
+        tree_id: Any,
+        from_id: Any,
+        to_id: Any,
+        male_only: bool | None | UnsetType = UNSET,
+        **kwargs: Any,
+    ) -> ClosestRelationship:
         query = gql("""
-            query ClosestRelationship($treeId: UUID!, $fromId: UUID!, $toId: UUID!) {
-              closestRelationship(treeId: $treeId, fromPersonId: $fromId, toPersonId: $toId) {
-                fromPersonId
-                toPersonId
-                found
-                distance
-                pathPersonIds
-                relationshipTypes
-                paths {
-                  distance
-                  pathPersonIds
-                  relationshipTypes
-                }
-              }
-            }
-            """)
-        variables: dict[str, object] = {
-            "treeId": tree_id,
-            "fromId": from_id,
-            "toId": to_id,
-        }
-        response = await self.execute(
-            query=query,
-            operation_name="ClosestRelationship",
-            variables=variables,
-            **kwargs,
-        )
-        data = self.get_data(response)
-        return ClosestRelationship.model_validate(data)
-
-    async def alternative_relationship_paths(
-        self, tree_id: Any, from_id: Any, to_id: Any, **kwargs: Any
-    ) -> AlternativeRelationshipPaths:
-        query = gql("""
-            query AlternativeRelationshipPaths($treeId: UUID!, $fromId: UUID!, $toId: UUID!) {
-              alternativeRelationshipPaths(
+            query ClosestRelationship($treeId: UUID!, $fromId: UUID!, $toId: UUID!, $maleOnly: Boolean = false) {
+              closestRelationship(
                 treeId: $treeId
                 fromPersonId: $fromId
                 toPersonId: $toId
+                maleOnly: $maleOnly
               ) {
                 fromPersonId
                 toPersonId
@@ -179,6 +153,52 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             "treeId": tree_id,
             "fromId": from_id,
             "toId": to_id,
+            "maleOnly": male_only,
+        }
+        response = await self.execute(
+            query=query,
+            operation_name="ClosestRelationship",
+            variables=variables,
+            **kwargs,
+        )
+        data = self.get_data(response)
+        return ClosestRelationship.model_validate(data)
+
+    async def alternative_relationship_paths(
+        self,
+        tree_id: Any,
+        from_id: Any,
+        to_id: Any,
+        male_only: bool | None | UnsetType = UNSET,
+        **kwargs: Any,
+    ) -> AlternativeRelationshipPaths:
+        query = gql("""
+            query AlternativeRelationshipPaths($treeId: UUID!, $fromId: UUID!, $toId: UUID!, $maleOnly: Boolean = false) {
+              alternativeRelationshipPaths(
+                treeId: $treeId
+                fromPersonId: $fromId
+                toPersonId: $toId
+                maleOnly: $maleOnly
+              ) {
+                fromPersonId
+                toPersonId
+                found
+                distance
+                pathPersonIds
+                relationshipTypes
+                paths {
+                  distance
+                  pathPersonIds
+                  relationshipTypes
+                }
+              }
+            }
+            """)
+        variables: dict[str, object] = {
+            "treeId": tree_id,
+            "fromId": from_id,
+            "toId": to_id,
+            "maleOnly": male_only,
         }
         response = await self.execute(
             query=query,

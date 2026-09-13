@@ -154,12 +154,13 @@ class Neo4jFamilyTreeRepository(FamilyTreeRepository):
         *,
         max_hops: int | None = None,
         person_count: int | None = None,
+        male_only: bool = False,
     ) -> RelationshipPathDTO:
         hops = await self._resolve_max_hops(
             tree_id, max_hops=max_hops, person_count=person_count
         )
         records = await neo4j_client.execute_read(
-            query=q.shortest_relationship_path_query(hops),
+            query=q.shortest_relationship_path_query(hops, male_only=male_only),
             params=_PathParams(
                 from_id=from_person_id, to_id=to_person_id, tree_id=tree_id
             ),
@@ -208,6 +209,7 @@ class Neo4jFamilyTreeRepository(FamilyTreeRepository):
         *,
         max_hops: int | None = None,
         person_count: int | None = None,
+        male_only: bool = False,
     ) -> RelationshipPathDTO:
         hops = await self._resolve_max_hops(
             tree_id, max_hops=max_hops, person_count=person_count
@@ -217,6 +219,7 @@ class Neo4jFamilyTreeRepository(FamilyTreeRepository):
             to_person_id,
             tree_id=tree_id,
             max_hops=hops,
+            male_only=male_only,
         )
         if not shortest.found or shortest.distance is None:
             return shortest
@@ -228,7 +231,12 @@ class Neo4jFamilyTreeRepository(FamilyTreeRepository):
         if excluded:
             for _ in range(MAX_DIVERSE_PATHS - 1):
                 avoided = await self._shortest_path_avoiding(
-                    from_person_id, to_person_id, tree_id, excluded, hops
+                    from_person_id,
+                    to_person_id,
+                    tree_id,
+                    excluded,
+                    hops,
+                    male_only=male_only,
                 )
                 if avoided is None:
                     break
@@ -243,7 +251,11 @@ class Neo4jFamilyTreeRepository(FamilyTreeRepository):
         ):
             candidates.extend(
                 await self._k_shortest_paths(
-                    from_person_id, to_person_id, tree_id, hops
+                    from_person_id,
+                    to_person_id,
+                    tree_id,
+                    hops,
+                    male_only=male_only,
                 )
             )
 
@@ -281,9 +293,13 @@ class Neo4jFamilyTreeRepository(FamilyTreeRepository):
         tree_id: UUID | None,
         excluded_ids: list[UUID],
         max_hops: int,
+        *,
+        male_only: bool = False,
     ) -> PathRecord | None:
         records = await neo4j_client.execute_read(
-            query=q.shortest_relationship_path_avoiding_query(max_hops),
+            query=q.shortest_relationship_path_avoiding_query(
+                max_hops, male_only=male_only
+            ),
             params=_PathAvoidParams(
                 from_id=from_person_id,
                 to_id=to_person_id,
@@ -301,9 +317,13 @@ class Neo4jFamilyTreeRepository(FamilyTreeRepository):
         to_person_id: UUID,
         tree_id: UUID | None,
         max_hops: int,
+        *,
+        male_only: bool = False,
     ) -> list[PathRecord]:
         records = await neo4j_client.execute_read(
-            query=q.k_shortest_relationship_paths_query(max_hops, pool=K_SHORTEST_POOL),
+            query=q.k_shortest_relationship_paths_query(
+                max_hops, pool=K_SHORTEST_POOL, male_only=male_only
+            ),
             params=_PathParams(
                 from_id=from_person_id, to_id=to_person_id, tree_id=tree_id
             ),

@@ -51,8 +51,46 @@ async def test_get_closest_relationship_success():
         tree_id=TREE_ID,
         max_hops=None,
         person_count=None,
+        male_only=False,
     )
     repo.find_diverse_relationship_paths.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_get_closest_relationship_male_only():
+    from_id = uuid4()
+    to_id = uuid4()
+    repo = AsyncMock()
+    repo.person_exists.return_value = True
+    repo.find_shortest_relationship_path.return_value = RelationshipPathDTO(
+        from_person_id=from_id,
+        to_person_id=to_id,
+        found=True,
+        distance=1,
+        path_person_ids=[from_id, to_id],
+        relationship_types=["PARENT_OF"],
+        paths=[
+            RelationshipPathItemDTO(
+                distance=1,
+                path_person_ids=[from_id, to_id],
+                relationship_types=["PARENT_OF"],
+            )
+        ],
+    )
+
+    result = await GetClosestRelationshipUseCase(repo).execute(
+        from_id, to_id, tree_id=TREE_ID, male_only=True
+    )
+
+    assert result.found is True
+    repo.find_shortest_relationship_path.assert_called_once_with(
+        from_person_id=from_id,
+        to_person_id=to_id,
+        tree_id=TREE_ID,
+        max_hops=None,
+        person_count=None,
+        male_only=True,
+    )
 
 
 @pytest.mark.asyncio
@@ -95,6 +133,7 @@ async def test_get_alternative_relationship_paths_success():
         tree_id=TREE_ID,
         max_hops=None,
         person_count=None,
+        male_only=False,
     )
     repo.find_shortest_relationship_path.assert_not_called()
 

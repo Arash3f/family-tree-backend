@@ -111,11 +111,14 @@ async def get_alternative_relationship_paths(
     tree_id: UUID,
     from_person_id: UUID,
     to_person_id: UUID,
+    male_only: bool = False,
     neo=Depends(get_neo),
     uow=Depends(get_request_uow),
 ) -> ClosestRelationshipResponse:
     usecase = GetAlternativeRelationshipPathsUseCase(neo, uow)
-    result = await usecase.execute(from_person_id, to_person_id, tree_id=tree_id)
+    result = await usecase.execute(
+        from_person_id, to_person_id, tree_id=tree_id, male_only=male_only
+    )
     return ClosestRelationshipResponse.model_validate(result.model_dump())
 
 
@@ -128,11 +131,14 @@ async def get_closest_relationship(
     tree_id: UUID,
     from_person_id: UUID,
     to_person_id: UUID,
+    male_only: bool = False,
     neo=Depends(get_neo),
     uow=Depends(get_request_uow),
 ) -> ClosestRelationshipResponse:
     usecase = GetClosestRelationshipUseCase(neo, uow)
-    result = await usecase.execute(from_person_id, to_person_id, tree_id=tree_id)
+    result = await usecase.execute(
+        from_person_id, to_person_id, tree_id=tree_id, male_only=male_only
+    )
     return ClosestRelationshipResponse.model_validate(result.model_dump())
 
 

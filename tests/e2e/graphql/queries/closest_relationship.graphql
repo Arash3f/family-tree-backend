@@ -1,5 +1,15 @@
-query ClosestRelationship($treeId: UUID!, $fromId: UUID!, $toId: UUID!) {
-  closestRelationship(treeId: $treeId, fromPersonId: $fromId, toPersonId: $toId) {
+query ClosestRelationship(
+  $treeId: UUID!
+  $fromId: UUID!
+  $toId: UUID!
+  $maleOnly: Boolean = false
+) {
+  closestRelationship(
+    treeId: $treeId
+    fromPersonId: $fromId
+    toPersonId: $toId
+    maleOnly: $maleOnly
+  ) {
     fromPersonId
     toPersonId
     found
@@ -14,11 +24,17 @@ query ClosestRelationship($treeId: UUID!, $fromId: UUID!, $toId: UUID!) {
   }
 }
 
-query AlternativeRelationshipPaths($treeId: UUID!, $fromId: UUID!, $toId: UUID!) {
+query AlternativeRelationshipPaths(
+  $treeId: UUID!
+  $fromId: UUID!
+  $toId: UUID!
+  $maleOnly: Boolean = false
+) {
   alternativeRelationshipPaths(
     treeId: $treeId
     fromPersonId: $fromId
     toPersonId: $toId
+    maleOnly: $maleOnly
   ) {
     fromPersonId
     toPersonId

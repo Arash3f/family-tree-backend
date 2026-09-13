@@ -96,9 +96,23 @@ def _clamp_hops(max_hops: int) -> int:
     return int(min(24, max(8, int(max_hops))))
 
 
-def shortest_relationship_path_query(max_hops: int) -> LiteralString:
+def _hop_filter(*, avoiding: bool = False, male_only: bool = False) -> str:
+    """Quantified-path hop WHERE clause (tree scope + optional filters)."""
+    parts = ["($tree_id IS NULL OR (x.tree_id = $tree_id AND y.tree_id = $tree_id))"]
+    if avoiding:
+        parts.append("NOT y.id IN $excluded_ids")
+    if male_only:
+        # Endpoints may be any gender; every intermediate hop target must be male.
+        parts.append("(y = b OR y.gender = 'MALE')")
+    return " AND\n      ".join(parts)
+
+
+def shortest_relationship_path_query(
+    max_hops: int, *, male_only: bool = False
+) -> LiteralString:
     """Shortest kinship path; hop bound is size-scaled by the caller."""
     hops = _clamp_hops(max_hops)
+    hop_where = _hop_filter(male_only=male_only)
     return cast(
         LiteralString,
         (
@@ -107,8 +121,7 @@ def shortest_relationship_path_query(max_hops: int) -> LiteralString:
             "(a.tree_id = $tree_id AND b.tree_id = $tree_id))\n"
             "MATCH path = SHORTEST 1 PATHS\n"
             "  (a)((x)-[:PARENT_OF|SPOUSE_OF]-(y)\n"
-            "    WHERE $tree_id IS NULL\n"
-            "      OR (x.tree_id = $tree_id AND y.tree_id = $tree_id)\n"
+            f"    WHERE {hop_where}\n"
             f"  ){{1,{hops}}}(b)\n"
             "RETURN\n"
             "  [n IN nodes(path) | n.id] AS person_ids,\n"
@@ -118,9 +131,12 @@ def shortest_relationship_path_query(max_hops: int) -> LiteralString:
     )
 
 
-def shortest_relationship_path_avoiding_query(max_hops: int) -> LiteralString:
+def shortest_relationship_path_avoiding_query(
+    max_hops: int, *, male_only: bool = False
+) -> LiteralString:
     """Next shortest path that skips already-used intermediate people."""
     hops = _clamp_hops(max_hops)
+    hop_where = _hop_filter(avoiding=True, male_only=male_only)
     return cast(
         LiteralString,
         (
@@ -129,9 +145,7 @@ def shortest_relationship_path_avoiding_query(max_hops: int) -> LiteralString:
             "(a.tree_id = $tree_id AND b.tree_id = $tree_id))\n"
             "MATCH path = SHORTEST 1 PATHS\n"
             "  (a)((x)-[:PARENT_OF|SPOUSE_OF]-(y)\n"
-            "    WHERE ($tree_id IS NULL\n"
-            "      OR (x.tree_id = $tree_id AND y.tree_id = $tree_id))\n"
-            "      AND NOT y.id IN $excluded_ids\n"
+            f"    WHERE {hop_where}\n"
             f"  ){{1,{hops}}}(b)\n"
             "RETURN\n"
             "  [n IN nodes(path) | n.id] AS person_ids,\n"
@@ -142,11 +156,12 @@ def shortest_relationship_path_avoiding_query(max_hops: int) -> LiteralString:
 
 
 def k_shortest_relationship_paths_query(
-    max_hops: int, *, pool: int = 6
+    max_hops: int, *, pool: int = 6, male_only: bool = False
 ) -> LiteralString:
     """Bounded k-shortest fallback when avoiding cannot diversify."""
     hops = _clamp_hops(max_hops)
     k = int(min(20, max(1, int(pool))))
+    hop_where = _hop_filter(male_only=male_only)
     return cast(
         LiteralString,
         (
@@ -155,8 +170,7 @@ def k_shortest_relationship_paths_query(
             "(a.tree_id = $tree_id AND b.tree_id = $tree_id))\n"
             f"MATCH path = SHORTEST {k} PATHS\n"
             "  (a)((x)-[:PARENT_OF|SPOUSE_OF]-(y)\n"
-            "    WHERE $tree_id IS NULL\n"
-            "      OR (x.tree_id = $tree_id AND y.tree_id = $tree_id)\n"
+            f"    WHERE {hop_where}\n"
             f"  ){{1,{hops}}}(b)\n"
             "RETURN\n"
             "  [n IN nodes(path) | n.id] AS person_ids,\n"
