@@ -46,6 +46,7 @@ async def resolve_login(
 async def resolve_register(
     info: Info,
     username: str,
+    fullname: str,
     password: str,
     re_password: str,
     email: str | None = None,
@@ -59,6 +60,7 @@ async def resolve_register(
     tokens = await usecase.execute(
         RegisterDTO(
             username=username,
+            fullname=fullname,
             password=password,
             re_password=re_password,
             email=email,

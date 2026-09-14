@@ -25,6 +25,7 @@ class UserModel:
         phone (None | str | Unset):
         role_id (None | Unset | UUID):
         account_type (AccountType | Unset):
+        is_active (bool | Unset):  Default: True.
         last_session_at (datetime.datetime | None | Unset):
     """
 
@@ -35,6 +36,7 @@ class UserModel:
     phone: None | str | Unset = UNSET
     role_id: None | Unset | UUID = UNSET
     account_type: AccountType | Unset = UNSET
+    is_active: bool | Unset = True
     last_session_at: datetime.datetime | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -69,6 +71,8 @@ class UserModel:
         if not isinstance(self.account_type, Unset):
             account_type = self.account_type.value
 
+        is_active = self.is_active
+
         last_session_at: None | str | Unset
         if isinstance(self.last_session_at, Unset):
             last_session_at = UNSET
@@ -94,6 +98,8 @@ class UserModel:
             field_dict["role_id"] = role_id
         if account_type is not UNSET:
             field_dict["account_type"] = account_type
+        if is_active is not UNSET:
+            field_dict["is_active"] = is_active
         if last_session_at is not UNSET:
             field_dict["last_session_at"] = last_session_at
 
@@ -150,6 +156,8 @@ class UserModel:
         else:
             account_type = AccountType(_account_type)
 
+        is_active = d.pop("is_active", UNSET)
+
         def _parse_last_session_at(data: object) -> datetime.datetime | None | Unset:
             if data is None:
                 return data
@@ -175,6 +183,7 @@ class UserModel:
             phone=phone,
             role_id=role_id,
             account_type=account_type,
+            is_active=is_active,
             last_session_at=last_session_at,
         )
 

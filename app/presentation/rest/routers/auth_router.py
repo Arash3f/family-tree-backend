@@ -94,6 +94,7 @@ async def register(
     tokens = await usecase.execute(
         RegisterDTO(
             username=body.username,
+            fullname=body.fullname,
             password=body.password,
             re_password=body.re_password,
             email=body.email,

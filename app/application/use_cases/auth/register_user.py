@@ -12,6 +12,7 @@ from app.domain.exceptions.role_exceptions import RoleNotFoundException
 from app.domain.exceptions.user_exceptions import (
     EmailAlreadyExistsException,
     PasswordConfirmationMismatchException,
+    PhoneAlreadyExistsException,
     UsernameAlreadyExistsException,
 )
 from app.domain.services.password_hasher import PasswordHasher
@@ -78,6 +79,9 @@ class RegisterUserUseCase:
             if email is not None and await self.uow.users.get_by_email(email):
                 raise EmailAlreadyExistsException()
 
+            if phone is not None and await self.uow.users.get_by_phone(phone):
+                raise PhoneAlreadyExistsException()
+
             member_role = await self.uow.roles.get_by_name(settings.MEMBER_ROLE_NAME)
             if member_role is None:
                 raise RoleNotFoundException(
@@ -87,6 +91,7 @@ class RegisterUserUseCase:
             user = await self.uow.users.create(
                 User(
                     username=data.username,
+                    fullname=data.fullname,
                     password_hash=self.password_hasher.hash(data.password),
                     email=email,
                     phone=phone,

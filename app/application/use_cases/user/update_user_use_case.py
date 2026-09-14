@@ -16,8 +16,10 @@ from app.domain.entities.user import User
 from app.domain.exceptions.user_exceptions import (
     EmailAlreadyExistsException,
     PasswordConfirmationMismatchException,
+    PhoneAlreadyExistsException,
     PrivilegedUserModificationException,
     SelfRoleChangeException,
+    UsernameAlreadyExistsException,
 )
 from app.domain.services.password_hasher import PasswordHasher
 from app.domain.shared.account_type import AccountType
@@ -57,6 +59,12 @@ class UpdateUserUseCase:
                 role = await self.uow.roles.get_or_raise(role_id=role_id)
                 user.role_id = role.safe_id
 
+            new_username = update_data_enum.get(UserUpdateField.USERNAME)
+            if new_username is not None and new_username != user.username:
+                existing = await self.uow.users.get_by_username(new_username)
+                if existing is not None and existing.safe_id != user.safe_id:
+                    raise UsernameAlreadyExistsException()
+
             if password is not None:
                 if password != re_password:
                     raise PasswordConfirmationMismatchException()
@@ -75,7 +83,12 @@ class UpdateUserUseCase:
                 country = (
                     dto.data.country_code if "country_code" in fields_set else None
                 )
-                user.phone = normalize_register_phone(phone_source, country)
+                phone = normalize_register_phone(phone_source, country)
+                if phone is not None and phone != user.phone:
+                    existing = await self.uow.users.get_by_phone(phone)
+                    if existing is not None and existing.safe_id != user.safe_id:
+                        raise PhoneAlreadyExistsException()
+                user.phone = phone
 
             for field, value in update_data_enum.items():
                 if field is UserUpdateField.ACCOUNT_TYPE:

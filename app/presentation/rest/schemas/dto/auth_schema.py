@@ -15,6 +15,7 @@ class RegisterRequest(BaseModel):
         max_length=50,
         pattern=r"^[a-zA-Z0-9_.-]+$",
     )
+    fullname: str = Field(min_length=1, max_length=100)
     password: str = Field(min_length=8, max_length=256)
     re_password: str = Field(min_length=8, max_length=256)
     email: str | None = Field(
@@ -24,6 +25,11 @@ class RegisterRequest(BaseModel):
     )
     phone: str | None = Field(default=None, max_length=32)
     country_code: str | None = Field(default=None, max_length=8)
+
+    @field_validator("fullname", mode="before")
+    @classmethod
+    def strip_fullname(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
 
     @field_validator("email", "phone", "country_code", mode="before")
     @classmethod

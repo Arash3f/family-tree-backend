@@ -55,6 +55,7 @@ class ErrorCode(int, Enum):
     USERNAME_ALREADY_EXISTS = 1405
     EMAIL_ALREADY_EXISTS = 1406
     ACCOUNT_DEACTIVATED = 1407
+    PHONE_ALREADY_EXISTS = 1408
     # -----------------------
     # |     Role Person     |
     # -----------------------
@@ -146,6 +147,7 @@ ERROR_MESSAGES = {
         ),
         ErrorCode.USERNAME_ALREADY_EXISTS: "Username is already taken",
         ErrorCode.EMAIL_ALREADY_EXISTS: "Email is already registered",
+        ErrorCode.PHONE_ALREADY_EXISTS: "Phone number is already registered",
         ErrorCode.ACCOUNT_DEACTIVATED: (
             "Your account has been deactivated. Please contact support."
         ),
@@ -230,6 +232,7 @@ ERROR_MESSAGES = {
         ),
         ErrorCode.USERNAME_ALREADY_EXISTS: "این نام کاربری قبلاً گرفته شده است",
         ErrorCode.EMAIL_ALREADY_EXISTS: "این ایمیل قبلاً ثبت شده است",
+        ErrorCode.PHONE_ALREADY_EXISTS: "این شماره تلفن قبلاً ثبت شده است",
         ErrorCode.ACCOUNT_DEACTIVATED: (
             "حساب شما غیرفعال شده است. لطفاً با پشتیبانی تماس بگیرید."
         ),

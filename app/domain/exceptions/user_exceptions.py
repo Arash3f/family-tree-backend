@@ -61,6 +61,15 @@ class EmailAlreadyExistsException(AppException):
         )
 
 
+class PhoneAlreadyExistsException(AppException):
+    def __init__(self, detail: list[str] | None = None):
+        super().__init__(
+            code=ErrorCode.PHONE_ALREADY_EXISTS,
+            status_code=409,
+            detail=detail or ["phone number is already registered"],
+        )
+
+
 class AccountDeactivatedException(AppException):
     def __init__(self, detail: list[str] | None = None):
         super().__init__(

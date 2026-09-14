@@ -43,6 +43,9 @@ class UserRepository(ABC):
     async def get_by_email(self, email: str) -> User | None: ...
 
     @abstractmethod
+    async def get_by_phone(self, phone: str) -> User | None: ...
+
+    @abstractmethod
     async def get_list_by_filter(
         self, query: FilterUserQuery
     ) -> PaginatedResult[User]: ...

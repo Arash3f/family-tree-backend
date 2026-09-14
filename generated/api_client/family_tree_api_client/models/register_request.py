@@ -16,6 +16,7 @@ class RegisterRequest:
     """
     Attributes:
         username (str):
+        fullname (str):
         password (str):
         re_password (str):
         email (None | str | Unset):
@@ -24,6 +25,7 @@ class RegisterRequest:
     """
 
     username: str
+    fullname: str
     password: str
     re_password: str
     email: None | str | Unset = UNSET
@@ -33,6 +35,8 @@ class RegisterRequest:
 
     def to_dict(self) -> dict[str, Any]:
         username = self.username
+
+        fullname = self.fullname
 
         password = self.password
 
@@ -61,6 +65,7 @@ class RegisterRequest:
         field_dict.update(
             {
                 "username": username,
+                "fullname": fullname,
                 "password": password,
                 "re_password": re_password,
             }
@@ -78,6 +83,8 @@ class RegisterRequest:
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
         username = d.pop("username")
+
+        fullname = d.pop("fullname")
 
         password = d.pop("password")
 
@@ -112,6 +119,7 @@ class RegisterRequest:
 
         register_request = cls(
             username=username,
+            fullname=fullname,
             password=password,
             re_password=re_password,
             email=email,

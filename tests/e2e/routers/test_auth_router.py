@@ -176,6 +176,7 @@ async def test_register_success(client: Client, asgi_transport: ASGITransport):
         client=client,
         body=RegisterRequest(
             username="signup_user",
+            fullname="Signup User",
             password="secret123",
             re_password="secret123",
             email="Signup@Example.com",
@@ -203,6 +204,7 @@ async def test_register_success(client: Client, asgi_transport: ASGITransport):
     assert me_response.status_code == 200
     assert isinstance(me_response.parsed, MeResponse)
     assert me_response.parsed.username == "signup_user"
+    assert me_response.parsed.fullname == "Signup User"
     assert me_response.parsed.email == "signup@example.com"
     assert me_response.parsed.phone == "+989123456789"
     assert me_response.parsed.account_type == "free"
@@ -216,6 +218,7 @@ async def test_register_success(client: Client, asgi_transport: ASGITransport):
 async def test_register_duplicate_username(client: Client):
     payload = RegisterRequest(
         username="dup_user",
+        fullname="Dup User",
         password="secret123",
         re_password="secret123",
     )
@@ -226,3 +229,34 @@ async def test_register_duplicate_username(client: Client):
     assert second.status_code == 409
     body = json.loads(second.content)
     assert body["error_code"] == ErrorCode.USERNAME_ALREADY_EXISTS
+
+
+@pytest.mark.asyncio
+async def test_register_duplicate_phone(client: Client):
+    first = await register(
+        client=client,
+        body=RegisterRequest(
+            username="phone_owner",
+            fullname="Phone Owner",
+            password="secret123",
+            re_password="secret123",
+            phone="09121112233",
+            country_code="+98",
+        ),
+    )
+    second = await register(
+        client=client,
+        body=RegisterRequest(
+            username="phone_reuser",
+            fullname="Phone Reuser",
+            password="secret123",
+            re_password="secret123",
+            phone="9121112233",
+            country_code="+98",
+        ),
+    )
+
+    assert first.status_code == 200
+    assert second.status_code == 409
+    body = json.loads(second.content)
+    assert body["error_code"] == ErrorCode.PHONE_ALREADY_EXISTS

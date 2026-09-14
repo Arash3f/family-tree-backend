@@ -109,6 +109,14 @@ class SQLUserRepository(UserRepository):
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
 
+    async def get_by_phone(self, phone: str) -> User | None:
+        # phone has no unique constraint, so older rows may already collide.
+        stmt = select(UserModel).where(UserModel.phone == phone).limit(1)
+
+        result = await self.session.execute(stmt)
+        model = result.scalar_one_or_none()
+        return self._to_entity(model) if model else None
+
     async def get_list_by_filter(self, query: FilterUserQuery) -> PaginatedResult[User]:
         stmt = select(UserModel)
         filters = query.filters

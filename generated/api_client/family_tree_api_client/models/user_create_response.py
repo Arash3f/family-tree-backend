@@ -24,6 +24,7 @@ class UserCreateResponse:
         account_type (AccountType):
         email (None | str | Unset):
         phone (None | str | Unset):
+        is_active (bool | Unset):  Default: True.
     """
 
     id: UUID
@@ -33,6 +34,7 @@ class UserCreateResponse:
     account_type: AccountType
     email: None | str | Unset = UNSET
     phone: None | str | Unset = UNSET
+    is_active: bool | Unset = True
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -62,6 +64,8 @@ class UserCreateResponse:
         else:
             phone = self.phone
 
+        is_active = self.is_active
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -77,6 +81,8 @@ class UserCreateResponse:
             field_dict["email"] = email
         if phone is not UNSET:
             field_dict["phone"] = phone
+        if is_active is not UNSET:
+            field_dict["is_active"] = is_active
 
         return field_dict
 
@@ -124,6 +130,8 @@ class UserCreateResponse:
 
         phone = _parse_phone(d.pop("phone", UNSET))
 
+        is_active = d.pop("is_active", UNSET)
+
         user_create_response = cls(
             id=id,
             username=username,
@@ -132,6 +140,7 @@ class UserCreateResponse:
             account_type=account_type,
             email=email,
             phone=phone,
+            is_active=is_active,
         )
 
         user_create_response.additional_properties = d

@@ -45,6 +45,8 @@ def mock_uow():
     users_repo.get_or_raise = AsyncMock()
     users_repo.get_for_update = AsyncMock(return_value=_paid_user())
     users_repo.ids_having_permission = AsyncMock(return_value=set())
+    users_repo.get_by_phone = AsyncMock(return_value=None)
+    users_repo.get_by_username = AsyncMock(return_value=None)
 
     persons_repo = MagicMock(spec_set=PersonRepository)
     persons_repo.create = AsyncMock()

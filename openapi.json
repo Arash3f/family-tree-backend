@@ -4971,6 +4971,12 @@
             "pattern": "^[a-zA-Z0-9_.-]+$",
             "title": "Username"
           },
+          "fullname": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Fullname"
+          },
           "password": {
             "type": "string",
             "maxLength": 256,
@@ -5024,6 +5030,7 @@
         "type": "object",
         "required": [
           "username",
+          "fullname",
           "password",
           "re_password"
         ],
@@ -6649,6 +6656,11 @@
           },
           "account_type": {
             "$ref": "#/components/schemas/AccountType"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
           }
         },
         "type": "object",
@@ -6753,6 +6765,11 @@
           },
           "account_type": {
             "$ref": "#/components/schemas/AccountType"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
           }
         },
         "type": "object",
@@ -6817,6 +6834,11 @@
           "account_type": {
             "$ref": "#/components/schemas/AccountType",
             "default": "free"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
           },
           "last_session_at": {
             "anyOf": [
@@ -6915,6 +6937,11 @@
           },
           "account_type": {
             "$ref": "#/components/schemas/AccountType"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
           }
         },
         "type": "object",

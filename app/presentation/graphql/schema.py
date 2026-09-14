@@ -270,6 +270,7 @@ class Mutation:
         self,
         info: strawberry.Info,
         username: str,
+        fullname: str,
         password: str,
         re_password: str,
         email: str | None = None,
@@ -280,6 +281,7 @@ class Mutation:
         return await auth_resolvers.resolve_register(
             info,
             username=username,
+            fullname=fullname,
             password=password,
             re_password=re_password,
             email=email,

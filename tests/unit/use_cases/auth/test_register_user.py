@@ -16,6 +16,7 @@ from app.core.config import settings
 from app.domain.exceptions.user_exceptions import (
     EmailAlreadyExistsException,
     PasswordConfirmationMismatchException,
+    PhoneAlreadyExistsException,
     UsernameAlreadyExistsException,
 )
 from app.domain.shared.account_type import AccountType
@@ -68,6 +69,7 @@ async def test_register_creates_free_member_and_returns_tokens(mock_uow):
     result = await usecase.execute(
         RegisterDTO(
             username="newuser",
+            fullname="New User",
             password="secret123",
             re_password="secret123",
             email="New@Example.com",
@@ -84,6 +86,7 @@ async def test_register_creates_free_member_and_returns_tokens(mock_uow):
 
     created = mock_uow.users.create.await_args.args[0]
     assert created.username == "newuser"
+    assert created.fullname == "New User"
     assert created.email == "new@example.com"
     assert created.phone == "+989123456789"
     assert created.role_id == UUID(int=7)
@@ -106,6 +109,7 @@ async def test_register_rejects_password_mismatch(mock_uow):
         await usecase.execute(
             RegisterDTO(
                 username="newuser",
+                fullname="New User",
                 password="secret123",
                 re_password="other123",
             )
@@ -120,6 +124,7 @@ async def test_register_rejects_duplicate_username(mock_uow):
         await usecase.execute(
             RegisterDTO(
                 username="taken",
+                fullname="Taken User",
                 password="secret123",
                 re_password="secret123",
             )
@@ -135,8 +140,39 @@ async def test_register_rejects_duplicate_email(mock_uow):
         await usecase.execute(
             RegisterDTO(
                 username="newuser",
+                fullname="New User",
                 password="secret123",
                 re_password="secret123",
                 email="used@example.com",
             )
+        )
+
+
+@pytest.mark.asyncio
+async def test_register_rejects_duplicate_phone(mock_uow):
+    mock_uow.users.get_by_username = AsyncMock(return_value=None)
+    mock_uow.users.get_by_email = AsyncMock(return_value=None)
+    mock_uow.users.get_by_phone = AsyncMock(return_value=MagicMock())
+    usecase = RegisterUserUseCase(mock_uow, MagicMock(), MagicMock())
+    with pytest.raises(PhoneAlreadyExistsException):
+        await usecase.execute(
+            RegisterDTO(
+                username="newuser",
+                fullname="New User",
+                password="secret123",
+                re_password="secret123",
+                phone="09123456789",
+                country_code="+98",
+            )
+        )
+    mock_uow.users.get_by_phone.assert_awaited_once_with("+989123456789")
+
+
+def test_register_requires_fullname():
+    with pytest.raises(ValueError):
+        RegisterDTO(
+            username="newuser",
+            fullname="   ",
+            password="secret123",
+            re_password="secret123",
         )

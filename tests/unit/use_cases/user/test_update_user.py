@@ -11,6 +11,10 @@ from app.application.dto.user.user_update_dto import (
 )
 from app.application.use_cases.user.update_user_use_case import UpdateUserUseCase
 from app.domain.entities.user import User
+from app.domain.exceptions.user_exceptions import (
+    PhoneAlreadyExistsException,
+    UsernameAlreadyExistsException,
+)
 
 CALLER = User(id=UUID(int=99), username="admin", password_hash="x")
 
@@ -113,3 +117,46 @@ async def test_update_user_only_role(mock_uow):
 
     password_hasher.hash.assert_not_called()
     assert existing_user.role_id == UUID(int=5)
+
+
+@pytest.mark.asyncio
+async def test_update_user_rejects_taken_username(mock_uow):
+    dto = UserUpdateDTO(
+        where=_UserUpdateWhereDTO(user_id=UUID(int=1)),
+        data=_UserUpdateDataDTO(username="taken"),
+    )
+    mock_uow.users.get_or_raise = AsyncMock(
+        return_value=User(id=UUID(int=1), username="old", password_hash="x")
+    )
+    mock_uow.users.get_by_username = AsyncMock(
+        return_value=User(id=UUID(int=2), username="taken", password_hash="x")
+    )
+    mock_uow.users.update = AsyncMock()
+
+    use_case = UpdateUserUseCase(mock_uow, MagicMock(), current_user=CALLER)
+
+    with pytest.raises(UsernameAlreadyExistsException):
+        await use_case.execute(dto)
+    mock_uow.users.update.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_update_user_rejects_taken_phone(mock_uow):
+    dto = UserUpdateDTO(
+        where=_UserUpdateWhereDTO(user_id=UUID(int=1)),
+        data=_UserUpdateDataDTO(phone="09121112233", country_code="+98"),
+    )
+    mock_uow.users.get_or_raise = AsyncMock(
+        return_value=User(id=UUID(int=1), username="old", password_hash="x")
+    )
+    mock_uow.users.get_by_phone = AsyncMock(
+        return_value=User(id=UUID(int=2), username="other", password_hash="x")
+    )
+    mock_uow.users.update = AsyncMock()
+
+    use_case = UpdateUserUseCase(mock_uow, MagicMock(), current_user=CALLER)
+
+    with pytest.raises(PhoneAlreadyExistsException):
+        await use_case.execute(dto)
+    mock_uow.users.get_by_phone.assert_awaited_once_with("+989121112233")
+    mock_uow.users.update.assert_not_awaited()

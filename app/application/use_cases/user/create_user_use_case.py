@@ -12,6 +12,7 @@ from app.domain.entities.user import User
 from app.domain.exceptions.user_exceptions import (
     EmailAlreadyExistsException,
     PasswordConfirmationMismatchException,
+    PhoneAlreadyExistsException,
     UsernameAlreadyExistsException,
 )
 from app.domain.services.password_hasher import PasswordHasher
@@ -35,6 +36,9 @@ class CreateUserUseCase:
 
             if email is not None and await self.uow.users.get_by_email(email):
                 raise EmailAlreadyExistsException()
+
+            if phone is not None and await self.uow.users.get_by_phone(phone):
+                raise PhoneAlreadyExistsException()
 
             role_id = None
             if dto.role_id:
