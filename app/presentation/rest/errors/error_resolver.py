@@ -23,7 +23,7 @@ def resolve_message(code, lang: str) -> str:
 
     Example:
         >>> resolve_message(ErrorCode.MARRIAGE_NOT_FOUND, "fa")
-        "ازدواج مورد نظر یافت نشد"
+        "ازدواج مورد نظر پیدا نشد."
     """
 
     # Fallback to English if the language is not supported

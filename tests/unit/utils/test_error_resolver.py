@@ -6,7 +6,7 @@ from app.utils.error_codes import ErrorCode
 
 def test_resolve_message_en_and_fa():
     assert resolve_message(ErrorCode.PERSON_NOT_FOUND, "en") == "Person not found"
-    assert resolve_message(ErrorCode.PERSON_NOT_FOUND, "fa") == "شخص مورد نظر یافت نشد"
+    assert resolve_message(ErrorCode.PERSON_NOT_FOUND, "fa") == "فرد مورد نظر پیدا نشد."
 
 
 def test_resolve_message_unsupported_lang_falls_back_to_en():

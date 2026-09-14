@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 _UNEXPECTED_ERROR_MESSAGE = {
     "en": "An unexpected error occurred.",
-    "fa": "خطای غیرمنتظره‌ای رخ داد.",
+    "fa": "خطای غیرمنتظره‌ای رخ داد. لطفاً دوباره تلاش کنید.",
 }
 
 

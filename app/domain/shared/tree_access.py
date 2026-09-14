@@ -59,7 +59,7 @@ class TreeAccessPermissions:
     }
 
     LABELS_FA: dict[str, str] = {
-        VIEW: "دیدن",
+        VIEW: "مشاهده",
         PERSON_CREATE: "افزودن فرد",
         PERSON_UPDATE: "ویرایش فرد",
         PERSON_DELETE: "حذف فرد",
@@ -67,12 +67,12 @@ class TreeAccessPermissions:
         MARRIAGE_UPDATE: "ویرایش ازدواج",
         MARRIAGE_DELETE: "حذف ازدواج",
         MARRIAGE_DIVORCE: "ثبت طلاق",
-        UPLOAD_PHOTO: "آپلود عکس",
+        UPLOAD_PHOTO: "بارگذاری عکس",
         MEMBER_ADD: "افزودن یا ویرایش عضو",
         MEMBER_REMOVE: "حذف عضو",
-        VIEW_BIRTH_DATE: "دیدن تاریخ تولد",
-        VIEW_MARRIAGE_DATE: "دیدن تاریخ ازدواج",
-        VIEW_PHOTO: "دیدن عکس",
+        VIEW_BIRTH_DATE: "مشاهدهٔ تاریخ تولد",
+        VIEW_MARRIAGE_DATE: "مشاهدهٔ تاریخ ازدواج",
+        VIEW_PHOTO: "مشاهدهٔ عکس",
         TICKET_MANAGE: "مدیریت تیکت‌ها",
     }
 

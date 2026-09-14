@@ -42,7 +42,7 @@ class Permissions:
     PERMISSION_DESCRIPTIONS: dict[str, tuple[str, str]] = {
         USER_CREATE: (
             "Create new user accounts and assign an initial role.",
-            "ایجاد حساب کاربری جدید و اختصاص نقش اولیه.",
+            "ایجاد حساب کاربری جدید و تعیین نقش اولیهٔ آن.",
         ),
         USER_DELETE: (
             "Permanently remove user accounts from the system.",
@@ -50,11 +50,11 @@ class Permissions:
         ),
         USER_READ: (
             "View the list of users and their basic profile details.",
-            "مشاهده فهرست کاربران و جزئیات پایه پروفایل آن‌ها.",
+            "مشاهدهٔ فهرست کاربران و اطلاعات اصلی حساب آن‌ها.",
         ),
         USER_UPDATE: (
             "Edit user accounts, including assigned roles.",
-            "ویرایش حساب‌های کاربری، از جمله نقش اختصاص‌داده‌شده.",
+            "ویرایش حساب‌های کاربری، از جمله نقش آن‌ها.",
         ),
         ROLE_CREATE: (
             "Create new roles and choose which permissions they include.",
@@ -62,47 +62,47 @@ class Permissions:
         ),
         ROLE_DELETE: (
             "Delete roles that are no longer needed.",
-            "حذف نقش‌هایی که دیگر لازم نیستند.",
+            "حذف نقش‌هایی که دیگر به آن‌ها نیازی نیست.",
         ),
         ROLE_READ: (
             "View available roles and their permission sets.",
-            "مشاهده نقش‌های موجود و مجموعه دسترسی‌های آن‌ها.",
+            "مشاهدهٔ نقش‌های موجود و دسترسی‌های هر نقش.",
         ),
         ROLE_UPDATE: (
             "Change a role's name or the permissions it grants.",
-            "تغییر نام نقش یا دسترسی‌هایی که اعطا می‌کند.",
+            "تغییر نام نقش یا دسترسی‌هایی که به آن داده شده است.",
         ),
         PERMISSION_READ: (
             "View the catalog of permissions that can be assigned to roles.",
-            "مشاهده فهرست دسترسی‌هایی که می‌توان به نقش‌ها اختصاص داد.",
+            "مشاهدهٔ فهرست دسترسی‌هایی که می‌توان به نقش‌ها داد.",
         ),
         TICKET_CREATE: (
             "Open a new support ticket and reply on tickets you created.",
-            "ایجاد تیکت پشتیبانی جدید و پاسخ روی تیکت‌های خودتان.",
+            "ثبت تیکت پشتیبانی جدید و پاسخ به تیکت‌هایی که خودتان ثبت کرده‌اید.",
         ),
         TICKET_READ: (
             "View your own support tickets.",
-            "مشاهده تیکت‌های پشتیبانی خودتان.",
+            "مشاهدهٔ تیکت‌های پشتیبانی خودتان.",
         ),
         TICKET_REPLY: (
             "Reply to and change status of support tickets not linked to a tree.",
-            "پاسخ و تغییر وضعیت تیکت‌های پشتیبانی که به هیچ شجره‌نامه‌ای وصل نیستند.",
+            "پاسخ به تیکت‌های پشتیبانی عمومی (غیرمربوط به شجره‌نامه) و تغییر وضعیت آن‌ها.",
         ),
         TREE_CREATE: (
             "Create a new family tree.",
-            "ایجاد شجره‌نامه جدید.",
+            "ایجاد شجره‌نامهٔ جدید.",
         ),
         TREE_READ: (
             "Open and browse family trees you belong to.",
-            "باز کردن و مرور شجره‌نامه‌هایی که عضو آن‌ها هستید.",
+            "باز کردن و مشاهدهٔ شجره‌نامه‌هایی که عضو آن‌ها هستید.",
         ),
         TREE_UPDATE: (
             "Rename or update settings of a family tree.",
-            "تغییر نام یا تنظیمات یک شجره‌نامه.",
+            "تغییر نام یا تنظیمات شجره‌نامه.",
         ),
         TREE_DELETE: (
             "Permanently delete a family tree.",
-            "حذف دائمی یک شجره‌نامه.",
+            "حذف دائمی شجره‌نامه.",
         ),
     }
 

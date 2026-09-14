@@ -180,86 +180,101 @@ ERROR_MESSAGES = {
         ErrorCode.FREE_ACCOUNT_LIMIT: "You are on a free account",
     },
     "fa": {
-        ErrorCode.UN_EXPECTED_ID: "شناسه غیرمنتظره",
-        ErrorCode.INVALID_PAGE_SIZE: "اندازه صفحه نامعتبر است",
-        ErrorCode.INVALID_PAGE: "شماره صفحه اشتباه است",
+        ErrorCode.UN_EXPECTED_ID: "شناسهٔ ارسال‌شده نامعتبر است.",
+        ErrorCode.INVALID_PAGE_SIZE: "تعداد موارد در هر صفحه نامعتبر است.",
+        ErrorCode.INVALID_PAGE: "شمارهٔ صفحه نامعتبر است.",
         # Domain Auth
-        ErrorCode.InvalidCredentials: "Invalid credentials",
-        ErrorCode.SESSION_NOT_FOUND: "نشست یافت نشد",
+        ErrorCode.InvalidCredentials: "نام کاربری یا رمز عبور اشتباه است.",
+        ErrorCode.SESSION_NOT_FOUND: "نشست پیدا نشد. لطفاً دوباره وارد شوید.",
         # Domain Person
-        ErrorCode.SELF_PARENT: "یک شخص نمی‌تواند والد خودش باشد",
-        ErrorCode.INVALID_BIRTH_DAY: "تاریخ تولد نامعتبر است",
-        ErrorCode.HUSBAND_NOT_FOUND: "شوهر یافت نشد",
-        ErrorCode.WIFE_NOT_FOUND: "همسر یافت نشد",
-        ErrorCode.PERSON_NOT_FOUND: "شخص مورد نظر یافت نشد",
-        ErrorCode.SAME_PARENT: "شخص نمی‌تواند والد تکراری داشته باشد",
-        ErrorCode.INVALID_GENDER: "جنسیت شخص نامعتبر است",
-        ErrorCode.PERSON_HAS_MARRIAGES: "شخص دارای ازدواج قابل حذف نیست",
-        ErrorCode.INVALID_MEDIA_CONTENT_TYPE: "نوع رسانه پشتیبانی نمی‌شود",
-        ErrorCode.MEDIA_TOO_LARGE: "حجم رسانه از حد مجاز بیشتر است",
-        ErrorCode.INVALID_MEDIA_OBJECT_KEY: "کلید شیء رسانه نامعتبر است",
-        ErrorCode.MEDIA_OBJECT_NOT_FOUND: "شیء رسانه یافت نشد",
+        ErrorCode.SELF_PARENT: "هیچ فردی نمی‌تواند والد خودش باشد.",
+        ErrorCode.INVALID_BIRTH_DAY: "تاریخ تولد معتبر نیست.",
+        ErrorCode.HUSBAND_NOT_FOUND: "همسر مرد پیدا نشد.",
+        ErrorCode.WIFE_NOT_FOUND: "همسر زن پیدا نشد.",
+        ErrorCode.PERSON_NOT_FOUND: "فرد مورد نظر پیدا نشد.",
+        ErrorCode.SAME_PARENT: "یک والد را نمی‌توان بیش از یک بار برای یک فرد ثبت کرد.",
+        ErrorCode.INVALID_GENDER: "جنسیت واردشده معتبر نیست.",
+        ErrorCode.PERSON_HAS_MARRIAGES: (
+            "تا وقتی ازدواجی برای این فرد ثبت شده است، نمی‌توان او را حذف کرد."
+        ),
+        ErrorCode.INVALID_MEDIA_CONTENT_TYPE: "نوع این فایل پشتیبانی نمی‌شود.",
+        ErrorCode.MEDIA_TOO_LARGE: "حجم فایل بیشتر از حد مجاز است.",
+        ErrorCode.INVALID_MEDIA_OBJECT_KEY: "شناسهٔ فایل معتبر نیست.",
+        ErrorCode.MEDIA_OBJECT_NOT_FOUND: "فایل مورد نظر پیدا نشد.",
         ErrorCode.TOO_MANY_BIOLOGICAL_PARENTS: (
-            "فرزند نمی‌تواند بیش از دو والد تنی داشته باشد"
+            "هر فرزند حداکثر می‌تواند دو والد تنی داشته باشد."
         ),
         ErrorCode.INVALID_PARENT_MARRIAGE: (
-            "والدهای تنی باید با همسران ازدواج مبدأ مطابقت داشته باشند"
+            "والدین تنی باید همان دو همسرِ ازدواجی باشند که فرزند از آن به دنیا "
+            "آمده است."
         ),
-        ErrorCode.PERSON_HAS_CHILDREN: "شخص دارای فرزند قابل حذف نیست",
+        ErrorCode.PERSON_HAS_CHILDREN: (
+            "تا وقتی فرزندی برای این فرد ثبت شده است، نمی‌توان او را حذف کرد."
+        ),
         # Domain Marriage
-        ErrorCode.SELF_MARRIAGE: "یک شخص نمی‌تواند با خودش ازدواج کند",
+        ErrorCode.SELF_MARRIAGE: "هیچ فردی نمی‌تواند با خودش ازدواج کند.",
         ErrorCode.DIVORCED_BEFORE_MARRIAGE: (
-            "فردی که طلاق گرفته است بدون اعتبارسنجی مناسب نمی‌تواند دوباره ازدواج کند"
+            "ثبت ازدواج دوباره برای فرد طلاق‌گرفته بدون بررسی‌های لازم امکان‌پذیر نیست."
         ),
         ErrorCode.MARRIAGE_AFTER_DIVORCE: (
-            "برای فرد مطلقه امکان ثبت این ازدواج وجود ندارد"
+            "برای فرد طلاق‌گرفته نمی‌توان این ازدواج را ثبت کرد."
         ),
-        ErrorCode.UNDERAGE_MARRIAGE: "ازدواج برای افراد زیر سن قانونی مجاز نیست",
-        ErrorCode.INVALID_MARRIAGE_GENDER: "ازدواج فقط بین یک مرد و یک زن مجاز است",
-        ErrorCode.MARRIAGE_NOT_FOUND: "ازدواج مورد نظر یافت نشد",
-        ErrorCode.ACTIVE_MARRIAGE_EXISTS: "شخص هم‌اکنون ازدواج فعال دارد",
-        ErrorCode.MARRIAGE_ALREADY_DIVORCED: "این ازدواج قبلاً به طلاق منجر شده است",
+        ErrorCode.UNDERAGE_MARRIAGE: "ثبت ازدواج برای افراد زیر سن قانونی مجاز نیست.",
+        ErrorCode.INVALID_MARRIAGE_GENDER: (
+            "ازدواج فقط میان یک مرد و یک زن قابل ثبت است."
+        ),
+        ErrorCode.MARRIAGE_NOT_FOUND: "ازدواج مورد نظر پیدا نشد.",
+        ErrorCode.ACTIVE_MARRIAGE_EXISTS: "این فرد در حال حاضر یک ازدواج فعال دارد.",
+        ErrorCode.MARRIAGE_ALREADY_DIVORCED: "طلاق این ازدواج قبلاً ثبت شده است.",
         # Domain Permission
-        ErrorCode.PERMISSION_NOT_FOUND: "دسترسی پیدا نشد",
-        ErrorCode.PERMISSION_DENIED: "عدم وجود دسترسی",
+        ErrorCode.PERMISSION_NOT_FOUND: "دسترسی مورد نظر پیدا نشد.",
+        ErrorCode.PERMISSION_DENIED: "شما اجازهٔ انجام این کار را ندارید.",
         # Domain User
-        ErrorCode.USER_NOT_FOUND: "همچین فردی وجود ندارد",
-        ErrorCode.USER_PASSWORD_INCORECT: "رمز کاربر اشتباه است",
-        ErrorCode.PASSWORD_CONFIRMATION_MISMATCH: "رمز عبور و تکرار آن یکسان نیستند",
-        ErrorCode.SELF_ROLE_CHANGE: "نمی‌توانید نقش خودتان را تغییر دهید",
+        ErrorCode.USER_NOT_FOUND: "کاربر مورد نظر پیدا نشد.",
+        ErrorCode.USER_PASSWORD_INCORECT: "رمز عبور اشتباه است.",
+        ErrorCode.PASSWORD_CONFIRMATION_MISMATCH: "رمز عبور و تکرار آن یکسان نیستند.",
+        ErrorCode.SELF_ROLE_CHANGE: "شما نمی‌توانید نقش خودتان را تغییر دهید.",
         ErrorCode.PRIVILEGED_USER_MODIFICATION: (
-            "فقط مدیر می‌تواند نقش مدیر را بدهد یا تغییر دهد"
+            "فقط مدیر سیستم می‌تواند نقش مدیر را به کسی بدهد یا آن را تغییر دهد."
         ),
-        ErrorCode.USERNAME_ALREADY_EXISTS: "این نام کاربری قبلاً گرفته شده است",
-        ErrorCode.EMAIL_ALREADY_EXISTS: "این ایمیل قبلاً ثبت شده است",
-        ErrorCode.PHONE_ALREADY_EXISTS: "این شماره تلفن قبلاً ثبت شده است",
+        ErrorCode.USERNAME_ALREADY_EXISTS: (
+            "این نام کاربری قبلاً ثبت شده است. نام دیگری انتخاب کنید."
+        ),
+        ErrorCode.EMAIL_ALREADY_EXISTS: "این ایمیل قبلاً ثبت شده است.",
+        ErrorCode.PHONE_ALREADY_EXISTS: "این شمارهٔ موبایل قبلاً ثبت شده است.",
         ErrorCode.ACCOUNT_DEACTIVATED: (
-            "حساب شما غیرفعال شده است. لطفاً با پشتیبانی تماس بگیرید."
+            "حساب کاربری شما غیرفعال شده است. لطفاً با پشتیبانی تماس بگیرید."
         ),
         # Domain Role
-        ErrorCode.ROLE_NOT_FOUND: "نقش پیدا نشد",
-        ErrorCode.ROLE_NAME_DUPLICATED: "اسم نقش تکراری است",
-        ErrorCode.ROLE_PROTECTED: "این نقش قابل حذف نیست",
+        ErrorCode.ROLE_NOT_FOUND: "نقش مورد نظر پیدا نشد.",
+        ErrorCode.ROLE_NAME_DUPLICATED: "نقشی با این نام از قبل وجود دارد.",
+        ErrorCode.ROLE_PROTECTED: "این نقش قابل حذف نیست.",
         # Domain Ticket
-        ErrorCode.TICKET_NOT_FOUND: "تیکت یافت نشد",
-        ErrorCode.TICKET_CLOSED: "تیکت بسته شده است",
-        ErrorCode.TICKET_ACCESS_DENIED: "دسترسی به تیکت مجاز نیست",
+        ErrorCode.TICKET_NOT_FOUND: "تیکت مورد نظر پیدا نشد.",
+        ErrorCode.TICKET_CLOSED: "این تیکت بسته شده است.",
+        ErrorCode.TICKET_ACCESS_DENIED: "شما به این تیکت دسترسی ندارید.",
         # Domain FamilyTree
-        ErrorCode.FAMILY_TREE_NOT_FOUND: "شجره‌نامه یافت نشد",
-        ErrorCode.TREE_MEMBERSHIP_DENIED: "شما عضو این شجره‌نامه نیستید",
-        ErrorCode.TREE_OWNER_REQUIRED: "فقط مالک شجره‌نامه می‌تواند این کار را انجام دهد",
-        ErrorCode.TREE_MEMBER_ALREADY_EXISTS: "کاربر از قبل عضو این شجره‌نامه است",
-        ErrorCode.TREE_MEMBER_NOT_FOUND: "عضویت در شجره‌نامه یافت نشد",
-        ErrorCode.CANNOT_REMOVE_LAST_OWNER: "نمی‌توان آخرین مالک شجره‌نامه را حذف کرد",
-        ErrorCode.PERSON_TREE_MISMATCH: "شخص متعلق به این شجره‌نامه نیست",
+        ErrorCode.FAMILY_TREE_NOT_FOUND: "شجره‌نامهٔ مورد نظر پیدا نشد.",
+        ErrorCode.TREE_MEMBERSHIP_DENIED: "شما عضو این شجره‌نامه نیستید.",
+        ErrorCode.TREE_OWNER_REQUIRED: (
+            "فقط مالک شجره‌نامه می‌تواند این کار را انجام دهد."
+        ),
+        ErrorCode.TREE_MEMBER_ALREADY_EXISTS: "این کاربر از قبل عضو این شجره‌نامه است.",
+        ErrorCode.TREE_MEMBER_NOT_FOUND: "عضو مورد نظر در این شجره‌نامه پیدا نشد.",
+        ErrorCode.CANNOT_REMOVE_LAST_OWNER: "آخرین مالک شجره‌نامه را نمی‌توان حذف کرد.",
+        ErrorCode.PERSON_TREE_MISMATCH: "این فرد متعلق به این شجره‌نامه نیست.",
         ErrorCode.MARRIAGE_TREE_MISMATCH: (
-            "ازدواج یا افراد مرتبط در این شجره‌نامه نیستند"
+            "این ازدواج یا افراد مربوط به آن در این شجره‌نامه نیستند."
         ),
         ErrorCode.TREE_EXCEL_INVALID: (
-            "فایل اکسل نامعتبر است یا با قالب مورد انتظار هم‌خوانی ندارد"
+            "فایل اکسل معتبر نیست یا با قالب فایل نمونه مطابقت ندارد."
         ),
-        ErrorCode.TREE_EXCEL_EMPTY: "فایل اکسل هیچ شخص یا ازدواجی برای ورود ندارد",
-        ErrorCode.TREE_ACCESS_DENIED: "این دسترسی را روی شجره‌نامه ندارید",
-        ErrorCode.FREE_ACCOUNT_LIMIT: "شما اکانت رایگان دارید",
+        ErrorCode.TREE_EXCEL_EMPTY: (
+            "در فایل اکسل هیچ فرد یا ازدواجی برای وارد کردن پیدا نشد."
+        ),
+        ErrorCode.TREE_ACCESS_DENIED: "شما این دسترسی را در این شجره‌نامه ندارید.",
+        ErrorCode.FREE_ACCOUNT_LIMIT: (
+            "حساب شما رایگان است و این امکان برای آن فعال نیست."
+        ),
     },
 }

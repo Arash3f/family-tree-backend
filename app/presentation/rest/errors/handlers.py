@@ -40,7 +40,7 @@ async def app_exception_handler(request: Request, exc: Exception) -> Response:
     Example response:
         {
             "error_code": "UNDERAGE_MARRIAGE",
-            "message": "ازدواج برای افراد زیر سن قانونی مجاز نیست",
+            "message": "ثبت ازدواج برای افراد زیر سن قانونی مجاز نیست.",
             "status": 422,
             "trace_id": "c1349b42d1f84a9b",
             "detail": "Domain rule violated"
