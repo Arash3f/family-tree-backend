@@ -9,6 +9,15 @@ from app.celery.tasks import backup as backup_module
 from app.celery.tasks import reconcile_neo4j as reconcile_module
 from app.celery.tasks import sync_person as sync_person_module
 from app.celery.tasks import sync_relationships as sync_rel_module
+from app.infrastructure.database.neo4j.neo4j import neo4j_client
+
+
+@pytest.fixture(autouse=True)
+def detached_neo4j_client(monkeypatch):
+    # run_celery_coro closes the shared client; a driver left open by an
+    # earlier async test is bound to a dead loop and would fail that close.
+    monkeypatch.setattr(neo4j_client, "_client", None)
+    monkeypatch.setattr(neo4j_client, "_init_lock", None)
 
 
 def test_sync_person_upsert_success():
