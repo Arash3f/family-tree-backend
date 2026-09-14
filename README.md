@@ -9,14 +9,13 @@
 |---|---|
 | Version | `0.1.0` |
 | Python | `3.11+` |
-| Tests | 631 passing, 88% coverage |
+| Tests | 695 passing, 89% coverage |
 | License | [MIT](LICENSE) |
 
 ---
 
 ## Contents
 
-- [Research / WIP](#research--wip)
 - [What it does](#what-it-does)
 - [Architecture](#architecture)
 - [Quick start](#quick-start)
@@ -28,16 +27,6 @@
 - [Project layout](#project-layout)
 - [Operations](#operations)
 - [Troubleshooting](#troubleshooting)
-
----
-
-## Research / WIP
-
-Ideas and features that are **noted, under investigation, or partially sketched** — not promised for a release date. Use this as a living scratchpad; move items into shipped docs when they land.
-
-_Nothing listed yet — add rows here when research notes are ready._
-
-When you start implementing an item, leave a short note here (owner, branch, or PR). When it ships, delete the row and mention it in the product updates copy on the frontend.
 
 ---
 
@@ -192,7 +181,7 @@ curl -X POST http://localhost:8001/family-trees \
 
 curl -X POST http://localhost:8001/family-trees/$TREE_ID/persons \
   -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  -d '{"name": "Ali", "gender": "MALE", "birthDate": "1975-04-12"}'
+  -d '{"name": "Ali", "gender": "male", "birth_date": "1975-04-12"}'
 ```
 
 Ask how two people are related — this one goes through Neo4j:
@@ -207,8 +196,8 @@ curl "http://localhost:8001/family-trees/$TREE_ID/persons/$FROM_ID/relation/$TO_
 ```
 
 ```json
-{ "fromPersonId": "...", "toPersonId": "...", "found": true, "distance": 3,
-  "pathPersonIds": ["...", "...", "..."], "relationshipTypes": ["PARENT_OF", "PARENT_OF"] }
+{ "from_person_id": "...", "to_person_id": "...", "found": true, "distance": 3,
+  "path_person_ids": ["...", "...", "..."], "relationship_types": ["PARENT_OF", "PARENT_OF"], "paths": [] }
 ```
 
 > Access tokens live 5 minutes by default. Use `POST /auth/refresh` to rotate rather than
@@ -311,9 +300,9 @@ List endpoints are **`POST .../list`**, not `GET`. They take pagination, filters
 body, which keeps complex filters expressible without unwieldy query strings:
 
 ```jsonc
-{ "pagination": { "page": 1, "pageSize": 30 },
-  "filters":    { "gender": "FEMALE", "birthDate": { "min": "1950-01-01" } },
-  "sortBy": "NAME", "sortOrder": "ASC" }
+{ "pagination": { "page": 1, "page_size": 30 },
+  "filters":    { "gender": "female", "birth_date": { "min": "1950-01-01" } },
+  "sort":       { "sort_by": "name", "sort_order": "asc" } }
 ```
 
 **Dates are ISO `YYYY-MM-DD`.** Jalali `YYYY/MM/DD` is accepted and produced only in Excel
@@ -324,7 +313,7 @@ import/export, where the spreadsheets are read by Persian-speaking users.
 | Method | Path | Purpose |
 |--------|------|---------|
 | `POST` | `/auth/login` | OAuth2 password form → access + refresh tokens |
-| `POST` | `/auth/register` | Public sign-up (free `Member` account) → access + refresh tokens |
+| `POST` | `/auth/register` | Public sign-up (free `Member` account; `username`, `fullname`, `password`, `re_password`, optional `email` / `phone` + `country_code`) → access + refresh tokens. Duplicate username, email or phone → `409` with `error_code` `1405` / `1406` / `1408` |
 | `POST` | `/auth/refresh` | Rotate the refresh token |
 | `POST` | `/auth/logout` | Revoke the current session |
 | `POST` | `/auth/logout-all` | Revoke every session for the user |
@@ -604,7 +593,7 @@ and requirements sync checks, and validates both Compose files.
 6. Runs the live Neo4j relationship test separately
 7. Uploads JUnit and coverage XML, dumps container logs on failure, and always tears down with `-v`
 
-The coverage floor is 80 while actual coverage sits at 88, leaving headroom for a refactor to land
+The coverage floor is 80 while actual coverage sits at 89, leaving headroom for a refactor to land
 without a red build over a rounding difference.
 
 ---
@@ -739,7 +728,7 @@ deliberate guards.
 1. Branch from `main` (`feat/`, `fix/`, `ref/`)
 2. Commit with `poetry run cz commit` — the `commit-msg` hook enforces the format
 3. Update `openapi.json` / `schema.graphql` and the generated clients when the API changes
-4. Push; the `pre-push` hook runs Bandit, and CI runs the full suite (including mypy)
+4. Push; the `pre-commit` hooks run Ruff and mypy, the `pre-push` hook runs Bandit, and CI runs the full suite
 
 ---
 
