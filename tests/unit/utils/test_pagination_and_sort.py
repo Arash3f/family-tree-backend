@@ -112,3 +112,39 @@ async def test_paginate_and_sort_success():
     assert page.total == 2
     assert page.page == 1
     assert page.page_size == 10
+
+
+@pytest.mark.asyncio
+async def test_paginate_and_sort_tie_breaks_on_id_for_stable_pages():
+    """Non-unique sort keys must still produce stable OFFSET pages."""
+    session = MagicMock()
+    session.scalar = AsyncMock(return_value=0)
+    result = MagicMock()
+    result.unique.return_value.scalars.return_value.all.return_value = []
+    session.execute = AsyncMock(return_value=result)
+
+    name_col = Column("name", Integer)
+    model = MagicMock()
+    model.id = sample_table.c.id
+
+    class SortByName(StrEnum):
+        NAME = "name"
+
+    base = select(sample_table)
+    await paginate_and_sort(
+        {SortByName.NAME: name_col},
+        SortByName.NAME,
+        model,
+        base,
+        session,
+        page=2,
+        offset=0,
+        page_size=10,
+        sort_order=SortOrderField.ASC,
+    )
+
+    executed_stmt = session.execute.await_args.args[0]
+    order_by = list(executed_stmt._order_by_clauses)
+    assert len(order_by) == 2
+    assert "name" in str(order_by[0])
+    assert "id" in str(order_by[1])

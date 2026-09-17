@@ -84,8 +84,11 @@ async def paginate_and_sort(
     Notes:
         - The total count is calculated using a subquery with the
           ordering removed to improve performance.
+        - Ordering always includes ``model.id`` as a tie-breaker so
+          OFFSET/LIMIT pages stay stable when the primary sort column
+          has duplicate values.
         - This function assumes the query returns ORM entities
-          compatible with `result.scalars()`.
+          compatible with ``result.scalars()``.
     """
     # validation page
     if page < 1:
@@ -118,11 +121,14 @@ async def paginate_and_sort(
 
     sort_column = sortable_columns.get(sort_by, model.id)
 
-    # sorting
+    # Always tie-break on primary key. Sorting only by a non-unique column
+    # (e.g. person name) makes OFFSET/LIMIT pages unstable: the same row can
+    # appear twice across pages while another is skipped — which then poisons
+    # Excel export short codes (duplicate P91, missing people).
     if sort_order == SortOrderField.DESC:
-        stmt = stmt.order_by(sort_column.desc())
+        stmt = stmt.order_by(sort_column.desc(), model.id.asc())
     else:
-        stmt = stmt.order_by(sort_column.asc())
+        stmt = stmt.order_by(sort_column.asc(), model.id.asc())
 
     # total count
     count_stmt = stmt.order_by(None).subquery()
