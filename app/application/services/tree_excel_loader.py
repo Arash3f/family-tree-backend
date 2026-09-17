@@ -62,10 +62,20 @@ async def load_all_tree_persons(uow: UnitOfWork, tree_id: UUID) -> list[Person]:
         if len(items) >= result.total or not result.items:
             break
         page += 1
-    items.sort(key=_name_sort_key)
+    # Guard against duplicate rows if a caller still paginates on an unstable
+    # sort: one person must never appear twice in an export workbook.
+    seen_ids: set[UUID] = set()
+    unique_items: list[Person] = []
     for person in items:
+        person_id = person.safe_id
+        if person_id in seen_ids:
+            continue
+        seen_ids.add(person_id)
+        unique_items.append(person)
+    unique_items.sort(key=_name_sort_key)
+    for person in unique_items:
         _ = person.parents
-    return items
+    return unique_items
 
 
 async def load_all_tree_marriages(uow: UnitOfWork, tree_id: UUID) -> list[Marriage]:
