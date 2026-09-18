@@ -6,7 +6,7 @@ poetry-plugin-export = ">=1.8"
 
 [project]
 name = "family-tree-backend"
-version = "0.1.0"
+version = "1.0.0"
 description = "Family tree backend base on FastApi"
 authors = [
     {name = "arash alfooneh",email = "arash.alfooneh@gmail.com"}

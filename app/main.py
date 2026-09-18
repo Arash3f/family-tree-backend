@@ -81,7 +81,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     lifespan=lifespan,
     title="Family Tree API",
-    version="0.1.0",
+    version="1.0.0",
     docs_url=None,
     redoc_url="/redoc",
     openapi_version="3.0.3",
