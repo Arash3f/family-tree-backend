@@ -78,14 +78,10 @@ class GetMeUseCase:
                 session_id=session_id,
                 account_type=details.account_type.value,
                 preferred_locale=(
-                    details.preferred_locale.value
-                    if details.preferred_locale
-                    else None
+                    details.preferred_locale.value if details.preferred_locale else None
                 ),
                 preferred_theme=(
-                    details.preferred_theme.value
-                    if details.preferred_theme
-                    else None
+                    details.preferred_theme.value if details.preferred_theme else None
                 ),
             )
 

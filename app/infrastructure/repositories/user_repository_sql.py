@@ -236,9 +236,7 @@ class SQLUserRepository(UserRepository):
                 else None
             ),
             preferred_theme=(
-                PreferredTheme(model.preferred_theme)
-                if model.preferred_theme
-                else None
+                PreferredTheme(model.preferred_theme) if model.preferred_theme else None
             ),
         )
 
