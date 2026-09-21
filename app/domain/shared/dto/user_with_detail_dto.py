@@ -3,6 +3,7 @@ from uuid import UUID
 from pydantic import BaseModel
 
 from app.domain.shared.account_type import AccountType
+from app.domain.shared.user_preferences import PreferredLocale, PreferredTheme
 
 
 class _Permission(BaseModel):
@@ -27,4 +28,6 @@ class UserGetWithDetailResponseDTO(BaseModel):
     role_id: UUID | None
     account_type: AccountType
     is_active: bool = True
+    preferred_locale: PreferredLocale | None = None
+    preferred_theme: PreferredTheme | None = None
     role: _RoleData | None

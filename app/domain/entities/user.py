@@ -5,6 +5,7 @@ from uuid import UUID
 from app.domain.exceptions.common_exceptions import UnExpectedIdException
 from app.domain.services.password_hasher import PasswordHasher
 from app.domain.shared.account_type import AccountType
+from app.domain.shared.user_preferences import PreferredLocale, PreferredTheme
 
 
 @dataclass
@@ -24,6 +25,8 @@ class User:
     role_id: UUID | None = None
     account_type: AccountType = AccountType.FREE
     is_active: bool = True
+    preferred_locale: PreferredLocale | None = None
+    preferred_theme: PreferredTheme | None = None
     # Populated only on list queries (max session created_at); not persisted on User.
     last_session_at: datetime | None = None
 
@@ -32,6 +35,10 @@ class User:
             self.fullname = self.username
         if isinstance(self.account_type, str):
             self.account_type = AccountType(self.account_type)
+        if isinstance(self.preferred_locale, str):
+            self.preferred_locale = PreferredLocale(self.preferred_locale)
+        if isinstance(self.preferred_theme, str):
+            self.preferred_theme = PreferredTheme(self.preferred_theme)
 
     @property
     def is_free(self) -> bool:

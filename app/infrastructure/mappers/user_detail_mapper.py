@@ -4,6 +4,7 @@ from app.domain.shared.dto.user_with_detail_dto import (
     _Permission,
     _RoleData,
 )
+from app.domain.shared.user_preferences import PreferredLocale, PreferredTheme
 from app.infrastructure.database.models.user_model import UserModel
 
 
@@ -33,5 +34,11 @@ def user_model_to_detail_dto(model: UserModel) -> UserGetWithDetailResponseDTO:
         role_id=model.role_id,
         account_type=AccountType(model.account_type),
         is_active=model.is_active,
+        preferred_locale=(
+            PreferredLocale(model.preferred_locale) if model.preferred_locale else None
+        ),
+        preferred_theme=(
+            PreferredTheme(model.preferred_theme) if model.preferred_theme else None
+        ),
         role=role,
     )

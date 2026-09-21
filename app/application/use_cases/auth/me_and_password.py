@@ -4,6 +4,7 @@ from app.application.dto.session_dto import (
     ChangePasswordDTO,
     MePermissionDTO,
     MeResponseDTO,
+    UpdatePreferencesDTO,
 )
 from app.application.interfaces.unit_of_work import UnitOfWork
 from app.domain.exceptions.user_exceptions import (
@@ -12,6 +13,7 @@ from app.domain.exceptions.user_exceptions import (
 )
 from app.domain.services.password_hasher import PasswordHasher
 from app.domain.shared.dto.common_dto import ResultDTO
+from app.domain.shared.user_preferences import PreferredLocale, PreferredTheme
 
 
 class GetMeUseCase:
@@ -36,6 +38,12 @@ class GetMeUseCase:
                     permission_details=[],
                     session_id=session_id,
                     account_type=user.account_type.value,
+                    preferred_locale=(
+                        user.preferred_locale.value if user.preferred_locale else None
+                    ),
+                    preferred_theme=(
+                        user.preferred_theme.value if user.preferred_theme else None
+                    ),
                 )
 
             permissions: list[str] = []
@@ -69,6 +77,16 @@ class GetMeUseCase:
                 permission_details=permission_details,
                 session_id=session_id,
                 account_type=details.account_type.value,
+                preferred_locale=(
+                    details.preferred_locale.value
+                    if details.preferred_locale
+                    else None
+                ),
+                preferred_theme=(
+                    details.preferred_theme.value
+                    if details.preferred_theme
+                    else None
+                ),
             )
 
 
@@ -94,3 +112,27 @@ class ChangeOwnPasswordUseCase:
             await self.uow.commit()
 
             return ResultDTO(result="Password updated")
+
+
+class UpdateOwnPreferencesUseCase:
+    def __init__(self, uow: UnitOfWork):
+        self.uow = uow
+
+    async def execute(self, user_id: UUID, data: UpdatePreferencesDTO) -> ResultDTO:
+        async with self.uow:
+            user = await self.uow.users.get_or_raise(user_id)
+            payload = data.model_dump(exclude_unset=True)
+
+            if "preferred_locale" in payload:
+                raw = payload["preferred_locale"]
+                user.preferred_locale = (
+                    PreferredLocale(raw) if raw is not None else None
+                )
+            if "preferred_theme" in payload:
+                raw = payload["preferred_theme"]
+                user.preferred_theme = PreferredTheme(raw) if raw is not None else None
+
+            await self.uow.users.update(user)
+            await self.uow.commit()
+
+            return ResultDTO(result="Preferences updated")

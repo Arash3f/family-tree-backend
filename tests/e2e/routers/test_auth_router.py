@@ -260,3 +260,28 @@ async def test_register_duplicate_phone(client: Client):
     assert second.status_code == 409
     body = json.loads(second.content)
     assert body["error_code"] == ErrorCode.PHONE_ALREADY_EXISTS
+
+
+@pytest.mark.asyncio
+async def test_update_own_preferences(admin_client: AuthenticatedClient):
+    http = admin_client.get_async_httpx_client()
+
+    put_response = await http.put(
+        "/auth/preferences",
+        json={"preferred_locale": "fa", "preferred_theme": "dark"},
+    )
+    assert put_response.status_code == 200
+    assert put_response.json()["result"] == "Preferences updated"
+
+    me_response = await me(client=admin_client)
+    assert me_response.status_code == 200
+    assert isinstance(me_response.parsed, MeResponse)
+    body = json.loads(me_response.content)
+    assert body["preferred_locale"] == "fa"
+    assert body["preferred_theme"] == "dark"
+
+    invalid = await http.put(
+        "/auth/preferences",
+        json={"preferred_locale": "de"},
+    )
+    assert invalid.status_code == 422

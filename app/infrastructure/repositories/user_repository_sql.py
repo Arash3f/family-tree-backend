@@ -14,6 +14,7 @@ from app.domain.shared.account_type import AccountType
 from app.domain.shared.dto.pagination_dto import PaginatedResult
 from app.domain.shared.dto.user_filter_dto import FilterUserQuery, UserSortField
 from app.domain.shared.dto.user_with_detail_dto import UserGetWithDetailResponseDTO
+from app.domain.shared.user_preferences import PreferredLocale, PreferredTheme
 from app.infrastructure.database.models.associations import role_permissions
 from app.infrastructure.database.models.permission_model import PermissionModel
 from app.infrastructure.database.models.role_model import RoleModel
@@ -201,6 +202,12 @@ class SQLUserRepository(UserRepository):
         model.password_hash = user.password_hash
         model.account_type = user.account_type.value
         model.is_active = user.is_active
+        model.preferred_locale = (
+            user.preferred_locale.value if user.preferred_locale else None
+        )
+        model.preferred_theme = (
+            user.preferred_theme.value if user.preferred_theme else None
+        )
 
         await self.session.flush()
         await self.session.refresh(model)
@@ -223,6 +230,16 @@ class SQLUserRepository(UserRepository):
             role_id=model.role_id,
             account_type=AccountType(model.account_type),
             is_active=model.is_active,
+            preferred_locale=(
+                PreferredLocale(model.preferred_locale)
+                if model.preferred_locale
+                else None
+            ),
+            preferred_theme=(
+                PreferredTheme(model.preferred_theme)
+                if model.preferred_theme
+                else None
+            ),
         )
 
     def _to_model(self, entity: User) -> UserModel:
@@ -236,6 +253,12 @@ class SQLUserRepository(UserRepository):
             role_id=entity.role_id,
             account_type=entity.account_type.value,
             is_active=entity.is_active,
+            preferred_locale=(
+                entity.preferred_locale.value if entity.preferred_locale else None
+            ),
+            preferred_theme=(
+                entity.preferred_theme.value if entity.preferred_theme else None
+            ),
         )
 
         return model

@@ -31,6 +31,8 @@ class UserModel(Base):
         default=True,
         server_default=true(),
     )
+    preferred_locale: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    preferred_theme: Mapped[str | None] = mapped_column(String(16), nullable=True)
 
     role_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("roles.id", ondelete="SET NULL"), nullable=True

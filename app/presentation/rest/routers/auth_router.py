@@ -5,10 +5,11 @@ from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 
 from app.application.dto.auth_dto import LoginDTO, RegisterDTO
-from app.application.dto.session_dto import ChangePasswordDTO
+from app.application.dto.session_dto import ChangePasswordDTO, UpdatePreferencesDTO
 from app.application.use_cases.auth.me_and_password import (
     ChangeOwnPasswordUseCase,
     GetMeUseCase,
+    UpdateOwnPreferencesUseCase,
 )
 from app.application.use_cases.auth.register_user import RegisterUserUseCase
 from app.application.use_cases.login_user import LoginUserUseCase
@@ -35,6 +36,7 @@ from app.presentation.rest.schemas.dto.auth_schema import (
     MeResponse,
     RegisterRequest,
     SessionResponse,
+    UpdatePreferencesRequest,
 )
 from app.presentation.rest.schemas.dto.common import ResultResponse
 from app.presentation.rest.schemas.mappers.auth_mappers import AuthApiMapper
@@ -205,5 +207,19 @@ async def change_own_password(
             new_password=data.new_password,
             re_password=data.re_password,
         ),
+    )
+    return CommonApiMapper.from_result_dto(result)
+
+
+@router.put("/preferences", response_model=ResultResponse)
+async def update_own_preferences(
+    data: UpdatePreferencesRequest,
+    current_user: User = Depends(get_current_user),
+    uow=Depends(get_request_uow),
+) -> ResultResponse:
+    usecase = UpdateOwnPreferencesUseCase(uow)
+    result = await usecase.execute(
+        current_user.safe_id,
+        UpdatePreferencesDTO.model_validate(data.model_dump(exclude_unset=True)),
     )
     return CommonApiMapper.from_result_dto(result)

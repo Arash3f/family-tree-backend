@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
@@ -63,6 +64,8 @@ class MeResponse(BaseModel):
     permission_details: list[MePermissionItem] = Field(default_factory=list)
     session_id: UUID
     account_type: str = "free"
+    preferred_locale: Literal["en", "fa"] | None = None
+    preferred_theme: Literal["light", "dark", "system"] | None = None
 
 
 class SessionResponse(BaseModel):
@@ -78,3 +81,8 @@ class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str = Field(min_length=8, max_length=256)
     re_password: str = Field(min_length=8, max_length=256)
+
+
+class UpdatePreferencesRequest(BaseModel):
+    preferred_locale: Literal["en", "fa"] | None = None
+    preferred_theme: Literal["light", "dark", "system"] | None = None

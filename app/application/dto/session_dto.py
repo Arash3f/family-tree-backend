@@ -31,9 +31,16 @@ class MeResponseDTO(BaseModel):
     permission_details: list[MePermissionDTO] = Field(default_factory=list)
     session_id: UUID
     account_type: str
+    preferred_locale: str | None = None
+    preferred_theme: str | None = None
 
 
 class ChangePasswordDTO(BaseModel):
     current_password: str
     new_password: str = Field(min_length=8, max_length=256)
     re_password: str = Field(min_length=8, max_length=256)
+
+
+class UpdatePreferencesDTO(BaseModel):
+    preferred_locale: str | None = None
+    preferred_theme: str | None = None
