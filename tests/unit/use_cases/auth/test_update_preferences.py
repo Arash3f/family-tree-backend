@@ -1,7 +1,7 @@
+from unittest.mock import AsyncMock
 from uuid import UUID
 
 import pytest
-from unittest.mock import AsyncMock
 
 from app.application.dto.session_dto import UpdatePreferencesDTO
 from app.application.use_cases.auth.me_and_password import UpdateOwnPreferencesUseCase
