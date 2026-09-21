@@ -7,6 +7,7 @@ from app.domain.exceptions.family_tree_exceptions import (
     TreeMembershipDeniedException,
     TreeOwnerRequiredException,
 )
+from app.domain.shared.tree_access import TreeAccessPermissions
 
 
 class TreeAccessService:
@@ -39,5 +40,20 @@ class TreeAccessService:
         if not membership.has_access(permission):
             raise TreeAccessDeniedException(
                 detail=[f"tree_id={tree_id} user_id={user_id} permission={permission}"]
+            )
+        return membership
+
+    async def require_tree_management(
+        self, *, tree_id: UUID, user_id: UUID
+    ) -> TreeMembership:
+        """Owner or any member with a non-view write capability."""
+        membership = await self.require_member(tree_id=tree_id, user_id=user_id)
+        if not TreeAccessPermissions.grants_management(
+            membership.effective_permissions()
+        ):
+            raise TreeAccessDeniedException(
+                detail=[
+                    f"tree_id={tree_id} user_id={user_id} permission=tree_management"
+                ]
             )
         return membership

@@ -94,6 +94,21 @@ class TreeAccessPermissions:
         TICKET_MANAGE: "Manage tickets",
     }
 
+    # Non-view capabilities that unlock the tree management / settings surface.
+    MANAGEMENT: tuple[str, ...] = (
+        PERSON_CREATE,
+        PERSON_UPDATE,
+        PERSON_DELETE,
+        MARRIAGE_CREATE,
+        MARRIAGE_UPDATE,
+        MARRIAGE_DELETE,
+        MARRIAGE_DIVORCE,
+        UPLOAD_PHOTO,
+        MEMBER_ADD,
+        MEMBER_REMOVE,
+        TICKET_MANAGE,
+    )
+
     @classmethod
     def get_all(cls) -> list[str]:
         return list(cls.ALL)
@@ -101,6 +116,11 @@ class TreeAccessPermissions:
     @classmethod
     def is_known(cls, name: str) -> bool:
         return name in cls.ALL
+
+    @classmethod
+    def grants_management(cls, permission_names: Iterable[str]) -> bool:
+        granted = set(permission_names)
+        return bool(granted.intersection(cls.MANAGEMENT))
 
     @classmethod
     def get_direct_requirements(cls, permission_name: str) -> tuple[str, ...]:

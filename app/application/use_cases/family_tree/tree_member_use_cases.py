@@ -150,7 +150,9 @@ class ListTreeMembersUseCase:
         self, *, tree_id: UUID, user_id: UUID
     ) -> list[TreeMembershipResponseDTO]:
         async with self.uow:
-            await self.access.require_member(tree_id=tree_id, user_id=user_id)
+            await self.access.require_tree_management(
+                tree_id=tree_id, user_id=user_id
+            )
             members_with_usernames = (
                 await self.uow.tree_memberships.list_by_tree_with_usernames(tree_id)
             )

@@ -404,12 +404,45 @@ async def test_list_tree_members_rejects_a_non_member(mock_uow):
 
 
 @pytest.mark.asyncio
-async def test_list_tree_members_returns_the_roster_for_a_member(mock_uow):
+async def test_list_tree_members_rejects_a_view_only_member(mock_uow):
     _memberships(mock_uow, present=_membership(MEMBER_ID, TreeMemberRole.MEMBER))
+    mock_uow.tree_memberships.list_by_tree_with_usernames = AsyncMock()
+
+    with pytest.raises(TreeAccessDeniedException):
+        await ListTreeMembersUseCase(mock_uow).execute(
+            tree_id=TREE_ID, user_id=MEMBER_ID
+        )
+
+    mock_uow.tree_memberships.list_by_tree_with_usernames.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_list_tree_members_returns_the_roster_for_an_editor(mock_uow):
+    _memberships(
+        mock_uow,
+        present=_membership(
+            MEMBER_ID,
+            TreeMemberRole.MEMBER,
+            permissions=[
+                TreeAccessPermissions.VIEW,
+                TreeAccessPermissions.PERSON_CREATE,
+            ],
+        ),
+    )
     mock_uow.tree_memberships.list_by_tree_with_usernames = AsyncMock(
         return_value=[
             (_membership(OWNER_ID, TreeMemberRole.OWNER), "owner"),
-            (_membership(MEMBER_ID, TreeMemberRole.MEMBER), "member"),
+            (
+                _membership(
+                    MEMBER_ID,
+                    TreeMemberRole.MEMBER,
+                    permissions=[
+                        TreeAccessPermissions.VIEW,
+                        TreeAccessPermissions.PERSON_CREATE,
+                    ],
+                ),
+                "member",
+            ),
         ]
     )
 
