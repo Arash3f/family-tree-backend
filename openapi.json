@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Family Tree API",
-    "version": "0.1.0"
+    "version": "1.0.0"
   },
   "paths": {
     "/health/neo4j": {
@@ -2854,6 +2854,52 @@
         ]
       }
     },
+    "/auth/preferences": {
+      "put": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Update Own Preferences",
+        "operationId": "update_own_preferences_auth_preferences_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePreferencesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
     "/graphql": {
       "get": {
         "summary": "Handle Http Get",
@@ -3802,6 +3848,37 @@
             "type": "string",
             "title": "Account Type",
             "default": "free"
+          },
+          "preferred_locale": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "en",
+                  "fa"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preferred Locale"
+          },
+          "preferred_theme": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "light",
+                  "dark",
+                  "system"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preferred Theme"
           }
         },
         "type": "object",
@@ -4027,6 +4104,11 @@
             "type": "integer",
             "title": "Offset",
             "default": 0
+          },
+          "get_all": {
+            "type": "boolean",
+            "title": "Get All",
+            "default": false
           }
         },
         "type": "object",
@@ -6519,6 +6601,43 @@
           "role"
         ],
         "title": "TreeMembershipResponse"
+      },
+      "UpdatePreferencesRequest": {
+        "properties": {
+          "preferred_locale": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "en",
+                  "fa"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preferred Locale"
+          },
+          "preferred_theme": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "light",
+                  "dark",
+                  "system"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preferred Theme"
+          }
+        },
+        "type": "object",
+        "title": "UpdatePreferencesRequest"
       },
       "UserCreateRequest": {
         "properties": {

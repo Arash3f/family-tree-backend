@@ -85,6 +85,7 @@ class PaginationInput:
     page: int = 1
     page_size: int = 30
     offset: int = 0
+    get_all: bool = False
 
 
 @strawberry.input
@@ -115,4 +116,9 @@ def marriage_sort_field(value: MarriageSortByEnum | None) -> MarriageSortField:
 
 def pagination_dict(pagination: PaginationInput | None) -> dict:
     p = pagination or PaginationInput()
-    return {"page": p.page, "page_size": p.page_size, "offset": p.offset}
+    return {
+        "page": p.page,
+        "page_size": p.page_size,
+        "offset": p.offset,
+        "get_all": p.get_all,
+    }

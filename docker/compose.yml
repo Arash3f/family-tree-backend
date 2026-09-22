@@ -126,6 +126,11 @@ services:
     restart: unless-stopped
     environment:
       NEO4J_AUTH: ${NEO4J_USER}/${NEO4J_PASSWORD}
+      # Keep Neo4j lean on small VPS hosts (≈4GiB). Defaults otherwise grab
+      # hundreds of MiB of pagecache and push Java into swap.
+      NEO4J_server_memory_pagecache_size: 192M
+      NEO4J_server_memory_heap_initial__size: 256M
+      NEO4J_server_memory_heap_max__size: 384M
     volumes:
       - neo4j_data:/data
       - neo4j_logs:/logs

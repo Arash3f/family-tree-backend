@@ -122,6 +122,7 @@ class SQLPersonRepository(PersonRepository):
             page=query.pagination.page,
             page_size=query.pagination.page_size,
             offset=query.pagination.offset,
+            get_all=query.pagination.get_all,
             sort_by=query.sort.sort_by,
             sort_order=query.sort.sort_order,
             sortable_columns=SORTABLE_COLUMNS,

@@ -35,6 +35,8 @@ from .marriage_update_response import MarriageUpdateResponse
 from .marriage_update_where_request import MarriageUpdateWhereRequest
 from .me_permission_item import MePermissionItem
 from .me_response import MeResponse
+from .me_response_preferred_locale_type_0 import MeResponsePreferredLocaleType0
+from .me_response_preferred_theme_type_0 import MeResponsePreferredThemeType0
 from .media_upload_response import MediaUploadResponse
 from .paginated_response_marriage_model import PaginatedResponseMarriageModel
 from .paginated_response_permission_model import PaginatedResponsePermissionModel
@@ -102,6 +104,9 @@ from .tree_member_add_request import TreeMemberAddRequest
 from .tree_member_role import TreeMemberRole
 from .tree_member_update_request import TreeMemberUpdateRequest
 from .tree_membership_response import TreeMembershipResponse
+from .update_preferences_request import UpdatePreferencesRequest
+from .update_preferences_request_preferred_locale_type_0 import UpdatePreferencesRequestPreferredLocaleType0
+from .update_preferences_request_preferred_theme_type_0 import UpdatePreferencesRequestPreferredThemeType0
 from .user_create_request import UserCreateRequest
 from .user_create_response import UserCreateResponse
 from .user_filter_request_data import UserFilterRequestData
@@ -150,6 +155,8 @@ __all__ = (
     "MediaUploadResponse",
     "MePermissionItem",
     "MeResponse",
+    "MeResponsePreferredLocaleType0",
+    "MeResponsePreferredThemeType0",
     "PaginatedResponseMarriageModel",
     "PaginatedResponsePermissionModel",
     "PaginatedResponsePersonModel",
@@ -216,6 +223,9 @@ __all__ = (
     "TreeMemberRole",
     "TreeMembershipResponse",
     "TreeMemberUpdateRequest",
+    "UpdatePreferencesRequest",
+    "UpdatePreferencesRequestPreferredLocaleType0",
+    "UpdatePreferencesRequestPreferredThemeType0",
     "UserCreateRequest",
     "UserCreateResponse",
     "UserFilterRequestData",

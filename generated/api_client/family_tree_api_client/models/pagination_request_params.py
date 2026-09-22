@@ -18,11 +18,13 @@ class PaginationRequestParams:
         page (int | Unset):  Default: 1.
         page_size (int | Unset):  Default: 30.
         offset (int | Unset):  Default: 0.
+        get_all (bool | Unset):  Default: False.
     """
 
     page: int | Unset = 1
     page_size: int | Unset = 30
     offset: int | Unset = 0
+    get_all: bool | Unset = False
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -31,6 +33,8 @@ class PaginationRequestParams:
         page_size = self.page_size
 
         offset = self.offset
+
+        get_all = self.get_all
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -41,6 +45,8 @@ class PaginationRequestParams:
             field_dict["page_size"] = page_size
         if offset is not UNSET:
             field_dict["offset"] = offset
+        if get_all is not UNSET:
+            field_dict["get_all"] = get_all
 
         return field_dict
 
@@ -53,10 +59,13 @@ class PaginationRequestParams:
 
         offset = d.pop("offset", UNSET)
 
+        get_all = d.pop("get_all", UNSET)
+
         pagination_request_params = cls(
             page=page,
             page_size=page_size,
             offset=offset,
+            get_all=get_all,
         )
 
         pagination_request_params.additional_properties = d

@@ -91,6 +91,7 @@ class SQLRoleRepository(RoleRepository):
             page_size=query.pagination.page_size,
             sort_by=query.sort.sort_by,
             offset=query.pagination.offset,
+            get_all=query.pagination.get_all,
             sort_order=query.sort.sort_order,
             sortable_columns=SORTABLE_COLUMNS,
         )

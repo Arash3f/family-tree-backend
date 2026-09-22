@@ -12,6 +12,7 @@ from app.utils.app_exception import AppException
 from app.utils.error_codes import ErrorCode
 
 
+
 @dataclass
 class IdRequest:
     id: UUID
@@ -43,6 +44,7 @@ class PaginationRequestParams(BaseModel):
     page: int = 1
     page_size: int = 30
     offset: int = 0
+    get_all: bool = False
 
     @model_validator(mode="after")
     def check_bounds(self) -> "PaginationRequestParams":
@@ -51,6 +53,10 @@ class PaginationRequestParams(BaseModel):
         Raises the application's own exceptions rather than letting Pydantic
         produce a ValidationError, so REST and GraphQL callers both get the
         usual error_code payload.
+
+        When ``get_all`` is true, ``page`` / ``page_size`` / ``offset`` are
+        ignored for the query (still validated lightly so clients can keep
+        sending a normal pagination object).
         """
         if self.page < 1:
             raise AppException(
@@ -66,7 +72,7 @@ class PaginationRequestParams(BaseModel):
                 detail=["Page size must be greater than or equal to 1."],
             )
 
-        if self.page_size > MAX_PAGE_SIZE:
+        if not self.get_all and self.page_size > MAX_PAGE_SIZE:
             raise AppException(
                 code=ErrorCode.INVALID_PAGE_SIZE,
                 status_code=422,

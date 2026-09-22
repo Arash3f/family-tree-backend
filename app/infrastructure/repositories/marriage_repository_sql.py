@@ -87,6 +87,7 @@ class SQLMarriageRepository(MarriageRepository):
             sort_by=query.sort.sort_by,
             sort_order=query.sort.sort_order,
             offset=query.pagination.offset,
+            get_all=query.pagination.get_all,
             sortable_columns=SORTABLE_COLUMNS,
             stmt=stmt,
         )

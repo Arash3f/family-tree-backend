@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.shared.dto.pagination_dto import MAX_PAGE_SIZE
+from app.domain.shared.dto.pagination_dto import MAX_GET_ALL_SIZE, MAX_PAGE_SIZE
 from app.domain.shared.dto.sorter_dto import SortOrderField
 from app.utils.app_exception import AppException
 from app.utils.error_codes import ErrorCode
@@ -35,6 +35,7 @@ async def paginate_and_sort(
     offset: int,
     page_size: int,
     sort_order: SortOrderField,
+    get_all: bool = False,
 ) -> _PaginatedResult:
     """
     Apply sorting and pagination to a SQLAlchemy async query.
@@ -42,7 +43,8 @@ async def paginate_and_sort(
     This utility function enhances a SQLAlchemy `Select` statement by:
         1. Applying dynamic sorting based on allowed sortable columns.
         2. Computing the total number of records efficiently.
-        3. Applying offset/limit pagination.
+        3. Applying offset/limit pagination (or returning all rows when
+           ``get_all`` is true, capped at ``MAX_GET_ALL_SIZE``).
         4. Executing the query and returning a structured paginated result.
 
     Args:
@@ -76,6 +78,10 @@ async def paginate_and_sort(
         sort_order (SortOrderField):
             Sorting direction (ASC or DESC).
 
+        get_all (bool):
+            When true, ignore page/offset/page_size and return every matching
+            row up to ``MAX_GET_ALL_SIZE``.
+
     Returns:
         _PaginatedResult:
             A paginated result object containing the retrieved items
@@ -105,7 +111,7 @@ async def paginate_and_sort(
             detail=["Page size must be greater than or equal to 1."],
         )
 
-    if page_size > MAX_PAGE_SIZE:
+    if not get_all and page_size > MAX_PAGE_SIZE:
         raise AppException(
             code=ErrorCode.INVALID_PAGE_SIZE,
             status_code=422,
@@ -133,6 +139,26 @@ async def paginate_and_sort(
     # total count
     count_stmt = stmt.order_by(None).subquery()
     total = await session.scalar(select(func.count()).select_from(count_stmt))
+    total_count = total or 0
+
+    if get_all:
+        if total_count > MAX_GET_ALL_SIZE:
+            raise AppException(
+                code=ErrorCode.INVALID_PAGE_SIZE,
+                status_code=422,
+                detail=[
+                    f"Result set has {total_count} rows; "
+                    f"get_all is capped at {MAX_GET_ALL_SIZE}."
+                ],
+            )
+        result = await session.execute(stmt)
+        items = result.unique().scalars().all()
+        return _PaginatedResult(
+            items=items,
+            total=total_count,
+            page=1,
+            page_size=total_count,
+        )
 
     # pagination
     stmt = stmt.offset(offset + (page - 1) * page_size).limit(page_size)
@@ -143,7 +169,7 @@ async def paginate_and_sort(
 
     return _PaginatedResult(
         items=items,
-        total=total or 0,
+        total=total_count,
         page=page,
         page_size=page_size,
     )

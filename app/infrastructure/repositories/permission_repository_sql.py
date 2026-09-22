@@ -86,6 +86,7 @@ class SQLPermissionRepository(PermissionRepository):
             page=query.pagination.page,
             offset=query.pagination.offset,
             page_size=query.pagination.page_size,
+            get_all=query.pagination.get_all,
             sort_by=query.sort.sort_by,
             sort_order=query.sort.sort_order,
             sortable_columns=SORTABLE_COLUMNS,

@@ -202,6 +202,7 @@ input PaginationInput {
   page: Int! = 1
   pageSize: Int! = 30
   offset: Int! = 0
+  getAll: Boolean! = false
 }
 
 input ParentLinkInput {

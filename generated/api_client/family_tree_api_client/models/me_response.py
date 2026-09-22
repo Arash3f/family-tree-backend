@@ -7,6 +7,8 @@ from uuid import UUID
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.me_response_preferred_locale_type_0 import MeResponsePreferredLocaleType0
+from ..models.me_response_preferred_theme_type_0 import MeResponsePreferredThemeType0
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
@@ -31,6 +33,8 @@ class MeResponse:
         permissions (list[str] | Unset):
         permission_details (list[MePermissionItem] | Unset):
         account_type (str | Unset):  Default: 'free'.
+        preferred_locale (MeResponsePreferredLocaleType0 | None | Unset):
+        preferred_theme (MeResponsePreferredThemeType0 | None | Unset):
     """
 
     id: UUID
@@ -44,6 +48,8 @@ class MeResponse:
     permissions: list[str] | Unset = UNSET
     permission_details: list[MePermissionItem] | Unset = UNSET
     account_type: str | Unset = "free"
+    preferred_locale: MeResponsePreferredLocaleType0 | None | Unset = UNSET
+    preferred_theme: MeResponsePreferredThemeType0 | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -94,6 +100,22 @@ class MeResponse:
 
         account_type = self.account_type
 
+        preferred_locale: None | str | Unset
+        if isinstance(self.preferred_locale, Unset):
+            preferred_locale = UNSET
+        elif isinstance(self.preferred_locale, MeResponsePreferredLocaleType0):
+            preferred_locale = self.preferred_locale.value
+        else:
+            preferred_locale = self.preferred_locale
+
+        preferred_theme: None | str | Unset
+        if isinstance(self.preferred_theme, Unset):
+            preferred_theme = UNSET
+        elif isinstance(self.preferred_theme, MeResponsePreferredThemeType0):
+            preferred_theme = self.preferred_theme.value
+        else:
+            preferred_theme = self.preferred_theme
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -119,6 +141,10 @@ class MeResponse:
             field_dict["permission_details"] = permission_details
         if account_type is not UNSET:
             field_dict["account_type"] = account_type
+        if preferred_locale is not UNSET:
+            field_dict["preferred_locale"] = preferred_locale
+        if preferred_theme is not UNSET:
+            field_dict["preferred_theme"] = preferred_theme
 
         return field_dict
 
@@ -192,6 +218,40 @@ class MeResponse:
 
         account_type = d.pop("account_type", UNSET)
 
+        def _parse_preferred_locale(data: object) -> MeResponsePreferredLocaleType0 | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, str):
+                    raise TypeError()
+                preferred_locale_type_0 = MeResponsePreferredLocaleType0(data)
+
+                return preferred_locale_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(MeResponsePreferredLocaleType0 | None | Unset, data)
+
+        preferred_locale = _parse_preferred_locale(d.pop("preferred_locale", UNSET))
+
+        def _parse_preferred_theme(data: object) -> MeResponsePreferredThemeType0 | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, str):
+                    raise TypeError()
+                preferred_theme_type_0 = MeResponsePreferredThemeType0(data)
+
+                return preferred_theme_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(MeResponsePreferredThemeType0 | None | Unset, data)
+
+        preferred_theme = _parse_preferred_theme(d.pop("preferred_theme", UNSET))
+
         me_response = cls(
             id=id,
             username=username,
@@ -204,6 +264,8 @@ class MeResponse:
             permissions=permissions,
             permission_details=permission_details,
             account_type=account_type,
+            preferred_locale=preferred_locale,
+            preferred_theme=preferred_theme,
         )
 
         me_response.additional_properties = d
