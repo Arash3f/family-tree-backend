@@ -12,7 +12,6 @@ from app.utils.app_exception import AppException
 from app.utils.error_codes import ErrorCode
 
 
-
 @dataclass
 class IdRequest:
     id: UUID

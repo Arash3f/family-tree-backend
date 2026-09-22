@@ -35,6 +35,7 @@ repos:
       - id: ruff
         exclude: (.*/models/__init__\.py$|^generated/)
       - id: ruff-format
+        exclude: (.*/models/__init__\.py$|^generated/)
   - repo: https://github.com/commitizen-tools/commitizen
     rev: v4.15.1
     hooks:
