@@ -1,4 +1,5 @@
-# syntax=docker/dockerfile:1
+# No `# syntax=docker/dockerfile:1` — that pulls docker.io/docker/dockerfile and
+# fails with 403 on networks that block/rate-limit Docker Hub (common on VPS).
 
 FROM python:3.11.15-slim AS base
 
