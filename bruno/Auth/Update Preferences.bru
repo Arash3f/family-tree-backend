@@ -1,0 +1,28 @@
+meta {
+  name: Update Preferences
+  type: http
+  seq: 10
+}
+
+put {
+  url: {{base_url}}/auth/preferences
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "preferred_locale": "fa",
+    "preferred_theme": "system"
+  }
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  # Update Preferences
+
+  Self-service locale and theme preferences. Does not require `user_update`.
+}

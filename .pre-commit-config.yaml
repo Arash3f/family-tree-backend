@@ -76,6 +76,12 @@ repos:
         language: system
         pass_filenames: false
         files: ^(pyproject\.toml|poetry\.lock|requirements(-dev)?\.txt)$
+      - id: bruno-routes-sync
+        name: Bruno collection covers every HTTP route
+        entry: poetry run pytest tests/unit/api/test_bruno_collection_matches_routes.py::test_every_route_has_a_bruno_request --no-cov -q
+        language: system
+        pass_filenames: false
+        files: ^(app/presentation/rest/|bruno/|app/main\.py$)
       # - id: pytest
       #   name: pytest
       #   entry: poetry run pytest
