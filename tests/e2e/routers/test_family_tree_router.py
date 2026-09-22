@@ -302,6 +302,40 @@ async def test_owner_can_add_and_remove_a_member(
 
 
 @pytest.mark.asyncio
+async def test_list_family_trees_does_not_duplicate_after_rejoin(
+    tree_id, admin_client: AuthenticatedClient, client: Client, uow, asgi_transport
+):
+    """Soft-deleted + active membership must not list the same tree twice."""
+    member = await create_authenticated_user(
+        client, uow, permissions=[Permissions.TREE_READ], asgi_transport=asgi_transport
+    )
+
+    added = await add_tree_member_api(
+        tree_id=tree_id,
+        client=admin_client,
+        body=TreeMemberAddRequest(username=member.username),
+    )
+    assert added.status_code == 201
+
+    removed = await remove_tree_member(
+        tree_id=tree_id, user_id=member.user.safe_id, client=admin_client
+    )
+    assert removed.status_code == 200
+
+    rejoined = await add_tree_member_api(
+        tree_id=tree_id,
+        client=admin_client,
+        body=TreeMemberAddRequest(username=member.username),
+    )
+    assert rejoined.status_code == 201
+
+    listing = await list_family_trees(client=member.client)
+    assert listing.status_code == 200
+    ids = [tree.id for tree in listing.parsed]
+    assert ids == [tree_id]
+
+
+@pytest.mark.asyncio
 async def test_owner_can_grant_operation_access(
     tree_id, admin_client: AuthenticatedClient, client: Client, uow, asgi_transport
 ):

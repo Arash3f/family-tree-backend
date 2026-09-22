@@ -35,17 +35,24 @@ class SQLTreeRepository(TreeRepository):
         return self._to_entity(model) if model else None
 
     async def list_for_user(self, user_id: UUID) -> list[FamilyTree]:
+        # Soft-deleted memberships must be excluded: the unique index is
+        # partial (`deleted_at IS NULL`), so a re-joined user can have both
+        # an old deleted row and an active one — joining without the filter
+        # returns the same tree twice in the dashboard list.
         stmt = (
             select(FamilyTreeModel)
             .join(
                 TreeMembershipModel,
                 TreeMembershipModel.tree_id == FamilyTreeModel.id,
             )
-            .where(TreeMembershipModel.user_id == user_id)
+            .where(
+                TreeMembershipModel.user_id == user_id,
+                TreeMembershipModel.deleted_at.is_(None),
+            )
             .order_by(FamilyTreeModel.created_at.desc())
         )
         result = await self.session.execute(stmt)
-        return [self._to_entity(m) for m in result.scalars().all()]
+        return [self._to_entity(m) for m in result.scalars().unique().all()]
 
     async def list_all(self) -> list[FamilyTree]:
         stmt = select(FamilyTreeModel).order_by(FamilyTreeModel.created_at.asc())
