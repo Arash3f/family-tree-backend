@@ -6,6 +6,8 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET, Unset
+
 T = TypeVar("T", bound="TreeExcelImportResponse")
 
 
@@ -15,16 +17,20 @@ class TreeExcelImportResponse:
     Attributes:
         persons_created (int):
         marriages_created (int):
+        persons_updated (int | Unset):  Default: 0.
     """
 
     persons_created: int
     marriages_created: int
+    persons_updated: int | Unset = 0
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         persons_created = self.persons_created
 
         marriages_created = self.marriages_created
+
+        persons_updated = self.persons_updated
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -34,6 +40,8 @@ class TreeExcelImportResponse:
                 "marriages_created": marriages_created,
             }
         )
+        if persons_updated is not UNSET:
+            field_dict["persons_updated"] = persons_updated
 
         return field_dict
 
@@ -44,9 +52,12 @@ class TreeExcelImportResponse:
 
         marriages_created = d.pop("marriages_created")
 
+        persons_updated = d.pop("persons_updated", UNSET)
+
         tree_excel_import_response = cls(
             persons_created=persons_created,
             marriages_created=marriages_created,
+            persons_updated=persons_updated,
         )
 
         tree_excel_import_response.additional_properties = d

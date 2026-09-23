@@ -27,6 +27,7 @@ class TreeExcelPreviewPerson:
         marriage_ref (None | str | Unset):
         already_exists (bool | Unset):  Default: False.
         existing_label (None | str | Unset):
+        changed_fields (list[str] | Unset):
         duplicate_of_ref (None | str | Unset):
         warning (None | str | Unset):
         parent1_label (None | str | Unset):
@@ -46,6 +47,7 @@ class TreeExcelPreviewPerson:
     marriage_ref: None | str | Unset = UNSET
     already_exists: bool | Unset = False
     existing_label: None | str | Unset = UNSET
+    changed_fields: list[str] | Unset = UNSET
     duplicate_of_ref: None | str | Unset = UNSET
     warning: None | str | Unset = UNSET
     parent1_label: None | str | Unset = UNSET
@@ -106,6 +108,10 @@ class TreeExcelPreviewPerson:
         else:
             existing_label = self.existing_label
 
+        changed_fields: list[str] | Unset = UNSET
+        if not isinstance(self.changed_fields, Unset):
+            changed_fields = self.changed_fields
+
         duplicate_of_ref: None | str | Unset
         if isinstance(self.duplicate_of_ref, Unset):
             duplicate_of_ref = UNSET
@@ -162,6 +168,8 @@ class TreeExcelPreviewPerson:
             field_dict["already_exists"] = already_exists
         if existing_label is not UNSET:
             field_dict["existing_label"] = existing_label
+        if changed_fields is not UNSET:
+            field_dict["changed_fields"] = changed_fields
         if duplicate_of_ref is not UNSET:
             field_dict["duplicate_of_ref"] = duplicate_of_ref
         if warning is not UNSET:
@@ -251,6 +259,8 @@ class TreeExcelPreviewPerson:
 
         existing_label = _parse_existing_label(d.pop("existing_label", UNSET))
 
+        changed_fields = cast(list[str], d.pop("changed_fields", UNSET))
+
         def _parse_duplicate_of_ref(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -309,6 +319,7 @@ class TreeExcelPreviewPerson:
             marriage_ref=marriage_ref,
             already_exists=already_exists,
             existing_label=existing_label,
+            changed_fields=changed_fields,
             duplicate_of_ref=duplicate_of_ref,
             warning=warning,
             parent1_label=parent1_label,

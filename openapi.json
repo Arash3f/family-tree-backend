@@ -113,6 +113,28 @@
         ]
       }
     },
+    "/family-trees/demo": {
+      "get": {
+        "tags": [
+          "Family Trees"
+        ],
+        "summary": "The publicly readable demo tree",
+        "description": "Point a signed-out visitor at the demo tree.\n\nDeclared above `/{tree_id}` so the literal path wins the match, and the only\nroute here that takes no credentials. `my_permissions` comes back as the\nread-only demo set, which is the same field the client already reads to\ndecide what to render — so the demo needs no second rendering path.",
+        "operationId": "get_demo_family_tree_family_trees_demo_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyTreeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/family-trees/{tree_id}": {
       "get": {
         "tags": [
@@ -6204,6 +6226,11 @@
           "marriages_created": {
             "type": "integer",
             "title": "Marriages Created"
+          },
+          "persons_updated": {
+            "type": "integer",
+            "title": "Persons Updated",
+            "default": 0
           }
         },
         "type": "object",
@@ -6405,6 +6432,14 @@
               }
             ],
             "title": "Existing Label"
+          },
+          "changed_fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Changed Fields",
+            "default": []
           },
           "duplicate_of_ref": {
             "anyOf": [
