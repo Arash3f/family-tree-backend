@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date
 from uuid import UUID, uuid4
 
@@ -16,6 +16,7 @@ from app.application.services.tree_excel_service import (
     match_tree_excel,
     parse_tree_excel,
     person_display_label,
+    person_row_changes,
 )
 from app.domain.entities.marriage import Marriage
 from app.domain.entities.person import ParentLink, ParentRelationshipType, Person
@@ -39,6 +40,10 @@ class PreviewPersonDTO:
     row_number: int
     already_exists: bool = False
     existing_label: str | None = None
+    #: Fields this row would rewrite on the person it matched. Empty on a row
+    #: that only repeats what is already stored, so the preview can separate
+    #: "already there" from "already there, and changed".
+    changed_fields: list[str] = field(default_factory=list)
     duplicate_of_ref: str | None = None
     warning: str | None = None
     #: Who the codes above point at, so the preview reads without decoding refs.
@@ -159,6 +164,8 @@ class PreviewTreeExcelUseCase:
         match = match_tree_excel(parsed, existing_persons, existing_marriages)
         existing_person_by_id = {person.safe_id: person for person in existing_persons}
 
+        row_by_ref = {row.ref: row for row in parsed.persons}
+
         for preview_person in persons_out:
             preview_person.already_exists = match.person_already_in_tree(
                 preview_person.ref
@@ -172,6 +179,27 @@ class PreviewTreeExcelUseCase:
             preview_person.warning = match.person_warning(
                 preview_person.ref, lang=text.lang
             )
+            existing_id = match.person_existing_id.get(preview_person.ref)
+            matched = (
+                existing_person_by_id.get(existing_id)
+                if existing_id is not None
+                else None
+            )
+            if matched is not None:
+                row = row_by_ref[preview_person.ref]
+                changes = person_row_changes(matched, row)
+                preview_person.changed_fields = sorted(changes)
+                if changes:
+                    # The edit has to satisfy the same invariants as a create
+                    # (a death date before the birth date, say). Checking a copy
+                    # keeps the preview free of side effects.
+                    try:
+                        replace(matched, **changes)
+                    except AppException as exc:
+                        for message in _exc_messages(exc, text.lang):
+                            errors.append(
+                                text.persons_row_detail(row.row_number, message)
+                            )
 
         for preview_marriage_item in marriages_out:
             preview_marriage_item.already_exists = match.marriage_already_in_tree(

@@ -9,10 +9,13 @@ from app.application.services.tree_excel_loader import (
     load_all_tree_persons,
 )
 from app.application.services.tree_excel_service import (
+    TreeExcelMatch,
+    apply_person_row_changes,
     canonical_excel_ref,
     excel_text,
     match_tree_excel,
     parse_tree_excel,
+    person_row_changes,
 )
 from app.domain.entities.marriage import Marriage
 from app.domain.entities.person import ParentLink, ParentRelationshipType, Person
@@ -28,6 +31,9 @@ from app.domain.services.marriage_rules import MarriageRulesService
 class ImportTreeExcelResultDTO:
     persons_created: int
     marriages_created: int
+    #: Rows that matched someone already in the tree and carried a changed
+    #: value — a renamed person is an edit, not a second person.
+    persons_updated: int = 0
 
 
 class ImportTreeExcelUseCase:
@@ -131,7 +137,28 @@ class ImportTreeExcelUseCase:
 
             _fill_duplicate_refs(person_ref_to_id, match.person_duplicate_of)
 
-            persons_by_id = {person.safe_id: person for person in existing_persons}
+            # A row matching someone already in the tree used to be skipped
+            # outright, so a corrected family name never reached the database —
+            # and on a sheet carrying no system ids the same person came back as
+            # a second row. A matched row is an edit.
+            existing_by_id = {person.safe_id: person for person in existing_persons}
+            updated_persons: list[Person] = []
+            for row in parsed.persons:
+                existing = _matched_person_to_update(
+                    row.ref,
+                    existing_by_id=existing_by_id,
+                    match=match,
+                    selected=selected_people,
+                )
+                if existing is None:
+                    continue
+                changes = person_row_changes(existing, row)
+                if not changes:
+                    continue
+                apply_person_row_changes(existing, changes)
+                updated_persons.append(await self.uow.persons.update(person=existing))
+
+            persons_by_id = dict(existing_by_id)
             persons_by_id.update((person.safe_id, person) for person in created_persons)
 
             for marriage_row in marriages_to_create:
@@ -281,12 +308,12 @@ class ImportTreeExcelUseCase:
 
             created_persons = list(created_by_id.values())
 
-            if not created_persons and not created_marriages:
+            if not created_persons and not created_marriages and not updated_persons:
                 raise TreeExcelEmptyException()
 
             await self.uow.commit()
 
-        for person in created_persons:
+        for person in (*created_persons, *updated_persons):
             self.sync_service.upsert_person(person)
         for marriage in created_marriages:
             if marriage.is_active():
@@ -297,7 +324,35 @@ class ImportTreeExcelUseCase:
         return ImportTreeExcelResultDTO(
             persons_created=len(created_persons),
             marriages_created=len(created_marriages),
+            persons_updated=len(updated_persons),
         )
+
+
+def _matched_person_to_update(
+    ref: str,
+    *,
+    existing_by_id: dict[UUID, Person],
+    match: TreeExcelMatch,
+    selected: set[str] | None,
+) -> Person | None:
+    """The person a row should edit, or None when the row creates instead.
+
+    @param ref - The row's code in the workbook.
+    @param existing_by_id - Every person already in the tree, by id.
+    @param match - What `match_tree_excel` resolved this upload to.
+    @param selected - Refs the caller chose to apply, or None for all of them.
+
+    @returns The matched person, or None when the row matched nobody, was
+        folded into another row, or was left out of the selection.
+    """
+    if ref in match.person_duplicate_of:
+        return None
+    if selected is not None and ref not in selected:
+        return None
+    existing_id = match.person_existing_id.get(ref)
+    if existing_id is None:
+        return None
+    return existing_by_id.get(existing_id)
 
 
 def _normalize_selected_refs(

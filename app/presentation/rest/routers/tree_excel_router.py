@@ -39,6 +39,8 @@ router = APIRouter(prefix="/excel", tags=["Family Tree Excel"])
 class TreeExcelImportResponse(BaseModel):
     persons_created: int
     marriages_created: int
+    #: Rows that matched someone already in the tree and carried a new value.
+    persons_updated: int = 0
 
 
 class TreeExcelImportInclude(BaseModel):
@@ -59,6 +61,9 @@ class TreeExcelPreviewPerson(BaseModel):
     row_number: int
     already_exists: bool = False
     existing_label: str | None = None
+    #: Names of the stored fields this row would rewrite; empty when the row
+    #: only repeats what is already there.
+    changed_fields: list[str] = []
     duplicate_of_ref: str | None = None
     warning: str | None = None
     parent1_label: str | None = None
@@ -329,6 +334,7 @@ async def import_excel(
         return TreeExcelImportResponse(
             persons_created=result.persons_created,
             marriages_created=result.marriages_created,
+            persons_updated=result.persons_updated,
         )
     except TimeoutError:
         return _timeout_response(lang, "import_timeout")

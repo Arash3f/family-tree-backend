@@ -1700,6 +1700,75 @@ def person_identity_key(
     )
 
 
+#: Person fields an import may rewrite on a row that matched someone already in
+#: the tree. Parent and marriage links are deliberately absent: they are a graph,
+#: not a value, and rewriting them from a sheet that may not carry the whole tree
+#: would detach people the file never mentioned.
+UPDATABLE_PERSON_FIELDS: tuple[str, ...] = (
+    "name",
+    "family_name",
+    "gender",
+    "birth_date",
+    "death_date",
+    "birth_place",
+    "death_place",
+    "notes",
+)
+
+
+def _is_blank(value: Any) -> bool:
+    return value is None or (isinstance(value, str) and not value.strip())
+
+
+def _normalized(value: Any) -> Any:
+    return value.strip() if isinstance(value, str) else value
+
+
+def person_row_changes(existing: Person, row: ExcelPersonRow) -> dict[str, Any]:
+    """Report which stored fields the row would rewrite.
+
+    An empty cell never clears a stored value. A sheet may be hand-made, or carry
+    only the columns someone cared about, and silently blanking a birth place
+    because a column was missing is not a trade anyone would accept for the
+    convenience of clearing one from Excel — that stays an edit in the app.
+
+    @param existing - The person already in the tree.
+    @param row - The parsed sheet row that matched them.
+
+    @returns Field name to new value, for the fields that actually differ; empty
+        when the row says nothing new.
+
+    @example
+    ```python
+    person_row_changes(person, row)  # {"family_name": "Karimi"}
+    ```
+    """
+    changes: dict[str, Any] = {}
+    for field_name in UPDATABLE_PERSON_FIELDS:
+        new_value = getattr(row, field_name)
+        if _is_blank(new_value):
+            continue
+        new_value = _normalized(new_value)
+        if _normalized(getattr(existing, field_name)) == new_value:
+            continue
+        changes[field_name] = new_value
+    return changes
+
+
+def apply_person_row_changes(existing: Person, changes: dict[str, Any]) -> None:
+    """Write `changes` onto the entity and re-check its invariants.
+
+    @param existing - The person to mutate in place.
+    @param changes - The mapping `person_row_changes` produced.
+
+    @throws {AppException} InvalidBirthDateException - When the new dates are
+        inconsistent, e.g. a death date before the birth date.
+    """
+    for field_name, value in changes.items():
+        setattr(existing, field_name, value)
+    existing.validate()
+
+
 def person_display_label(person: Person, *, with_birth_date: bool = True) -> str:
     parts = [person.name]
     if person.family_name:

@@ -41,7 +41,8 @@ Within a tree you can:
 - Link **parents** to children, tagged `BIOLOGICAL`, `ADOPTIVE` or `STEP`
 - Record **marriages** and divorces
 - Ask for the **closest relationship path** between any two people, then optionally **alternative diverse paths** (Neo4j)
-- **Import and export** whole trees as Excel workbooks
+- **Import and export** whole trees as Excel workbooks — a row matching someone already in the
+  tree is applied as an edit, not skipped
 - Manage **users, roles and permissions** (including optional **email** and **phone**), and raise **support tickets**
 
 ### Design notes
