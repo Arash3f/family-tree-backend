@@ -1,0 +1,19 @@
+# Mounts the Google service-account key that the off-site backup upload needs.
+#
+# Kept out of compose.yml on purpose: a bind mount whose source file does not
+# exist makes Docker create a *directory* in its place, which would break every
+# deployment that has not set Drive backups up. Adding this overlay is the
+# explicit statement that the key file is there.
+#
+# From repository root, once GOOGLE_DRIVE_BACKUP_ENABLED=true in .env:
+#   docker compose -f docker/compose.yml -f docker/compose.google-drive.yml \
+#     --env-file .env up -d
+#
+# GOOGLE_DRIVE_CREDENTIALS_HOST_FILE is the path on the host; the container path
+# must match GOOGLE_DRIVE_CREDENTIALS_FILE in .env.
+
+services:
+  celery_worker:
+    volumes:
+      # Read-only, and only on the worker — beat merely enqueues the task.
+      - ${GOOGLE_DRIVE_CREDENTIALS_HOST_FILE:-./secrets/google-drive-service-account.json}:/run/secrets/google-drive-service-account.json:ro

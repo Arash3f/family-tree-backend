@@ -147,3 +147,6 @@ temp/
 
 # Local knowledge-graph cache (never commit)
 graphify-out/
+
+# Google service-account key for off-site backups (never commit)
+secrets/
