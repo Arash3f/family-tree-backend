@@ -25,7 +25,12 @@ def main() -> None:
 
     output_path = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "openapi.json"
     schema = app.openapi()
-    output_path.write_text(json.dumps(schema, indent=2, ensure_ascii=False) + "\n")
+    # encoding is explicit: the default is the platform one, so a description
+    # carrying an em dash or Persian text silently writes cp1252 on Windows,
+    # which the client generator then refuses to read back.
+    output_path.write_text(
+        json.dumps(schema, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
     print(f"Wrote OpenAPI schema to {output_path}")
 
 
