@@ -86,6 +86,19 @@ docker compose -f docker/compose.yml --env-file .env exec -T api \
   pytest -v --cov=app --cov-fail-under=80
 ```
 
+## Google Drive backups
+
+Off by default. Turning it on copies each nightly dump to a dated folder tree in Google Drive.
+Setup, configuration, verification, restore and troubleshooting all live in
+[GOOGLE-DRIVE-BACKUP.md](../GOOGLE-DRIVE-BACKUP.md).
+
+Once configured, the stack needs the extra overlay that mounts the service-account key:
+
+```bash
+docker compose -f docker/compose.yml -f docker/compose.google-drive.yml --env-file .env up -d
+```
+
+
 ## Published ports (defaults)
 
 | Service | Port | Published by default? |

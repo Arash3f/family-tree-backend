@@ -636,6 +636,7 @@ FastAPI, SQLAlchemy or Neo4j. A use case is testable with no I/O because of it.
 | `sync.relationship.*` | `sync_relationship` | On parentage or marriage change |
 | `reconcile.neo4j` | `reconcile_neo4j` | Beat, hourly at :30 |
 | `backup.database` | `backup_database` | Beat, daily at 00:00 Asia/Tehran |
+| `backup.upload_to_drive` | `backup_database` | Queued by `backup.database` when Drive backups are on |
 
 > The worker must consume **every** queue listed above. A queue with no consumer accepts messages
 > silently and never runs them — the failure looks like nothing happening rather than an error.
@@ -657,6 +658,20 @@ The two dumps are taken back to back rather than in one transaction, so a write 
 can appear on only one side. Restoring both from the same timestamp gets as close to a consistent
 point as this strategy allows — check application-level consistency afterwards, and remember that
 Neo4j can always be rebuilt from Postgres by reconciliation if the graph side looks wrong.
+
+#### Off-site copy in Google Drive
+
+`BACKUP_DIR` is a volume on the same host as the databases, so a host loss takes the backups with
+it. With `GOOGLE_DRIVE_BACKUP_ENABLED=true` the nightly run also queues `backup.upload_to_drive`,
+which zips the Neo4j export, uploads both dumps plus a `manifest.json` into a
+`YYYY/YYYY-MM/<timestamp>/` folder in Drive and prunes runs past
+`GOOGLE_DRIVE_RETENTION_DAYS`. The upload is a separate task on purpose: a Drive outage retries the
+transfer rather than re-running `pg_dump` against the live database, and a failed upload never costs
+you the local dump.
+
+Off by default. Setup, configuration, restore and troubleshooting:
+**[GOOGLE-DRIVE-BACKUP.md](GOOGLE-DRIVE-BACKUP.md)**.
+
 
 ### Production notes
 
