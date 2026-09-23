@@ -15,6 +15,9 @@ from app.domain.exceptions.user_exceptions import (
 from app.presentation.dependencies import get_request_uow, get_token_service
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+# auto_error=False so a request with no Authorization header reaches the
+# dependency as None instead of being rejected at the security layer.
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 
 
 async def get_current_user(
@@ -61,6 +64,32 @@ async def get_current_user(
     # Attach session id for logout handlers
     user._active_session_id = session_id  # type: ignore[attr-defined]
     return user
+
+
+async def get_optional_current_user(
+    token: str | None = Depends(oauth2_scheme_optional),
+    uow: UnitOfWork = Depends(get_request_uow),
+    token_service: TokenService = Depends(get_token_service),
+):
+    """Resolve the caller when there is one, without requiring it.
+
+    Only the *absence* of a token is treated as anonymous. A token that is
+    present but bad still raises: silently downgrading an expired session to
+    'anonymous' would show a signed-in member the public view of a tree and
+    never tell them why.
+
+    @param token - Bearer token, or None when the header is absent.
+
+    @returns The authenticated user, or None for an anonymous caller.
+
+    @throws {AppException} InvalidCredentialsException - When a token is present
+        but not a valid, active access token.
+    @throws {AppException} UserNotFoundException - When it names a missing user.
+    @throws {AppException} AccountDeactivatedException - When that user is inactive.
+    """
+    if token is None:
+        return None
+    return await get_current_user(token=token, uow=uow, token_service=token_service)
 
 
 def get_current_session_id(current_user=Depends(get_current_user)) -> UUID:

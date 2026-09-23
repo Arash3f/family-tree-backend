@@ -55,6 +55,12 @@ cases, so authorization, validation and error semantics cannot drift apart. Ever
 into Neo4j, which exists purely as a query accelerator for path finding — it can be rebuilt from
 Postgres at any time, and an hourly reconciliation task repairs drift.
 
+**One tree may be public, and only in one direction.** Setting `DEMO_TREE_ID` publishes that tree
+for anyone to read without signing in. It is not a second code path: the guard hands an anonymous
+visitor a synthetic membership carrying only `TreeAccessPermissions.DEMO` — four read capabilities —
+so every write route refuses it through the same check that refuses any other member, and with the
+setting unset the fallback cannot match at all. See [Public demo tree](#public-demo-tree).
+
 **Tenancy is enforced in Cypher, not just in Python.** Path queries are scoped by `tree_id`, so a
 person who appears in two trees cannot act as a bridge between two otherwise unrelated people.
 
@@ -454,6 +460,39 @@ browsable, and every document is capped by `GRAPHQL_MAX_DEPTH`, `GRAPHQL_MAX_ALI
 Everything is environment-driven and validated by `AppSettings` on import — misconfiguration fails at
 startup, not on first request. [.env.example](.env.example) documents every field, and a CI check
 fails if a setting is added without documenting it.
+
+### Public demo tree
+
+Off by default. `DEMO_TREE_ID` names one existing tree that becomes readable without a session:
+
+```env
+DEMO_TREE_ID=                 # empty = no public tree at all
+DEMO_RATE_LIMIT_PER_MINUTE=60 # per-IP ceiling for anonymous demo reads
+```
+
+`GET /family-trees/demo` is the only route that takes no credentials; it answers `404` while the
+setting is empty. It returns the tree with `my_permissions` set to the demo capabilities, which is
+the same field a client already reads to decide what to render — so the demo needs no second UI.
+With the id in hand, the ordinary read routes accept it anonymously too.
+
+What the demo grants, and nothing else:
+
+| Capability | Why |
+|------------|-----|
+| `view` | The tree, its people and marriages |
+| `view_birth_date` | Dates are most of what a tree is worth looking at |
+| `view_marriage_date` | Same, for couples |
+| `view_photo` | Presigned, short-lived, like everywhere else |
+
+Everything else — every create, update, delete, member change and upload — is outside that set and
+refused. Relationship path finding is the expensive query on this surface and the one anyone can
+reach, which is what `DEMO_RATE_LIMIT_PER_MINUTE` is for; it meters only the anonymous fallback, so
+a member reading their own tree is never throttled by it. A signed-out request to a non-demo tree
+still gets `401`, not `403`: publishing one tree must not turn an authentication failure into an
+authorization one.
+
+Pick a tree whose contents you are content to have indexed by a search engine — the frontend's
+`/demo` page is public and crawlable.
 
 ### Required
 

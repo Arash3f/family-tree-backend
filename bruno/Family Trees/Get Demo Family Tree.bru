@@ -1,0 +1,46 @@
+meta {
+  name: Get Demo Family Tree
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{base_url}}/family-trees/demo
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isString
+  res.body.name: isString
+}
+
+docs {
+  # Get Demo Family Tree
+
+  The only tree route that takes no credentials. Returns the tree named by
+  `DEMO_TREE_ID`, with `my_permissions` set to the read-only demo capabilities
+  (`view`, `view_birth_date`, `view_marriage_date`, `view_photo`).
+
+  Returns `404` when no demo tree is configured, and every request is metered
+  per IP by `DEMO_RATE_LIMIT_PER_MINUTE`.
+
+  Once you have the id, the ordinary read routes accept it anonymously too —
+  `GET /persons?tree_id=…`, `GET /marriages?tree_id=…` and the relation
+  endpoints. Write routes still refuse, because the demo grants no write
+  capability.
+
+  ## Input
+  None.
+
+  ## Output `200`
+  ```json
+  {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "name": "Karimi family",
+    "owner_user_id": "00000000-0000-0000-0000-000000000002",
+    "my_permissions": ["view", "view_birth_date", "view_marriage_date", "view_photo"]
+  }
+  ```
+}

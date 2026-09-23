@@ -12,6 +12,7 @@ from app.application.use_cases.family_tree.create_family_tree_use_case import (
     CreateFamilyTreeUseCase,
 )
 from app.application.use_cases.family_tree.get_family_tree_use_case import (
+    GetDemoFamilyTreeUseCase,
     GetFamilyTreeUseCase,
     ListFamilyTreesUseCase,
 )
@@ -30,6 +31,7 @@ from app.domain.shared.permissions import Permissions
 from app.presentation.dependencies import get_request_uow
 from app.presentation.rest.dependencies.auth_dependencies import get_current_user
 from app.presentation.rest.dependencies.permission_guard import RequirePermission
+from app.presentation.rest.dependencies.rate_limit import rate_limit_demo
 from app.presentation.rest.dependencies.tree_guard import (
     require_tree_member_add,
     require_tree_member_remove,
@@ -78,6 +80,24 @@ async def list_family_trees(
     usecase = ListFamilyTreesUseCase(uow)
     res = await usecase.execute(user_id=current_user.safe_id)
     return [FamilyTreeResponse.model_validate(item.model_dump()) for item in res]
+
+
+@router.get(
+    "/demo",
+    response_model=FamilyTreeResponse,
+    dependencies=[Depends(rate_limit_demo)],
+    summary="The publicly readable demo tree",
+)
+async def get_demo_family_tree(uow=Depends(get_request_uow)) -> FamilyTreeResponse:
+    """Point a signed-out visitor at the demo tree.
+
+    Declared above `/{tree_id}` so the literal path wins the match, and the only
+    route here that takes no credentials. `my_permissions` comes back as the
+    read-only demo set, which is the same field the client already reads to
+    decide what to render — so the demo needs no second rendering path.
+    """
+    res = await GetDemoFamilyTreeUseCase(uow).execute()
+    return FamilyTreeResponse.model_validate(res.model_dump())
 
 
 @router.get(

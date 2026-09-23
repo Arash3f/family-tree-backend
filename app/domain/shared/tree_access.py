@@ -109,6 +109,21 @@ class TreeAccessPermissions:
         TICKET_MANAGE,
     )
 
+    # The only capabilities the public demo tree ever grants. Read-only by
+    # construction: every write capability is absent, so a demo visitor is
+    # refused by the same permission check that refuses any other member.
+    DEMO: tuple[str, ...] = (
+        VIEW,
+        VIEW_BIRTH_DATE,
+        VIEW_MARRIAGE_DATE,
+        VIEW_PHOTO,
+    )
+
+    @classmethod
+    def grants_demo(cls, permission_name: str) -> bool:
+        """Whether the public demo may satisfy this capability."""
+        return permission_name in cls.DEMO
+
     @classmethod
     def get_all(cls) -> list[str]:
         return list(cls.ALL)

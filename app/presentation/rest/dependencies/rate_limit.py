@@ -38,22 +38,31 @@ async def reset_rate_limit_redis() -> None:
         _redis_client = None
 
 
-async def rate_limit_auth(request: Request) -> None:
-    """Per-IP sliding window for unauthenticated auth endpoints (shared via Redis).
+async def _enforce_ip_rate_limit(
+    request: Request, *, key_prefix: str, limit: int, message: str
+) -> None:
+    """Per-IP sliding window over a minute, shared between workers via Redis.
 
-    When Redis is unreachable the limiter cannot tell a first attempt from the
-    ten-thousandth, so outside development it refuses the request rather than
-    leaving credential stuffing unmetered. Locally it stays permissive so a
-    missing Redis does not block day-to-day work.
+    When Redis is unreachable the limiter cannot tell a first request from the
+    ten-thousandth, so outside development it refuses rather than leaving the
+    endpoint unmetered. Locally it stays permissive so a missing Redis does not
+    block day-to-day work.
+
+    @param request - The incoming request, for the client IP.
+    @param key_prefix - Namespace for the window, so surfaces count separately.
+    @param limit - Requests allowed per minute per IP; 0 or less disables it.
+    @param message - Detail returned with the 429.
+
+    @throws {HTTPException} 429 - When the window is exhausted.
+    @throws {HTTPException} 503 - When Redis is unreachable outside development.
     """
-    limit = settings.AUTH_RATE_LIMIT_PER_MINUTE
     if limit <= 0:
         return
 
     ip = request.client.host if request.client else "unknown"
     now = time()
     window_start = now - 60
-    key = f"auth_rate:{ip}"
+    key = f"{key_prefix}:{ip}"
     client = get_rate_limit_redis()
 
     try:
@@ -66,10 +75,31 @@ async def rate_limit_auth(request: Request) -> None:
     except (redis.RedisError, OSError) as exc:
         if settings.is_development_like:
             return
-        raise HTTPException(
-            status_code=503,
-            detail="Authentication is temporarily unavailable",
-        ) from exc
+        raise HTTPException(status_code=503, detail=message) from exc
 
     if int(count) > limit:
-        raise HTTPException(status_code=429, detail="Too many authentication attempts")
+        raise HTTPException(status_code=429, detail=message)
+
+
+async def rate_limit_auth(request: Request) -> None:
+    """Per-IP window for the unauthenticated credential-checking endpoints."""
+    await _enforce_ip_rate_limit(
+        request,
+        key_prefix="auth_rate",
+        limit=settings.AUTH_RATE_LIMIT_PER_MINUTE,
+        message="Too many authentication attempts",
+    )
+
+
+async def rate_limit_demo(request: Request) -> None:
+    """Per-IP window for anonymous reads of the public demo tree.
+
+    Applied only on the demo fallback, so a signed-in member reading their own
+    tree is never metered by it.
+    """
+    await _enforce_ip_rate_limit(
+        request,
+        key_prefix="demo_rate",
+        limit=settings.DEMO_RATE_LIMIT_PER_MINUTE,
+        message="Too many demo requests",
+    )

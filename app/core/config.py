@@ -1,4 +1,5 @@
 from typing import Self
+from uuid import UUID
 
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings as PydanticBaseSettings
@@ -87,6 +88,14 @@ class AppSettings(PydanticBaseSettings):
     )
     AUTH_RATE_LIMIT_PER_MINUTE: int = 30
 
+    # Public read-only demo. Empty (the default) means there is no demo tree and
+    # every tree stays members-only. Set it to the id of one real tree to make
+    # that tree — and nothing else — readable without signing in.
+    DEMO_TREE_ID: str = ""
+    # Per-IP ceiling for anonymous demo reads. Relationship path finding is the
+    # expensive query on this surface, and it is the one anyone can reach.
+    DEMO_RATE_LIMIT_PER_MINUTE: int = 60
+
     # GraphQL hardening. A single query can fan out far more work than a REST
     # call, so cap how large an incoming document may be.
     GRAPHQL_MAX_DEPTH: int = 10
@@ -137,6 +146,24 @@ class AppSettings(PydanticBaseSettings):
                 "GOOGLE_DRIVE_BACKUP_ENABLED is true but "
                 f"{', '.join(missing)} is empty."
             )
+        return self
+
+    @property
+    def demo_tree_id(self) -> UUID | None:
+        """The publicly readable tree, or None when the demo is off."""
+        raw = self.DEMO_TREE_ID.strip()
+        return UUID(raw) if raw else None
+
+    @model_validator(mode="after")
+    def ensure_demo_tree_id_is_a_uuid(self) -> Self:
+        """A typo here would otherwise surface as a 500 on the demo page."""
+        raw = self.DEMO_TREE_ID.strip()
+        if not raw:
+            return self
+        try:
+            UUID(raw)
+        except ValueError as exc:
+            raise ValueError(f"DEMO_TREE_ID must be a UUID, got {raw!r}.") from exc
         return self
 
     @property
