@@ -3,19 +3,33 @@
 > Multi-tenant genealogy API. Records people, parentage and marriages in PostgreSQL, mirrors the
 > kinship graph into Neo4j, and answers "how are these two related?" over the graph.
 
+## Live production
+
+**This repository is the API behind the live product:**
+
+### https://family.arash-alfooneh.ir
+
+The site above is served by
+[family-tree-front](https://github.com/Arash3f/family-tree-front); **this backend is the
+API that powers it** (same product, same deployment). Browser traffic reaches the API
+through the frontend’s same-origin `/backend` proxy.
+
 **FastAPI · PostgreSQL · Neo4j · Celery · Redis · MinIO — REST and GraphQL over one set of use cases.**
 
 | | |
 |---|---|
+| Live site | **https://family.arash-alfooneh.ir** |
 | Version | `1.0.0` |
 | Python | `3.11+` |
 | Tests | 695 passing, 89% coverage |
 | License | [MIT](LICENSE) |
+| Companion UI | [family-tree-front](https://github.com/Arash3f/family-tree-front) |
 
 ---
 
 ## Contents
 
+- [Live production](#live-production)
 - [What it does](#what-it-does)
 - [Architecture](#architecture)
 - [Quick start](#quick-start)
