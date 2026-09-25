@@ -59,22 +59,20 @@ class AppSettings(PydanticBaseSettings):
 
     BACKUP_DIR: str = "/mnt/backups"
 
-    # Off-site copy of the nightly dumps. Off by default so a deployment that
-    # has not set up a service account keeps working exactly as before; the
+    # Off-site copy of the nightly dumps to S3-compatible storage (Arvan Object
+    # Storage / گنجینه). Separate from MinIO photo buckets. Off by default; the
     # validator below refuses a half-configured "on".
-    GOOGLE_DRIVE_BACKUP_ENABLED: bool = False
-    # Path to the service-account JSON key, mounted into the worker.
-    GOOGLE_DRIVE_CREDENTIALS_FILE: str = (
-        "/run/secrets/google-drive-service-account.json"
-    )
-    # Id of the Drive folder shared with that service account (the last path
-    # segment of the folder URL).
-    GOOGLE_DRIVE_FOLDER_ID: str = ""
-    # Set only when the folder lives in a Shared Drive rather than My Drive.
-    GOOGLE_DRIVE_SHARED_DRIVE_ID: str = ""
-    # Dated folders older than this are trashed after each successful upload.
-    # 0 disables pruning and keeps every run forever.
-    GOOGLE_DRIVE_RETENTION_DAYS: int = 30
+    OFFSITE_BACKUP_ENABLED: bool = False
+    OFFSITE_BACKUP_ENDPOINT: str = ""
+    OFFSITE_BACKUP_ACCESS_KEY: str = ""
+    OFFSITE_BACKUP_SECRET_KEY: str = ""
+    OFFSITE_BACKUP_BUCKET: str = ""
+    OFFSITE_BACKUP_REGION: str = "ir-thr-at1"
+    OFFSITE_BACKUP_SECURE: bool = True
+    OFFSITE_BACKUP_PREFIX: str = "backups"
+    # Dated run prefixes older than this are deleted after each successful
+    # upload. 0 disables pruning and keeps every run forever.
+    OFFSITE_BACKUP_RETENTION_DAYS: int = 30
 
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/1"
@@ -131,20 +129,24 @@ class AppSettings(PydanticBaseSettings):
         return self
 
     @model_validator(mode="after")
-    def ensure_google_drive_backup_is_configured(self) -> Self:
+    def ensure_offsite_backup_is_configured(self) -> Self:
         """A silently misconfigured off-site backup is worse than none at all."""
-        if not self.GOOGLE_DRIVE_BACKUP_ENABLED:
+        if not self.OFFSITE_BACKUP_ENABLED:
             return self
 
         missing = [
             name
-            for name in ("GOOGLE_DRIVE_CREDENTIALS_FILE", "GOOGLE_DRIVE_FOLDER_ID")
+            for name in (
+                "OFFSITE_BACKUP_ENDPOINT",
+                "OFFSITE_BACKUP_ACCESS_KEY",
+                "OFFSITE_BACKUP_SECRET_KEY",
+                "OFFSITE_BACKUP_BUCKET",
+            )
             if not getattr(self, name).strip()
         ]
         if missing:
             raise ValueError(
-                "GOOGLE_DRIVE_BACKUP_ENABLED is true but "
-                f"{', '.join(missing)} is empty."
+                f"OFFSITE_BACKUP_ENABLED is true but {', '.join(missing)} is empty."
             )
         return self
 

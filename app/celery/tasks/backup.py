@@ -9,8 +9,8 @@ from neo4j import GraphDatabase
 from neo4j_backup import Extractor
 
 from app.core.config import settings
-from app.infrastructure.storage.google_drive_backup import (
-    GoogleDriveBackupError,
+from app.infrastructure.storage.object_storage_backup import (
+    OffsiteBackupError,
     upload_backup_run,
 )
 
@@ -112,11 +112,11 @@ def create_postgres_backup(self):
     backup_file = backup_postgres(timestamp)
     backup_neo4j_file = backup_neo4j(timestamp)
 
-    # Handing the upload to its own task keeps the two failure modes apart: a
-    # Drive outage retries the transfer on its own schedule instead of running
-    # pg_dump against the live database five more times.
-    if settings.GOOGLE_DRIVE_BACKUP_ENABLED:
-        upload_backup_to_drive.delay(
+    # Handing the upload to its own task keeps the two failure modes apart: an
+    # object-storage outage retries the transfer on its own schedule instead of
+    # running pg_dump against the live database five more times.
+    if settings.OFFSITE_BACKUP_ENABLED:
+        upload_backup_offsite.delay(
             timestamp=timestamp,
             postgres_dump=backup_file,
             neo4j_dir=backup_neo4j_file,
@@ -125,23 +125,21 @@ def create_postgres_backup(self):
     return {
         "postgres": f"success to {backup_file}",
         "neo4j": f"success to {backup_neo4j_file}",
-        "google_drive": "queued" if settings.GOOGLE_DRIVE_BACKUP_ENABLED else "off",
+        "offsite": "queued" if settings.OFFSITE_BACKUP_ENABLED else "off",
     }
 
 
-@shared_task(
-    name="backup.upload_to_drive", bind=True, max_retries=5, retry_backoff=True
-)
-def upload_backup_to_drive(self, *, timestamp: str, postgres_dump: str, neo4j_dir: str):
-    """Copy one finished backup run to Google Drive and prune expired runs.
+@shared_task(name="backup.upload_offsite", bind=True, max_retries=5, retry_backoff=True)
+def upload_backup_offsite(self, *, timestamp: str, postgres_dump: str, neo4j_dir: str):
+    """Copy one finished backup run to object storage and prune expired runs.
 
     @param timestamp - The run stamp, reused as the dated folder name.
     @param postgres_dump - Path of the pg_dump file on the worker.
     @param neo4j_dir - Path of the directory the Neo4j extractor wrote.
 
-    @returns The Drive folder the run landed in and how many files were sent.
+    @returns The key prefix the run landed in and how many files were sent.
 
-    @throws {GoogleDriveBackupError} Retried; raised for good once the retries
+    @throws {OffsiteBackupError} Retried; raised for good once the retries
         run out, leaving the local copies untouched.
     """
     try:
@@ -150,14 +148,15 @@ def upload_backup_to_drive(self, *, timestamp: str, postgres_dump: str, neo4j_di
             postgres_dump=Path(postgres_dump),
             neo4j_dir=Path(neo4j_dir),
         )
-    except (GoogleDriveBackupError, OSError) as exc:
+    except (OffsiteBackupError, OSError) as exc:
         # The local dumps are already on disk, so a failed upload costs the
         # off-site copy only — never the backup itself.
-        logger.error("Google Drive upload failed for %s: %s", timestamp, exc)
+        logger.error("Off-site backup upload failed for %s: %s", timestamp, exc)
         raise self.retry(exc=exc) from exc
 
     return {
         "folder": result.folder_path,
+        "prefix": result.prefix,
         "files": [item.name for item in result.files],
         "pruned_folders": result.pruned_folders,
     }

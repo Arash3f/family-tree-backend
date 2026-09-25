@@ -86,17 +86,15 @@ docker compose -f docker/compose.yml --env-file .env exec -T api \
   pytest -v --cov=app --cov-fail-under=80
 ```
 
-## Google Drive backups
+## Off-site backups (Arvan Object Storage)
 
-Off by default. Turning it on copies each nightly dump to a dated folder tree in Google Drive.
-Setup, configuration, verification, restore and troubleshooting all live in
-[GOOGLE-DRIVE-BACKUP.md](../GOOGLE-DRIVE-BACKUP.md).
+Off by default. Turning it on copies each nightly dump to a dated key tree in an
+S3-compatible bucket (گنجینه ابر آروان). Setup, configuration, verification,
+restore and troubleshooting:
 
-Once configured, the stack needs the extra overlay that mounts the service-account key:
+[OFFSITE-BACKUP.md](../OFFSITE-BACKUP.md)
 
-```bash
-docker compose -f docker/compose.yml -f docker/compose.google-drive.yml --env-file .env up -d
-```
+No Compose overlay is required — credentials come from `.env`.
 
 
 ## Published ports (defaults)

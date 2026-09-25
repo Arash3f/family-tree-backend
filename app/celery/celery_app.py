@@ -22,7 +22,7 @@ celery_app.conf.update(
     enable_utc=True,
     task_routes={
         "backup.database": {"queue": "backup_database"},
-        "backup.upload_to_drive": {"queue": "backup_database"},
+        "backup.upload_offsite": {"queue": "backup_database"},
         "sync.person.*": {"queue": "sync_person"},
         "sync.relationship.*": {"queue": "sync_relationship"},
         "reconcile.neo4j": {"queue": "reconcile_neo4j"},
