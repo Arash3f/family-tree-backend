@@ -7,7 +7,6 @@ from app.domain.entities.person import Gender, Person
 from app.domain.exceptions.marriage_exceptions import (
     InvalidMarriageGenderException,
     SelfMarriageException,
-    UnderageMarriageException,
 )
 from app.domain.services.marriage_rules import MarriageRulesService
 
@@ -52,7 +51,7 @@ def test_validate_marriage_self_marriage():
         )
 
 
-def test_validate_marriage_underage():
+def test_validate_marriage_allows_underage():
     spouse_a = create_person(id=UUID(int=1), birth_date=date(2010, 1, 1))
     spouse_b = create_person(
         id=UUID(int=2), name="Sara", gender=Gender.FEMALE, birth_date=date(1997, 1, 1)
@@ -60,10 +59,20 @@ def test_validate_marriage_underage():
 
     marriage_date = date(2023, 1, 1)
 
-    with pytest.raises(UnderageMarriageException):
-        MarriageRulesService.validate_marriage(
-            spouse_a=spouse_a, spouse_b=spouse_b, marriage_date=marriage_date
-        )
+    MarriageRulesService.validate_marriage(
+        spouse_a=spouse_a, spouse_b=spouse_b, marriage_date=marriage_date
+    )
+
+
+def test_underage_spouse_names():
+    spouse_a = create_person(id=UUID(int=1), birth_date=date(2010, 1, 1))
+    spouse_b = create_person(
+        id=UUID(int=2), name="Sara", gender=Gender.FEMALE, birth_date=date(1997, 1, 1)
+    )
+
+    assert MarriageRulesService.underage_spouse_names(
+        spouse_a=spouse_a, spouse_b=spouse_b, marriage_date=date(2023, 1, 1)
+    ) == ["Ali"]
 
 
 @pytest.mark.parametrize("gender", [Gender.MALE, Gender.FEMALE])

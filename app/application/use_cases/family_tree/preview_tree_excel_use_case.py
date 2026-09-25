@@ -17,6 +17,7 @@ from app.application.services.tree_excel_service import (
     parse_tree_excel,
     person_display_label,
     person_row_changes,
+    underage_marriage_warning,
 )
 from app.domain.entities.marriage import Marriage
 from app.domain.entities.person import ParentLink, ParentRelationshipType, Person
@@ -251,6 +252,7 @@ class PreviewTreeExcelUseCase:
 
         marriage_by_ref: dict[str, ExcelMarriageRow] = {}
         marriage_ids: dict[str, UUID] = {}
+        preview_marriage_by_ref = {item.ref: item for item in marriages_out}
 
         for marriage_row in parsed.marriages:
             marriage_by_ref[marriage_row.ref] = marriage_row
@@ -291,6 +293,18 @@ class PreviewTreeExcelUseCase:
                     errors.append(
                         text.marriages_row_detail(marriage_row.row_number, message)
                     )
+            else:
+                underage_names = self.marriage_rules_service.underage_spouse_names(
+                    spouse_a=spouse_a,
+                    spouse_b=spouse_b,
+                    marriage_date=marriage_row.married_at,
+                )
+                if underage_names:
+                    preview = preview_marriage_by_ref.get(marriage_row.ref)
+                    if preview is not None:
+                        preview.warning = underage_marriage_warning(
+                            underage_names, lang=text.lang
+                        )
 
             marriage_id = uuid4()
             try:

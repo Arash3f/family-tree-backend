@@ -125,7 +125,9 @@ ERROR_MESSAGES = {
         ErrorCode.MARRIAGE_AFTER_DIVORCE: (
             "Marriage cannot be registered for a divorced person"
         ),
-        ErrorCode.UNDERAGE_MARRIAGE: "Marriage is not allowed for underage persons",
+        ErrorCode.UNDERAGE_MARRIAGE: (
+            "One or both spouses were under the usual legal marriage age"
+        ),
         ErrorCode.INVALID_MARRIAGE_GENDER: (
             "Marriage is only allowed between a male and a female"
         ),
@@ -219,7 +221,9 @@ ERROR_MESSAGES = {
         ErrorCode.MARRIAGE_AFTER_DIVORCE: (
             "برای فرد طلاق‌گرفته نمی‌توان این ازدواج را ثبت کرد."
         ),
-        ErrorCode.UNDERAGE_MARRIAGE: "ثبت ازدواج برای افراد زیر سن قانونی مجاز نیست.",
+        ErrorCode.UNDERAGE_MARRIAGE: (
+            "یکی از همسران در تاریخ ازدواج زیر سن معمول قانونی بوده است."
+        ),
         ErrorCode.INVALID_MARRIAGE_GENDER: (
             "ازدواج فقط میان یک مرد و یک زن قابل ثبت است."
         ),

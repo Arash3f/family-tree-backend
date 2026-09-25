@@ -392,6 +392,14 @@ _ERROR_TEXTS: dict[str, dict[str, str]] = {
             "person; to update an existing one instead, export the tree first — "
             "the hidden internal id keeps the match."
         ),
+        "underage_marriage": (
+            "{names} was under the usual legal marriage age on the wedding date. "
+            "The marriage can still be imported."
+        ),
+        "underage_marriage_both": (
+            "{names} were under the usual legal marriage age on the wedding date. "
+            "The marriage can still be imported."
+        ),
     },
     "fa": {
         "row_prefix": "برگهٔ «{sheet}»، ردیف {row}: ",
@@ -459,6 +467,14 @@ _ERROR_TEXTS: dict[str, dict[str, str]] = {
             "می‌شود. اگر می‌خواهید اطلاعات یکی از افراد موجود به‌روزرسانی شود، "
             "اول از شجره‌نامه خروجی اکسل بگیرید؛ شناسهٔ مخفی همان فرد تطبیق را "
             "حفظ می‌کند."
+        ),
+        "underage_marriage": (
+            "«{names}» در تاریخ ازدواج زیر سن معمول قانونی بوده است. ازدواج "
+            "همچنان قابل وارد کردن است."
+        ),
+        "underage_marriage_both": (
+            "«{names}» در تاریخ ازدواج زیر سن معمول قانونی بوده‌اند. ازدواج "
+            "همچنان قابل وارد کردن است."
         ),
     },
 }
@@ -1826,6 +1842,12 @@ def person_namesake_warning(other_ref: str, *, lang: str = "en") -> str:
 
 def person_ambiguous_identity_warning(*, lang: str = "en") -> str:
     return excel_text(lang).message("ambiguous_identity")
+
+
+def underage_marriage_warning(names: list[str], *, lang: str = "en") -> str:
+    joined = "، ".join(names) if lang == "fa" else ", ".join(names)
+    key = "underage_marriage_both" if len(names) > 1 else "underage_marriage"
+    return excel_text(lang).message(key, names=joined)
 
 
 def try_parse_excel_uuid(value: str) -> UUID | None:

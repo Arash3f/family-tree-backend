@@ -14,7 +14,7 @@ from app.application.use_cases.marriage.create_marriage_use_case import (
 )
 from app.domain.entities.marriage import Marriage
 from app.domain.entities.person import Gender
-from app.domain.exceptions.marriage_exceptions import UnderageMarriageException
+from app.domain.exceptions.marriage_exceptions import SelfMarriageException
 from app.domain.exceptions.person_exceptions import PersonNotFoundException
 
 
@@ -197,13 +197,13 @@ async def test_create_marriage_raises_if_rules_fail(mock_uow):
         side_effect=[MagicMock(tree_id=UUID(int=7)), MagicMock(tree_id=UUID(int=7))]
     )
     rules = MagicMock()
-    rules.validate_marriage.side_effect = UnderageMarriageException()
+    rules.validate_marriage.side_effect = SelfMarriageException()
 
     use_case = CreateMarriageUseCase(
         mock_uow, marriage_rules_service=rules, sync_service=MagicMock()
     )
 
-    with pytest.raises(UnderageMarriageException):
+    with pytest.raises(SelfMarriageException):
         await use_case.execute(dto, tree_id=UUID(int=7))
 
     mock_uow.marriages.create.assert_not_awaited()
