@@ -118,14 +118,34 @@ def test_backup_neo4j_success(tmp_path):
         assert result == str(tmp_path) + "/neo_2026-01-01_00-00-00"
 
 
-def test_create_postgres_backup_task(tmp_path):
+def test_create_postgres_backup_task(tmp_path, monkeypatch):
+    monkeypatch.setattr(backup_module.settings, "OFFSITE_BACKUP_ENABLED", False)
     with (
         patch.object(backup_module, "backup_postgres", return_value="pg.sql"),
         patch.object(backup_module, "backup_neo4j", return_value=str(tmp_path)),
+        patch.object(backup_module.upload_backup_offsite, "delay") as delay,
     ):
         result = backup_module.create_postgres_backup.run()
         assert "postgres" in result
         assert "neo4j" in result
+        assert result["offsite"] == "off"
+        delay.assert_not_called()
+
+
+def test_create_postgres_backup_queues_offsite_when_enabled(tmp_path, monkeypatch):
+    monkeypatch.setattr(backup_module.settings, "OFFSITE_BACKUP_ENABLED", True)
+    with (
+        patch.object(backup_module, "backup_postgres", return_value="pg.sql"),
+        patch.object(backup_module, "backup_neo4j", return_value=str(tmp_path)),
+        patch.object(backup_module.upload_backup_offsite, "delay") as delay,
+    ):
+        result = backup_module.create_postgres_backup.run()
+        assert result["offsite"] == "queued"
+        delay.assert_called_once()
+        kwargs = delay.call_args.kwargs
+        assert kwargs["postgres_dump"] == "pg.sql"
+        assert kwargs["neo4j_dir"] == str(tmp_path)
+        assert "timestamp" in kwargs
 
 
 def _fake_redis_client(*, set_return: bool):

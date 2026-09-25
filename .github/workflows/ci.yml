@@ -144,6 +144,7 @@ jobs:
 
       - name: Run tests
         run: |
+          set +e
           docker compose --env-file .env exec -T api sh -c '
             export COVERAGE_FILE=/tmp/.coverage
             pytest -v --tb=short \
@@ -154,6 +155,12 @@ jobs:
               --cov-fail-under=80 \
               -o cache_dir=/tmp/pytest_cache
           '
+          status=$?
+          set -e
+          mkdir -p artifacts
+          docker compose --env-file .env cp api:/tmp/pytest.xml artifacts/pytest.xml || true
+          python scripts/annotate_pytest_junit.py artifacts/pytest.xml || true
+          exit "$status"
 
       - name: Live Neo4j closest-relationship e2e
         run: |
