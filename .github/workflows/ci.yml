@@ -96,9 +96,8 @@ jobs:
             exit 1
           fi
 
-      # Dependency images avoid Docker Hub where possible (ECR / gcr mirror /
-      # quay). Pull per-service so one registry blip does not hide which image
-      # failed, and retry briefly for transient 5xx/network errors.
+      # Dependency images avoid registries that block anonymous GHA pulls.
+      # Pull per-service so the failing image is named in annotations.
       - name: Pull dependency images
         run: |
           set -eux

@@ -90,7 +90,7 @@ services:
 
   # Postgres/Redis via AWS Public ECR (Docker Hub library mirror) so CI and
   # shared runners are not blocked by anonymous Docker Hub pull rate limits.
-  # Neo4j via Google's Docker Hub mirror for the same reason; MinIO is on quay.io.
+  # Neo4j + MinIO via Google's Docker Hub mirror (MinIO's own public tags are gone).
   db:
     image: public.ecr.aws/docker/library/postgres:15.13
     restart: unless-stopped
@@ -146,15 +146,16 @@ services:
       retries: 12
       start_period: 30s
 
+  # MinIO's own quay/dockerhub public images were locked down; Bitnami's
+  # legacy build is still pullable via Google's Hub mirror (same S3 API).
   minio:
-    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+    image: ${MINIO_IMAGE:-mirror.gcr.io/bitnamilegacy/minio:2025.3.12-debian-12-r1}
     restart: unless-stopped
-    command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
     volumes:
-      - minio_data:/data
+      - minio_data:/bitnami/minio/data
     networks:
       - family-tree
     healthcheck:

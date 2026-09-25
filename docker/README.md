@@ -28,8 +28,13 @@ docker compose -f docker/compose.yml --env-file .env up --build
 
 Uses Docker DNS names from `.env.example` (`db`, `redis`, `neo4j`, `minio`).
 Postgres and Redis images come from AWS Public ECR (Docker Hub library mirror);
-Neo4j from `mirror.gcr.io`; MinIO from quay.io. Prefer service names
-(`docker compose exec api …`) over hard-coded container names.
+Neo4j and MinIO from `mirror.gcr.io` (Neo4j official mirror; Bitnami legacy MinIO,
+because MinIO’s own public quay/dockerhub tags no longer allow anonymous pulls).
+Prefer service names (`docker compose exec api …`) over hard-coded container names.
+
+If you previously ran the old `quay.io/minio/minio` image, the data directory moved
+from `/data` to `/bitnami/minio/data` — recreate the `minio_data` volume or copy
+objects across before expecting old photos to appear.
 
 ## Choosing the image
 
