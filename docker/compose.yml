@@ -25,7 +25,6 @@ services:
     <<: *app-env
     build: *app-build
     image: "family-tree-api:${APP_IMAGE_TARGET:-runtime}"
-    container_name: family-tree-api
     entrypoint: ["/entrypoint.sh"]
     ports:
       - "${API_PORT:-8001}:8001"
@@ -43,7 +42,6 @@ services:
     <<: *app-env
     build: *app-build
     image: "family-tree-api:${APP_IMAGE_TARGET:-runtime}"
-    container_name: family-tree-celery-worker
     command: >
       celery -A app.celery.celery_app worker --loglevel=info
       -Q celery,sync_person,sync_relationship,backup_database,reconcile_neo4j
@@ -70,7 +68,6 @@ services:
     <<: *app-env
     build: *app-build
     image: "family-tree-api:${APP_IMAGE_TARGET:-runtime}"
-    container_name: family-tree-celery-beat
     command: celery -A app.celery.celery_app beat --loglevel=info
     volumes:
       - celerybeat_data:/app/celerybeat
@@ -91,9 +88,11 @@ services:
       retries: 3
       start_period: 20s
 
+  # Postgres/Redis via AWS Public ECR (Docker Hub Hub library mirror) so CI and
+  # shared runners are not blocked by anonymous Docker Hub pull rate limits.
+  # Neo4j stays on Docker Hub (no library mirror); MinIO is already on quay.io.
   db:
-    image: postgres:15.13
-    container_name: family-tree-db
+    image: public.ecr.aws/docker/library/postgres:15.13
     restart: unless-stopped
     env_file:
       - ../.env
@@ -109,8 +108,7 @@ services:
       start_period: 10s
 
   redis:
-    image: redis:8.2.1
-    container_name: family-tree-redis
+    image: public.ecr.aws/docker/library/redis:8.2.1
     restart: unless-stopped
     networks:
       - family-tree
@@ -122,7 +120,6 @@ services:
 
   neo4j:
     image: neo4j:5.26.4
-    container_name: family-tree-neo4j
     restart: unless-stopped
     environment:
       NEO4J_AUTH: ${NEO4J_USER}/${NEO4J_PASSWORD}
@@ -151,7 +148,6 @@ services:
 
   minio:
     image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
-    container_name: family-tree-minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
@@ -170,6 +166,7 @@ services:
 
 networks:
   family-tree:
+    # Stable name so the frontend container can join with --network family-tree-net.
     name: family-tree-net
     driver: bridge
 

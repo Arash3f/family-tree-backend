@@ -1,7 +1,8 @@
 # No `# syntax=docker/dockerfile:1` — that pulls docker.io/docker/dockerfile and
 # fails with 403 on networks that block/rate-limit Docker Hub (common on VPS).
+# Base image is the Docker Hub library mirror on AWS Public ECR for the same reason.
 
-FROM python:3.11.15-slim AS base
+FROM public.ecr.aws/docker/library/python:3.11.15-slim AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

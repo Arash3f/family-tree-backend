@@ -1,3 +1,6 @@
 # Keep shell scripts with LF so Linux containers can exec them on Windows checkouts.
 *.sh text eol=lf
 docker/entrypoint.sh text eol=lf
+
+# Env templates are copied into Linux CI/containers; CRLF would poison values.
+.env.example text eol=lf

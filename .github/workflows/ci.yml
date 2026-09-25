@@ -96,9 +96,26 @@ jobs:
             exit 1
           fi
 
+      # Postgres/Redis come from Public ECR; Neo4j is still on Docker Hub and can
+      # 429 under anonymous pull quotas. Retry before --wait so Start stack does
+      # not fail in under a second with a cryptic pull error.
+      - name: Pull dependency images
+        run: |
+          set -eux
+          attempt=1
+          until docker compose --env-file .env pull db redis neo4j minio; do
+            if [ "$attempt" -ge 5 ]; then
+              echo "::error::dependency image pull failed after ${attempt} attempts"
+              exit 1
+            fi
+            echo "pull failed (attempt ${attempt}); retrying..."
+            attempt=$((attempt + 1))
+            sleep $((attempt * 8))
+          done
+
       - name: Start stack
         # api + its depends_on (db, redis, neo4j, minio). Celery not needed for pytest.
-        run: docker compose --env-file .env up -d --wait --wait-timeout 180 api
+        run: docker compose --env-file .env up -d --wait --wait-timeout 180 --pull never api
 
       - name: Alembic migration smoke
         run: |
