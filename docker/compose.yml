@@ -88,9 +88,9 @@ services:
       retries: 3
       start_period: 20s
 
-  # Postgres/Redis via AWS Public ECR (Docker Hub Hub library mirror) so CI and
+  # Postgres/Redis via AWS Public ECR (Docker Hub library mirror) so CI and
   # shared runners are not blocked by anonymous Docker Hub pull rate limits.
-  # Neo4j stays on Docker Hub (no library mirror); MinIO is already on quay.io.
+  # Neo4j via Google's Docker Hub mirror for the same reason; MinIO is on quay.io.
   db:
     image: public.ecr.aws/docker/library/postgres:15.13
     restart: unless-stopped
@@ -119,7 +119,7 @@ services:
       retries: 10
 
   neo4j:
-    image: neo4j:5.26.4
+    image: ${NEO4J_IMAGE:-mirror.gcr.io/neo4j:5.26.4}
     restart: unless-stopped
     environment:
       NEO4J_AUTH: ${NEO4J_USER}/${NEO4J_PASSWORD}

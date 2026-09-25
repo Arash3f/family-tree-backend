@@ -28,7 +28,7 @@ docker compose -f docker/compose.yml --env-file .env up --build
 
 Uses Docker DNS names from `.env.example` (`db`, `redis`, `neo4j`, `minio`).
 Postgres and Redis images come from AWS Public ECR (Docker Hub library mirror);
-MinIO from quay.io; Neo4j still from Docker Hub. Prefer service names
+Neo4j from `mirror.gcr.io`; MinIO from quay.io. Prefer service names
 (`docker compose exec api …`) over hard-coded container names.
 
 ## Choosing the image
