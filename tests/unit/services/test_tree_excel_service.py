@@ -490,6 +490,8 @@ def test_export_uses_short_codes_and_keeps_uuids_in_the_system_id_column():
     assert persons["K3"].value == "Ali Karimi"
     assert persons["R2"].value == str(father_id)
     assert persons["R3"].value == str(child_id)
+    # Off-screen for the reader; still present so a re-import can match.
+    assert persons.column_dimensions["R"].hidden is True
 
 
 def test_reimporting_an_export_matches_on_the_system_id_column():

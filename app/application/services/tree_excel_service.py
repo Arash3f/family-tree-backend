@@ -91,7 +91,8 @@ _PERSON_HEADER_LABELS: dict[str, dict[str, str]] = {
         "parent2_type": "parent 2 type",
         "marriage_ref": "born from marriage (code)",
         "marriage_label": "born from marriage (couple)",
-        "system_id": "system id (do not edit)",
+        # Hidden in the sheet; mild wording if someone unhides the column.
+        "system_id": "internal id",
     },
     "fa": {
         "ref": "کد",
@@ -111,7 +112,7 @@ _PERSON_HEADER_LABELS: dict[str, dict[str, str]] = {
         "parent2_type": "نوع والد ۲",
         "marriage_ref": "کد ازدواج مبدأ",
         "marriage_label": "ازدواج مبدأ (زوج)",
-        "system_id": "شناسه سیستمی (دست نزنید)",
+        "system_id": "شناسه داخلی",
     },
 }
 
@@ -124,7 +125,7 @@ _MARRIAGE_HEADER_LABELS: dict[str, dict[str, str]] = {
         "spouse_b_name": "spouse 2 (name)",
         "married_at": "marriage date",
         "divorced_at": "divorce date",
-        "system_id": "system id (do not edit)",
+        "system_id": "internal id",
     },
     "fa": {
         "ref": "کد",
@@ -134,7 +135,7 @@ _MARRIAGE_HEADER_LABELS: dict[str, dict[str, str]] = {
         "spouse_b_name": "همسر ۲ (نام)",
         "married_at": "تاریخ ازدواج",
         "divorced_at": "تاریخ طلاق",
-        "system_id": "شناسه سیستمی (دست نزنید)",
+        "system_id": "شناسه داخلی",
     },
 }
 
@@ -157,7 +158,17 @@ _PERSON_LEGACY_HEADERS: dict[str, tuple[str, ...]] = {
     "parent2_type": ("parent2_type", "نوع والد 2"),
     "marriage_ref": ("marriage_ref", "شناسه ازدواج", "ازدواج مبدأ"),
     "marriage_label": ("marriage_label",),
-    "system_id": ("system_id", "system id", "uuid", "شناسه سیستمی"),
+    "system_id": (
+        "system_id",
+        "system id",
+        "system id (do not edit)",
+        "internal id",
+        "uuid",
+        "شناسه سیستمی",
+        "شناسه سیستمی (دست نزنید)",
+        "شناسه داخلی",
+        "شناسه شخص",
+    ),
 }
 
 _MARRIAGE_LEGACY_HEADERS: dict[str, tuple[str, ...]] = {
@@ -182,7 +193,16 @@ _MARRIAGE_LEGACY_HEADERS: dict[str, tuple[str, ...]] = {
     "spouse_b_name": ("spouse_b_name",),
     "married_at": ("married_at",),
     "divorced_at": ("divorced_at",),
-    "system_id": ("system_id", "system id", "uuid", "شناسه سیستمی"),
+    "system_id": (
+        "system_id",
+        "system id",
+        "system id (do not edit)",
+        "internal id",
+        "uuid",
+        "شناسه سیستمی",
+        "شناسه سیستمی (دست نزنید)",
+        "شناسه داخلی",
+    ),
 }
 
 
@@ -369,8 +389,8 @@ _ERROR_TEXTS: dict[str, dict[str, str]] = {
         "ambiguous_identity": (
             "More than one person in this tree has this exact name and birth date, "
             "so we cannot tell which one you mean. This row will be added as a new "
-            "person; to update an existing one instead, export the tree and reuse "
-            "its “system id” value."
+            "person; to update an existing one instead, export the tree first — "
+            "the hidden internal id keeps the match."
         ),
     },
     "fa": {
@@ -436,9 +456,9 @@ _ERROR_TEXTS: dict[str, dict[str, str]] = {
         "ambiguous_identity": (
             "در این شجره‌نامه بیش از یک فرد با همین نام و تاریخ تولد وجود دارد و "
             "مشخص نیست منظور شما کدام است. این ردیف به‌عنوان فرد جدید اضافه "
-            "می‌شود. اگر می‌خواهید اطلاعات یکی از افراد موجود به‌روزرسانی شود، از "
-            "شجره‌نامه خروجی اکسل بگیرید و مقدار ستون «شناسه سیستمی» همان فرد را "
-            "در این ردیف قرار دهید."
+            "می‌شود. اگر می‌خواهید اطلاعات یکی از افراد موجود به‌روزرسانی شود، "
+            "اول از شجره‌نامه خروجی اکسل بگیرید؛ شناسهٔ مخفی همان فرد تطبیق را "
+            "حفظ می‌کند."
         ),
     },
 }
@@ -736,6 +756,14 @@ def _shade_display_columns(
             cell.font = DISPLAY_FONT
 
 
+def _hide_system_id_column(ws, columns: tuple[str, ...]) -> None:
+    """Keep the UUID off-screen; Excel still stores and re-imports it."""
+    letter = _column_letter(columns, "system_id")
+    ws.column_dimensions[letter].hidden = True
+    # Narrow so an accidental unhide does not dominate the sheet.
+    ws.column_dimensions[letter].width = 12
+
+
 def _range_formula(sheet_title: str, columns: tuple[str, ...], key: str) -> str:
     """A cross-sheet list source.
 
@@ -856,8 +884,11 @@ _HOW_TO: dict[str, list[str]] = {
         "Grey columns are written for you to read. We never read them back, so "
         "editing them changes nothing.",
         "Two people with the same name stay two people. Give each their own code.",
-        "On import you get a preview and choose which rows to add. Rows already "
-        "in the tree are marked and skipped.",
+        "On import you get a preview and choose which rows to add or update. "
+        "Rows already in the tree are marked; if you changed their fields they "
+        "can be updated instead of duplicated.",
+        "A hidden internal-id column is filled when you export. Leave it alone — "
+        "it lets a re-import find the exact person without cluttering the sheet.",
     ],
     "fa": [
         "ابتدا برگهٔ «{persons}» را پر کنید؛ برای هر فرد یک ردیف. وارد کردن نام "
@@ -880,8 +911,12 @@ _HOW_TO: dict[str, list[str]] = {
         "دو فرد هم‌نام، دو فرد جداگانه به حساب می‌آیند. برای هر کدام کد جداگانه‌ای "
         "بگذارید.",
         "هنگام وارد کردن، پیش‌نمایشی از اطلاعات نمایش داده می‌شود و خودتان "
-        "ردیف‌هایی را که باید اضافه شوند انتخاب می‌کنید. ردیف‌هایی که از قبل در "
-        "شجره‌نامه هستند مشخص می‌شوند و دوباره اضافه نمی‌شوند.",
+        "ردیف‌هایی را که باید اضافه یا به‌روزرسانی شوند انتخاب می‌کنید. "
+        "ردیف‌های موجود مشخص می‌شوند؛ اگر فیلدهایشان را عوض کرده باشید، "
+        "به‌جای ساختن فرد تکراری، همان فرد ویرایش می‌شود.",
+        "هنگام خروجی، یک ستون مخفی «شناسه داخلی» پر می‌شود. آن را دست نزنید — "
+        "با کمک آن، وارد کردن دوباره همان فرد را پیدا می‌کند بدون اینکه "
+        "برگه شلوغ شود.",
     ],
 }
 
@@ -906,8 +941,8 @@ _PERSON_COLUMN_HELP: dict[str, dict[str, str]] = {
         "marriage_ref": "Optional. Code of the marriage this person was born "
         "into, from the Marriages sheet.",
         "marriage_label": "Read-only. That couple’s names, for your eyes.",
-        "system_id": "Do not edit. Lets a re-import update this exact person "
-        "instead of adding a copy.",
+        "system_id": "Hidden in the sheet and filled on export. Do not edit — "
+        "it lets a re-import update this exact person instead of adding a copy.",
     },
     "fa": {
         "ref": "اختیاری. کد کوتاه این ردیف (P1، P2 و…). فقط وقتی لازم است که "
@@ -929,8 +964,9 @@ _PERSON_COLUMN_HELP: dict[str, dict[str, str]] = {
         "marriage_ref": "اختیاری. کد ازدواجی که این فرد حاصل آن است (از برگهٔ "
         "«ازدواج‌ها»).",
         "marriage_label": "فقط برای نمایش. نام دو همسرِ آن ازدواج، برای راهنمایی شما.",
-        "system_id": "این ستون را تغییر ندهید. به کمک آن، هنگام وارد کردن دوباره، "
-        "اطلاعات همین فرد به‌روزرسانی می‌شود و فرد تکراری ساخته نمی‌شود.",
+        "system_id": "در برگه مخفی است و هنگام خروجی پر می‌شود. تغییرش ندهید — "
+        "به کمک آن، وارد کردن دوباره اطلاعات همین فرد را به‌روز می‌کند و فرد "
+        "تکراری ساخته نمی‌شود.",
     },
 }
 
@@ -944,7 +980,8 @@ _MARRIAGE_COLUMN_HELP: dict[str, dict[str, str]] = {
         "spouse_b_name": "Read-only. That spouse’s name, for your eyes.",
         "married_at": "Required.",
         "divorced_at": "Optional. Leave empty if still married.",
-        "system_id": "Do not edit. Lets a re-import recognise this exact marriage.",
+        "system_id": "Hidden in the sheet and filled on export. Do not edit — "
+        "it lets a re-import recognise this exact marriage.",
     },
     "fa": {
         "ref": "اختیاری. کد کوتاه این ازدواج (M1، M2 و…). اگر فرزندی به این "
@@ -955,8 +992,8 @@ _MARRIAGE_COLUMN_HELP: dict[str, dict[str, str]] = {
         "spouse_b_name": "فقط برای نمایش. نام همسر دوم، برای راهنمایی شما.",
         "married_at": "الزامی.",
         "divorced_at": "اختیاری. اگر این ازدواج هنوز پابرجاست، خالی بگذارید.",
-        "system_id": "این ستون را تغییر ندهید. به کمک آن، هنگام وارد کردن دوباره، "
-        "همین ازدواج شناسایی می‌شود.",
+        "system_id": "در برگه مخفی است و هنگام خروجی پر می‌شود. تغییرش ندهید — "
+        "به کمک آن، وارد کردن دوباره همین ازدواج را شناسایی می‌کند.",
     },
 }
 
@@ -970,8 +1007,8 @@ _INSTRUCTION_LABELS: dict[str, dict[str, str]] = {
         "column": "Column",
         "meaning": "What goes in it",
         "export_note": "This file was exported from your tree. Edit it and "
-        "upload it again to add what is new — rows that are already in the "
-        "tree are recognised and skipped.",
+        "upload it again to add what is new or update what changed — a hidden "
+        "internal id keeps each row matched to the right person.",
     },
     "fa": {
         "sample_title": "شجره‌نامه — قالب اکسل",
@@ -982,9 +1019,9 @@ _INSTRUCTION_LABELS: dict[str, dict[str, str]] = {
         "column": "ستون",
         "meaning": "توضیح",
         "export_note": "این فایل از شجره‌نامهٔ شما خروجی گرفته شده است. می‌توانید "
-        "آن را ویرایش کنید و دوباره بارگذاری کنید تا موارد جدید اضافه شوند. "
-        "ردیف‌هایی که از قبل در شجره‌نامه هستند شناسایی می‌شوند و دوباره اضافه "
-        "نمی‌شوند.",
+        "آن را ویرایش کنید و دوباره بارگذاری کنید تا موارد جدید اضافه شوند یا "
+        "تغییرها اعمال شوند. یک شناسهٔ مخفی داخلی هر ردیف را به همان فرد "
+        "متصل نگه می‌دارد.",
     },
 }
 
@@ -1228,6 +1265,7 @@ def build_sample_workbook(*, lang: str = "en") -> bytes:
         PERSON_DISPLAY_COLUMNS,
         last_row=len(_SAMPLE_PEOPLE) + 1,
     )
+    _hide_system_id_column(persons, PERSON_COLUMNS)
 
     marriages = wb.create_sheet(text.marriages_sheet)
     _style_header(marriages, MARRIAGE_COLUMNS, text.marriage_headers())
@@ -1253,6 +1291,7 @@ def build_sample_workbook(*, lang: str = "en") -> bytes:
         MARRIAGE_DISPLAY_COLUMNS,
         last_row=len(_SAMPLE_MARRIAGES) + 1,
     )
+    _hide_system_id_column(marriages, MARRIAGE_COLUMNS)
 
     buffer = BytesIO()
     wb.save(buffer)
@@ -1342,6 +1381,7 @@ def build_export_workbook(
         PERSON_DISPLAY_COLUMNS,
         last_row=len(persons) + 1,
     )
+    _hide_system_id_column(persons_ws, PERSON_COLUMNS)
 
     marriages_ws = wb.create_sheet(text.marriages_sheet)
     _style_header(marriages_ws, MARRIAGE_COLUMNS, text.marriage_headers())
@@ -1370,6 +1410,7 @@ def build_export_workbook(
         MARRIAGE_DISPLAY_COLUMNS,
         last_row=len(marriages) + 1,
     )
+    _hide_system_id_column(marriages_ws, MARRIAGE_COLUMNS)
 
     buffer = BytesIO()
     wb.save(buffer)
