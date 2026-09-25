@@ -55,7 +55,9 @@ cases, so authorization, validation and error semantics cannot drift apart. Ever
 into Neo4j, which exists purely as a query accelerator for path finding — it can be rebuilt from
 Postgres at any time, and an hourly reconciliation task repairs drift.
 
-**One tree may be public, and only in one direction.** Setting `DEMO_TREE_ID` publishes that tree
+**One tree (or one per locale) may be public, and only in one direction.** Setting
+`DEMO_TREE_ID_FA` / `DEMO_TREE_ID_EN` (or the legacy `DEMO_TREE_ID` fallback) publishes
+those trees
 for anyone to read without signing in. It is not a second code path: the guard hands an anonymous
 visitor a synthetic membership carrying only `TreeAccessPermissions.DEMO` — four read capabilities —
 so every write route refuses it through the same check that refuses any other member, and with the
@@ -463,16 +465,21 @@ fails if a setting is added without documenting it.
 
 ### Public demo tree
 
-Off by default. `DEMO_TREE_ID` names one existing tree that becomes readable without a session:
+Off by default. Locale-specific ids publish a Persian tree for `/fa/demo` and an
+English tree for `/en/demo`. `DEMO_TREE_ID` remains as a fallback when a locale
+slot is empty:
 
 ```env
-DEMO_TREE_ID=                 # empty = no public tree at all
+DEMO_TREE_ID=                 # fallback when a locale slot is empty
+DEMO_TREE_ID_FA=              # tree for locale=fa
+DEMO_TREE_ID_EN=              # tree for locale=en
 DEMO_RATE_LIMIT_PER_MINUTE=60 # per-IP ceiling for anonymous demo reads
 ```
 
-`GET /family-trees/demo` is the only route that takes no credentials; it answers `404` while the
-setting is empty. It returns the tree with `my_permissions` set to the demo capabilities, which is
-the same field a client already reads to decide what to render — so the demo needs no second UI.
+`GET /family-trees/demo?locale=fa|en` is the only route that takes no credentials;
+it answers `404` while no id resolves for that locale. It returns the tree with
+`my_permissions` set to the demo capabilities, which is the same field a client
+already reads to decide what to render — so the demo needs no second UI.
 With the id in hand, the ordinary read routes accept it anonymously too.
 
 What the demo grants, and nothing else:

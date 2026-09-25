@@ -10,6 +10,10 @@ get {
   auth: none
 }
 
+params:query {
+  locale: en
+}
+
 assert {
   res.status: eq 200
   res.body.id: isString
@@ -20,11 +24,12 @@ docs {
   # Get Demo Family Tree
 
   The only tree route that takes no credentials. Returns the tree named by
-  `DEMO_TREE_ID`, with `my_permissions` set to the read-only demo capabilities
-  (`view`, `view_birth_date`, `view_marriage_date`, `view_photo`).
+  `DEMO_TREE_ID_FA` / `DEMO_TREE_ID_EN` for the given `locale` query (falling
+  back to `DEMO_TREE_ID`), with `my_permissions` set to the read-only demo
+  capabilities (`view`, `view_birth_date`, `view_marriage_date`, `view_photo`).
 
-  Returns `404` when no demo tree is configured, and every request is metered
-  per IP by `DEMO_RATE_LIMIT_PER_MINUTE`.
+  Returns `404` when no demo tree is configured for that locale, and every
+  request is metered per IP by `DEMO_RATE_LIMIT_PER_MINUTE`.
 
   Once you have the id, the ordinary read routes accept it anonymously too —
   `GET /persons?tree_id=…`, `GET /marriages?tree_id=…` and the relation
@@ -32,7 +37,9 @@ docs {
   capability.
 
   ## Input
-  None.
+  | Name | In | Required | Notes |
+  |---|---|---|---|
+  | `locale` | query | no | `fa` or `en` (default `en`) |
 
   ## Output `200`
   ```json

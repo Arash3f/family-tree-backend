@@ -1,6 +1,7 @@
+from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.application.dto.family_tree.family_tree_dto import (
     FamilyTreeCreateDTO,
@@ -86,17 +87,23 @@ async def list_family_trees(
     "/demo",
     response_model=FamilyTreeResponse,
     dependencies=[Depends(rate_limit_demo)],
-    summary="The publicly readable demo tree",
+    summary="The publicly readable demo tree for a UI locale",
 )
-async def get_demo_family_tree(uow=Depends(get_request_uow)) -> FamilyTreeResponse:
-    """Point a signed-out visitor at the demo tree.
+async def get_demo_family_tree(
+    locale: Literal["fa", "en"] = Query(
+        "en",
+        description="UI locale: `fa` and `en` may point at different demo trees.",
+    ),
+    uow=Depends(get_request_uow),
+) -> FamilyTreeResponse:
+    """Point a signed-out visitor at the demo tree for their language.
 
     Declared above `/{tree_id}` so the literal path wins the match, and the only
     route here that takes no credentials. `my_permissions` comes back as the
     read-only demo set, which is the same field the client already reads to
     decide what to render — so the demo needs no second rendering path.
     """
-    res = await GetDemoFamilyTreeUseCase(uow).execute()
+    res = await GetDemoFamilyTreeUseCase(uow).execute(locale=locale)
     return FamilyTreeResponse.model_validate(res.model_dump())
 
 

@@ -86,10 +86,12 @@ class AppSettings(PydanticBaseSettings):
     )
     AUTH_RATE_LIMIT_PER_MINUTE: int = 30
 
-    # Public read-only demo. Empty (the default) means there is no demo tree and
-    # every tree stays members-only. Set it to the id of one real tree to make
-    # that tree — and nothing else — readable without signing in.
+    # Public read-only demos. Empty (the default) means no public tree and every
+    # tree stays members-only. Prefer the locale-specific ids; DEMO_TREE_ID is
+    # the fallback when a locale slot is empty (and still publishes that tree).
     DEMO_TREE_ID: str = ""
+    DEMO_TREE_ID_FA: str = ""
+    DEMO_TREE_ID_EN: str = ""
     # Per-IP ceiling for anonymous demo reads. Relationship path finding is the
     # expensive query on this surface, and it is the one anyone can reach.
     DEMO_RATE_LIMIT_PER_MINUTE: int = 60
@@ -150,22 +152,59 @@ class AppSettings(PydanticBaseSettings):
             )
         return self
 
+    @staticmethod
+    def _parse_optional_uuid(raw: str, *, field: str) -> UUID | None:
+        stripped = raw.strip()
+        if not stripped:
+            return None
+        try:
+            return UUID(stripped)
+        except ValueError as exc:
+            raise ValueError(f"{field} must be a UUID, got {stripped!r}.") from exc
+
     @property
     def demo_tree_id(self) -> UUID | None:
-        """The publicly readable tree, or None when the demo is off."""
-        raw = self.DEMO_TREE_ID.strip()
-        return UUID(raw) if raw else None
+        """Legacy single-id fallback; prefer `demo_tree_id_for_locale`."""
+        return self._parse_optional_uuid(self.DEMO_TREE_ID, field="DEMO_TREE_ID")
+
+    @property
+    def demo_tree_ids(self) -> frozenset[UUID]:
+        """Every tree published for anonymous read access."""
+        ids: set[UUID] = set()
+        for field, raw in (
+            ("DEMO_TREE_ID", self.DEMO_TREE_ID),
+            ("DEMO_TREE_ID_FA", self.DEMO_TREE_ID_FA),
+            ("DEMO_TREE_ID_EN", self.DEMO_TREE_ID_EN),
+        ):
+            parsed = self._parse_optional_uuid(raw, field=field)
+            if parsed is not None:
+                ids.add(parsed)
+        return frozenset(ids)
+
+    def demo_tree_id_for_locale(self, locale: str) -> UUID | None:
+        """The tree `/demo` should show for this UI locale.
+
+        Locale-specific ids win when set; otherwise `DEMO_TREE_ID` is used so the
+        usual single-tree deploy serves both `/fa/demo` and `/en/demo` (chrome
+        language only — same people and edges).
+        """
+        specific = {
+            "fa": self.DEMO_TREE_ID_FA,
+            "en": self.DEMO_TREE_ID_EN,
+        }.get(locale, "")
+        parsed = self._parse_optional_uuid(
+            specific,
+            field=f"DEMO_TREE_ID_{locale.upper()}"
+            if locale in {"fa", "en"}
+            else "DEMO_TREE_ID",
+        )
+        return parsed if parsed is not None else self.demo_tree_id
 
     @model_validator(mode="after")
-    def ensure_demo_tree_id_is_a_uuid(self) -> Self:
+    def ensure_demo_tree_ids_are_uuids(self) -> Self:
         """A typo here would otherwise surface as a 500 on the demo page."""
-        raw = self.DEMO_TREE_ID.strip()
-        if not raw:
-            return self
-        try:
-            UUID(raw)
-        except ValueError as exc:
-            raise ValueError(f"DEMO_TREE_ID must be a UUID, got {raw!r}.") from exc
+        # Touching the set runs the same parse rules used at request time.
+        _ = self.demo_tree_ids
         return self
 
     @property

@@ -50,9 +50,8 @@ class TreeAccessService:
         return membership
 
     def is_demo_tree(self, tree_id: UUID) -> bool:
-        """Whether this tree is the one published as the public demo."""
-        demo_tree_id = settings.demo_tree_id
-        return demo_tree_id is not None and tree_id == demo_tree_id
+        """Whether this tree is published as a public demo (any locale)."""
+        return tree_id in settings.demo_tree_ids
 
     def allows_anonymous(self, *, tree_id: UUID, permission: str) -> bool:
         """Whether this capability on this tree is readable without signing in.
@@ -60,7 +59,7 @@ class TreeAccessService:
         @param tree_id - The tree being reached for.
         @param permission - The capability the route demands.
 
-        @returns True only for the configured demo tree and a demo capability.
+        @returns True only for a configured demo tree and a demo capability.
         """
         return self.is_demo_tree(tree_id) and TreeAccessPermissions.grants_demo(
             permission
@@ -69,12 +68,13 @@ class TreeAccessService:
     async def require_demo_access(
         self, *, tree_id: UUID, permission: str
     ) -> TreeMembership:
-        """Grant a signed-out visitor read access to the demo tree.
+        """Grant a signed-out visitor read access to a published demo tree.
 
         This is the only path in the service that answers without a user, and it
-        is deliberately narrow: one configured tree, and only the capabilities in
-        `TreeAccessPermissions.DEMO`. Every write capability is outside that set,
-        so a demo visitor is refused by the same check that refuses anyone else.
+        is deliberately narrow: the configured demo tree(s), and only the
+        capabilities in `TreeAccessPermissions.DEMO`. Every write capability is
+        outside that set, so a demo visitor is refused by the same check that
+        refuses anyone else.
 
         @param tree_id - The tree being reached for.
         @param permission - The capability the route demands.
@@ -82,7 +82,7 @@ class TreeAccessService:
         @returns A synthetic read-only membership, not persisted anywhere.
 
         @throws {AppException} TreeMembershipDeniedException - When the demo is
-            off, the tree is not the demo tree, or the capability is not one the
+            off, the tree is not a demo tree, or the capability is not one the
             demo grants.
         """
         if not self.allows_anonymous(tree_id=tree_id, permission=permission):
@@ -90,7 +90,7 @@ class TreeAccessService:
                 detail=[f"tree_id={tree_id} user=anonymous permission={permission}"]
             )
 
-        # Still proves the tree exists, so a stale DEMO_TREE_ID reads as a
+        # Still proves the tree exists, so a stale DEMO_TREE_ID_* reads as a
         # missing tree rather than an empty one.
         await self.uow.family_trees.get_or_raise(tree_id)
         return TreeMembership(

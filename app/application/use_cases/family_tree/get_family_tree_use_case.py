@@ -53,7 +53,7 @@ class GetFamilyTreeUseCase:
 
 
 class GetDemoFamilyTreeUseCase:
-    """Resolve the publicly published demo tree for a signed-out visitor.
+    """Resolve a publicly published demo tree for a signed-out visitor.
 
     Kept separate from `GetFamilyTreeUseCase` rather than folded into it behind
     an optional user id: the two answer to different authorization rules, and a
@@ -65,16 +65,19 @@ class GetDemoFamilyTreeUseCase:
         self.uow = uow
         self.access = TreeAccessService(uow)
 
-    async def execute(self) -> FamilyTreeResponseDTO:
-        """Return the demo tree with the read-only permissions it grants.
+    async def execute(self, *, locale: str) -> FamilyTreeResponseDTO:
+        """Return the locale's demo tree with the read-only permissions it grants.
+
+        @param locale - UI locale (`fa` / `en`). Picks `DEMO_TREE_ID_FA` /
+            `DEMO_TREE_ID_EN`, falling back to `DEMO_TREE_ID`.
 
         @returns The tree, with `my_permissions` set to the demo capabilities so
             the client renders it read-only from the same field it always reads.
 
         @throws {AppException} FamilyTreeNotFoundException - When no demo tree is
-            configured, or `DEMO_TREE_ID` names a tree that no longer exists.
+            configured for this locale, or the configured id no longer exists.
         """
-        tree_id = settings.demo_tree_id
+        tree_id = settings.demo_tree_id_for_locale(locale)
         if tree_id is None:
             raise FamilyTreeNotFoundException(detail=["no demo tree is configured"])
 

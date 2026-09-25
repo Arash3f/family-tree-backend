@@ -34,8 +34,8 @@ class RequireTreeAccess:
     that tree its own copy of every read route, the fallback lives here: a caller
     who is not a member is offered the demo membership, which carries only
     `TreeAccessPermissions.DEMO`. Every write guard asks for a capability outside
-    that set, so nothing becomes writable by adding this, and with `DEMO_TREE_ID`
-    unset the fallback can never match at all.
+    that set, so nothing becomes writable by adding this, and with no
+    `DEMO_TREE_ID*` set the fallback can never match at all.
 
     A caller with no credentials and no public read to fall back on still gets
     the same 401 as before — the demo must never turn an authentication failure
