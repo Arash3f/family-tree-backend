@@ -95,7 +95,9 @@ async def test_create_person_unauthenticated(client: Client, tree_id):
     resp = await create_person(tree_id=tree_id, client=client, body=req)
 
     assert resp.status_code == 401
-    assert json.loads(resp.content)["detail"] == "Not authenticated"
+    body = json.loads(resp.content)
+    assert body["error_code"] == int(ErrorCode.InvalidCredentials)
+    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.InvalidCredentials]
 
 
 @pytest.mark.asyncio
@@ -175,7 +177,9 @@ async def test_get_person_unauthenticated(client: Client, tree_id):
     resp = await get_person(tree_id=tree_id, person_id=UUID(int=1), client=client)
 
     assert resp.status_code == 401
-    assert json.loads(resp.content)["detail"] == "Not authenticated"
+    body = json.loads(resp.content)
+    assert body["error_code"] == int(ErrorCode.InvalidCredentials)
+    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.InvalidCredentials]
 
 
 @pytest.mark.asyncio
@@ -255,7 +259,9 @@ async def test_update_person_unauthenticated(client: Client, tree_id):
     resp = await update_person(tree_id=tree_id, client=client, body=payload)
 
     assert resp.status_code == 401
-    assert json.loads(resp.content)["detail"] == "Not authenticated"
+    body = json.loads(resp.content)
+    assert body["error_code"] == int(ErrorCode.InvalidCredentials)
+    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.InvalidCredentials]
 
 
 @pytest.mark.asyncio
@@ -332,7 +338,9 @@ async def test_delete_person_unauthenticated(client: Client, tree_id):
     resp = await delete_person(tree_id=tree_id, person_id=UUID(int=1), client=client)
 
     assert resp.status_code == 401
-    assert json.loads(resp.content)["detail"] == "Not authenticated"
+    body = json.loads(resp.content)
+    assert body["error_code"] == int(ErrorCode.InvalidCredentials)
+    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.InvalidCredentials]
 
 
 @pytest.mark.asyncio
@@ -416,7 +424,9 @@ async def test_get_person_list_by_filter_unauthenticated(client: Client, tree_id
     resp = await get_person_list_by_filter(tree_id=tree_id, client=client, body=req)
 
     assert resp.status_code == 401
-    assert json.loads(resp.content)["detail"] == "Not authenticated"
+    body = json.loads(resp.content)
+    assert body["error_code"] == int(ErrorCode.InvalidCredentials)
+    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.InvalidCredentials]
 
 
 @pytest.mark.asyncio

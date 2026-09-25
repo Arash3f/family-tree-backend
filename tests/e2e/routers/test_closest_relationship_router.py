@@ -69,7 +69,9 @@ async def test_closest_relationship_unauthenticated(client: Client, tree_id, moc
         to_person_id=uuid4(),
     )
     assert resp.status_code == 401
-    assert json.loads(resp.content)["detail"] == "Not authenticated"
+    body = json.loads(resp.content)
+    assert body["error_code"] == int(ErrorCode.InvalidCredentials)
+    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.InvalidCredentials]
 
 
 @pytest.mark.asyncio

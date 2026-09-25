@@ -122,7 +122,9 @@ async def test_create_marriage_unauthenticated(client: Client, tree_id):
     resp = await create_marriage(tree_id=tree_id, client=client, body=req)
 
     assert resp.status_code == 401
-    assert json.loads(resp.content)["detail"] == "Not authenticated"
+    body = json.loads(resp.content)
+    assert body["error_code"] == int(ErrorCode.InvalidCredentials)
+    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.InvalidCredentials]
 
 
 @pytest.mark.asyncio
@@ -179,7 +181,9 @@ async def test_get_marriage_unauthenticated(client: Client, tree_id):
     resp = await get_marriage(tree_id=tree_id, marriage_id=UUID(int=1), client=client)
 
     assert resp.status_code == 401
-    assert json.loads(resp.content)["detail"] == "Not authenticated"
+    body = json.loads(resp.content)
+    assert body["error_code"] == int(ErrorCode.InvalidCredentials)
+    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.InvalidCredentials]
 
 
 @pytest.mark.asyncio
@@ -266,7 +270,9 @@ async def test_update_marriage_unauthenticated(client: Client, tree_id):
     resp = await update_marriage(tree_id=tree_id, client=client, body=payload)
 
     assert resp.status_code == 401
-    assert json.loads(resp.content)["detail"] == "Not authenticated"
+    body = json.loads(resp.content)
+    assert body["error_code"] == int(ErrorCode.InvalidCredentials)
+    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.InvalidCredentials]
 
 
 @pytest.mark.asyncio
@@ -355,7 +361,9 @@ async def test_delete_marriage_unauthenticated(client: Client, tree_id):
     )
 
     assert resp.status_code == 401
-    assert json.loads(resp.content)["detail"] == "Not authenticated"
+    body = json.loads(resp.content)
+    assert body["error_code"] == int(ErrorCode.InvalidCredentials)
+    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.InvalidCredentials]
 
 
 @pytest.mark.asyncio
@@ -439,7 +447,9 @@ async def test_divorce_unauthenticated(client: Client, tree_id):
     resp = await divorce(tree_id=tree_id, client=client, body=req)
 
     assert resp.status_code == 401
-    assert json.loads(resp.content)["detail"] == "Not authenticated"
+    body = json.loads(resp.content)
+    assert body["error_code"] == int(ErrorCode.InvalidCredentials)
+    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.InvalidCredentials]
 
 
 @pytest.mark.asyncio
@@ -530,7 +540,9 @@ async def test_get_marriage_list_by_filter_unauthenticated(client: Client, tree_
     resp = await get_marriage_list_by_filter(tree_id=tree_id, client=client, body=req)
 
     assert resp.status_code == 401
-    assert json.loads(resp.content)["detail"] == "Not authenticated"
+    body = json.loads(resp.content)
+    assert body["error_code"] == int(ErrorCode.InvalidCredentials)
+    assert body["message"] == ERROR_MESSAGES["en"][ErrorCode.InvalidCredentials]
 
 
 @pytest.mark.asyncio
