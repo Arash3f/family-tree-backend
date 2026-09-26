@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from typing import Any
-from urllib.parse import urlparse
 
 import aioboto3
 from botocore.client import Config
@@ -15,12 +14,11 @@ logger = logging.getLogger(__name__)
 
 
 class MinioObjectStorage(ObjectStorage):
-    """Async S3-compatible client targeting MinIO."""
+    """Async S3-compatible client targeting MinIO (server-side only)."""
 
     def __init__(
         self,
         endpoint: str | None = None,
-        public_endpoint: str | None = None,
         access_key: str | None = None,
         secret_key: str | None = None,
         bucket: str | None = None,
@@ -28,7 +26,6 @@ class MinioObjectStorage(ObjectStorage):
         secure: bool | None = None,
     ) -> None:
         self._endpoint = endpoint or settings.MINIO_ENDPOINT
-        self._public_endpoint = public_endpoint or settings.minio_public_endpoint
         self._access_key = access_key or settings.MINIO_ACCESS_KEY
         self._secret_key = secret_key or settings.MINIO_SECRET_KEY
         self._bucket = bucket or settings.MINIO_BUCKET
@@ -36,17 +33,17 @@ class MinioObjectStorage(ObjectStorage):
         self._secure = settings.MINIO_SECURE if secure is None else secure
         self._session = aioboto3.Session()
 
-    def _endpoint_url(self, host: str) -> str:
-        scheme = "https" if self._secure else "http"
+    def _endpoint_url(self) -> str:
+        host = self._endpoint
         if host.startswith("http://") or host.startswith("https://"):
             return host
+        scheme = "https" if self._secure else "http"
         return f"{scheme}://{host}"
 
-    def _client_kwargs(self, *, for_presign: bool = False) -> dict[str, Any]:
-        host = self._public_endpoint if for_presign else self._endpoint
+    def _client_kwargs(self) -> dict[str, Any]:
         return {
             "service_name": "s3",
-            "endpoint_url": self._endpoint_url(host),
+            "endpoint_url": self._endpoint_url(),
             "aws_access_key_id": self._access_key,
             "aws_secret_access_key": self._secret_key,
             "region_name": self._region,
@@ -105,21 +102,3 @@ class MinioObjectStorage(ObjectStorage):
                 if code in {"404", "NoSuchKey", "NotFound"}:
                     return None
                 raise
-
-    async def presign_get(self, key: str, expires_seconds: int) -> str:
-        async with self._session.client(
-            **self._client_kwargs(for_presign=True)
-        ) as client:
-            url = await client.generate_presigned_url(
-                "get_object",
-                Params={"Bucket": self._bucket, "Key": key},
-                ExpiresIn=expires_seconds,
-            )
-        # Ensure host matches the public endpoint when path-style URLs are used.
-        parsed_public = urlparse(self._endpoint_url(self._public_endpoint))
-        parsed_url = urlparse(url)
-        if parsed_url.hostname != parsed_public.hostname:
-            url = parsed_url._replace(
-                netloc=parsed_public.netloc or parsed_public.hostname or ""
-            ).geturl()
-        return url

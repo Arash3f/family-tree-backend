@@ -1,4 +1,3 @@
-import asyncio
 from uuid import UUID
 
 from app.application.dto.person.person_get_dto import (
@@ -26,15 +25,12 @@ class GetPersonListByFilterUseCase:
 
             person_list = await self.uow.persons.get_list_by_filter(query=query)
 
-            photo_urls = await asyncio.gather(
-                *(
-                    self.photo_service.presign(person.photo_object_key)
-                    for person in person_list.items
-                )
-            )
             items = [
-                PersonGetMapper.to_response(person, photo_url=photo_url)
-                for person, photo_url in zip(person_list.items, photo_urls)
+                PersonGetMapper.to_response(
+                    person,
+                    photo_url=self.photo_service.media_url(person.photo_object_key),
+                )
+                for person in person_list.items
             ]
 
             return PaginatedResult(

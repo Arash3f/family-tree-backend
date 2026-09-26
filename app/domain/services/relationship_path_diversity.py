@@ -15,9 +15,6 @@ K_SHORTEST_POOL = 6
 # at least one route distinct from the shortest.
 MIN_PATHS_BEFORE_K_SHORTEST = 2
 
-# Keep for callers/tests that still import the old name as "ceiling for selection".
-MAX_PATH_HOPS = MAX_PATH_HOPS_CAP
-
 
 @dataclass(frozen=True)
 class PathRecord:

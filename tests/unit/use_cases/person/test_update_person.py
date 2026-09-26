@@ -13,8 +13,8 @@ from app.domain.exceptions.person_exceptions import InvalidBirthDateException
 def _photo_service():
     service = MagicMock()
     service.ensure_object_exists = AsyncMock()
-    service.presign = AsyncMock(
-        side_effect=lambda key: f"https://minio.example/{key}" if key else None
+    service.media_url = MagicMock(
+        side_effect=lambda key: f"/media/{key}?exp=1&sig=x" if key else None
     )
     service.delete_quiet = AsyncMock()
     return service

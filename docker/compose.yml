@@ -90,7 +90,9 @@ services:
 
   # Postgres/Redis via AWS Public ECR (Docker Hub library mirror) so CI and
   # shared runners are not blocked by anonymous Docker Hub pull rate limits.
-  # Neo4j + MinIO via Google's Docker Hub mirror (MinIO's own public tags are gone).
+  # Neo4j + MinIO default to Arvan's Hub mirror — reachable from Iranian VPS
+  # hosts where mirror.gcr.io / quay.io often return 403/401. CI overrides to
+  # mirror.gcr.io (see .github/workflows/ci.yml). MinIO's own public tags are gone.
   db:
     image: public.ecr.aws/docker/library/postgres:15.13
     restart: unless-stopped
@@ -119,7 +121,7 @@ services:
       retries: 10
 
   neo4j:
-    image: ${NEO4J_IMAGE:-mirror.gcr.io/neo4j:5.26.4}
+    image: ${NEO4J_IMAGE:-docker.arvancloud.ir/neo4j:5.26.4}
     restart: unless-stopped
     environment:
       NEO4J_AUTH: ${NEO4J_USER}/${NEO4J_PASSWORD}
@@ -146,16 +148,18 @@ services:
       retries: 12
       start_period: 30s
 
-  # MinIO's own quay/dockerhub public images were locked down; Bitnami's
-  # legacy build is still pullable via Google's Hub mirror (same S3 API).
+  # MinIO's own quay/dockerhub anonymous pulls are locked; Arvan mirrors the
+  # last public RELEASE tag. Keep the data dir at /data so existing volumes
+  # (created by the old quay image) keep working without chown/migrate.
   minio:
-    image: ${MINIO_IMAGE:-mirror.gcr.io/bitnamilegacy/minio:2025.3.12-debian-12-r1}
+    image: ${MINIO_IMAGE:-docker.arvancloud.ir/minio/minio:RELEASE.2025-04-22T22-12-26Z}
     restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
     environment:
       MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
     volumes:
-      - minio_data:/bitnami/minio/data
+      - minio_data:/data
     networks:
       - family-tree
     healthcheck:

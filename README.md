@@ -132,7 +132,7 @@ logged at `CRITICAL`, and the hourly `reconcile.neo4j` task repairs the differen
 | **PostgreSQL** | Users, roles, permissions, trees, memberships, persons, marriages, tickets |
 | **Neo4j** | `Person` nodes and parent/spouse edges — a derived, rebuildable projection |
 | **Redis** | Celery broker (db 0) and results (db 1); auth rate-limit windows (db 2) |
-| **MinIO** | Person photos in a private bucket, served as presigned URLs |
+| **MinIO** | Person photos in a private bucket; browser loads via signed `GET /media` |
 
 ---
 
@@ -382,8 +382,9 @@ Paid accounts are unlimited. Exceeding a free quota returns `error_code` **1711*
 |--------|------|---------|
 | `POST` | `/family-trees/{tree_id}/media/upload` | Upload a photo → `photoObjectKey` |
 
-Set the returned `photoObjectKey` on a person. Reads return a time-limited presigned `photoUrl`
-(`MINIO_PRESIGN_EXPIRE_SECONDS`, default one hour); the bucket itself stays private.
+Set the returned `photoObjectKey` on a person. Reads return a time-limited signed
+`photoUrl` path (`GET /media/...`, lifetime `MEDIA_URL_EXPIRE_SECONDS`, default one
+hour). The bucket stays private; the browser never talks to MinIO directly.
 
 ### Excel
 
@@ -560,8 +561,7 @@ DB_POOL_TIMEOUT_SECONDS=30
 DB_POOL_RECYCLE_SECONDS=1800
 
 MINIO_BUCKET=family-tree        # created on startup if absent
-MINIO_PUBLIC_ENDPOINT=localhost:9000   # host in presigned URLs, if it differs internally
-MINIO_PRESIGN_EXPIRE_SECONDS=3600
+MEDIA_URL_EXPIRE_SECONDS=3600   # HMAC lifetime for GET /media (not S3 presign)
 
 APP_IMAGE_TARGET=runtime        # set to `ci` to get an image with pytest and the linters
 API_PORT=8001

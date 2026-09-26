@@ -21,7 +21,7 @@ WEBP_BYTES = b"RIFF\x00\x00\x00\x00WEBP" + b"\x00" * 16
 
 
 def _service(storage: MagicMock | None = None) -> PersonPhotoService:
-    return PersonPhotoService(storage or MagicMock(), presign_expire_seconds=60)
+    return PersonPhotoService(storage or MagicMock(), media_url_expire_seconds=60)
 
 
 def test_validate_upload_accepts_jpeg():
@@ -136,18 +136,16 @@ async def test_upload_person_photo_rejects_disguised_payload():
     storage.upload.assert_not_awaited()
 
 
-@pytest.mark.asyncio
-async def test_presign_returns_none_for_missing_key():
+def test_media_url_returns_none_for_missing_key():
     service = _service()
-    assert await service.presign(None) is None
+    assert service.media_url(None) is None
 
 
-@pytest.mark.asyncio
-async def test_presign_returns_signed_api_path():
+def test_media_url_returns_signed_api_path():
     service = _service()
     key = f"persons/{uuid4()}.jpg"
 
-    url = await service.presign(key)
+    url = service.media_url(key)
 
     assert url is not None
     assert url.startswith(f"/media/{key}?exp=")

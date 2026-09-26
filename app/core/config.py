@@ -1,7 +1,7 @@
 from typing import Self
 from uuid import UUID
 
-from pydantic import Field, model_validator
+from pydantic import AliasChoices, Field, model_validator
 from pydantic_settings import BaseSettings as PydanticBaseSettings
 from pydantic_settings import SettingsConfigDict
 
@@ -102,9 +102,8 @@ class AppSettings(PydanticBaseSettings):
     GRAPHQL_MAX_ALIASES: int = 15
     GRAPHQL_MAX_TOKENS: int = 2000
 
-    # MinIO / S3-compatible object storage
+    # MinIO / S3-compatible object storage (API ↔ MinIO only; browser uses /media)
     MINIO_ENDPOINT: str = "localhost:9000"
-    MINIO_PUBLIC_ENDPOINT: str | None = None
     MINIO_ACCESS_KEY: str = "minioadmin"
     MINIO_SECRET_KEY: str = "minioadmin"
     MINIO_BUCKET: str = "family-tree"
@@ -112,7 +111,14 @@ class AppSettings(PydanticBaseSettings):
     MINIO_BUCKETS: str | None = None
     MINIO_REGION: str = "us-east-1"
     MINIO_SECURE: bool = False
-    MINIO_PRESIGN_EXPIRE_SECONDS: int = 3600
+    # HMAC lifetime for GET /media/{key}?exp=&sig= (not S3 presign).
+    MEDIA_URL_EXPIRE_SECONDS: int = Field(
+        default=3600,
+        validation_alias=AliasChoices(
+            "MEDIA_URL_EXPIRE_SECONDS",
+            "MINIO_PRESIGN_EXPIRE_SECONDS",
+        ),
+    )
 
     @model_validator(mode="after")
     def ensure_test_database_is_separate(self) -> Self:
@@ -270,10 +276,6 @@ class AppSettings(PydanticBaseSettings):
             f"{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:"
             f"{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
-
-    @property
-    def minio_public_endpoint(self) -> str:
-        return self.MINIO_PUBLIC_ENDPOINT or self.MINIO_ENDPOINT
 
     @property
     def minio_buckets(self) -> list[str]:

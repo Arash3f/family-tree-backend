@@ -15,8 +15,8 @@ from app.domain.entities.person import Gender, ParentRelationshipType
 def _photo_service():
     service = MagicMock()
     service.ensure_object_exists = AsyncMock()
-    service.presign = AsyncMock(
-        side_effect=lambda key: f"https://minio.example/{key}" if key else None
+    service.media_url = MagicMock(
+        side_effect=lambda key: f"/media/{key}?exp=1&sig=x" if key else None
     )
     return service
 
@@ -186,7 +186,7 @@ async def test_create_person_with_photo(mock_uow):
 
     photo_service.ensure_object_exists.assert_awaited_once_with(key)
     mapper_mock.assert_called_once_with(
-        created_person, photo_url=f"https://minio.example/{key}"
+        created_person, photo_url=f"/media/{key}?exp=1&sig=x"
     )
     created_entity = mock_uow.persons.create.await_args.args[0]
     assert created_entity.photo_object_key == key

@@ -79,13 +79,13 @@ class PersonPhotoService:
         self,
         storage: ObjectStorage,
         *,
-        presign_expire_seconds: int | None = None,
+        media_url_expire_seconds: int | None = None,
     ) -> None:
         self.storage = storage
-        self.presign_expire_seconds = (
-            settings.MINIO_PRESIGN_EXPIRE_SECONDS
-            if presign_expire_seconds is None
-            else presign_expire_seconds
+        self.media_url_expire_seconds = (
+            settings.MEDIA_URL_EXPIRE_SECONDS
+            if media_url_expire_seconds is None
+            else media_url_expire_seconds
         )
 
     def build_object_key(self, content_type: str) -> str:
@@ -125,11 +125,11 @@ class PersonPhotoService:
     def build_media_url(self, key: str) -> str:
         """Same-origin API path; browser reaches MinIO only through the API."""
         self.validate_person_key(key)
-        expires_at = int(time.time()) + self.presign_expire_seconds
+        expires_at = int(time.time()) + self.media_url_expire_seconds
         signature = sign_media_access(key, expires_at)
         return f"/media/{key}?exp={expires_at}&sig={signature}"
 
-    async def presign(self, key: str | None) -> str | None:
+    def media_url(self, key: str | None) -> str | None:
         if not key:
             return None
         return self.build_media_url(key)

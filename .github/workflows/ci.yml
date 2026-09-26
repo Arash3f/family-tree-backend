@@ -77,6 +77,9 @@ jobs:
     env:
       # Compose defaults to the production image; the suite needs the test tooling.
       APP_IMAGE_TARGET: ci
+      # Compose defaults to Arvan mirrors (Iran VPS). GHA can pull the same tags.
+      NEO4J_IMAGE: docker.arvancloud.ir/neo4j:5.26.4
+      MINIO_IMAGE: docker.arvancloud.ir/minio/minio:RELEASE.2025-04-22T22-12-26Z
     steps:
       - uses: actions/checkout@v4
 
