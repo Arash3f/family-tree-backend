@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -133,6 +133,17 @@ class SQLUserRepository(UserRepository):
 
             if filters.role_id:
                 stmt = stmt.where(UserModel.role_id == filters.role_id)
+
+            search = (filters.search or "").strip()
+            if search:
+                stmt = stmt.where(
+                    or_(
+                        UserModel.username.icontains(search, autoescape=True),
+                        UserModel.fullname.icontains(search, autoescape=True),
+                        UserModel.email.icontains(search, autoescape=True),
+                        UserModel.phone.icontains(search, autoescape=True),
+                    )
+                )
 
         SORTABLE_COLUMNS: Mapping[Enum, Any] = {
             UserSortField.ID: UserModel.id,

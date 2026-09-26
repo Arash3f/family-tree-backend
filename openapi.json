@@ -118,9 +118,27 @@
         "tags": [
           "Family Trees"
         ],
-        "summary": "The publicly readable demo tree",
-        "description": "Point a signed-out visitor at the demo tree.\n\nDeclared above `/{tree_id}` so the literal path wins the match, and the only\nroute here that takes no credentials. `my_permissions` comes back as the\nread-only demo set, which is the same field the client already reads to\ndecide what to render — so the demo needs no second rendering path.",
+        "summary": "The publicly readable demo tree for a UI locale",
+        "description": "Point a signed-out visitor at the demo tree for their language.\n\nDeclared above `/{tree_id}` so the literal path wins the match, and the only\nroute here that takes no credentials. `my_permissions` comes back as the\nread-only demo set, which is the same field the client already reads to\ndecide what to render — so the demo needs no second rendering path.",
         "operationId": "get_demo_family_tree_family_trees_demo_get",
+        "parameters": [
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "fa",
+                "en"
+              ],
+              "type": "string",
+              "description": "UI locale: `fa` and `en` may point at different demo trees.",
+              "default": "en",
+              "title": "Locale"
+            },
+            "description": "UI locale: `fa` and `en` may point at different demo trees."
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -128,6 +146,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/FamilyTreeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -5634,6 +5662,17 @@
             "format": "uuid",
             "title": "Created By User Id"
           },
+          "created_by_username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By Username"
+          },
           "created_by_can_manage": {
             "type": "boolean",
             "title": "Created By Can Manage",
@@ -5803,6 +5842,17 @@
             "type": "string",
             "format": "uuid",
             "title": "Created By User Id"
+          },
+          "created_by_username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By Username"
           },
           "created_by_can_manage": {
             "type": "boolean",
@@ -6047,6 +6097,17 @@
             "format": "uuid",
             "title": "Created By User Id"
           },
+          "created_by_username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By Username"
+          },
           "created_by_can_manage": {
             "type": "boolean",
             "title": "Created By Can Manage",
@@ -6148,6 +6209,17 @@
             "type": "string",
             "format": "uuid",
             "title": "Created By User Id"
+          },
+          "created_by_username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By Username"
           },
           "created_by_can_manage": {
             "type": "boolean",
@@ -6863,6 +6935,19 @@
               }
             ],
             "title": "Role Id"
+          },
+          "search": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Search",
+            "description": "Case-insensitive match on username, full name, email or phone."
           }
         },
         "type": "object",

@@ -28,6 +28,7 @@ class TicketSummaryModel(BaseModel):
     status: TicketStatus
     category: TicketCategory
     created_by_user_id: UUID
+    created_by_username: str | None = None
     created_by_can_manage: bool = False
     viewer_can_manage: bool = False
     family_tree_id: UUID | None = None
@@ -42,6 +43,7 @@ class TicketDetailModel(BaseModel):
     status: TicketStatus
     category: TicketCategory
     created_by_user_id: UUID
+    created_by_username: str | None = None
     created_by_can_manage: bool = False
     viewer_can_manage: bool = False
     family_tree_id: UUID | None = None

@@ -19,11 +19,13 @@ class UserFilterRequestData:
         id (None | Unset | UUID):
         username (None | str | Unset):
         role_id (None | Unset | UUID):
+        search (None | str | Unset): Case-insensitive match on username, full name, email or phone.
     """
 
     id: None | Unset | UUID = UNSET
     username: None | str | Unset = UNSET
     role_id: None | Unset | UUID = UNSET
+    search: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -49,6 +51,12 @@ class UserFilterRequestData:
         else:
             role_id = self.role_id
 
+        search: None | str | Unset
+        if isinstance(self.search, Unset):
+            search = UNSET
+        else:
+            search = self.search
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
@@ -58,6 +66,8 @@ class UserFilterRequestData:
             field_dict["username"] = username
         if role_id is not UNSET:
             field_dict["role_id"] = role_id
+        if search is not UNSET:
+            field_dict["search"] = search
 
         return field_dict
 
@@ -108,10 +118,20 @@ class UserFilterRequestData:
 
         role_id = _parse_role_id(d.pop("role_id", UNSET))
 
+        def _parse_search(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        search = _parse_search(d.pop("search", UNSET))
+
         user_filter_request_data = cls(
             id=id,
             username=username,
             role_id=role_id,
+            search=search,
         )
 
         user_filter_request_data.additional_properties = d

@@ -16,6 +16,12 @@ from app.domain.shared.enums.ticket_status import TicketStatus
 from app.infrastructure.database.models.ticket_model import TicketModel
 from app.infrastructure.database.utils.pagination_and_sort import paginate_and_sort
 
+# Relations `_to_entity` reads: the linked tree's name and the requester's username.
+_TICKET_LOAD_OPTIONS = (
+    selectinload(TicketModel.family_tree),
+    selectinload(TicketModel.created_by),
+)
+
 
 class SQLTicketRepository(TicketRepository):
     def __init__(self, session: AsyncSession):
@@ -39,7 +45,7 @@ class SQLTicketRepository(TicketRepository):
     async def get(self, ticket_id: UUID) -> Ticket | None:
         stmt = (
             select(TicketModel)
-            .options(selectinload(TicketModel.family_tree))
+            .options(*_TICKET_LOAD_OPTIONS)
             .where(TicketModel.id == ticket_id, TicketModel.deleted_at.is_(None))
         )
         result = await self.session.execute(stmt)
@@ -53,7 +59,7 @@ class SQLTicketRepository(TicketRepository):
     ) -> PaginatedResult[Ticket]:
         stmt = (
             select(TicketModel)
-            .options(selectinload(TicketModel.family_tree))
+            .options(*_TICKET_LOAD_OPTIONS)
             .where(TicketModel.deleted_at.is_(None))
         )
         filters = query.filters
@@ -120,7 +126,7 @@ class SQLTicketRepository(TicketRepository):
     async def update(self, ticket: Ticket) -> Ticket:
         stmt = (
             select(TicketModel)
-            .options(selectinload(TicketModel.family_tree))
+            .options(*_TICKET_LOAD_OPTIONS)
             .where(TicketModel.id == ticket.id)
         )
         result = await self.session.execute(stmt)
@@ -133,7 +139,7 @@ class SQLTicketRepository(TicketRepository):
         model.family_tree_id = ticket.family_tree_id
 
         await self.session.flush()
-        await self.session.refresh(model, attribute_names=["family_tree"])
+        await self.session.refresh(model, attribute_names=["family_tree", "created_by"])
         return self._to_entity(model)
 
     def _to_entity(self, model: TicketModel) -> Ticket:
@@ -146,6 +152,7 @@ class SQLTicketRepository(TicketRepository):
             status=TicketStatus(model.status),
             category=TicketCategory(model.category),
             created_by_user_id=model.created_by_user_id,
+            created_by_username=model.created_by.username,
             family_tree_id=model.family_tree_id,
             family_tree_name=tree_name,
             created_at=model.created_at,

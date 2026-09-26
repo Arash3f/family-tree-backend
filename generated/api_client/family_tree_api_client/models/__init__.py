@@ -20,6 +20,7 @@ from .filter_role_request import FilterRoleRequest
 from .filter_ticket_request import FilterTicketRequest
 from .filter_user_request import FilterUserRequest
 from .gender import Gender
+from .get_demo_family_tree_family_trees_demo_get_locale import GetDemoFamilyTreeFamilyTreesDemoGetLocale
 from .http_validation_error import HTTPValidationError
 from .id_request import IdRequest
 from .login_response import LoginResponse
@@ -139,6 +140,7 @@ __all__ = (
     "FilterTicketRequest",
     "FilterUserRequest",
     "Gender",
+    "GetDemoFamilyTreeFamilyTreesDemoGetLocale",
     "HTTPValidationError",
     "IdRequest",
     "LoginResponse",

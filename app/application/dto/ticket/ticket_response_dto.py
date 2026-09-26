@@ -24,6 +24,7 @@ class TicketDetailResponseDTO(BaseModel):
     status: TicketStatus
     category: TicketCategory
     created_by_user_id: UUID
+    created_by_username: str | None = None
     created_by_can_manage: bool = False
     viewer_can_manage: bool = False
     family_tree_id: UUID | None = None
@@ -39,6 +40,7 @@ class TicketSummaryResponseDTO(BaseModel):
     status: TicketStatus
     category: TicketCategory
     created_by_user_id: UUID
+    created_by_username: str | None = None
     created_by_can_manage: bool = False
     viewer_can_manage: bool = False
     family_tree_id: UUID | None = None
@@ -70,6 +72,7 @@ def ticket_to_detail_dto(
         status=ticket.status,
         category=ticket.category,
         created_by_user_id=ticket.created_by_user_id,
+        created_by_username=ticket.created_by_username,
         created_by_can_manage=created_by_can_manage,
         viewer_can_manage=viewer_can_manage,
         family_tree_id=ticket.family_tree_id,
@@ -91,6 +94,7 @@ def ticket_to_summary_dto(
         status=ticket.status,
         category=ticket.category,
         created_by_user_id=ticket.created_by_user_id,
+        created_by_username=ticket.created_by_username,
         created_by_can_manage=created_by_can_manage,
         viewer_can_manage=viewer_can_manage,
         family_tree_id=ticket.family_tree_id,

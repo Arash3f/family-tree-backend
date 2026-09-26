@@ -538,6 +538,7 @@ type TicketSummaryType {
   viewerCanManage: Boolean!
   familyTreeId: UUID
   familyTreeName: String
+  createdByUsername: String
   createdAt: DateTime
   updatedAt: DateTime
 }
@@ -552,6 +553,7 @@ type TicketType {
   viewerCanManage: Boolean!
   familyTreeId: UUID
   familyTreeName: String
+  createdByUsername: String
   createdAt: DateTime
   updatedAt: DateTime
   messages: [TicketMessageType!]!
@@ -602,6 +604,7 @@ input UserFilterInput {
   id: UUID = null
   username: String = null
   roleId: UUID = null
+  search: String = null
 }
 
 input UserListInput {

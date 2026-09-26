@@ -17,6 +17,7 @@ class Ticket:
     status: TicketStatus
     category: TicketCategory
     created_by_user_id: UUID
+    created_by_username: str | None = None
     family_tree_id: UUID | None = None
     family_tree_name: str | None = None
     id: UUID | None = None

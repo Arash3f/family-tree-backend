@@ -17,6 +17,8 @@ class UserFilterDTO(BaseModel):
     id: UUID | None = None
     username: str | None = None
     role_id: UUID | None = None
+    # Case-insensitive match on username, full name, email or phone.
+    search: str | None = None
 
 
 class FilterUserQuery(BaseModel):

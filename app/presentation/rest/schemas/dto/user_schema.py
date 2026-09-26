@@ -116,6 +116,11 @@ class UserFilterRequestData(BaseModel):
     id: UUID | None = None
     username: str | None = None
     role_id: UUID | None = None
+    search: str | None = Field(
+        default=None,
+        max_length=100,
+        description="Case-insensitive match on username, full name, email or phone.",
+    )
 
 
 class FilterUserRequest(BaseModel):

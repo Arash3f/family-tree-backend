@@ -93,7 +93,9 @@ def _user_list_request(data: UserListInput | None) -> FilterUserRequest:
     filters = None
     if payload.filters is not None:
         f = payload.filters
-        filters = UserFilterRequestData(id=f.id, username=f.username, role_id=f.role_id)
+        filters = UserFilterRequestData(
+            id=f.id, username=f.username, role_id=f.role_id, search=f.search
+        )
     return FilterUserRequest(
         pagination=PaginationRequestParams(**pagination_dict(payload.pagination)),
         filters=filters,

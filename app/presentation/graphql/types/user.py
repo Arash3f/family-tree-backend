@@ -95,6 +95,7 @@ class UserFilterInput:
     id: UUID | None = None
     username: str | None = None
     role_id: UUID | None = None
+    search: str | None = None
 
 
 @strawberry.input

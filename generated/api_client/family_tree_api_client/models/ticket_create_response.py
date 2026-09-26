@@ -28,6 +28,7 @@ class TicketCreateResponse:
         status (TicketStatus):
         category (TicketCategory):
         created_by_user_id (UUID):
+        created_by_username (None | str | Unset):
         created_by_can_manage (bool | Unset):  Default: False.
         viewer_can_manage (bool | Unset):  Default: False.
         family_tree_id (None | Unset | UUID):
@@ -42,6 +43,7 @@ class TicketCreateResponse:
     status: TicketStatus
     category: TicketCategory
     created_by_user_id: UUID
+    created_by_username: None | str | Unset = UNSET
     created_by_can_manage: bool | Unset = False
     viewer_can_manage: bool | Unset = False
     family_tree_id: None | Unset | UUID = UNSET
@@ -61,6 +63,12 @@ class TicketCreateResponse:
         category = self.category.value
 
         created_by_user_id = str(self.created_by_user_id)
+
+        created_by_username: None | str | Unset
+        if isinstance(self.created_by_username, Unset):
+            created_by_username = UNSET
+        else:
+            created_by_username = self.created_by_username
 
         created_by_can_manage = self.created_by_can_manage
 
@@ -114,6 +122,8 @@ class TicketCreateResponse:
                 "created_by_user_id": created_by_user_id,
             }
         )
+        if created_by_username is not UNSET:
+            field_dict["created_by_username"] = created_by_username
         if created_by_can_manage is not UNSET:
             field_dict["created_by_can_manage"] = created_by_can_manage
         if viewer_can_manage is not UNSET:
@@ -145,6 +155,15 @@ class TicketCreateResponse:
         category = TicketCategory(d.pop("category"))
 
         created_by_user_id = UUID(d.pop("created_by_user_id"))
+
+        def _parse_created_by_username(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        created_by_username = _parse_created_by_username(d.pop("created_by_username", UNSET))
 
         created_by_can_manage = d.pop("created_by_can_manage", UNSET)
 
@@ -225,6 +244,7 @@ class TicketCreateResponse:
             status=status,
             category=category,
             created_by_user_id=created_by_user_id,
+            created_by_username=created_by_username,
             created_by_can_manage=created_by_can_manage,
             viewer_can_manage=viewer_can_manage,
             family_tree_id=family_tree_id,
