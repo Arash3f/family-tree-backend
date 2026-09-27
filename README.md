@@ -364,6 +364,7 @@ Paid accounts are unlimited. Exceeding a free quota returns `error_code` **1711*
 | `POST` `PUT` | `/family-trees/{tree_id}/persons` | Create · update |
 | `POST` | `/family-trees/{tree_id}/persons/list` | Filtered, paginated list |
 | `GET` `DELETE` | `/family-trees/{tree_id}/persons/{person_id}` | Read · delete |
+| `GET` | `/family-trees/{tree_id}/persons/{person_id}/card` | Person card: parents, marriages with spouses, descendant stats per generation |
 | `GET` | `/family-trees/{tree_id}/persons/{from_person_id}/relation/{to_person_id}` | Closest (shortest) relationship path (`male_only=true` keeps only male intermediates) |
 | `GET` | `/family-trees/{tree_id}/persons/{from_person_id}/relation/{to_person_id}/alternatives` | Diverse alternative relationship paths (same `male_only` flag) |
 
