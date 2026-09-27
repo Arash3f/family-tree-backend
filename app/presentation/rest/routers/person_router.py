@@ -9,6 +9,9 @@ from app.application.use_cases.person.get_closest_relationship_use_case import (
     GetAlternativeRelationshipPathsUseCase,
     GetClosestRelationshipUseCase,
 )
+from app.application.use_cases.person.get_person_card_use_case import (
+    GetPersonCardUseCase,
+)
 from app.application.use_cases.person.get_person_list_by_filter_use_case import (
     GetPersonListByFilterUseCase,
 )
@@ -30,6 +33,7 @@ from app.presentation.rest.schemas.dto.common import PaginatedResponse, ResultRe
 from app.presentation.rest.schemas.dto.person_schema import (
     ClosestRelationshipResponse,
     FilterPersonRequest,
+    PersonCardResponse,
     PersonCreateRequest,
     PersonCreateResponse,
     PersonGetResponse,
@@ -39,7 +43,7 @@ from app.presentation.rest.schemas.dto.person_schema import (
 )
 from app.presentation.rest.schemas.mappers.common_mappers import CommonApiMapper
 from app.presentation.rest.schemas.mappers.person_mappers import PersonApiMapper
-from app.presentation.tree_data_access import redact_person_data
+from app.presentation.tree_data_access import redact_person_card, redact_person_data
 
 router = APIRouter(prefix="/persons", tags=["Persons"])
 
@@ -140,6 +144,25 @@ async def get_closest_relationship(
         from_person_id, to_person_id, tree_id=tree_id, male_only=male_only
     )
     return ClosestRelationshipResponse.model_validate(result.model_dump())
+
+
+@router.get(
+    "/{person_id}/card",
+    response_model=PersonCardResponse,
+)
+async def get_person_card(
+    tree_id: UUID,
+    person_id: UUID,
+    membership: TreeMembership = Depends(require_tree_view),
+    uow=Depends(get_request_uow),
+    photo_service: PersonPhotoService = Depends(get_person_photo_service),
+) -> PersonCardResponse:
+    usecase = GetPersonCardUseCase(uow, photo_service)
+    res = await usecase.execute(CommonApiMapper.to_id_dto(person_id), tree_id=tree_id)
+    response = PersonApiMapper.from_get_person_card_dto(res)
+    return PersonCardResponse.model_validate(
+        redact_person_card(response.model_dump(), membership)
+    )
 
 
 @router.get(

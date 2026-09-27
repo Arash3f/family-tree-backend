@@ -1,3 +1,4 @@
+from app.application.dto.person.person_card_dto import PersonCardResponseDTO
 from app.application.dto.person.person_create_dto import (
     PersonCreateDTO,
     PersonCreateResponseDTO,
@@ -12,6 +13,7 @@ from app.domain.shared.dto.person_filter_dto import FilterPersonQuery
 from app.presentation.rest.schemas.dto.common import PaginatedResponse
 from app.presentation.rest.schemas.dto.person_schema import (
     FilterPersonRequest,
+    PersonCardResponse,
     PersonCreateRequest,
     PersonCreateResponse,
     PersonGetResponse,
@@ -50,6 +52,12 @@ class PersonApiMapper:
     def from_get_person_dto(response: PersonGetResponseDTO) -> PersonGetResponse:
         response_data = response.model_dump()
         return PersonGetResponse.model_validate(response_data)
+
+    @staticmethod
+    def from_get_person_card_dto(
+        response: PersonCardResponseDTO,
+    ) -> PersonCardResponse:
+        return PersonCardResponse.model_validate(response.model_dump())
 
     @staticmethod
     def to_get_list_person_dto(request: FilterPersonRequest) -> FilterPersonQuery:

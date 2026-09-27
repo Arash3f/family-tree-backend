@@ -1,0 +1,46 @@
+meta {
+  name: Get Person Card
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{base_url}}/family-trees/{{tree_id}}/persons/{{person_id}}/card
+  body: none
+  auth: inherit
+}
+
+params:path {
+  person_id: {{person_id}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.person.id: isString
+  res.body.person.name: isString
+  res.body.parents: isArray
+  res.body.marriages: isArray
+  res.body.descendants: isDefined
+}
+
+docs {
+  # Get Person Card
+
+  Pedigree detail panel payload: person, resolved parents, marriages with
+  spouse summary, and descendant generation stats.
+
+  ## Input (path)
+  | Param | Type | Required |
+  |-------|------|----------|
+  | person_id | uuid | yes |
+
+  ## Output `200`
+  ```json
+  {
+    "person": { "id": "...", "name": "Ali", "gender": "male" },
+    "parents": [],
+    "marriages": [],
+    "descendants": { "generations": [], "total": { "male": 0, "female": 0, "total": 0 } }
+  }
+  ```
+}

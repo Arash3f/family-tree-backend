@@ -100,6 +100,57 @@ class PersonGetResponse(BaseModel):
     }
 
 
+class PersonCardSummary(BaseModel):
+    id: UUID
+    name: str
+    gender: Gender
+    family_name: str | None = None
+    birth_date: date | None = None
+    death_date: date | None = None
+    photo_url: str | None = None
+
+
+class PersonCardParent(BaseModel):
+    parent_id: UUID
+    relationship_type: ParentRelationshipType
+    person: PersonCardSummary | None = None
+
+
+class PersonCardMarriage(BaseModel):
+    id: UUID
+    spouse_a_id: UUID
+    spouse_b_id: UUID
+    married_at: date | None = None
+    divorced_at: date | None = None
+    spouse: PersonCardSummary | None = None
+
+
+class GenderCounts(BaseModel):
+    male: int = 0
+    female: int = 0
+    total: int = 0
+
+
+class GenerationStats(BaseModel):
+    generation: int
+    male: int = 0
+    female: int = 0
+    total: int = 0
+    people: list[PersonCardSummary] = Field(default_factory=list)
+
+
+class DescendantStats(BaseModel):
+    generations: list[GenerationStats] = Field(default_factory=list)
+    total: GenderCounts = Field(default_factory=GenderCounts)
+
+
+class PersonCardResponse(BaseModel):
+    person: PersonGetResponse
+    parents: list[PersonCardParent] = Field(default_factory=list)
+    marriages: list[PersonCardMarriage] = Field(default_factory=list)
+    descendants: DescendantStats = Field(default_factory=DescendantStats)
+
+
 class PersonCreateRequest(BaseModel):
     name: str = Field(description="Person full name")
     gender: Gender
