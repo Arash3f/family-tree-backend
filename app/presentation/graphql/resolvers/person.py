@@ -268,11 +268,19 @@ def _relationship_path_to_type(data: dict) -> ClosestRelationshipType:
         distance=data.get("distance"),
         path_person_ids=list(data.get("path_person_ids") or []),
         relationship_types=list(data.get("relationship_types") or []),
+        label_fa=data.get("label_fa"),
+        label_en=data.get("label_en"),
+        description_fa=data.get("description_fa"),
+        description_en=data.get("description_en"),
         paths=[
             RelationshipPathItemType(
                 distance=item["distance"],
                 path_person_ids=list(item.get("path_person_ids") or []),
                 relationship_types=list(item.get("relationship_types") or []),
+                label_fa=item.get("label_fa"),
+                label_en=item.get("label_en"),
+                description_fa=item.get("description_fa"),
+                description_en=item.get("description_en"),
             )
             for item in data.get("paths") or []
         ],

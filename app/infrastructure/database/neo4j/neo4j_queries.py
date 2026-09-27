@@ -126,6 +126,9 @@ def shortest_relationship_path_query(
             "RETURN\n"
             "  [n IN nodes(path) | n.id] AS person_ids,\n"
             "  [r IN relationships(path) | type(r)] AS relationship_types,\n"
+            "  [r IN relationships(path) | startNode(r).id]"
+            " AS relationship_start_ids,\n"
+            "  [n IN nodes(path) | n.gender] AS genders,\n"
             "  length(path) AS distance\n"
         ),
     )
@@ -150,6 +153,9 @@ def shortest_relationship_path_avoiding_query(
             "RETURN\n"
             "  [n IN nodes(path) | n.id] AS person_ids,\n"
             "  [r IN relationships(path) | type(r)] AS relationship_types,\n"
+            "  [r IN relationships(path) | startNode(r).id]"
+            " AS relationship_start_ids,\n"
+            "  [n IN nodes(path) | n.gender] AS genders,\n"
             "  length(path) AS distance\n"
         ),
     )
@@ -175,6 +181,9 @@ def k_shortest_relationship_paths_query(
             "RETURN\n"
             "  [n IN nodes(path) | n.id] AS person_ids,\n"
             "  [rel IN relationships(path) | type(rel)] AS relationship_types,\n"
+            "  [rel IN relationships(path) | startNode(rel).id]"
+            " AS relationship_start_ids,\n"
+            "  [n IN nodes(path) | n.gender] AS genders,\n"
             "  length(path) AS distance\n"
         ),
     )

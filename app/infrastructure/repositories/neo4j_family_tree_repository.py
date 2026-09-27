@@ -13,6 +13,7 @@ from app.domain.services.relationship_path_diversity import (
     path_hops_for_tree_size,
     select_diverse_paths,
 )
+from app.domain.services.relationship_path_label import labels_for_row
 from app.domain.shared.dto.family_tree_dto import (
     DeleteRelationshipDTO,
     DeleteSpouseRelationshipDTO,
@@ -159,47 +160,20 @@ class Neo4jFamilyTreeRepository(FamilyTreeRepository):
         hops = await self._resolve_max_hops(
             tree_id, max_hops=max_hops, person_count=person_count
         )
-        records = await neo4j_client.execute_read(
-            query=q.shortest_relationship_path_query(hops, male_only=male_only),
-            params=_PathParams(
-                from_id=from_person_id, to_id=to_person_id, tree_id=tree_id
-            ),
+        record = await self._fetch_shortest_record(
+            from_person_id,
+            to_person_id,
+            tree_id,
+            hops,
+            male_only=male_only,
         )
-
-        if not records:
+        if record is None:
             return RelationshipPathDTO(
                 from_person_id=from_person_id,
                 to_person_id=to_person_id,
                 found=False,
             )
-
-        row = records[0]
-        distance = row.get("distance")
-        person_ids = [UUID(str(pid)) for pid in (row.get("person_ids") or [])]
-        relationship_types = list(row.get("relationship_types") or [])
-        found = distance is not None and len(person_ids) >= 2
-
-        paths = (
-            [
-                RelationshipPathItemDTO(
-                    distance=int(distance),
-                    path_person_ids=person_ids,
-                    relationship_types=relationship_types,
-                )
-            ]
-            if found
-            else []
-        )
-
-        return RelationshipPathDTO(
-            from_person_id=from_person_id,
-            to_person_id=to_person_id,
-            found=found,
-            distance=distance if found else None,
-            path_person_ids=person_ids if found else [],
-            relationship_types=relationship_types if found else [],
-            paths=paths,
-        )
+        return _records_to_dto(from_person_id, to_person_id, [record])
 
     async def find_diverse_relationship_paths(
         self,
@@ -214,19 +188,22 @@ class Neo4jFamilyTreeRepository(FamilyTreeRepository):
         hops = await self._resolve_max_hops(
             tree_id, max_hops=max_hops, person_count=person_count
         )
-        shortest = await self.find_shortest_relationship_path(
+        shortest_record = await self._fetch_shortest_record(
             from_person_id,
             to_person_id,
-            tree_id=tree_id,
-            max_hops=hops,
+            tree_id,
+            hops,
             male_only=male_only,
         )
-        if not shortest.found or shortest.distance is None:
-            return shortest
+        if shortest_record is None:
+            return RelationshipPathDTO(
+                from_person_id=from_person_id,
+                to_person_id=to_person_id,
+                found=False,
+            )
 
-        shortest_record = _dto_to_record(shortest)
         candidates: list[PathRecord] = []
-        excluded = list(shortest.path_person_ids[1:-1])
+        excluded = list(shortest_record.person_ids[1:-1])
 
         if excluded:
             for _ in range(MAX_DIVERSE_PATHS - 1):
@@ -261,6 +238,25 @@ class Neo4jFamilyTreeRepository(FamilyTreeRepository):
 
         selected = select_diverse_paths(shortest_record, candidates, max_hops=hops)
         return _records_to_dto(from_person_id, to_person_id, selected)
+
+    async def _fetch_shortest_record(
+        self,
+        from_person_id: UUID,
+        to_person_id: UUID,
+        tree_id: UUID | None,
+        max_hops: int,
+        *,
+        male_only: bool = False,
+    ) -> PathRecord | None:
+        records = await neo4j_client.execute_read(
+            query=q.shortest_relationship_path_query(max_hops, male_only=male_only),
+            params=_PathParams(
+                from_id=from_person_id, to_id=to_person_id, tree_id=tree_id
+            ),
+        )
+        if not records:
+            return None
+        return _row_to_record(records[0])
 
     async def _resolve_max_hops(
         self,
@@ -345,14 +341,12 @@ def _row_to_record(row: dict) -> PathRecord | None:
         person_ids=tuple(person_ids),
         relationship_types=tuple(row.get("relationship_types") or []),
         distance=int(distance),
-    )
-
-
-def _dto_to_record(path: RelationshipPathDTO) -> PathRecord:
-    return PathRecord(
-        person_ids=tuple(path.path_person_ids),
-        relationship_types=tuple(path.relationship_types),
-        distance=path.distance or 0,
+        relationship_start_ids=tuple(
+            str(sid) for sid in (row.get("relationship_start_ids") or [])
+        ),
+        genders=tuple(
+            None if g is None else str(g) for g in (row.get("genders") or [])
+        ),
     )
 
 
@@ -367,6 +361,24 @@ def _unique_candidate_count(shortest: PathRecord, candidates: list[PathRecord]) 
     return unique
 
 
+def _item_from_record(path: PathRecord) -> RelationshipPathItemDTO:
+    labels = labels_for_row(
+        person_ids=path.person_ids,
+        relationship_types=path.relationship_types,
+        relationship_start_ids=path.relationship_start_ids or None,
+        genders=path.genders or None,
+    )
+    return RelationshipPathItemDTO(
+        distance=path.distance,
+        path_person_ids=list(path.person_ids),
+        relationship_types=list(path.relationship_types),
+        label_fa=labels.label_fa,
+        label_en=labels.label_en,
+        description_fa=labels.description_fa,
+        description_en=labels.description_en,
+    )
+
+
 def _records_to_dto(
     from_person_id: UUID,
     to_person_id: UUID,
@@ -378,20 +390,18 @@ def _records_to_dto(
             to_person_id=to_person_id,
             found=False,
         )
-    first = selected[0]
+    items = [_item_from_record(path) for path in selected]
+    first = items[0]
     return RelationshipPathDTO(
         from_person_id=from_person_id,
         to_person_id=to_person_id,
         found=True,
         distance=first.distance,
-        path_person_ids=list(first.person_ids),
+        path_person_ids=list(first.path_person_ids),
         relationship_types=list(first.relationship_types),
-        paths=[
-            RelationshipPathItemDTO(
-                distance=path.distance,
-                path_person_ids=list(path.person_ids),
-                relationship_types=list(path.relationship_types),
-            )
-            for path in selected
-        ],
+        label_fa=first.label_fa,
+        label_en=first.label_en,
+        description_fa=first.description_fa,
+        description_en=first.description_en,
+        paths=items,
     )

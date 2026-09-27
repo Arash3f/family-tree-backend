@@ -66,6 +66,10 @@ class RelationshipPathItemType:
     distance: int
     path_person_ids: list[UUID]
     relationship_types: list[str]
+    label_fa: str | None = None
+    label_en: str | None = None
+    description_fa: str | None = None
+    description_en: str | None = None
 
 
 @strawberry.type
@@ -76,6 +80,10 @@ class ClosestRelationshipType:
     distance: int | None = None
     path_person_ids: list[UUID]
     relationship_types: list[str]
+    label_fa: str | None = None
+    label_en: str | None = None
+    description_fa: str | None = None
+    description_en: str | None = None
     paths: list[RelationshipPathItemType]
 
 

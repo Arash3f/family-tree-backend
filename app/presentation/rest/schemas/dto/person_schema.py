@@ -221,6 +221,10 @@ class RelationshipPathItemResponse(BaseModel):
     distance: int
     path_person_ids: list[UUID] = Field(default_factory=list)
     relationship_types: list[str] = Field(default_factory=list)
+    label_fa: str | None = None
+    label_en: str | None = None
+    description_fa: str | None = None
+    description_en: str | None = None
 
 
 class ClosestRelationshipResponse(BaseModel):
@@ -230,6 +234,10 @@ class ClosestRelationshipResponse(BaseModel):
     distance: int | None = None
     path_person_ids: list[UUID] = Field(default_factory=list)
     relationship_types: list[str] = Field(default_factory=list)
+    label_fa: str | None = None
+    label_en: str | None = None
+    description_fa: str | None = None
+    description_en: str | None = None
     paths: list[RelationshipPathItemResponse] = Field(default_factory=list)
 
 

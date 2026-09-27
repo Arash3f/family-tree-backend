@@ -80,6 +80,10 @@ class RelationshipPathItemDTO(BaseModel):
     distance: int
     path_person_ids: list[UUID] = Field(default_factory=list)
     relationship_types: list[str] = Field(default_factory=list)
+    label_fa: str | None = None
+    label_en: str | None = None
+    description_fa: str | None = None
+    description_en: str | None = None
 
 
 class RelationshipPathDTO(BaseModel):
@@ -89,4 +93,8 @@ class RelationshipPathDTO(BaseModel):
     distance: int | None = None
     path_person_ids: list[UUID] = Field(default_factory=list)
     relationship_types: list[str] = Field(default_factory=list)
+    label_fa: str | None = None
+    label_en: str | None = None
+    description_fa: str | None = None
+    description_en: str | None = None
     paths: list[RelationshipPathItemDTO] = Field(default_factory=list)

@@ -21,6 +21,8 @@ class PathRecord:
     person_ids: tuple[UUID, ...]
     relationship_types: tuple[str, ...]
     distance: int
+    relationship_start_ids: tuple[str, ...] = ()
+    genders: tuple[str | None, ...] = ()
 
 
 def path_hops_for_tree_size(person_count: int) -> int:

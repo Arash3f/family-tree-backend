@@ -99,11 +99,19 @@ async def test_closest_relationship_success(
         distance=2,
         path_person_ids=[from_id, mid, to_id],
         relationship_types=["PARENT_OF", "PARENT_OF"],
+        label_fa="برادر",
+        label_en="brother",
+        description_fa="پسرِ پدر",
+        description_en="father's son",
         paths=[
             RelationshipPathItemDTO(
                 distance=2,
                 path_person_ids=[from_id, mid, to_id],
                 relationship_types=["PARENT_OF", "PARENT_OF"],
+                label_fa="برادر",
+                label_en="brother",
+                description_fa="پسرِ پدر",
+                description_en="father's son",
             )
         ],
     )
@@ -125,6 +133,9 @@ async def test_closest_relationship_success(
     assert body.relationship_types == ["PARENT_OF", "PARENT_OF"]
     assert body.paths is not None
     assert len(body.paths) == 1
+    raw = json.loads(resp.content)
+    assert raw.get("label_fa") == "برادر"
+    assert raw["paths"][0].get("label_fa") == "برادر"
     mock_neo.find_shortest_relationship_path.assert_called_once()
     mock_neo.find_diverse_relationship_paths.assert_not_called()
     call_kwargs = mock_neo.find_shortest_relationship_path.await_args.kwargs
