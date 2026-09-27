@@ -141,13 +141,13 @@ def count_descendants_by_generation(
     for person_id, generation in generation_of.items():
         if generation <= 0:
             continue
-        person = by_id.get(person_id)
-        if person is None:
+        descendant = by_id.get(person_id)
+        if descendant is None:
             continue
         bucket = by_gen.setdefault(generation, _empty_counts())
-        _add_person(bucket, person)
-        _add_person(total, person)
-        people_by_gen.setdefault(generation, []).append(person)
+        _add_person(bucket, descendant)
+        _add_person(total, descendant)
+        people_by_gen.setdefault(generation, []).append(descendant)
 
     generations = [
         GenerationStatsDTO(
