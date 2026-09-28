@@ -383,9 +383,10 @@ Paid accounts are unlimited. Exceeding a free quota returns `error_code` **1711*
 |--------|------|---------|
 | `POST` | `/family-trees/{tree_id}/media/upload` | Upload a photo → `photoObjectKey` |
 
-Set the returned `photoObjectKey` on a person. Reads return a time-limited signed
-`photoUrl` path (`GET /media/...`, lifetime `MEDIA_URL_EXPIRE_SECONDS`, default one
-hour). The bucket stays private; the browser never talks to MinIO directly.
+Set the returned `photoObjectKey` on a person. Uploads accept JPEG/PNG/WebP up to 5MB;
+the API resizes the longest edge to at most 1280px and stores WebP. Reads return a
+time-limited signed `photoUrl` path (`GET /media/...`, lifetime `MEDIA_URL_EXPIRE_SECONDS`,
+default one hour). The bucket stays private; the browser never talks to MinIO directly.
 
 ### Excel
 

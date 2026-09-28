@@ -28,17 +28,18 @@ script:post-response {
 docs {
   # Upload Media
 
-  Upload a person photo to private MinIO storage.
+  Upload a person photo to private MinIO storage. The API resizes the longest edge
+  to at most 1280px and stores WebP.
 
   ## Input (`multipart/form-data`)
   | Field | Type | Required | Notes |
   |-------|------|----------|-------|
-  | file | file | yes | `image/jpeg`, `image/png`, or `image/webp` (max 5MB) |
+  | file | file | yes | `image/jpeg`, `image/png`, or `image/webp` (max 5MB before optimize) |
 
   ## Output `200`
   ```json
   {
-    "object_key": "persons/11111111-1111-1111-1111-111111111111.jpg"
+    "object_key": "persons/11111111-1111-1111-1111-111111111111.webp"
   }
   ```
 

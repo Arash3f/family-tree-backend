@@ -1,11 +1,15 @@
+from io import BytesIO
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
+from PIL import Image
 
 from app.application.services.person_photo_service import (
     MAX_UPLOAD_BYTES,
+    PERSON_PHOTO_MAX_EDGE,
     PersonPhotoService,
+    optimize_person_photo,
     sniff_image_content_type,
 )
 from app.domain.exceptions.media_exceptions import (
@@ -15,9 +19,31 @@ from app.domain.exceptions.media_exceptions import (
     MediaTooLargeException,
 )
 
-JPEG_BYTES = b"\xff\xd8\xff\xe0" + b"\x00" * 16
-PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"\x00" * 16
-WEBP_BYTES = b"RIFF\x00\x00\x00\x00WEBP" + b"\x00" * 16
+
+def _png_bytes(*, size: tuple[int, int] = (32, 24), color=(20, 40, 60)) -> bytes:
+    image = Image.new("RGB", size, color)
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
+def _jpeg_bytes(*, size: tuple[int, int] = (32, 24)) -> bytes:
+    image = Image.new("RGB", size, (200, 100, 50))
+    buffer = BytesIO()
+    image.save(buffer, format="JPEG", quality=90)
+    return buffer.getvalue()
+
+
+def _webp_bytes(*, size: tuple[int, int] = (32, 24)) -> bytes:
+    image = Image.new("RGB", size, (10, 120, 80))
+    buffer = BytesIO()
+    image.save(buffer, format="WEBP", quality=90)
+    return buffer.getvalue()
+
+
+JPEG_BYTES = _jpeg_bytes()
+PNG_BYTES = _png_bytes()
+WEBP_BYTES = _webp_bytes()
 
 
 def _service(storage: MagicMock | None = None) -> PersonPhotoService:
@@ -70,7 +96,7 @@ async def test_ensure_object_exists_raises_when_missing():
 
 
 @pytest.mark.asyncio
-async def test_upload_person_photo():
+async def test_upload_person_photo_stores_optimized_webp():
     storage = MagicMock()
     storage.upload = AsyncMock(side_effect=lambda data, content_type, key: key)
     service = _service(storage)
@@ -78,8 +104,21 @@ async def test_upload_person_photo():
     key = await service.upload_person_photo(PNG_BYTES, "image/png")
 
     assert key.startswith("persons/")
-    assert key.endswith(".png")
+    assert key.endswith(".webp")
     storage.upload.assert_awaited_once()
+    uploaded_data, uploaded_type, _uploaded_key = storage.upload.await_args.args
+    assert uploaded_type == "image/webp"
+    assert sniff_image_content_type(uploaded_data) == "image/webp"
+    with Image.open(BytesIO(uploaded_data)) as image:
+        assert image.format == "WEBP"
+        assert max(image.size) <= PERSON_PHOTO_MAX_EDGE
+
+
+def test_optimize_person_photo_downscales_long_edge():
+    source = _png_bytes(size=(2400, 1600))
+    optimized = optimize_person_photo(source)
+    with Image.open(BytesIO(optimized)) as image:
+        assert image.size == (PERSON_PHOTO_MAX_EDGE, 853)
 
 
 @pytest.mark.parametrize(

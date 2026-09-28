@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import io
 import logging
 import re
 import time
 from uuid import uuid4
+
+from PIL import Image, ImageOps, UnidentifiedImageError
 
 from app.core.config import settings
 from app.domain.exceptions.media_exceptions import (
@@ -29,6 +32,10 @@ _GENERIC_UPLOAD_TYPES = frozenset(
     {"", "application/octet-stream", "binary/octet-stream"}
 )
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024
+# Longest edge after normalize; detail panels need more than tree avatars (~40–76px).
+PERSON_PHOTO_MAX_EDGE = 1280
+PERSON_PHOTO_WEBP_QUALITY = 80
+STORED_CONTENT_TYPE = "image/webp"
 _PERSON_KEY_RE = re.compile(
     rf"^{re.escape(PERSON_PHOTO_PREFIX)}"
     r"[0-9a-fA-F-]{36}\.(jpg|png|webp)$"
@@ -49,6 +56,54 @@ def sniff_image_content_type(data: bytes) -> str | None:
     if len(data) >= 12 and data.startswith(b"RIFF") and data[8:12] == b"WEBP":
         return "image/webp"
     return None
+
+
+def optimize_person_photo(data: bytes) -> bytes:
+    """Resize (max edge) and re-encode as WebP for storage and tree bandwidth.
+
+    Incoming bytes are already signature-validated. Pillow still has to decode
+    the payload; a truncated or hostile file fails closed as invalid media.
+    """
+    try:
+        with Image.open(io.BytesIO(data)) as image:
+            image = ImageOps.exif_transpose(image)
+            # Animated sources keep only the first frame for a still portrait.
+            if getattr(image, "is_animated", False):
+                image.seek(0)
+            image = _normalize_photo_mode(image)
+            image = _fit_max_edge(image, PERSON_PHOTO_MAX_EDGE)
+            out = io.BytesIO()
+            image.save(
+                out,
+                format="WEBP",
+                quality=PERSON_PHOTO_WEBP_QUALITY,
+                method=4,
+            )
+            return out.getvalue()
+    except (OSError, UnidentifiedImageError, ValueError) as exc:
+        raise InvalidMediaContentTypeException(
+            detail=["file content is not a supported image"]
+        ) from exc
+
+
+def _normalize_photo_mode(image: Image.Image) -> Image.Image:
+    if image.mode in {"RGB", "RGBA"}:
+        return image
+    if image.mode == "P":
+        return image.convert("RGBA" if "transparency" in image.info else "RGB")
+    if image.mode in {"LA", "PA"}:
+        return image.convert("RGBA")
+    return image.convert("RGB")
+
+
+def _fit_max_edge(image: Image.Image, max_edge: int) -> Image.Image:
+    width, height = image.size
+    longest = max(width, height)
+    if longest <= max_edge:
+        return image
+    scale = max_edge / longest
+    size = (max(1, round(width * scale)), max(1, round(height * scale)))
+    return image.resize(size, Image.Resampling.LANCZOS)
 
 
 def _normalize_declared_type(content_type: str | None) -> str:
@@ -167,6 +222,7 @@ class PersonPhotoService:
         return detected
 
     async def upload_person_photo(self, data: bytes, content_type: str | None) -> str:
-        normalized = self.validate_upload_bytes(data, content_type)
-        key = self.build_object_key(normalized)
-        return await self.storage.upload(data, normalized, key)
+        self.validate_upload_bytes(data, content_type)
+        optimized = optimize_person_photo(data)
+        key = self.build_object_key(STORED_CONTENT_TYPE)
+        return await self.storage.upload(optimized, STORED_CONTENT_TYPE, key)
