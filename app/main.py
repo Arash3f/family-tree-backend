@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -83,7 +83,9 @@ app = FastAPI(
     title="Family Tree API",
     version="1.0.0",
     docs_url=None,
-    redoc_url="/redoc",
+    # Custom /redoc below — absolute "/openapi.json" breaks when the API is
+    # reached via the frontend same-origin proxy at /backend/*.
+    redoc_url=None,
     openapi_version="3.0.3",
     openapi_url="/openapi.json",
     redirect_slashes=False,
@@ -122,6 +124,22 @@ def custom_openapi():
 app.openapi = custom_openapi  # type: ignore[method-assign]
 
 
+# Relative asset/spec URLs so docs work both on the API host and under
+# https://family…/backend/… (browser resolves against the current path).
+_DOCS_OPENAPI_URL = "openapi.json"
+_DOCS_SWAGGER_JS_URL = "swagger/swagger-ui-bundle.js"
+_DOCS_SWAGGER_CSS_URL = "swagger/swagger-ui.css"
+
+
+@app.get("/redoc", include_in_schema=False)
+async def redoc_ui():
+    """ReDoc with a path-relative OpenAPI URL (proxy-safe)."""
+    return get_redoc_html(
+        openapi_url=_DOCS_OPENAPI_URL,
+        title=f"{app.title} - ReDoc",
+    )
+
+
 @app.get("/api_docs", include_in_schema=False)
 async def custom_swagger_ui():
     """
@@ -134,10 +152,10 @@ async def custom_swagger_ui():
         HTMLResponse: Swagger UI interface for API documentation.
     """
     return get_swagger_ui_html(
-        openapi_url="/openapi.json",
+        openapi_url=_DOCS_OPENAPI_URL,
         title="API Docs",
-        swagger_js_url="/swagger/swagger-ui-bundle.js",
-        swagger_css_url="/swagger/swagger-ui.css",
+        swagger_js_url=_DOCS_SWAGGER_JS_URL,
+        swagger_css_url=_DOCS_SWAGGER_CSS_URL,
     )
 
 
