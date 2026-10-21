@@ -11,6 +11,11 @@ class UserSortField(StrEnum):
     ID = "id"
     USERNAME = "username"
     ROLE_ID = "role_id"
+    FULLNAME = "fullname"
+    EMAIL = "email"
+    IS_ACTIVE = "is_active"
+    ACCOUNT_TYPE = "account_type"
+    LAST_SESSION_AT = "last_session_at"
 
 
 class UserFilterDTO(BaseModel):

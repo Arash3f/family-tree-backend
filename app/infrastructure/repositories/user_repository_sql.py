@@ -149,7 +149,34 @@ class SQLUserRepository(UserRepository):
             UserSortField.ID: UserModel.id,
             UserSortField.USERNAME: UserModel.username,
             UserSortField.ROLE_ID: UserModel.role_id,
+            UserSortField.FULLNAME: UserModel.fullname,
+            UserSortField.EMAIL: UserModel.email,
+            UserSortField.IS_ACTIVE: UserModel.is_active,
+            UserSortField.ACCOUNT_TYPE: UserModel.account_type,
         }
+
+        # `last_session_at` is not a column on users — it is the newest session
+        # per user. Join it only when it is actually being sorted on, so the
+        # ordinary listing keeps its single-table query. The subquery groups by
+        # user, so the LEFT JOIN cannot duplicate rows (and `total` stays
+        # correct). COALESCE puts "never signed in" at the far past instead of
+        # letting NULLs jump to the top on a descending sort.
+        if query.sort.sort_by is UserSortField.LAST_SESSION_AT:
+            last_session = (
+                select(
+                    UserSessionModel.user_id.label("user_id"),
+                    func.max(UserSessionModel.created_at).label("last_session_at"),
+                )
+                .group_by(UserSessionModel.user_id)
+                .subquery()
+            )
+            stmt = stmt.outerjoin(last_session, last_session.c.user_id == UserModel.id)
+            SORTABLE_COLUMNS = {
+                **SORTABLE_COLUMNS,
+                UserSortField.LAST_SESSION_AT: func.coalesce(
+                    last_session.c.last_session_at, func.to_timestamp(0)
+                ),
+            }
 
         result = await paginate_and_sort(
             model=UserModel,
