@@ -70,6 +70,15 @@ class PhoneAlreadyExistsException(AppException):
         )
 
 
+class ImpersonationNotAllowedException(AppException):
+    def __init__(self, detail: list[str] | None = None):
+        super().__init__(
+            code=ErrorCode.IMPERSONATION_NOT_ALLOWED,
+            status_code=403,
+            detail=detail or ["this user cannot be impersonated"],
+        )
+
+
 class AccountDeactivatedException(AppException):
     def __init__(self, detail: list[str] | None = None):
         super().__init__(

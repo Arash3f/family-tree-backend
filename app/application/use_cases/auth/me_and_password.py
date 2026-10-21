@@ -20,7 +20,13 @@ class GetMeUseCase:
     def __init__(self, uow: UnitOfWork):
         self.uow = uow
 
-    async def execute(self, user_id: UUID, session_id: UUID) -> MeResponseDTO:
+    async def execute(
+        self,
+        user_id: UUID,
+        session_id: UUID | None,
+        *,
+        is_impersonating: bool = False,
+    ) -> MeResponseDTO:
         async with self.uow:
             details = await self.uow.users.get_with_details(user_id)
             if details is None:
@@ -37,6 +43,7 @@ class GetMeUseCase:
                     permissions=[],
                     permission_details=[],
                     session_id=session_id,
+                    is_impersonating=is_impersonating,
                     account_type=user.account_type.value,
                     preferred_locale=(
                         user.preferred_locale.value if user.preferred_locale else None
@@ -76,6 +83,7 @@ class GetMeUseCase:
                 permissions=permissions,
                 permission_details=permission_details,
                 session_id=session_id,
+                is_impersonating=is_impersonating,
                 account_type=details.account_type.value,
                 preferred_locale=(
                     details.preferred_locale.value if details.preferred_locale else None

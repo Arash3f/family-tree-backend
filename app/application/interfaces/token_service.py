@@ -12,6 +12,12 @@ class TokenService(ABC):
         pass
 
     @abstractmethod
+    def create_impersonation_token(
+        self, target_user_id: UUID, actor_admin_id: UUID
+    ) -> str:
+        pass
+
+    @abstractmethod
     def decode_token(self, token: str) -> dict:
         pass
 

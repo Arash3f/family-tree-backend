@@ -13,6 +13,9 @@ from app.application.use_cases.user.get_user_list_by_filter_use_case import (
     GetUserListByFilterUseCase,
 )
 from app.application.use_cases.user.get_user_use_case import GetUserUseCase
+from app.application.use_cases.user.impersonate_user_use_case import (
+    ImpersonateUserUseCase,
+)
 from app.application.use_cases.user.update_user_use_case import UpdateUserUseCase
 from app.domain.entities.user import User
 from app.domain.services.password_hasher import PasswordHasher
@@ -20,10 +23,14 @@ from app.domain.shared.permissions import Permissions
 from app.presentation.dependencies import (
     get_password_hasher,
     get_request_uow,
+    get_token_service,
 )
 from app.presentation.rest.dependencies.auth_dependencies import get_current_session_id
 from app.presentation.rest.dependencies.permission_guard import RequirePermission
-from app.presentation.rest.schemas.dto.auth_schema import SessionResponse
+from app.presentation.rest.schemas.dto.auth_schema import (
+    ImpersonateResponse,
+    SessionResponse,
+)
 from app.presentation.rest.schemas.dto.common import PaginatedResponse, ResultResponse
 from app.presentation.rest.schemas.dto.user_schema import (
     FilterUserRequest,
@@ -120,6 +127,26 @@ async def get_user_list_by_filter(
     res = await usecase.execute(UserApiMapper.to_get_list_user_dto(data))
 
     return UserApiMapper.from_get_list_user_dto(res)
+
+
+@router.post(
+    "/{user_id}/impersonate",
+    response_model=ImpersonateResponse,
+)
+async def impersonate_user(
+    user_id: UUID,
+    current_user: User = Depends(RequirePermission(Permissions.USER_IMPERSONATE)),
+    uow=Depends(get_request_uow),
+    token_service=Depends(get_token_service),
+) -> ImpersonateResponse:
+    usecase = ImpersonateUserUseCase(uow, token_service)
+
+    token = await usecase.execute(
+        actor_admin_id=current_user.safe_id,
+        target_user_id=user_id,
+    )
+
+    return ImpersonateResponse(access_token=token)
 
 
 @router.get(

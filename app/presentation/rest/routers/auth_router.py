@@ -28,6 +28,8 @@ from app.presentation.dependencies import (
 from app.presentation.rest.dependencies.auth_dependencies import (
     get_current_session_id,
     get_current_user,
+    get_is_impersonating,
+    get_optional_current_session_id,
 )
 from app.presentation.rest.dependencies.rate_limit import rate_limit_auth
 from app.presentation.rest.schemas.dto.auth_schema import (
@@ -152,11 +154,14 @@ async def logout_all(
 @router.get("/me", response_model=MeResponse)
 async def me(
     current_user: User = Depends(get_current_user),
-    session_id: UUID = Depends(get_current_session_id),
+    session_id: UUID | None = Depends(get_optional_current_session_id),
+    is_impersonating: bool = Depends(get_is_impersonating),
     uow=Depends(get_request_uow),
 ) -> MeResponse:
     usecase = GetMeUseCase(uow)
-    data = await usecase.execute(current_user.safe_id, session_id)
+    data = await usecase.execute(
+        current_user.safe_id, session_id, is_impersonating=is_impersonating
+    )
     return MeResponse.model_validate(data.model_dump())
 
 

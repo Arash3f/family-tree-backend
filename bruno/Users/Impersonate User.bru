@@ -1,0 +1,49 @@
+meta {
+  name: Impersonate User
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{base_url}}/users/{{user_id}}/impersonate
+  body: none
+  auth: inherit
+}
+
+params:path {
+  user_id: {{user_id}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.access_token: isDefined
+}
+
+docs {
+  # Impersonate User
+
+  Signs the caller in as another user without that user's password, for
+  support and debugging. Requires permission `user_impersonate`.
+
+  The returned access token opens **no login session**: it is not stored
+  server-side, cannot be revoked before it expires, and carries no refresh
+  token. It simply dies after `IMPERSONATION_TOKEN_EXPIRE_MINUTES` (30 by
+  default), which is why that window is kept short. Use it as a normal
+  `Authorization: Bearer` token; `/auth/me` then answers as the target user
+  with `is_impersonating: true`, while `/auth/logout` and the session routes
+  refuse it because there is no session behind it.
+
+  Refused with `403` when the target is the caller themselves, or when the
+  target also holds `user_impersonate` — impersonating another privileged
+  account would be an escalation path.
+
+  ## Input (path)
+  | Param | Type | Required |
+  |-------|------|----------|
+  | user_id | uuid | yes |
+
+  ## Output `200`
+  ```json
+  { "access_token": "eyJhbGciOi...", "token_type": "bearer" }
+  ```
+}

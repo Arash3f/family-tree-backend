@@ -25,6 +25,7 @@ async def get_current_user(
     uow: UnitOfWork = Depends(get_request_uow),
     token_service: TokenService = Depends(get_token_service),
 ):
+    session_id: UUID | None = None
     try:
         payload = token_service.decode_token(token)
 
@@ -33,25 +34,35 @@ async def get_current_user(
 
         user_id_raw = payload.get("sub")
         session_id_raw = payload.get("sid")
+        # An admin impersonation token deliberately has no session behind it
+        # (see TokenService.create_impersonation_token). Only an explicit
+        # boolean true counts, so a stray string claim cannot skip the check.
+        is_impersonation = payload.get("imp") is True
 
-        if user_id_raw is None or session_id_raw is None:
+        if user_id_raw is None:
+            raise InvalidCredentialsException()
+        if not is_impersonation and session_id_raw is None:
             raise InvalidCredentialsException()
 
         user_id = UUID(str(user_id_raw))
-        session_id = UUID(str(session_id_raw))
+        if not is_impersonation:
+            session_id = UUID(str(session_id_raw))
 
     except InvalidCredentialsException:
         raise
     except (JWTError, ValueError, KeyError, TypeError) as exc:
         raise InvalidCredentialsException() from exc
 
-    session = await uow.sessions.get(session_id)
-    if (
-        session is None
-        or session.user_id != user_id
-        or not session.is_active(datetime.now(UTC))
-    ):
-        raise InvalidCredentialsException()
+    # Every ordinary access token is only as good as its login session; an
+    # impersonation token has none and expires on its own instead.
+    if session_id is not None:
+        session = await uow.sessions.get(session_id)
+        if (
+            session is None
+            or session.user_id != user_id
+            or not session.is_active(datetime.now(UTC))
+        ):
+            raise InvalidCredentialsException()
 
     user = await uow.users.get(user_id)
 
@@ -61,8 +72,10 @@ async def get_current_user(
     if not user.is_active:
         raise AccountDeactivatedException()
 
-    # Attach session id for logout handlers
+    # Attach session id for logout handlers. None while impersonating, so the
+    # session-bound routes (logout, session list) correctly refuse that token.
     user._active_session_id = session_id  # type: ignore[attr-defined]
+    user._is_impersonated = is_impersonation  # type: ignore[attr-defined]
     return user
 
 
@@ -97,3 +110,20 @@ def get_current_session_id(current_user=Depends(get_current_user)) -> UUID:
     if session_id is None:
         raise InvalidCredentialsException()
     return session_id
+
+
+def get_optional_current_session_id(
+    current_user=Depends(get_current_user),
+) -> UUID | None:
+    """The caller's session, or None when they are being impersonated.
+
+    `/auth/me` has to answer for an impersonated caller too — it is how the
+    client learns who it is now acting as — so it cannot demand a session the
+    way logout and the session list do.
+    """
+    return getattr(current_user, "_active_session_id", None)
+
+
+def get_is_impersonating(current_user=Depends(get_current_user)) -> bool:
+    """Whether this request is authenticated by an admin impersonation token."""
+    return getattr(current_user, "_is_impersonated", False) is True

@@ -56,6 +56,7 @@ class ErrorCode(int, Enum):
     EMAIL_ALREADY_EXISTS = 1406
     ACCOUNT_DEACTIVATED = 1407
     PHONE_ALREADY_EXISTS = 1408
+    IMPERSONATION_NOT_ALLOWED = 1409
     # -----------------------
     # |     Role Person     |
     # -----------------------
@@ -153,6 +154,7 @@ ERROR_MESSAGES = {
         ErrorCode.ACCOUNT_DEACTIVATED: (
             "Your account has been deactivated. Please contact support."
         ),
+        ErrorCode.IMPERSONATION_NOT_ALLOWED: "This user cannot be impersonated",
         # Domain Role
         ErrorCode.ROLE_NOT_FOUND: "Role not found",
         ErrorCode.ROLE_NAME_DUPLICATED: "Role name duplicated",
@@ -249,6 +251,7 @@ ERROR_MESSAGES = {
         ErrorCode.ACCOUNT_DEACTIVATED: (
             "حساب کاربری شما غیرفعال شده است. لطفاً با پشتیبانی تماس بگیرید."
         ),
+        ErrorCode.IMPERSONATION_NOT_ALLOWED: ("ورود به این حساب کاربری مجاز نیست."),
         # Domain Role
         ErrorCode.ROLE_NOT_FOUND: "نقش مورد نظر پیدا نشد.",
         ErrorCode.ROLE_NAME_DUPLICATED: "نقشی با این نام از قبل وجود دارد.",

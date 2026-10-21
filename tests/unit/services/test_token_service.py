@@ -46,6 +46,41 @@ def test_create_refresh_token(token_service):
     assert "exp" in payload
 
 
+def test_create_impersonation_token(token_service):
+    target_id = UUID(int=11)
+    admin_id = UUID(int=12)
+
+    token = token_service.create_impersonation_token(
+        target_user_id=target_id, actor_admin_id=admin_id
+    )
+
+    payload = jwt.decode(
+        token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM]
+    )
+
+    assert payload["sub"] == str(target_id)
+    assert payload["act"] == str(admin_id)
+    assert payload["imp"] is True
+    assert payload["type"] == "access"
+    # No session is opened for impersonation, so the token must name none.
+    assert "sid" not in payload
+    assert "jti" not in payload
+
+
+def test_impersonation_token_expiry_follows_its_own_setting(token_service):
+    token = token_service.create_impersonation_token(
+        target_user_id=UUID(int=1), actor_admin_id=UUID(int=2)
+    )
+
+    payload = jwt.decode(
+        token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM]
+    )
+
+    lifetime_minutes = (payload["exp"] - payload["iat"]) / 60
+    # The 5s early issuance absorbs clock skew, hence the tolerance.
+    assert abs(lifetime_minutes - settings.IMPERSONATION_TOKEN_EXPIRE_MINUTES) < 0.2
+
+
 def test_decode_token(token_service):
     token = token_service.create_access_token(
         user_id=UUID(int=5), session_id=UUID(int=2)

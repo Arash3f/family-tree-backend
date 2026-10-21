@@ -28,6 +28,10 @@ class AppSettings(PydanticBaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 5
     REFRESH_TOKEN_EXPIRE_MINUTES: int = 60
 
+    # Admin "login as user" (impersonation). These tokens carry no session row
+    # and cannot be revoked before they expire, so keep the lifetime short.
+    IMPERSONATION_TOKEN_EXPIRE_MINUTES: int = 30
+
     # Database:
     POSTGRES_HOST: str = "127.0.0.1"
     POSTGRES_USER: str = "postgres"

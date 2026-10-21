@@ -29,7 +29,9 @@ class MeResponseDTO(BaseModel):
     role_name: str | None
     permissions: list[str]
     permission_details: list[MePermissionDTO] = Field(default_factory=list)
-    session_id: UUID
+    # None while an admin is impersonating: that token opens no login session.
+    session_id: UUID | None
+    is_impersonating: bool = False
     account_type: str
     preferred_locale: str | None = None
     preferred_theme: str | None = None

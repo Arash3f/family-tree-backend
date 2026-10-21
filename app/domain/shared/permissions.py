@@ -6,6 +6,7 @@ class Permissions:
     USER_DELETE = "user_delete"
     USER_READ = "user_read"
     USER_UPDATE = "user_update"
+    USER_IMPERSONATE = "user_impersonate"
 
     ROLE_CREATE = "role_create"
     ROLE_DELETE = "role_delete"
@@ -28,6 +29,7 @@ class Permissions:
         USER_CREATE: (USER_READ, ROLE_READ),
         USER_UPDATE: (USER_READ, ROLE_READ),
         USER_DELETE: (USER_READ,),
+        USER_IMPERSONATE: (USER_READ,),
         ROLE_CREATE: (ROLE_READ, PERMISSION_READ),
         ROLE_UPDATE: (ROLE_READ, PERMISSION_READ),
         ROLE_DELETE: (ROLE_READ,),
@@ -55,6 +57,10 @@ class Permissions:
         USER_UPDATE: (
             "Edit user accounts, including assigned roles.",
             "ویرایش حساب‌های کاربری، از جمله نقش آن‌ها.",
+        ),
+        USER_IMPERSONATE: (
+            "Sign in as another user without their password (support/debug).",
+            "ورود به حساب کاربر دیگر بدون رمز عبور او (برای پشتیبانی و عیب‌یابی).",
         ),
         ROLE_CREATE: (
             "Create new roles and choose which permissions they include.",

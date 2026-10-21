@@ -46,6 +46,13 @@ class LoginResponse(BaseModel):
     token_type: str = "bearer"
 
 
+class ImpersonateResponse(BaseModel):
+    """No refresh token on purpose: impersonation ends when this one expires."""
+
+    access_token: str
+    token_type: str = "bearer"
+
+
 class MePermissionItem(BaseModel):
     name: str
     description_en: str = ""
@@ -62,7 +69,8 @@ class MeResponse(BaseModel):
     role_name: str | None = None
     permissions: list[str] = []
     permission_details: list[MePermissionItem] = Field(default_factory=list)
-    session_id: UUID
+    session_id: UUID | None = None
+    is_impersonating: bool = False
     account_type: str = "free"
     preferred_locale: Literal["en", "fa"] | None = None
     preferred_theme: Literal["light", "dark", "system"] | None = None
