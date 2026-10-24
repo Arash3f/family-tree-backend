@@ -12,6 +12,9 @@ x-app-build: &app-build
   context: ..
   dockerfile: docker/Dockerfile
   target: ${APP_IMAGE_TARGET:-runtime}
+  # Unset → the Dockerfile's ECR default; CI points it at Docker Hub.
+  args:
+    - PYTHON_IMAGE
 
 x-app-env: &app-env
   env_file:
@@ -94,7 +97,7 @@ services:
   # hosts where mirror.gcr.io / quay.io often return 403/401. CI overrides to
   # mirror.gcr.io (see .github/workflows/ci.yml). MinIO's own public tags are gone.
   db:
-    image: public.ecr.aws/docker/library/postgres:15.13
+    image: ${POSTGRES_IMAGE:-public.ecr.aws/docker/library/postgres:15.13}
     restart: unless-stopped
     env_file:
       - ../.env
@@ -110,7 +113,7 @@ services:
       start_period: 10s
 
   redis:
-    image: public.ecr.aws/docker/library/redis:8.2.1
+    image: ${REDIS_IMAGE:-public.ecr.aws/docker/library/redis:8.2.1}
     restart: unless-stopped
     networks:
       - family-tree

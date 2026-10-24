@@ -1,8 +1,11 @@
 # No `# syntax=docker/dockerfile:1` — that pulls docker.io/docker/dockerfile and
 # fails with 403 on networks that block/rate-limit Docker Hub (common on VPS).
 # Base image is the Docker Hub library mirror on AWS Public ECR for the same reason.
+# PYTHON_IMAGE overrides it: ECR rate-limits anonymous pulls from shared IPs
+# (GitHub runners get 429 "Data limit exceeded"), so CI pulls from Docker Hub.
+ARG PYTHON_IMAGE=public.ecr.aws/docker/library/python:3.11.15-slim
 
-FROM public.ecr.aws/docker/library/python:3.11.15-slim AS base
+FROM ${PYTHON_IMAGE} AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

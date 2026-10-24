@@ -80,6 +80,11 @@ jobs:
       # Compose defaults to Arvan mirrors (Iran VPS). GHA can pull the same tags.
       NEO4J_IMAGE: docker.arvancloud.ir/neo4j:5.26.4
       MINIO_IMAGE: docker.arvancloud.ir/minio/minio:RELEASE.2025-04-22T22-12-26Z
+      # The other defaults are AWS Public ECR, which answers shared runner IPs
+      # with 429 "Data limit exceeded". Same images, straight from Docker Hub.
+      PYTHON_IMAGE: python:3.11.15-slim
+      POSTGRES_IMAGE: postgres:15.13
+      REDIS_IMAGE: redis:8.2.1
     steps:
       - uses: actions/checkout@v4
 
@@ -92,7 +97,7 @@ jobs:
       # The ci image is built on top of runtime, so this reuses cached layers.
       - name: Production image is importable and free of test tooling
         run: |
-          docker build -f docker/Dockerfile --target runtime -t family-tree-api:runtime-check .
+          docker build -f docker/Dockerfile --target runtime --build-arg PYTHON_IMAGE="$PYTHON_IMAGE" -t family-tree-api:runtime-check .
           docker run --rm --env-file .env --entrypoint python family-tree-api:runtime-check -c 'import app.main'
           if docker run --rm --entrypoint sh family-tree-api:runtime-check -c 'command -v pytest'; then
             echo "::error::the runtime image ships pytest; it must stay production-only"
