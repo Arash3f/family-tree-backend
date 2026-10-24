@@ -65,11 +65,13 @@ def optimize_person_photo(data: bytes) -> bytes:
     the payload; a truncated or hostile file fails closed as invalid media.
     """
     try:
-        with Image.open(io.BytesIO(data)) as image:
-            image = ImageOps.exif_transpose(image)
+        # `source` stays the decoder's own ImageFile; every step below hands
+        # back a plain Image, so they are kept in a separate name.
+        with Image.open(io.BytesIO(data)) as source:
             # Animated sources keep only the first frame for a still portrait.
-            if getattr(image, "is_animated", False):
-                image.seek(0)
+            if getattr(source, "is_animated", False):
+                source.seek(0)
+            image: Image.Image = ImageOps.exif_transpose(source) or source
             image = _normalize_photo_mode(image)
             image = _fit_max_edge(image, PERSON_PHOTO_MAX_EDGE)
             out = io.BytesIO()
