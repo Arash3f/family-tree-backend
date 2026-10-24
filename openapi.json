@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Family Tree API",
-    "version": "1.0.0"
+    "version": "2.3.0"
   },
   "paths": {
     "/health/neo4j": {
@@ -25,7 +25,7 @@
     "/health": {
       "get": {
         "summary": "Health",
-        "description": "Liveness/readiness probe for Compose HEALTHCHECK and load balancers.\n\nReturns HTTP 200 only when Postgres and Neo4j both respond.\nReturns HTTP 503 with ``status: degraded`` when any dependency fails so\n``curl -fsS`` / orchestrators treat the instance as unhealthy.",
+        "description": "Liveness/readiness probe for Compose HEALTHCHECK and load balancers.\n\nReturns HTTP 200 only when Postgres and Neo4j both respond.\nReturns HTTP 503 with ``status: degraded`` when any dependency fails so\n``curl -fsS`` / orchestrators treat the instance as unhealthy.\n\nCarries ``version`` either way: the frontend reads it to show which API\nbuild it is talking to, so a screenshot or screen recording names the\ndeployed version instead of a hardcoded guess.",
         "operationId": "health_health_get",
         "responses": {
           "200": {
@@ -912,6 +912,64 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ClosestRelationshipResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/family-trees/{tree_id}/persons/{person_id}/card": {
+      "get": {
+        "tags": [
+          "Persons"
+        ],
+        "summary": "Get Person Card",
+        "operationId": "get_person_card_family_trees__tree_id__persons__person_id__card_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tree_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Tree Id"
+            }
+          },
+          {
+            "name": "person_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Person Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonCardResponse"
                 }
               }
             }
@@ -1887,6 +1945,54 @@
             "OAuth2PasswordBearer": []
           }
         ]
+      }
+    },
+    "/users/{user_id}/impersonate": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Impersonate User",
+        "operationId": "impersonate_user_users__user_id__impersonate_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImpersonateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/users/{user_id}/sessions": {
@@ -3175,6 +3281,50 @@
             "type": "array",
             "title": "Relationship Types"
           },
+          "label_fa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label Fa"
+          },
+          "label_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label En"
+          },
+          "description_fa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description Fa"
+          },
+          "description_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description En"
+          },
           "paths": {
             "items": {
               "$ref": "#/components/schemas/RelationshipPathItemResponse"
@@ -3190,6 +3340,22 @@
           "found"
         ],
         "title": "ClosestRelationshipResponse"
+      },
+      "DescendantStats": {
+        "properties": {
+          "generations": {
+            "items": {
+              "$ref": "#/components/schemas/GenerationStats"
+            },
+            "type": "array",
+            "title": "Generations"
+          },
+          "total": {
+            "$ref": "#/components/schemas/GenderCounts"
+          }
+        },
+        "type": "object",
+        "title": "DescendantStats"
       },
       "DivorceRequest": {
         "properties": {
@@ -3413,6 +3579,62 @@
         ],
         "title": "Gender"
       },
+      "GenderCounts": {
+        "properties": {
+          "male": {
+            "type": "integer",
+            "title": "Male",
+            "default": 0
+          },
+          "female": {
+            "type": "integer",
+            "title": "Female",
+            "default": 0
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "GenderCounts"
+      },
+      "GenerationStats": {
+        "properties": {
+          "generation": {
+            "type": "integer",
+            "title": "Generation"
+          },
+          "male": {
+            "type": "integer",
+            "title": "Male",
+            "default": 0
+          },
+          "female": {
+            "type": "integer",
+            "title": "Female",
+            "default": 0
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "default": 0
+          },
+          "people": {
+            "items": {
+              "$ref": "#/components/schemas/PersonCardSummary"
+            },
+            "type": "array",
+            "title": "People"
+          }
+        },
+        "type": "object",
+        "required": [
+          "generation"
+        ],
+        "title": "GenerationStats"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -3439,6 +3661,25 @@
           "id"
         ],
         "title": "IdRequest"
+      },
+      "ImpersonateResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token"
+        ],
+        "title": "ImpersonateResponse",
+        "description": "No refresh token on purpose: impersonation ends when this one expires."
       },
       "LoginResponse": {
         "properties": {
@@ -3890,9 +4131,21 @@
             "title": "Permission Details"
           },
           "session_id": {
-            "type": "string",
-            "format": "uuid",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Session Id"
+          },
+          "is_impersonating": {
+            "type": "boolean",
+            "title": "Is Impersonating",
+            "default": false
           },
           "account_type": {
             "type": "string",
@@ -3934,8 +4187,7 @@
         "type": "object",
         "required": [
           "id",
-          "username",
-          "session_id"
+          "username"
         ],
         "title": "MeResponse"
       },
@@ -4256,6 +4508,192 @@
           "name"
         ],
         "title": "PermissionSortField"
+      },
+      "PersonCardMarriage": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "spouse_a_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Spouse A Id"
+          },
+          "spouse_b_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Spouse B Id"
+          },
+          "married_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Married At"
+          },
+          "divorced_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Divorced At"
+          },
+          "spouse": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PersonCardSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "spouse_a_id",
+          "spouse_b_id"
+        ],
+        "title": "PersonCardMarriage"
+      },
+      "PersonCardParent": {
+        "properties": {
+          "parent_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Parent Id"
+          },
+          "relationship_type": {
+            "$ref": "#/components/schemas/ParentRelationshipType"
+          },
+          "person": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PersonCardSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "parent_id",
+          "relationship_type"
+        ],
+        "title": "PersonCardParent"
+      },
+      "PersonCardResponse": {
+        "properties": {
+          "person": {
+            "$ref": "#/components/schemas/PersonGetResponse"
+          },
+          "parents": {
+            "items": {
+              "$ref": "#/components/schemas/PersonCardParent"
+            },
+            "type": "array",
+            "title": "Parents"
+          },
+          "marriages": {
+            "items": {
+              "$ref": "#/components/schemas/PersonCardMarriage"
+            },
+            "type": "array",
+            "title": "Marriages"
+          },
+          "descendants": {
+            "$ref": "#/components/schemas/DescendantStats"
+          }
+        },
+        "type": "object",
+        "required": [
+          "person"
+        ],
+        "title": "PersonCardResponse"
+      },
+      "PersonCardSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "gender": {
+            "$ref": "#/components/schemas/Gender"
+          },
+          "family_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Family Name"
+          },
+          "birth_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Birth Date"
+          },
+          "death_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Death Date"
+          },
+          "photo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "gender"
+        ],
+        "title": "PersonCardSummary"
       },
       "PersonCreateRequest": {
         "properties": {
@@ -5188,6 +5626,50 @@
             },
             "type": "array",
             "title": "Relationship Types"
+          },
+          "label_fa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label Fa"
+          },
+          "label_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label En"
+          },
+          "description_fa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description Fa"
+          },
+          "description_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description En"
           }
         },
         "type": "object",
@@ -7105,7 +7587,12 @@
         "enum": [
           "id",
           "username",
-          "role_id"
+          "role_id",
+          "fullname",
+          "email",
+          "is_active",
+          "account_type",
+          "last_session_at"
         ],
         "title": "UserSortField"
       },

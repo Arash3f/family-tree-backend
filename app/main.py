@@ -10,6 +10,7 @@ from sqlalchemy import text
 from swagger_ui_bundle import swagger_ui_path
 
 from app.core.config import settings
+from app.core.version import APP_VERSION
 from app.infrastructure.database.neo4j.neo4j import neo4j_client
 from app.infrastructure.database.seed import (
     seed_initial_permissions,
@@ -81,7 +82,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     lifespan=lifespan,
     title="Family Tree API",
-    version="1.0.0",
+    version=APP_VERSION,
     docs_url=None,
     # Custom /redoc below — absolute "/openapi.json" breaks when the API is
     # reached via the frontend same-origin proxy at /backend/*.
@@ -189,6 +190,10 @@ async def health():
     Returns HTTP 200 only when Postgres and Neo4j both respond.
     Returns HTTP 503 with ``status: degraded`` when any dependency fails so
     ``curl -fsS`` / orchestrators treat the instance as unhealthy.
+
+    Carries ``version`` either way: the frontend reads it to show which API
+    build it is talking to, so a screenshot or screen recording names the
+    deployed version instead of a hardcoded guess.
     """
     status: dict[str, str] = {}
     healthy = True
@@ -211,6 +216,7 @@ async def health():
         status["neo4j"] = "error"
         healthy = False
 
+    status["version"] = APP_VERSION
     status["status"] = "ok" if healthy else "degraded"
     return JSONResponse(
         content=status,

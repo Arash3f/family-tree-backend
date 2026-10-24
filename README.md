@@ -19,7 +19,7 @@ through the frontend’s same-origin `/backend` proxy.
 | | |
 |---|---|
 | Live site | **https://family.arash-alfooneh.ir** |
-| Version | `1.0.0` |
+| Version | `2.3.0` (`GET /health` reports it) |
 | Python | `3.11+` |
 | Tests | 695 passing, 89% coverage |
 | License | [MIT](LICENSE) |

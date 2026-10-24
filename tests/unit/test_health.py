@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from app.core.version import APP_VERSION
 from app.main import health
 
 
@@ -31,6 +32,7 @@ async def test_health_ok_returns_200():
     assert data["status"] == "ok"
     assert data["postgres"] == "ok"
     assert data["neo4j"] == "ok"
+    assert data["version"] == APP_VERSION
 
 
 @pytest.mark.asyncio
@@ -63,3 +65,16 @@ async def test_health_degraded_returns_503_when_neo4j_fails():
     assert data["status"] == "degraded"
     assert data["postgres"] == "ok"
     assert data["neo4j"] == "error"
+
+
+@pytest.mark.asyncio
+async def test_health_reports_the_version_even_when_degraded():
+    with (
+        patch("app.main.get_uow", return_value=_uow_mock(fail_execute=True)),
+        patch("app.main.neo4j_client") as neo4j,
+    ):
+        neo4j.execute_read = AsyncMock(return_value=[{"ok": 1}])
+        response = await health()
+
+    data = json.loads(response.body)
+    assert data["version"] == APP_VERSION
