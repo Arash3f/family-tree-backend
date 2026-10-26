@@ -27,9 +27,41 @@ through the frontend’s same-origin `/backend` proxy.
 
 ---
 
+## Hosted or self-hosted
+
+Two ways to use Family Tree, both running this same code:
+
+| | **Hosted** | **Self-hosted** |
+|---|---|---|
+| Where | [family.arash-alfooneh.ir](https://family.arash-alfooneh.ir) | Your own server |
+| Cost | Free plan, paid plan for larger trees | Free, MIT licensed |
+| Setup | Sign up and start | `docker compose` (see [Quick start](#quick-start)) |
+| Servers, backups, upgrades | Taken care of | Yours to run |
+
+Self-hosted, you are the administrator: an account you mark `paid` has no limits. The
+free-account quotas exist only to keep the shared hosted service sustainable.
+
+---
+
+## Screenshots
+
+What this API powers, through [family-tree-front](https://github.com/Arash3f/family-tree-front)
+(invented family; the relation and its path come from `GET .../persons/{id}/relation/{other}`).
+The images are copies of the frontend's `public/showcase/` shots, which
+`scripts/shoot-showcase.mjs` there regenerates:
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/relation-en-dark.webp">
+  <img alt="Finding how two people are related, with the path highlighted" src="docs/screenshots/relation-en-light.webp">
+</picture>
+
+---
+
 ## Contents
 
 - [Live production](#live-production)
+- [Hosted or self-hosted](#hosted-or-self-hosted)
+- [Screenshots](#screenshots)
 - [What it does](#what-it-does)
 - [Architecture](#architecture)
 - [Quick start](#quick-start)
