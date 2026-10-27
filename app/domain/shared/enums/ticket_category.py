@@ -7,4 +7,5 @@ class TicketCategory(StrEnum):
     TECHNICAL = "technical"
     BUG = "bug"
     FEATURE_REQUEST = "feature_request"
+    UPGRADE_REQUEST = "upgrade_request"
     OTHER = "other"
