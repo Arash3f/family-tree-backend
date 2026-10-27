@@ -56,7 +56,7 @@ class PaginatedResponseTicketSummaryModel:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.ticket_summary_model import TicketSummaryModel
+        from ..models.ticket_summary_model import TicketSummaryModel  # noqa: PLC0415
 
         d = dict(src_dict)
         items = []

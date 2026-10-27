@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class MarriageSortField(str, Enum):
+class MarriageSortField(StrEnum):
     DIVORCED_AT = "divorced_at"
     ID = "id"
     MARRIED_AT = "married_at"

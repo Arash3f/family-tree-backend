@@ -32,7 +32,7 @@ class FilterRoleRequest:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.role_filter_request_data import RoleFilterRequestData
+        from ..models.role_filter_request_data import RoleFilterRequestData  # noqa: PLC0415
 
         pagination: dict[str, Any] | Unset = UNSET
         if not isinstance(self.pagination, Unset):
@@ -64,9 +64,9 @@ class FilterRoleRequest:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.pagination_request_params import PaginationRequestParams
-        from ..models.role_filter_request_data import RoleFilterRequestData
-        from ..models.sort_request_params_role_sort_field import SortRequestParamsRoleSortField
+        from ..models.pagination_request_params import PaginationRequestParams  # noqa: PLC0415
+        from ..models.role_filter_request_data import RoleFilterRequestData  # noqa: PLC0415
+        from ..models.sort_request_params_role_sort_field import SortRequestParamsRoleSortField  # noqa: PLC0415
 
         d = dict(src_dict)
         _pagination = d.pop("pagination", UNSET)

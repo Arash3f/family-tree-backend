@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class ParentRelationshipType(str, Enum):
+class ParentRelationshipType(StrEnum):
     ADOPTIVE = "adoptive"
     BIOLOGICAL = "biological"
     STEP = "step"

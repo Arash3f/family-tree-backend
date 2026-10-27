@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 from uuid import UUID
@@ -24,7 +25,6 @@ class MeResponse:
     Attributes:
         id (UUID):
         username (str):
-        session_id (UUID):
         fullname (str | Unset):  Default: ''.
         email (None | str | Unset):
         phone (None | str | Unset):
@@ -32,14 +32,16 @@ class MeResponse:
         role_name (None | str | Unset):
         permissions (list[str] | Unset):
         permission_details (list[MePermissionItem] | Unset):
+        session_id (None | Unset | UUID):
+        is_impersonating (bool | Unset):  Default: False.
         account_type (str | Unset):  Default: 'free'.
+        paid_until (datetime.date | None | Unset):
         preferred_locale (MeResponsePreferredLocaleType0 | None | Unset):
         preferred_theme (MeResponsePreferredThemeType0 | None | Unset):
     """
 
     id: UUID
     username: str
-    session_id: UUID
     fullname: str | Unset = ""
     email: None | str | Unset = UNSET
     phone: None | str | Unset = UNSET
@@ -47,7 +49,10 @@ class MeResponse:
     role_name: None | str | Unset = UNSET
     permissions: list[str] | Unset = UNSET
     permission_details: list[MePermissionItem] | Unset = UNSET
+    session_id: None | Unset | UUID = UNSET
+    is_impersonating: bool | Unset = False
     account_type: str | Unset = "free"
+    paid_until: datetime.date | None | Unset = UNSET
     preferred_locale: MeResponsePreferredLocaleType0 | None | Unset = UNSET
     preferred_theme: MeResponsePreferredThemeType0 | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -56,8 +61,6 @@ class MeResponse:
         id = str(self.id)
 
         username = self.username
-
-        session_id = str(self.session_id)
 
         fullname = self.fullname
 
@@ -98,7 +101,25 @@ class MeResponse:
                 permission_details_item = permission_details_item_data.to_dict()
                 permission_details.append(permission_details_item)
 
+        session_id: None | str | Unset
+        if isinstance(self.session_id, Unset):
+            session_id = UNSET
+        elif isinstance(self.session_id, UUID):
+            session_id = str(self.session_id)
+        else:
+            session_id = self.session_id
+
+        is_impersonating = self.is_impersonating
+
         account_type = self.account_type
+
+        paid_until: None | str | Unset
+        if isinstance(self.paid_until, Unset):
+            paid_until = UNSET
+        elif isinstance(self.paid_until, datetime.date):
+            paid_until = self.paid_until.isoformat()
+        else:
+            paid_until = self.paid_until
 
         preferred_locale: None | str | Unset
         if isinstance(self.preferred_locale, Unset):
@@ -122,7 +143,6 @@ class MeResponse:
             {
                 "id": id,
                 "username": username,
-                "session_id": session_id,
             }
         )
         if fullname is not UNSET:
@@ -139,8 +159,14 @@ class MeResponse:
             field_dict["permissions"] = permissions
         if permission_details is not UNSET:
             field_dict["permission_details"] = permission_details
+        if session_id is not UNSET:
+            field_dict["session_id"] = session_id
+        if is_impersonating is not UNSET:
+            field_dict["is_impersonating"] = is_impersonating
         if account_type is not UNSET:
             field_dict["account_type"] = account_type
+        if paid_until is not UNSET:
+            field_dict["paid_until"] = paid_until
         if preferred_locale is not UNSET:
             field_dict["preferred_locale"] = preferred_locale
         if preferred_theme is not UNSET:
@@ -150,14 +176,12 @@ class MeResponse:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.me_permission_item import MePermissionItem
+        from ..models.me_permission_item import MePermissionItem  # noqa: PLC0415
 
         d = dict(src_dict)
         id = UUID(d.pop("id"))
 
         username = d.pop("username")
-
-        session_id = UUID(d.pop("session_id"))
 
         fullname = d.pop("fullname", UNSET)
 
@@ -216,7 +240,43 @@ class MeResponse:
 
                 permission_details.append(permission_details_item)
 
+        def _parse_session_id(data: object) -> None | Unset | UUID:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, str):
+                    raise TypeError()
+                session_id_type_0 = UUID(data)
+
+                return session_id_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(None | Unset | UUID, data)
+
+        session_id = _parse_session_id(d.pop("session_id", UNSET))
+
+        is_impersonating = d.pop("is_impersonating", UNSET)
+
         account_type = d.pop("account_type", UNSET)
+
+        def _parse_paid_until(data: object) -> datetime.date | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, str):
+                    raise TypeError()
+                paid_until_type_0 = datetime.date.fromisoformat(data)
+
+                return paid_until_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(datetime.date | None | Unset, data)
+
+        paid_until = _parse_paid_until(d.pop("paid_until", UNSET))
 
         def _parse_preferred_locale(data: object) -> MeResponsePreferredLocaleType0 | None | Unset:
             if data is None:
@@ -255,7 +315,6 @@ class MeResponse:
         me_response = cls(
             id=id,
             username=username,
-            session_id=session_id,
             fullname=fullname,
             email=email,
             phone=phone,
@@ -263,7 +322,10 @@ class MeResponse:
             role_name=role_name,
             permissions=permissions,
             permission_details=permission_details,
+            session_id=session_id,
+            is_impersonating=is_impersonating,
             account_type=account_type,
+            paid_until=paid_until,
             preferred_locale=preferred_locale,
             preferred_theme=preferred_theme,
         )

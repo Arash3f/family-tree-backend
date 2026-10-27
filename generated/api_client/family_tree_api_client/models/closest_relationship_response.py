@@ -26,6 +26,10 @@ class ClosestRelationshipResponse:
         distance (int | None | Unset):
         path_person_ids (list[UUID] | Unset):
         relationship_types (list[str] | Unset):
+        label_fa (None | str | Unset):
+        label_en (None | str | Unset):
+        description_fa (None | str | Unset):
+        description_en (None | str | Unset):
         paths (list[RelationshipPathItemResponse] | Unset):
     """
 
@@ -35,6 +39,10 @@ class ClosestRelationshipResponse:
     distance: int | None | Unset = UNSET
     path_person_ids: list[UUID] | Unset = UNSET
     relationship_types: list[str] | Unset = UNSET
+    label_fa: None | str | Unset = UNSET
+    label_en: None | str | Unset = UNSET
+    description_fa: None | str | Unset = UNSET
+    description_en: None | str | Unset = UNSET
     paths: list[RelationshipPathItemResponse] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -62,6 +70,30 @@ class ClosestRelationshipResponse:
         if not isinstance(self.relationship_types, Unset):
             relationship_types = self.relationship_types
 
+        label_fa: None | str | Unset
+        if isinstance(self.label_fa, Unset):
+            label_fa = UNSET
+        else:
+            label_fa = self.label_fa
+
+        label_en: None | str | Unset
+        if isinstance(self.label_en, Unset):
+            label_en = UNSET
+        else:
+            label_en = self.label_en
+
+        description_fa: None | str | Unset
+        if isinstance(self.description_fa, Unset):
+            description_fa = UNSET
+        else:
+            description_fa = self.description_fa
+
+        description_en: None | str | Unset
+        if isinstance(self.description_en, Unset):
+            description_en = UNSET
+        else:
+            description_en = self.description_en
+
         paths: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.paths, Unset):
             paths = []
@@ -84,6 +116,14 @@ class ClosestRelationshipResponse:
             field_dict["path_person_ids"] = path_person_ids
         if relationship_types is not UNSET:
             field_dict["relationship_types"] = relationship_types
+        if label_fa is not UNSET:
+            field_dict["label_fa"] = label_fa
+        if label_en is not UNSET:
+            field_dict["label_en"] = label_en
+        if description_fa is not UNSET:
+            field_dict["description_fa"] = description_fa
+        if description_en is not UNSET:
+            field_dict["description_en"] = description_en
         if paths is not UNSET:
             field_dict["paths"] = paths
 
@@ -91,7 +131,7 @@ class ClosestRelationshipResponse:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.relationship_path_item_response import RelationshipPathItemResponse
+        from ..models.relationship_path_item_response import RelationshipPathItemResponse  # noqa: PLC0415
 
         d = dict(src_dict)
         from_person_id = UUID(d.pop("from_person_id"))
@@ -120,6 +160,42 @@ class ClosestRelationshipResponse:
 
         relationship_types = cast(list[str], d.pop("relationship_types", UNSET))
 
+        def _parse_label_fa(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        label_fa = _parse_label_fa(d.pop("label_fa", UNSET))
+
+        def _parse_label_en(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        label_en = _parse_label_en(d.pop("label_en", UNSET))
+
+        def _parse_description_fa(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        description_fa = _parse_description_fa(d.pop("description_fa", UNSET))
+
+        def _parse_description_en(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        description_en = _parse_description_en(d.pop("description_en", UNSET))
+
         _paths = d.pop("paths", UNSET)
         paths: list[RelationshipPathItemResponse] | Unset = UNSET
         if _paths is not UNSET:
@@ -136,6 +212,10 @@ class ClosestRelationshipResponse:
             distance=distance,
             path_person_ids=path_person_ids,
             relationship_types=relationship_types,
+            label_fa=label_fa,
+            label_en=label_en,
+            description_fa=description_fa,
+            description_en=description_en,
             paths=paths,
         )
 

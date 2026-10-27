@@ -16,6 +16,10 @@ type ClosestRelationshipType {
   distance: Int
   pathPersonIds: [UUID!]!
   relationshipTypes: [String!]!
+  labelFa: String
+  labelEn: String
+  descriptionFa: String
+  descriptionEn: String
   paths: [RelationshipPathItemType!]!
 }
 
@@ -48,6 +52,12 @@ type FamilyTreeType {
 
 input FamilyTreeUpdateInput {
   name: String!
+}
+
+type FreeLimitsType {
+  ownedTrees: Int!
+  personsPerTree: Int!
+  marriagesPerTree: Int!
 }
 
 enum Gender {
@@ -340,6 +350,9 @@ type Query {
   """Current authenticated user (REST: GET /auth/me)"""
   me: UserType!
 
+  """Own trees against the plan's quotas (REST: GET /auth/usage)"""
+  myUsage: UsageType!
+
   """List family trees for current user (REST: GET /family-trees)"""
   familyTrees: [FamilyTreeType!]!
 
@@ -399,6 +412,10 @@ type RelationshipPathItemType {
   distance: Int!
   pathPersonIds: [UUID!]!
   relationshipTypes: [String!]!
+  labelFa: String
+  labelEn: String
+  descriptionFa: String
+  descriptionEn: String
 }
 
 type ResultType {
@@ -467,6 +484,7 @@ enum TicketCategory {
   TECHNICAL
   BUG
   FEATURE_REQUEST
+  UPGRADE_REQUEST
   OTHER
 }
 
@@ -586,7 +604,24 @@ type TreeMembershipType {
   username: String
 }
 
+type TreeUsageType {
+  treeId: UUID!
+  name: String!
+  persons: Int!
+  marriages: Int!
+}
+
 scalar UUID
+
+type UsageType {
+  accountType: AccountTypeEnum!
+  paidUntil: Date
+  daysLeft: Int
+  limited: Boolean!
+  freeLimits: FreeLimitsType!
+  ownedTrees: Int!
+  trees: [TreeUsageType!]!
+}
 
 input UserCreateInput {
   username: String!
@@ -598,6 +633,7 @@ input UserCreateInput {
   countryCode: String = null
   roleId: UUID = null
   accountType: AccountTypeEnum = null
+  paidUntil: Date = null
 }
 
 input UserFilterInput {
@@ -635,6 +671,7 @@ type UserType {
   phone: String
   roleId: UUID
   accountType: AccountTypeEnum!
+  paidUntil: Date
   isActive: Boolean!
   lastSessionAt: DateTime
 }
@@ -649,6 +686,7 @@ input UserUpdateDataInput {
   countryCode: String = null
   roleId: UUID = null
   accountType: AccountTypeEnum = null
+  paidUntil: Date
 }
 
 input UserUpdateInput {

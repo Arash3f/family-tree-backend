@@ -56,7 +56,7 @@ class PaginatedResponsePermissionModel:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.permission_model import PermissionModel
+        from ..models.permission_model import PermissionModel  # noqa: PLC0415
 
         d = dict(src_dict)
         items = []

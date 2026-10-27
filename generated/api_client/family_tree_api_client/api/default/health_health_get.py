@@ -49,6 +49,10 @@ def sync_detailed(
     Returns HTTP 503 with ``status: degraded`` when any dependency fails so
     ``curl -fsS`` / orchestrators treat the instance as unhealthy.
 
+    Carries ``version`` either way: the frontend reads it to show which API
+    build it is talking to, so a screenshot or screen recording names the
+    deployed version instead of a hardcoded guess.
+
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
@@ -77,6 +81,10 @@ async def asyncio_detailed(
     Returns HTTP 200 only when Postgres and Neo4j both respond.
     Returns HTTP 503 with ``status: degraded`` when any dependency fails so
     ``curl -fsS`` / orchestrators treat the instance as unhealthy.
+
+    Carries ``version`` either way: the frontend reads it to show which API
+    build it is talking to, so a screenshot or screen recording names the
+    deployed version instead of a hardcoded guess.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

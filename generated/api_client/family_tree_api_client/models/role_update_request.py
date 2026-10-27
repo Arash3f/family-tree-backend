@@ -44,8 +44,8 @@ class RoleUpdateRequest:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.role_update_date_request import RoleUpdateDateRequest
-        from ..models.role_update_where_request import RoleUpdateWhereRequest
+        from ..models.role_update_date_request import RoleUpdateDateRequest  # noqa: PLC0415
+        from ..models.role_update_where_request import RoleUpdateWhereRequest  # noqa: PLC0415
 
         d = dict(src_dict)
         data = RoleUpdateDateRequest.from_dict(d.pop("data"))

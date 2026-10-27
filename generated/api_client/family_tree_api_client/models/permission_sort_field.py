@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class PermissionSortField(str, Enum):
+class PermissionSortField(StrEnum):
     ID = "id"
     NAME = "name"
 

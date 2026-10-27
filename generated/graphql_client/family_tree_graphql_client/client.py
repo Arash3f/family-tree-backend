@@ -74,7 +74,9 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"username": username, "password": password}
-        response = await self.execute(query=query, operation_name="Login", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="Login", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return Login.model_validate(data)
 
@@ -88,7 +90,9 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {}
-        response = await self.execute(query=query, operation_name="Me", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="Me", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return Me.model_validate(data)
 
@@ -102,7 +106,9 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"token": token}
-        response = await self.execute(query=query, operation_name="RefreshToken", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="RefreshToken", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return RefreshToken.model_validate(data)
 
@@ -115,7 +121,9 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {}
-        response = await self.execute(query=query, operation_name="Logout", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="Logout", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return Logout.model_validate(data)
 
@@ -124,7 +132,7 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
         tree_id: Any,
         from_id: Any,
         to_id: Any,
-        male_only: bool | None | UnsetType = UNSET,
+        male_only: Union[Optional[bool], UnsetType] = UNSET,
         **kwargs: Any,
     ) -> ClosestRelationship:
         query = gql("""
@@ -169,7 +177,7 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
         tree_id: Any,
         from_id: Any,
         to_id: Any,
-        male_only: bool | None | UnsetType = UNSET,
+        male_only: Union[Optional[bool], UnsetType] = UNSET,
         **kwargs: Any,
     ) -> AlternativeRelationshipPaths:
         query = gql("""
@@ -209,7 +217,9 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
         data = self.get_data(response)
         return AlternativeRelationshipPaths.model_validate(data)
 
-    async def create_tree(self, data: FamilyTreeCreateInput, **kwargs: Any) -> CreateTree:
+    async def create_tree(
+        self, data: FamilyTreeCreateInput, **kwargs: Any
+    ) -> CreateTree:
         query = gql("""
             mutation CreateTree($data: FamilyTreeCreateInput!) {
               createFamilyTree(data: $data) {
@@ -220,7 +230,9 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"data": data}
-        response = await self.execute(query=query, operation_name="CreateTree", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="CreateTree", variables=variables, **kwargs
+        )
         _data = self.get_data(response)
         return CreateTree.model_validate(_data)
 
@@ -234,7 +246,9 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {}
-        response = await self.execute(query=query, operation_name="ListTrees", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="ListTrees", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return ListTrees.model_validate(data)
 
@@ -248,11 +262,15 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"treeId": tree_id}
-        response = await self.execute(query=query, operation_name="GetTree", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="GetTree", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return GetTree.model_validate(data)
 
-    async def update_tree(self, tree_id: Any, data: FamilyTreeUpdateInput, **kwargs: Any) -> UpdateTree:
+    async def update_tree(
+        self, tree_id: Any, data: FamilyTreeUpdateInput, **kwargs: Any
+    ) -> UpdateTree:
         query = gql("""
             mutation UpdateTree($treeId: UUID!, $data: FamilyTreeUpdateInput!) {
               updateFamilyTree(treeId: $treeId, data: $data) {
@@ -262,7 +280,9 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"treeId": tree_id, "data": data}
-        response = await self.execute(query=query, operation_name="UpdateTree", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="UpdateTree", variables=variables, **kwargs
+        )
         _data = self.get_data(response)
         return UpdateTree.model_validate(_data)
 
@@ -276,11 +296,15 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"treeId": tree_id}
-        response = await self.execute(query=query, operation_name="TreeMembers", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="TreeMembers", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return TreeMembers.model_validate(data)
 
-    async def add_member(self, tree_id: Any, data: TreeMemberAddInput, **kwargs: Any) -> AddMember:
+    async def add_member(
+        self, tree_id: Any, data: TreeMemberAddInput, **kwargs: Any
+    ) -> AddMember:
         query = gql("""
             mutation AddMember($treeId: UUID!, $data: TreeMemberAddInput!) {
               addTreeMember(treeId: $treeId, data: $data) {
@@ -290,11 +314,15 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"treeId": tree_id, "data": data}
-        response = await self.execute(query=query, operation_name="AddMember", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="AddMember", variables=variables, **kwargs
+        )
         _data = self.get_data(response)
         return AddMember.model_validate(_data)
 
-    async def create_marriage(self, tree_id: Any, data: MarriageCreateInput, **kwargs: Any) -> CreateMarriage:
+    async def create_marriage(
+        self, tree_id: Any, data: MarriageCreateInput, **kwargs: Any
+    ) -> CreateMarriage:
         query = gql("""
             mutation CreateMarriage($treeId: UUID!, $data: MarriageCreateInput!) {
               createMarriage(treeId: $treeId, data: $data) {
@@ -307,11 +335,15 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"treeId": tree_id, "data": data}
-        response = await self.execute(query=query, operation_name="CreateMarriage", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="CreateMarriage", variables=variables, **kwargs
+        )
         _data = self.get_data(response)
         return CreateMarriage.model_validate(_data)
 
-    async def get_marriage(self, tree_id: Any, marriage_id: Any, **kwargs: Any) -> GetMarriage:
+    async def get_marriage(
+        self, tree_id: Any, marriage_id: Any, **kwargs: Any
+    ) -> GetMarriage:
         query = gql("""
             query GetMarriage($treeId: UUID!, $marriageId: UUID!) {
               marriage(treeId: $treeId, marriageId: $marriageId) {
@@ -322,7 +354,9 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"treeId": tree_id, "marriageId": marriage_id}
-        response = await self.execute(query=query, operation_name="GetMarriage", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="GetMarriage", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return GetMarriage.model_validate(data)
 
@@ -335,7 +369,9 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"treeId": tree_id, "data": data}
-        response = await self.execute(query=query, operation_name="Divorce", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="Divorce", variables=variables, **kwargs
+        )
         _data = self.get_data(response)
         return Divorce.model_validate(_data)
 
@@ -351,11 +387,15 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"treeId": tree_id}
-        response = await self.execute(query=query, operation_name="ListMarriages", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="ListMarriages", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return ListMarriages.model_validate(data)
 
-    async def delete_marriage(self, tree_id: Any, marriage_id: Any, **kwargs: Any) -> DeleteMarriage:
+    async def delete_marriage(
+        self, tree_id: Any, marriage_id: Any, **kwargs: Any
+    ) -> DeleteMarriage:
         query = gql("""
             mutation DeleteMarriage($treeId: UUID!, $marriageId: UUID!) {
               deleteMarriage(treeId: $treeId, marriageId: $marriageId) {
@@ -364,11 +404,15 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"treeId": tree_id, "marriageId": marriage_id}
-        response = await self.execute(query=query, operation_name="DeleteMarriage", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="DeleteMarriage", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return DeleteMarriage.model_validate(data)
 
-    async def create_person(self, tree_id: Any, data: PersonCreateInput, **kwargs: Any) -> CreatePerson:
+    async def create_person(
+        self, tree_id: Any, data: PersonCreateInput, **kwargs: Any
+    ) -> CreatePerson:
         query = gql("""
             mutation CreatePerson($treeId: UUID!, $data: PersonCreateInput!) {
               createPerson(treeId: $treeId, data: $data) {
@@ -383,11 +427,15 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"treeId": tree_id, "data": data}
-        response = await self.execute(query=query, operation_name="CreatePerson", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="CreatePerson", variables=variables, **kwargs
+        )
         _data = self.get_data(response)
         return CreatePerson.model_validate(_data)
 
-    async def update_person(self, tree_id: Any, data: PersonUpdateInput, **kwargs: Any) -> UpdatePerson:
+    async def update_person(
+        self, tree_id: Any, data: PersonUpdateInput, **kwargs: Any
+    ) -> UpdatePerson:
         query = gql("""
             mutation UpdatePerson($treeId: UUID!, $data: PersonUpdateInput!) {
               updatePerson(treeId: $treeId, data: $data) {
@@ -397,11 +445,15 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"treeId": tree_id, "data": data}
-        response = await self.execute(query=query, operation_name="UpdatePerson", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="UpdatePerson", variables=variables, **kwargs
+        )
         _data = self.get_data(response)
         return UpdatePerson.model_validate(_data)
 
-    async def delete_person(self, tree_id: Any, person_id: Any, **kwargs: Any) -> DeletePerson:
+    async def delete_person(
+        self, tree_id: Any, person_id: Any, **kwargs: Any
+    ) -> DeletePerson:
         query = gql("""
             mutation DeletePerson($treeId: UUID!, $personId: UUID!) {
               deletePerson(treeId: $treeId, personId: $personId) {
@@ -410,11 +462,15 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"treeId": tree_id, "personId": person_id}
-        response = await self.execute(query=query, operation_name="DeletePerson", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="DeletePerson", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return DeletePerson.model_validate(data)
 
-    async def get_person(self, tree_id: Any, person_id: Any, **kwargs: Any) -> GetPerson:
+    async def get_person(
+        self, tree_id: Any, person_id: Any, **kwargs: Any
+    ) -> GetPerson:
         query = gql("""
             query GetPerson($treeId: UUID!, $personId: UUID!) {
               person(treeId: $treeId, personId: $personId) {
@@ -425,14 +481,16 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"treeId": tree_id, "personId": person_id}
-        response = await self.execute(query=query, operation_name="GetPerson", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="GetPerson", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return GetPerson.model_validate(data)
 
     async def list_persons(
         self,
         tree_id: Any,
-        data: PersonListInput | None | UnsetType = UNSET,
+        data: Union[Optional[PersonListInput], UnsetType] = UNSET,
         **kwargs: Any,
     ) -> ListPersons:
         query = gql("""
@@ -447,11 +505,15 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"treeId": tree_id, "data": data}
-        response = await self.execute(query=query, operation_name="ListPersons", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="ListPersons", variables=variables, **kwargs
+        )
         _data = self.get_data(response)
         return ListPersons.model_validate(_data)
 
-    async def create_ticket(self, data: TicketCreateInput, **kwargs: Any) -> CreateTicket:
+    async def create_ticket(
+        self, data: TicketCreateInput, **kwargs: Any
+    ) -> CreateTicket:
         query = gql("""
             mutation CreateTicket($data: TicketCreateInput!) {
               createTicket(data: $data) {
@@ -466,7 +528,9 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"data": data}
-        response = await self.execute(query=query, operation_name="CreateTicket", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="CreateTicket", variables=variables, **kwargs
+        )
         _data = self.get_data(response)
         return CreateTicket.model_validate(_data)
 
@@ -485,7 +549,9 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {}
-        response = await self.execute(query=query, operation_name="ListTickets", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="ListTickets", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return ListTickets.model_validate(data)
 
@@ -504,11 +570,15 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"id": id}
-        response = await self.execute(query=query, operation_name="GetTicket", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="GetTicket", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return GetTicket.model_validate(data)
 
-    async def add_ticket_message(self, id: Any, data: TicketMessageCreateInput, **kwargs: Any) -> AddTicketMessage:
+    async def add_ticket_message(
+        self, id: Any, data: TicketMessageCreateInput, **kwargs: Any
+    ) -> AddTicketMessage:
         query = gql("""
             mutation AddTicketMessage($id: UUID!, $data: TicketMessageCreateInput!) {
               addTicketMessage(ticketId: $id, data: $data) {
@@ -527,7 +597,9 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
         _data = self.get_data(response)
         return AddTicketMessage.model_validate(_data)
 
-    async def update_ticket_status(self, id: Any, data: TicketUpdateStatusInput, **kwargs: Any) -> UpdateTicketStatus:
+    async def update_ticket_status(
+        self, id: Any, data: TicketUpdateStatusInput, **kwargs: Any
+    ) -> UpdateTicketStatus:
         query = gql("""
             mutation UpdateTicketStatus($id: UUID!, $data: TicketUpdateStatusInput!) {
               updateTicketStatus(ticketId: $id, data: $data) {
@@ -560,7 +632,9 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {}
-        response = await self.execute(query=query, operation_name="ListPermissions", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="ListPermissions", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return ListPermissions.model_validate(data)
 
@@ -575,7 +649,9 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"data": data}
-        response = await self.execute(query=query, operation_name="CreateRole", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="CreateRole", variables=variables, **kwargs
+        )
         _data = self.get_data(response)
         return CreateRole.model_validate(_data)
 
@@ -591,7 +667,9 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"data": data}
-        response = await self.execute(query=query, operation_name="CreateUser", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="CreateUser", variables=variables, **kwargs
+        )
         _data = self.get_data(response)
         return CreateUser.model_validate(_data)
 
@@ -606,7 +684,9 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"id": id}
-        response = await self.execute(query=query, operation_name="GetUser", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="GetUser", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return GetUser.model_validate(data)
 
@@ -620,11 +700,15 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"id": id}
-        response = await self.execute(query=query, operation_name="GetRole", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="GetRole", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return GetRole.model_validate(data)
 
-    async def list_users(self, data: UserListInput | None | UnsetType = UNSET, **kwargs: Any) -> ListUsers:
+    async def list_users(
+        self, data: Union[Optional[UserListInput], UnsetType] = UNSET, **kwargs: Any
+    ) -> ListUsers:
         query = gql("""
             query ListUsers($data: UserListInput) {
               users(data: $data) {
@@ -637,7 +721,9 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"data": data}
-        response = await self.execute(query=query, operation_name="ListUsers", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="ListUsers", variables=variables, **kwargs
+        )
         _data = self.get_data(response)
         return ListUsers.model_validate(_data)
 
@@ -650,7 +736,9 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"id": id}
-        response = await self.execute(query=query, operation_name="DeleteUser", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="DeleteUser", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return DeleteUser.model_validate(data)
 
@@ -663,6 +751,8 @@ class FamilyTreeGraphQLClient(AsyncBaseClient):
             }
             """)
         variables: dict[str, object] = {"id": id}
-        response = await self.execute(query=query, operation_name="DeleteRole", variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="DeleteRole", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return DeleteRole.model_validate(data)

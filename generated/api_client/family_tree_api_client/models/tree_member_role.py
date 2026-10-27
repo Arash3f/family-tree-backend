@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class TreeMemberRole(str, Enum):
+class TreeMemberRole(StrEnum):
     MEMBER = "member"
     OWNER = "owner"
 

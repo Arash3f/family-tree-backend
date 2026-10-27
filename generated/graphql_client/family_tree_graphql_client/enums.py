@@ -54,6 +54,7 @@ class TicketCategory(str, Enum):
     TECHNICAL = "TECHNICAL"
     BUG = "BUG"
     FEATURE_REQUEST = "FEATURE_REQUEST"
+    UPGRADE_REQUEST = "UPGRADE_REQUEST"
     OTHER = "OTHER"
 
 

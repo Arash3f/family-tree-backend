@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class MeResponsePreferredThemeType0(str, Enum):
+class MeResponsePreferredThemeType0(StrEnum):
     DARK = "dark"
     LIGHT = "light"
     SYSTEM = "system"

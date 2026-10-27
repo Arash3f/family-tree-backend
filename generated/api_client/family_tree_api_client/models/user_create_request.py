@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
 from typing import Any, TypeVar, cast
 from uuid import UUID
@@ -26,6 +27,7 @@ class UserCreateRequest:
         country_code (None | str | Unset):
         role_id (None | Unset | UUID):
         account_type (AccountType | Unset):
+        paid_until (datetime.date | None | Unset):
     """
 
     username: str
@@ -37,6 +39,7 @@ class UserCreateRequest:
     country_code: None | str | Unset = UNSET
     role_id: None | Unset | UUID = UNSET
     account_type: AccountType | Unset = UNSET
+    paid_until: datetime.date | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -78,6 +81,14 @@ class UserCreateRequest:
         if not isinstance(self.account_type, Unset):
             account_type = self.account_type.value
 
+        paid_until: None | str | Unset
+        if isinstance(self.paid_until, Unset):
+            paid_until = UNSET
+        elif isinstance(self.paid_until, datetime.date):
+            paid_until = self.paid_until.isoformat()
+        else:
+            paid_until = self.paid_until
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -98,6 +109,8 @@ class UserCreateRequest:
             field_dict["role_id"] = role_id
         if account_type is not UNSET:
             field_dict["account_type"] = account_type
+        if paid_until is not UNSET:
+            field_dict["paid_until"] = paid_until
 
         return field_dict
 
@@ -163,6 +176,23 @@ class UserCreateRequest:
         else:
             account_type = AccountType(_account_type)
 
+        def _parse_paid_until(data: object) -> datetime.date | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, str):
+                    raise TypeError()
+                paid_until_type_0 = datetime.date.fromisoformat(data)
+
+                return paid_until_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(datetime.date | None | Unset, data)
+
+        paid_until = _parse_paid_until(d.pop("paid_until", UNSET))
+
         user_create_request = cls(
             username=username,
             fullname=fullname,
@@ -173,6 +203,7 @@ class UserCreateRequest:
             country_code=country_code,
             role_id=role_id,
             account_type=account_type,
+            paid_until=paid_until,
         )
 
         user_create_request.additional_properties = d

@@ -2886,6 +2886,32 @@
         ]
       }
     },
+    "/auth/usage": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "My Usage",
+        "operationId": "my_usage_auth_usage_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
     "/auth/sessions": {
       "get": {
         "tags": [
@@ -3571,6 +3597,29 @@
         "type": "object",
         "title": "FilterUserRequest"
       },
+      "FreeLimitsResponse": {
+        "properties": {
+          "owned_trees": {
+            "type": "integer",
+            "title": "Owned Trees"
+          },
+          "persons_per_tree": {
+            "type": "integer",
+            "title": "Persons Per Tree"
+          },
+          "marriages_per_tree": {
+            "type": "integer",
+            "title": "Marriages Per Tree"
+          }
+        },
+        "type": "object",
+        "required": [
+          "owned_trees",
+          "persons_per_tree",
+          "marriages_per_tree"
+        ],
+        "title": "FreeLimitsResponse"
+      },
       "Gender": {
         "type": "string",
         "enum": [
@@ -4151,6 +4200,18 @@
             "type": "string",
             "title": "Account Type",
             "default": "free"
+          },
+          "paid_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paid Until"
           },
           "preferred_locale": {
             "anyOf": [
@@ -6080,6 +6141,7 @@
           "technical",
           "bug",
           "feature_request",
+          "upgrade_request",
           "other"
         ],
         "title": "TicketCategory"
@@ -7191,6 +7253,35 @@
         ],
         "title": "TreeMembershipResponse"
       },
+      "TreeUsageResponse": {
+        "properties": {
+          "tree_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Tree Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "persons": {
+            "type": "integer",
+            "title": "Persons"
+          },
+          "marriages": {
+            "type": "integer",
+            "title": "Marriages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tree_id",
+          "name",
+          "persons",
+          "marriages"
+        ],
+        "title": "TreeUsageResponse"
+      },
       "UpdatePreferencesRequest": {
         "properties": {
           "preferred_locale": {
@@ -7227,6 +7318,66 @@
         },
         "type": "object",
         "title": "UpdatePreferencesRequest"
+      },
+      "UsageResponse": {
+        "properties": {
+          "account_type": {
+            "type": "string",
+            "title": "Account Type"
+          },
+          "paid_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paid Until"
+          },
+          "days_left": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days Left",
+            "description": "Days the paid plan still covers, today included."
+          },
+          "limited": {
+            "type": "boolean",
+            "title": "Limited",
+            "description": "Whether the free quotas apply right now."
+          },
+          "free_limits": {
+            "$ref": "#/components/schemas/FreeLimitsResponse"
+          },
+          "owned_trees": {
+            "type": "integer",
+            "title": "Owned Trees"
+          },
+          "trees": {
+            "items": {
+              "$ref": "#/components/schemas/TreeUsageResponse"
+            },
+            "type": "array",
+            "title": "Trees"
+          }
+        },
+        "type": "object",
+        "required": [
+          "account_type",
+          "limited",
+          "free_limits",
+          "owned_trees",
+          "trees"
+        ],
+        "title": "UsageResponse"
       },
       "UserCreateRequest": {
         "properties": {
@@ -7302,6 +7453,18 @@
           "account_type": {
             "$ref": "#/components/schemas/AccountType",
             "default": "free"
+          },
+          "paid_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paid Until"
           }
         },
         "type": "object",
@@ -7364,6 +7527,18 @@
           },
           "account_type": {
             "$ref": "#/components/schemas/AccountType"
+          },
+          "paid_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paid Until"
           },
           "is_active": {
             "type": "boolean",
@@ -7487,6 +7662,18 @@
           "account_type": {
             "$ref": "#/components/schemas/AccountType"
           },
+          "paid_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paid Until"
+          },
           "is_active": {
             "type": "boolean",
             "title": "Is Active",
@@ -7555,6 +7742,18 @@
           "account_type": {
             "$ref": "#/components/schemas/AccountType",
             "default": "free"
+          },
+          "paid_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paid Until"
           },
           "is_active": {
             "type": "boolean",
@@ -7663,6 +7862,18 @@
           },
           "account_type": {
             "$ref": "#/components/schemas/AccountType"
+          },
+          "paid_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paid Until"
           },
           "is_active": {
             "type": "boolean",
@@ -8088,6 +8299,19 @@
                 "type": "null"
               }
             ]
+          },
+          "paid_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paid Until",
+            "description": "Last day the paid plan covers; null makes it open-ended."
           }
         },
         "type": "object",

@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class MeResponsePreferredLocaleType0(str, Enum):
+class MeResponsePreferredLocaleType0(StrEnum):
     EN = "en"
     FA = "fa"
 

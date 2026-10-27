@@ -25,6 +25,7 @@ class UserModel:
         phone (None | str | Unset):
         role_id (None | Unset | UUID):
         account_type (AccountType | Unset):
+        paid_until (datetime.date | None | Unset):
         is_active (bool | Unset):  Default: True.
         last_session_at (datetime.datetime | None | Unset):
     """
@@ -36,6 +37,7 @@ class UserModel:
     phone: None | str | Unset = UNSET
     role_id: None | Unset | UUID = UNSET
     account_type: AccountType | Unset = UNSET
+    paid_until: datetime.date | None | Unset = UNSET
     is_active: bool | Unset = True
     last_session_at: datetime.datetime | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -71,6 +73,14 @@ class UserModel:
         if not isinstance(self.account_type, Unset):
             account_type = self.account_type.value
 
+        paid_until: None | str | Unset
+        if isinstance(self.paid_until, Unset):
+            paid_until = UNSET
+        elif isinstance(self.paid_until, datetime.date):
+            paid_until = self.paid_until.isoformat()
+        else:
+            paid_until = self.paid_until
+
         is_active = self.is_active
 
         last_session_at: None | str | Unset
@@ -98,6 +108,8 @@ class UserModel:
             field_dict["role_id"] = role_id
         if account_type is not UNSET:
             field_dict["account_type"] = account_type
+        if paid_until is not UNSET:
+            field_dict["paid_until"] = paid_until
         if is_active is not UNSET:
             field_dict["is_active"] = is_active
         if last_session_at is not UNSET:
@@ -156,6 +168,23 @@ class UserModel:
         else:
             account_type = AccountType(_account_type)
 
+        def _parse_paid_until(data: object) -> datetime.date | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, str):
+                    raise TypeError()
+                paid_until_type_0 = datetime.date.fromisoformat(data)
+
+                return paid_until_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(datetime.date | None | Unset, data)
+
+        paid_until = _parse_paid_until(d.pop("paid_until", UNSET))
+
         is_active = d.pop("is_active", UNSET)
 
         def _parse_last_session_at(data: object) -> datetime.datetime | None | Unset:
@@ -183,6 +212,7 @@ class UserModel:
             phone=phone,
             role_id=role_id,
             account_type=account_type,
+            paid_until=paid_until,
             is_active=is_active,
             last_session_at=last_session_at,
         )

@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class GetDemoFamilyTreeFamilyTreesDemoGetLocale(str, Enum):
+class GetDemoFamilyTreeFamilyTreesDemoGetLocale(StrEnum):
     EN = "en"
     FA = "fa"
 

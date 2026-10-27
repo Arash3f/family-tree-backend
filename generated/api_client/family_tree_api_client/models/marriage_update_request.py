@@ -44,8 +44,8 @@ class MarriageUpdateRequest:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.marriage_update_date_request import MarriageUpdateDateRequest
-        from ..models.marriage_update_where_request import MarriageUpdateWhereRequest
+        from ..models.marriage_update_date_request import MarriageUpdateDateRequest  # noqa: PLC0415
+        from ..models.marriage_update_where_request import MarriageUpdateWhereRequest  # noqa: PLC0415
 
         d = dict(src_dict)
         data = MarriageUpdateDateRequest.from_dict(d.pop("data"))

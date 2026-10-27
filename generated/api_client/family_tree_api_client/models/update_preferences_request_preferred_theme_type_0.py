@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class UpdatePreferencesRequestPreferredThemeType0(str, Enum):
+class UpdatePreferencesRequestPreferredThemeType0(StrEnum):
     DARK = "dark"
     LIGHT = "light"
     SYSTEM = "system"

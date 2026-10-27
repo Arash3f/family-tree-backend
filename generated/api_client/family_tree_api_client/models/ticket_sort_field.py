@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class TicketSortField(str, Enum):
+class TicketSortField(StrEnum):
     CATEGORY = "category"
     CREATED_AT = "created_at"
     ID = "id"

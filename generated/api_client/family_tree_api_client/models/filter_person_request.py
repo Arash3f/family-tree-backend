@@ -32,7 +32,7 @@ class FilterPersonRequest:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.person_filter_request_data import PersonFilterRequestData
+        from ..models.person_filter_request_data import PersonFilterRequestData  # noqa: PLC0415
 
         pagination: dict[str, Any] | Unset = UNSET
         if not isinstance(self.pagination, Unset):
@@ -64,9 +64,9 @@ class FilterPersonRequest:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.pagination_request_params import PaginationRequestParams
-        from ..models.person_filter_request_data import PersonFilterRequestData
-        from ..models.sort_request_params_person_sort_field import SortRequestParamsPersonSortField
+        from ..models.pagination_request_params import PaginationRequestParams  # noqa: PLC0415
+        from ..models.person_filter_request_data import PersonFilterRequestData  # noqa: PLC0415
+        from ..models.sort_request_params_person_sort_field import SortRequestParamsPersonSortField  # noqa: PLC0415
 
         d = dict(src_dict)
         _pagination = d.pop("pagination", UNSET)

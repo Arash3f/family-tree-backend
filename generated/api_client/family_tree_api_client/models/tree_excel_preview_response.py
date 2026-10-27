@@ -60,8 +60,8 @@ class TreeExcelPreviewResponse:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.tree_excel_preview_marriage import TreeExcelPreviewMarriage
-        from ..models.tree_excel_preview_person import TreeExcelPreviewPerson
+        from ..models.tree_excel_preview_marriage import TreeExcelPreviewMarriage  # noqa: PLC0415
+        from ..models.tree_excel_preview_person import TreeExcelPreviewPerson  # noqa: PLC0415
 
         d = dict(src_dict)
         valid = d.pop("valid")

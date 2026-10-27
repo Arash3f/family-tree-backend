@@ -56,7 +56,7 @@ class PaginatedResponseMarriageModel:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.marriage_model import MarriageModel
+        from ..models.marriage_model import MarriageModel  # noqa: PLC0415
 
         d = dict(src_dict)
         items = []

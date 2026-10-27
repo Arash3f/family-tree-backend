@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class RoleSortField(str, Enum):
+class RoleSortField(StrEnum):
     ID = "id"
     NAME = "name"
 

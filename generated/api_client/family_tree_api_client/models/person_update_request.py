@@ -44,8 +44,8 @@ class PersonUpdateRequest:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.person_update_date_request import PersonUpdateDateRequest
-        from ..models.person_update_where_request import PersonUpdateWhereRequest
+        from ..models.person_update_date_request import PersonUpdateDateRequest  # noqa: PLC0415
+        from ..models.person_update_where_request import PersonUpdateWhereRequest  # noqa: PLC0415
 
         d = dict(src_dict)
         data = PersonUpdateDateRequest.from_dict(d.pop("data"))

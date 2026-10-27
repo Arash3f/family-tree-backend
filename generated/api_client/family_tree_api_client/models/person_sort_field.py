@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class PersonSortField(str, Enum):
+class PersonSortField(StrEnum):
     BIRTH_DATE = "birth_date"
     GENDER = "gender"
     ID = "id"

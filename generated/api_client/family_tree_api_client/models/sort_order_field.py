@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class SortOrderField(str, Enum):
+class SortOrderField(StrEnum):
     ASC = "asc"
     DESC = "desc"
 
