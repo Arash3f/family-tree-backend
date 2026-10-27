@@ -7,12 +7,6 @@ class AccountType(StrEnum):
     PAID = "paid"
 
 
-# Matches the two starter trees provisioned on self-signup.
-FREE_MAX_OWNED_TREES = 2
-FREE_MAX_PERSONS_PER_TREE = 20
-FREE_MAX_MARRIAGES_PER_TREE = 8
-
-
 def effective_account_type(
     account_type: AccountType,
     paid_until: date | None,

@@ -1,9 +1,11 @@
+from datetime import date
 from unittest.mock import AsyncMock
 from uuid import UUID
 
 import pytest
 
 from app.application.services.account_limit_service import AccountLimitService
+from app.core.config import settings
 from app.domain.entities.family_tree import FamilyTree
 from app.domain.entities.user import User
 from app.domain.exceptions.family_tree_exceptions import FreeAccountLimitException
@@ -92,3 +94,39 @@ async def test_free_owner_allows_person_within_limit(mock_uow):
     service = AccountLimitService()
 
     await service.assert_can_create_persons(mock_uow, tree_id=TREE_ID, additional=1)
+
+
+@pytest.mark.asyncio
+async def test_lapsed_paid_owner_is_held_to_free_quotas(mock_uow):
+    lapsed = User(
+        id=OWNER_ID,
+        username="owner",
+        password_hash="hash",
+        account_type=AccountType.PAID,
+        paid_until=date(2000, 1, 1),
+    )
+    mock_uow.users.get_for_update = AsyncMock(return_value=lapsed)
+    mock_uow.family_trees.count_owned_by_user = AsyncMock(return_value=2)
+
+    with pytest.raises(FreeAccountLimitException):
+        await AccountLimitService().assert_can_create_tree(
+            mock_uow, owner_user_id=OWNER_ID
+        )
+
+
+@pytest.mark.asyncio
+async def test_free_quotas_come_from_settings(mock_uow, monkeypatch):
+    monkeypatch.setattr(settings, "FREE_MAX_PERSONS_PER_TREE", 50)
+    mock_uow.users.get_for_update = AsyncMock(
+        return_value=_owner(account_type=AccountType.FREE)
+    )
+    mock_uow.family_trees.get_or_raise = AsyncMock(return_value=_tree())
+    mock_uow.persons.count_in_tree = AsyncMock(return_value=30)
+    service = AccountLimitService()
+
+    # 31 would break the default of 20; the configured 50 lets it through.
+    await service.assert_can_create_persons(mock_uow, tree_id=TREE_ID)
+
+    mock_uow.persons.count_in_tree = AsyncMock(return_value=50)
+    with pytest.raises(FreeAccountLimitException):
+        await service.assert_can_create_persons(mock_uow, tree_id=TREE_ID)

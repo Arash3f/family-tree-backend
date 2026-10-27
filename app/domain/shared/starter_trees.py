@@ -12,7 +12,8 @@ class StarterTreeSpec:
     template_key: str
 
 
-# Exactly two trees per new free account — keep in sync with FREE_MAX_OWNED_TREES.
+# Exactly two trees per new free account — keep in sync with
+# settings.FREE_MAX_OWNED_TREES.
 STARTER_TREE_SPECS: tuple[StarterTreeSpec, ...] = (
     StarterTreeSpec(
         key="karimi-en",

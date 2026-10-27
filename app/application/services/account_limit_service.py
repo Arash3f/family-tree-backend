@@ -1,12 +1,8 @@
 from uuid import UUID
 
 from app.application.interfaces.unit_of_work import UnitOfWork
+from app.core.config import settings
 from app.domain.exceptions.family_tree_exceptions import FreeAccountLimitException
-from app.domain.shared.account_type import (
-    FREE_MAX_MARRIAGES_PER_TREE,
-    FREE_MAX_OWNED_TREES,
-    FREE_MAX_PERSONS_PER_TREE,
-)
 
 
 class AccountLimitService:
@@ -19,10 +15,11 @@ class AccountLimitService:
         if owner is None or not owner.is_free:
             return
 
+        limit = settings.FREE_MAX_OWNED_TREES
         owned = await uow.family_trees.count_owned_by_user(owner_user_id)
-        if owned >= FREE_MAX_OWNED_TREES:
+        if owned >= limit:
             raise FreeAccountLimitException(
-                detail=[f"free accounts may own at most {FREE_MAX_OWNED_TREES} tree(s)"]
+                detail=[f"free accounts may own at most {limit} tree(s)"]
             )
 
     async def assert_can_create_persons(
@@ -37,13 +34,11 @@ class AccountLimitService:
         owner = await self._lock_tree_owner(uow, tree_id)
         if owner is None or not owner.is_free:
             return
+        limit = settings.FREE_MAX_PERSONS_PER_TREE
         current = await uow.persons.count_in_tree(tree_id)
-        if current + additional > FREE_MAX_PERSONS_PER_TREE:
+        if current + additional > limit:
             raise FreeAccountLimitException(
-                detail=[
-                    f"free accounts may have at most {FREE_MAX_PERSONS_PER_TREE} "
-                    "person(s) per tree"
-                ]
+                detail=[f"free accounts may have at most {limit} person(s) per tree"]
             )
 
     async def assert_can_create_marriages(
@@ -58,13 +53,11 @@ class AccountLimitService:
         owner = await self._lock_tree_owner(uow, tree_id)
         if owner is None or not owner.is_free:
             return
+        limit = settings.FREE_MAX_MARRIAGES_PER_TREE
         current = await uow.marriages.count_in_tree(tree_id)
-        if current + additional > FREE_MAX_MARRIAGES_PER_TREE:
+        if current + additional > limit:
             raise FreeAccountLimitException(
-                detail=[
-                    f"free accounts may have at most {FREE_MAX_MARRIAGES_PER_TREE} "
-                    "marriage(s) per tree"
-                ]
+                detail=[f"free accounts may have at most {limit} marriage(s) per tree"]
             )
 
     async def _lock_tree_owner(self, uow: UnitOfWork, tree_id: UUID):

@@ -90,6 +90,12 @@ class AppSettings(PydanticBaseSettings):
     )
     AUTH_RATE_LIMIT_PER_MINUTE: int = 30
 
+    # Free-account quotas. A paid account has none until its `paid_until` day
+    # has passed. The tree cap matches the two starter trees a self-signup gets.
+    FREE_MAX_OWNED_TREES: int = Field(default=2, ge=1)
+    FREE_MAX_PERSONS_PER_TREE: int = Field(default=20, ge=1)
+    FREE_MAX_MARRIAGES_PER_TREE: int = Field(default=8, ge=1)
+
     # Public read-only demos. Empty (the default) means no public tree and every
     # tree stays members-only. Prefer the locale-specific ids; DEMO_TREE_ID is
     # the fallback when a locale slot is empty (and still publishes that tree).
