@@ -40,6 +40,32 @@ class UserType:
 
 
 @strawberry.type
+class FreeLimitsType:
+    owned_trees: int
+    persons_per_tree: int
+    marriages_per_tree: int
+
+
+@strawberry.type
+class TreeUsageType:
+    tree_id: UUID
+    name: str
+    persons: int
+    marriages: int
+
+
+@strawberry.type
+class UsageType:
+    account_type: AccountTypeEnum
+    paid_until: date | None
+    days_left: int | None
+    limited: bool
+    free_limits: FreeLimitsType
+    owned_trees: int
+    trees: list[TreeUsageType]
+
+
+@strawberry.type
 class UserPage:
     items: list[UserType]
     total: int

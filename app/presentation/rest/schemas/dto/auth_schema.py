@@ -78,6 +78,32 @@ class MeResponse(BaseModel):
     preferred_theme: Literal["light", "dark", "system"] | None = None
 
 
+class FreeLimitsResponse(BaseModel):
+    owned_trees: int
+    persons_per_tree: int
+    marriages_per_tree: int
+
+
+class TreeUsageResponse(BaseModel):
+    tree_id: UUID
+    name: str
+    persons: int
+    marriages: int
+
+
+class UsageResponse(BaseModel):
+    account_type: str
+    paid_until: date | None = None
+    days_left: int | None = Field(
+        default=None,
+        description="Days the paid plan still covers, today included.",
+    )
+    limited: bool = Field(description="Whether the free quotas apply right now.")
+    free_limits: FreeLimitsResponse
+    owned_trees: int
+    trees: list[TreeUsageResponse]
+
+
 class SessionResponse(BaseModel):
     id: UUID
     user_agent: str | None = None

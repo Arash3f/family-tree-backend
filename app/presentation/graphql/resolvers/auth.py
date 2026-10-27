@@ -1,6 +1,7 @@
 from strawberry.types import Info
 
 from app.application.dto.auth_dto import LoginDTO, RegisterDTO
+from app.application.use_cases.auth.get_usage import GetMyUsageUseCase
 from app.application.use_cases.auth.register_user import RegisterUserUseCase
 from app.application.use_cases.login_user import LoginUserUseCase
 from app.application.use_cases.logout_user import LogoutAllUseCase, LogoutUseCase
@@ -13,7 +14,11 @@ from app.presentation.graphql.auth import (
 )
 from app.presentation.graphql.types.common import ResultType
 from app.presentation.graphql.types.user import (
+    AccountTypeEnum,
     AuthTokensType,
+    FreeLimitsType,
+    TreeUsageType,
+    UsageType,
     UserType,
     user_from_mapping,
 )
@@ -127,3 +132,16 @@ async def resolve_me(info: Info) -> UserType:
         }
     )
 
+
+async def resolve_my_usage(info: Info) -> UsageType:
+    user = await get_current_user(info)
+    data = await GetMyUsageUseCase(info.context.uow).execute(user.safe_id)
+    return UsageType(
+        account_type=AccountTypeEnum(data.account_type),
+        paid_until=data.paid_until,
+        days_left=data.days_left,
+        limited=data.limited,
+        free_limits=FreeLimitsType(**data.free_limits.model_dump()),
+        owned_trees=data.owned_trees,
+        trees=[TreeUsageType(**tree.model_dump()) for tree in data.trees],
+    )

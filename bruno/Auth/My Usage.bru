@@ -1,0 +1,42 @@
+meta {
+  name: My Usage
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{base_url}}/auth/usage
+  body: none
+  auth: inherit
+}
+
+assert {
+  res.status: eq 200
+  res.body.account_type: isString
+  res.body.limited: isBoolean
+  res.body.free_limits: isDefined
+  res.body.trees: isArray
+}
+
+docs {
+  # My Usage
+
+  The caller's own trees — people and marriages in each — against the quotas of their plan. `account_type` is the plan in force today: a paid plan whose `paid_until` day has passed already reads `free`, before the daily expiry task stores it. `days_left` counts today, and is null when the plan never lapses or is free. `free_limits` always carries the free quotas, so a client can show them to a paid account too.
+
+  ## Output `200`
+  ```json
+  {
+    "account_type": "free",
+    "paid_until": null,
+    "days_left": null,
+    "limited": true,
+    "free_limits": { "owned_trees": 2, "persons_per_tree": 20, "marriages_per_tree": 8 },
+    "owned_trees": 1,
+    "trees": [
+      { "tree_id": "00000000-0000-0000-0000-000000000010", "name": "Family", "persons": 14, "marriages": 3 }
+    ]
+  }
+  ```
+
+  Requires `Authorization: Bearer {{access_token}}` (run Login first).
+}

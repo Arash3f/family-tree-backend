@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from app.application.dto.auth_dto import LoginDTO, RegisterDTO
 from app.application.dto.session_dto import ChangePasswordDTO, UpdatePreferencesDTO
+from app.application.use_cases.auth.get_usage import GetMyUsageUseCase
 from app.application.use_cases.auth.me_and_password import (
     ChangeOwnPasswordUseCase,
     GetMeUseCase,
@@ -39,6 +40,7 @@ from app.presentation.rest.schemas.dto.auth_schema import (
     RegisterRequest,
     SessionResponse,
     UpdatePreferencesRequest,
+    UsageResponse,
 )
 from app.presentation.rest.schemas.dto.common import ResultResponse
 from app.presentation.rest.schemas.mappers.auth_mappers import AuthApiMapper
@@ -163,6 +165,15 @@ async def me(
         current_user.safe_id, session_id, is_impersonating=is_impersonating
     )
     return MeResponse.model_validate(data.model_dump())
+
+
+@router.get("/usage", response_model=UsageResponse)
+async def my_usage(
+    current_user: User = Depends(get_current_user),
+    uow=Depends(get_request_uow),
+) -> UsageResponse:
+    data = await GetMyUsageUseCase(uow).execute(current_user.safe_id)
+    return UsageResponse.model_validate(data.model_dump())
 
 
 @router.get("/sessions", response_model=list[SessionResponse])

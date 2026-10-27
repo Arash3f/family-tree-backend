@@ -72,6 +72,7 @@ from app.presentation.graphql.types.ticket import (
 )
 from app.presentation.graphql.types.user import (
     AuthTokensType,
+    UsageType,
     UserCreateInput,
     UserListInput,
     UserPage,
@@ -87,6 +88,13 @@ class Query:
     async def me(self, info: strawberry.Info) -> UserType:
 
         return await auth_resolvers.resolve_me(info)
+
+    @strawberry.field(
+        description="Own trees against the plan's quotas (REST: GET /auth/usage)"
+    )
+    async def my_usage(self, info: strawberry.Info) -> UsageType:
+
+        return await auth_resolvers.resolve_my_usage(info)
 
     @strawberry.field(
         description="List family trees for current user (REST: GET /family-trees)"
