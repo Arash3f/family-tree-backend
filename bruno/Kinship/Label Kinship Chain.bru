@@ -1,0 +1,43 @@
+meta {
+  name: Label Kinship Chain
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/kinship/label
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "steps": ["father", "brother", "son"]
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.label_fa: eq پسرعمو
+  res.body.label_en: isString
+}
+
+docs {
+  # Label Kinship Chain
+
+  Public, no account. Names the relation reached by walking `steps` from the speaker, using the same labeller as the relationship finder. Steps: `father`, `mother`, `son`, `daughter`, `brother`, `sister`, `husband`, `wife`; 1 to 8 of them. Starting with `wife` or `husband` also tells the labeller the speaker's gender, which in-law names depend on (پدرزن vs پدرشوهر).
+
+  Rate-limited per IP (`KINSHIP_RATE_LIMIT_PER_MINUTE`).
+
+  The descriptions spell out the graph hops, so a brother or sister shows as a parent and then a child.
+
+  ## Output `200`
+  ```json
+  {
+    "label_fa": "پسرعمو",
+    "label_en": "paternal uncle's son",
+    "description_fa": "پسرِ پسرِ والدِ پدر",
+    "description_en": "father's parent's son's son"
+  }
+  ```
+}

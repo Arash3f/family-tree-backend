@@ -29,6 +29,7 @@ from app.presentation.rest.routers.auth_router import router as auth_router
 from app.presentation.rest.routers.family_tree_router import (
     router as family_tree_router,
 )
+from app.presentation.rest.routers.kinship_router import router as kinship_router
 from app.presentation.rest.routers.marriage_router import router as marriage_router
 from app.presentation.rest.routers.media_router import (
     serve_router as media_serve_router,
@@ -263,6 +264,7 @@ app.include_router(permission_router)
 app.include_router(role_router)
 app.include_router(ticket_router)
 app.include_router(auth_router)
+app.include_router(kinship_router)
 app.include_router(graphql_router)
 
 # Configure application logging

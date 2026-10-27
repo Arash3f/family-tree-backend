@@ -28,6 +28,9 @@ from .get_demo_family_tree_family_trees_demo_get_locale import GetDemoFamilyTree
 from .http_validation_error import HTTPValidationError
 from .id_request import IdRequest
 from .impersonate_response import ImpersonateResponse
+from .kinship_label_request import KinshipLabelRequest
+from .kinship_label_response import KinshipLabelResponse
+from .kinship_step import KinshipStep
 from .login_response import LoginResponse
 from .marriage_create_request import MarriageCreateRequest
 from .marriage_create_response import MarriageCreateResponse
@@ -159,6 +162,9 @@ __all__ = (
     "HTTPValidationError",
     "IdRequest",
     "ImpersonateResponse",
+    "KinshipLabelRequest",
+    "KinshipLabelResponse",
+    "KinshipStep",
     "LoginResponse",
     "MarriageCreateRequest",
     "MarriageCreateResponse",

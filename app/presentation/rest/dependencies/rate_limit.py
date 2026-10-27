@@ -92,6 +92,16 @@ async def rate_limit_auth(request: Request) -> None:
     )
 
 
+async def rate_limit_kinship(request: Request) -> None:
+    """Per-IP window for the public kinship-name tool, which anyone can call."""
+    await _enforce_ip_rate_limit(
+        request,
+        key_prefix="kinship_rate",
+        limit=settings.KINSHIP_RATE_LIMIT_PER_MINUTE,
+        message="Too many kinship requests",
+    )
+
+
 async def rate_limit_demo(request: Request) -> None:
     """Per-IP window for anonymous reads of the public demo tree.
 

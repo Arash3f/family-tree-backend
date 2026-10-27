@@ -112,6 +112,8 @@ class AppSettings(PydanticBaseSettings):
     # Per-IP ceiling for anonymous demo reads. Relationship path finding is the
     # expensive query on this surface, and it is the one anyone can reach.
     DEMO_RATE_LIMIT_PER_MINUTE: int = 60
+    # Per-IP ceiling for the public kinship-name tool, which needs no account.
+    KINSHIP_RATE_LIMIT_PER_MINUTE: int = 60
 
     # GraphQL hardening. A single query can fan out far more work than a REST
     # call, so cap how large an incoming document may be.

@@ -3082,6 +3082,48 @@
         ]
       }
     },
+    "/kinship/label": {
+      "post": {
+        "tags": [
+          "Kinship"
+        ],
+        "summary": "Name a relation given as a chain of family steps",
+        "description": "Public and stateless: no account, no tree, nothing stored. Uses the same labeller as the relationship finder, so the names match the app.",
+        "operationId": "label_kinship_chain_kinship_label_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KinshipLabelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KinshipLabelResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/graphql": {
       "get": {
         "summary": "Handle Http Get",
@@ -3729,6 +3771,99 @@
         ],
         "title": "ImpersonateResponse",
         "description": "No refresh token on purpose: impersonation ends when this one expires."
+      },
+      "KinshipLabelRequest": {
+        "properties": {
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/KinshipStep"
+            },
+            "type": "array",
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Steps",
+            "description": "The chain from the speaker outwards: [\"father\", \"brother\", \"son\"] is \"my father's brother's son\"."
+          }
+        },
+        "type": "object",
+        "required": [
+          "steps"
+        ],
+        "title": "KinshipLabelRequest"
+      },
+      "KinshipLabelResponse": {
+        "properties": {
+          "label_fa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label Fa",
+            "description": "The relation's Persian name, e.g. پسرعمو"
+          },
+          "label_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label En",
+            "description": "The English name, e.g. paternal uncle's son"
+          },
+          "description_fa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description Fa",
+            "description": "The chain word by word, in Persian"
+          },
+          "description_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description En",
+            "description": "The chain word by word, in English"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label_fa",
+          "label_en",
+          "description_fa",
+          "description_en"
+        ],
+        "title": "KinshipLabelResponse"
+      },
+      "KinshipStep": {
+        "type": "string",
+        "enum": [
+          "father",
+          "mother",
+          "son",
+          "daughter",
+          "brother",
+          "sister",
+          "husband",
+          "wife"
+        ],
+        "title": "KinshipStep"
       },
       "LoginResponse": {
         "properties": {

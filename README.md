@@ -470,6 +470,17 @@ some imply others — granting `user_create` requires `user_read` and `role_read
 
 `/health` backs the container `HEALTHCHECK`, so a degraded dependency marks the container unhealthy.
 
+### Kinship names
+
+| Method | Path | Behaviour |
+|--------|------|-----------|
+| `POST` | `/kinship/label` | Public, no account. Names a chain of steps — `{"steps": ["father", "brother", "son"]}` → `پسرعمو` / `paternal uncle's son` |
+
+Steps are `father`, `mother`, `son`, `daughter`, `brother`, `sister`, `husband` and `wife`, 1 to 8 of
+them. The chain is turned into the hops a real path would have and named by the same labeller as the
+relationship finder, so the public kinship tool can never disagree with the app. Nothing is read or
+stored; requests are rate-limited per IP (`KINSHIP_RATE_LIMIT_PER_MINUTE`).
+
 ### GraphQL
 
 One endpoint, `POST /graphql`, with the same auth header and the same permission checks.
@@ -603,7 +614,7 @@ BACKUP_DIR=/mnt/backups
 ```
 
 **Client addresses behind proxies.** Per-IP limits (`AUTH_RATE_LIMIT_PER_MINUTE`,
-`DEMO_RATE_LIMIT_PER_MINUTE`) and the IP shown on login sessions read
+`DEMO_RATE_LIMIT_PER_MINUTE`, `KINSHIP_RATE_LIMIT_PER_MINUTE`) and the IP shown on login sessions read
 the visitor's address from `X-Forwarded-For`, but only when the request arrives from a network in
 `TRUSTED_PROXY_CIDRS` (loopback and private ranges by default, which covers nginx and the frontend
 container). A request from anywhere else is counted by its own address, so the header cannot be
