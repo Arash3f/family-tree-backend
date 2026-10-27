@@ -191,3 +191,30 @@ def test_unknown_gender_fallback():
     assert "والد" in (labels.description_fa or "") or "فرزند" in (
         labels.description_fa or ""
     )
+
+
+def test_spouses_of_two_siblings_have_their_own_words():
+    # Two men married to two sisters are each other's باجناق.
+    assert (
+        _from_hops(
+            [("S", "FEMALE"), ("U", "MALE"), ("D", "FEMALE"), ("S", "MALE")],
+            start_gender="MALE",
+        ).label_fa
+        == "باجناق"
+    )
+    # Two women married to two brothers are each other's جاری.
+    assert (
+        _from_hops(
+            [("S", "MALE"), ("U", "MALE"), ("D", "MALE"), ("S", "FEMALE")],
+            start_gender="FEMALE",
+        ).label_fa
+        == "جاری"
+    )
+    # The same shape across genders has no word of its own.
+    assert (
+        _from_hops(
+            [("S", "FEMALE"), ("U", "MALE"), ("D", "MALE"), ("S", "FEMALE")],
+            start_gender="MALE",
+        ).label_fa
+        == "زنِ برادرزن"
+    )

@@ -296,6 +296,19 @@ def _spouse_sibling(owner: Gender, sibling: Gender) -> _Term:
     )
 
 
+def _co_sibling_in_law(owner: Gender, sibling: Gender, spouse: Gender) -> _Term | None:
+    """The two Persian words for a spouse's sibling's spouse.
+
+    Men married to two sisters are each other's باجناق; women married to two
+    brothers are each other's جاری. English has no single word for either.
+    """
+    if owner == "M" and sibling == "F" and spouse == "M":
+        return _Term("باجناق", "wife's sister's husband")
+    if owner == "F" and sibling == "M" and spouse == "F":
+        return _Term("جاری", "husband's brother's wife")
+    return None
+
+
 def _compress(hops: list[_Hop], owner_genders: list[Gender]) -> list[_Term]:
     terms: list[_Term] = []
     i = 0
@@ -307,7 +320,14 @@ def _compress(hops: list[_Hop], owner_genders: list[Gender]) -> list[_Term]:
             and hops[i + 1].kind == "U"
             and hops[i + 2].kind == "D"
         ):
-            terms.append(_spouse_sibling(owner_genders[i], hops[i + 2].reached))
+            owner, sibling = owner_genders[i], hops[i + 2].reached
+            if i + 3 < n and hops[i + 3].kind == "S":
+                co_in_law = _co_sibling_in_law(owner, sibling, hops[i + 3].reached)
+                if co_in_law is not None:
+                    terms.append(co_in_law)
+                    i += 4
+                    continue
+            terms.append(_spouse_sibling(owner, sibling))
             i += 3
             continue
         if i + 1 < n and hops[i].kind == "S" and hops[i + 1].kind == "U":
