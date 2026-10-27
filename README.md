@@ -620,7 +620,9 @@ the visitor's address from `X-Forwarded-For`, but only when the request arrives 
 container). A request from anywhere else is counted by its own address, so the header cannot be
 forged from outside. If the frontend's `API_PROXY_TARGET` is the API's **public** URL, its requests
 come back in through the server's public address — add that address to `TRUSTED_PROXY_CIDRS`, or every
-visitor is again counted as one.
+visitor is again counted as one. Behind a CDN, add the CDN's published ranges as well (for ArvanCloud,
+<https://www.arvancloud.ir/en/ips.txt>), or each CDN edge is counted as one visitor. To check, sign in
+from two different networks and compare the IPs on the profile's sessions page.
 
 ---
 
