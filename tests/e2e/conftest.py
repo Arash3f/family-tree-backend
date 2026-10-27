@@ -31,8 +31,13 @@ from app.presentation.dependencies import get_uow
 from tests.helpers.family_tree import create_family_tree_with_owner, get_admin_user
 from tests.helpers.uow import TreeUnitOfWork
 
-# Avoid cross-test auth rate-limit bleed (shared client IP in ASGI tests)
+# Avoid cross-test rate-limit bleed (shared client IP in ASGI tests). Disabled
+# limiters also never touch the module-level Redis client, which is bound to
+# the event loop of the first test that used it and fails in later ones with
+# "Event loop is closed".
 settings.AUTH_RATE_LIMIT_PER_MINUTE = 0
+settings.KINSHIP_RATE_LIMIT_PER_MINUTE = 0
+settings.DEMO_RATE_LIMIT_PER_MINUTE = 0
 
 
 @pytest.fixture(scope="session")
