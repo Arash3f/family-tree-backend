@@ -6,6 +6,7 @@ import redis.asyncio as aioredis
 from fastapi import HTTPException, Request
 
 from app.core.config import settings
+from app.presentation.rest.utils.client_ip import client_ip
 
 _redis_client: aioredis.Redis | None = None
 
@@ -59,7 +60,7 @@ async def _enforce_ip_rate_limit(
     if limit <= 0:
         return
 
-    ip = request.client.host if request.client else "unknown"
+    ip = client_ip(request) or "unknown"
     now = time()
     window_start = now - 60
     key = f"{key_prefix}:{ip}"

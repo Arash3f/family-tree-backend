@@ -14,6 +14,7 @@ from app.domain.exceptions.user_exceptions import (
 )
 from app.presentation.graphql.context import GraphQLContext
 from app.presentation.rest.dependencies.rate_limit import rate_limit_auth
+from app.presentation.rest.utils.client_ip import client_ip
 
 
 def _context(info: Info) -> GraphQLContext:
@@ -120,5 +121,5 @@ async def enforce_auth_rate_limit(info: Info) -> None:
 def client_meta(info: Info) -> tuple[str | None, str | None]:
     request = _request(info)
     user_agent = request.headers.get("user-agent")
-    ip_address = request.client.host if request.client else None
+    ip_address = client_ip(request)
     return user_agent, ip_address

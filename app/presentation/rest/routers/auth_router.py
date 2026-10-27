@@ -45,6 +45,7 @@ from app.presentation.rest.schemas.dto.auth_schema import (
 from app.presentation.rest.schemas.dto.common import ResultResponse
 from app.presentation.rest.schemas.mappers.auth_mappers import AuthApiMapper
 from app.presentation.rest.schemas.mappers.common_mappers import CommonApiMapper
+from app.presentation.rest.utils.client_ip import client_ip
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -55,7 +56,7 @@ class RefreshTokenRequest(BaseModel):
 
 def _client_meta(request: Request) -> tuple[str | None, str | None]:
     user_agent = request.headers.get("user-agent")
-    ip_address = request.client.host if request.client else None
+    ip_address = client_ip(request)
     return user_agent, ip_address
 
 

@@ -89,6 +89,13 @@ class AppSettings(PydanticBaseSettings):
         "https://family.arash-alfooneh.ir,http://family.arash-alfooneh.ir"
     )
     AUTH_RATE_LIMIT_PER_MINUTE: int = 30
+    # Proxies whose X-Forwarded-For is believed when working out a client's
+    # address (nginx, the frontend's /backend proxy, the Docker network).
+    # A request from anywhere else is counted by its own address. Add the
+    # server's public IP when the frontend reaches the API by its public URL.
+    TRUSTED_PROXY_CIDRS: str = (
+        "127.0.0.0/8,::1/128,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,fc00::/7"
+    )
 
     # Free-account quotas. A paid account has none until its `paid_until` day
     # has passed. The tree cap matches the two starter trees a self-signup gets.

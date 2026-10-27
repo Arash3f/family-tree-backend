@@ -602,6 +602,15 @@ API_PORT=8001
 BACKUP_DIR=/mnt/backups
 ```
 
+**Client addresses behind proxies.** Per-IP limits (`AUTH_RATE_LIMIT_PER_MINUTE`,
+`DEMO_RATE_LIMIT_PER_MINUTE`) and the IP shown on login sessions read
+the visitor's address from `X-Forwarded-For`, but only when the request arrives from a network in
+`TRUSTED_PROXY_CIDRS` (loopback and private ranges by default, which covers nginx and the frontend
+container). A request from anywhere else is counted by its own address, so the header cannot be
+forged from outside. If the frontend's `API_PROXY_TARGET` is the API's **public** URL, its requests
+come back in through the server's public address — add that address to `TRUSTED_PROXY_CIDRS`, or every
+visitor is again counted as one.
+
 ---
 
 ## Testing and quality
