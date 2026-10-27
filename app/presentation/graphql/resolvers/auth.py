@@ -121,7 +121,9 @@ async def resolve_me(info: Info) -> UserType:
             "email": user.email,
             "phone": user.phone,
             "role_id": user.role_id,
-            "account_type": user.account_type.value,
+            "account_type": user.effective_account_type.value,
+            "paid_until": user.paid_until,
             "is_active": user.is_active,
         }
     )
+

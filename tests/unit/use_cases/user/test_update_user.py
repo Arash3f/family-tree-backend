@@ -1,3 +1,4 @@
+from datetime import date
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID
 
@@ -15,6 +16,7 @@ from app.domain.exceptions.user_exceptions import (
     PhoneAlreadyExistsException,
     UsernameAlreadyExistsException,
 )
+from app.domain.shared.account_type import AccountType
 
 CALLER = User(id=UUID(int=99), username="admin", password_hash="x")
 
@@ -160,3 +162,51 @@ async def test_update_user_rejects_taken_phone(mock_uow):
         await use_case.execute(dto)
     mock_uow.users.get_by_phone.assert_awaited_once_with("+989121112233")
     mock_uow.users.update.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("paid_until", [date(2027, 10, 27), None])
+async def test_update_user_sets_or_clears_paid_until(mock_uow, paid_until):
+    target = User(
+        id=UUID(int=1),
+        username="member",
+        password_hash="h",
+        account_type=AccountType.PAID,
+        paid_until=date(2026, 1, 1),
+    )
+    mock_uow.users.get_or_raise = AsyncMock(return_value=target)
+    mock_uow.users.update = AsyncMock(side_effect=lambda user: user)
+    mock_uow.commit = AsyncMock()
+    dto = UserUpdateDTO.model_validate(
+        {"where": {"user_id": UUID(int=1)}, "data": {"paid_until": paid_until}}
+    )
+
+    result = await UpdateUserUseCase(
+        mock_uow, MagicMock(), current_user=CALLER
+    ).execute(dto)
+
+    # null is meaningful here: it makes the plan open-ended.
+    assert result.paid_until == paid_until
+
+
+@pytest.mark.asyncio
+async def test_update_user_leaves_paid_until_alone_when_not_sent(mock_uow):
+    target = User(
+        id=UUID(int=1),
+        username="member",
+        password_hash="h",
+        account_type=AccountType.PAID,
+        paid_until=date(2027, 1, 1),
+    )
+    mock_uow.users.get_or_raise = AsyncMock(return_value=target)
+    mock_uow.users.update = AsyncMock(side_effect=lambda user: user)
+    mock_uow.commit = AsyncMock()
+    dto = UserUpdateDTO.model_validate(
+        {"where": {"user_id": UUID(int=1)}, "data": {"fullname": "New Name"}}
+    )
+
+    result = await UpdateUserUseCase(
+        mock_uow, MagicMock(), current_user=CALLER
+    ).execute(dto)
+
+    assert result.paid_until == date(2027, 1, 1)

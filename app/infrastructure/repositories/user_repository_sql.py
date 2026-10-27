@@ -1,9 +1,11 @@
 from collections.abc import Mapping
+from datetime import date
 from enum import Enum
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
-from sqlalchemy import delete, func, or_, select
+from sqlalchemy import delete, func, or_, select, update
+from sqlalchemy.engine import CursorResult
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -240,6 +242,7 @@ class SQLUserRepository(UserRepository):
         model.role_id = user.role_id
         model.password_hash = user.password_hash
         model.account_type = user.account_type.value
+        model.paid_until = user.paid_until
         model.is_active = user.is_active
         model.preferred_locale = (
             user.preferred_locale.value if user.preferred_locale else None
@@ -258,6 +261,19 @@ class SQLUserRepository(UserRepository):
 
         await self.session.execute(stmt)
 
+    async def downgrade_lapsed_paid_plans(self, today: date) -> int:
+        stmt = (
+            update(UserModel)
+            .where(
+                UserModel.account_type == AccountType.PAID.value,
+                UserModel.paid_until.is_not(None),
+                UserModel.paid_until < today,
+            )
+            .values(account_type=AccountType.FREE.value)
+        )
+        result = cast(CursorResult[Any], await self.session.execute(stmt))
+        return result.rowcount or 0
+
     def _to_entity(self, model: UserModel) -> User:
         return User(
             id=model.id,
@@ -268,6 +284,7 @@ class SQLUserRepository(UserRepository):
             password_hash=model.password_hash,
             role_id=model.role_id,
             account_type=AccountType(model.account_type),
+            paid_until=model.paid_until,
             is_active=model.is_active,
             preferred_locale=(
                 PreferredLocale(model.preferred_locale)
@@ -289,6 +306,7 @@ class SQLUserRepository(UserRepository):
             password_hash=entity.password_hash,
             role_id=entity.role_id,
             account_type=entity.account_type.value,
+            paid_until=entity.paid_until,
             is_active=entity.is_active,
             preferred_locale=(
                 entity.preferred_locale.value if entity.preferred_locale else None

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal
 from uuid import UUID
 
@@ -71,7 +71,9 @@ class MeResponse(BaseModel):
     permission_details: list[MePermissionItem] = Field(default_factory=list)
     session_id: UUID | None = None
     is_impersonating: bool = False
+    # The plan in force today: "free" once a paid plan's last day has passed.
     account_type: str = "free"
+    paid_until: date | None = None
     preferred_locale: Literal["en", "fa"] | None = None
     preferred_theme: Literal["light", "dark", "system"] | None = None
 

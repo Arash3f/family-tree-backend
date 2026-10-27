@@ -1,3 +1,4 @@
+from datetime import date
 from enum import StrEnum
 from uuid import UUID
 
@@ -17,6 +18,7 @@ class UserUpdateField(StrEnum):
     COUNTRY_CODE = "country_code"
     ROLE_ID = "role_id"
     ACCOUNT_TYPE = "account_type"
+    PAID_UNTIL = "paid_until"
 
 
 class _UserUpdateDataDTO(BaseModel):
@@ -29,6 +31,8 @@ class _UserUpdateDataDTO(BaseModel):
     country_code: str | None = None
     role_id: UUID | None = None
     account_type: AccountType | None = None
+    # Sent as null, it clears the date: a paid plan that never lapses.
+    paid_until: date | None = None
 
 
 class _UserUpdateWhereDTO(BaseModel):
@@ -48,6 +52,7 @@ class UserUpdateResponseDTO(BaseModel):
     phone: str | None = None
     role_id: UUID | None
     account_type: AccountType
+    paid_until: date | None = None
     is_active: bool = True
 
 
@@ -62,5 +67,6 @@ class UserUpdateMapper(BaseModel):
             phone=user.phone,
             role_id=user.role_id,
             account_type=user.account_type,
+            paid_until=user.paid_until,
             is_active=user.is_active,
         )

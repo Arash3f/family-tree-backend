@@ -1,3 +1,4 @@
+from datetime import date
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -33,6 +34,7 @@ class UserCreateDTO(BaseModel):
     country_code: str | None = Field(default=None, max_length=8)
     role_id: UUID | None
     account_type: AccountType = AccountType.FREE
+    paid_until: date | None = None
 
 
 class UserCreateResponseDTO(BaseModel):
@@ -43,6 +45,7 @@ class UserCreateResponseDTO(BaseModel):
     phone: str | None = None
     role_id: UUID | None
     account_type: AccountType
+    paid_until: date | None = None
     is_active: bool = True
 
 
@@ -57,5 +60,6 @@ class UserCreateMapper(BaseModel):
             phone=user.phone,
             role_id=user.role_id,
             account_type=user.account_type,
+            paid_until=user.paid_until,
             is_active=user.is_active,
         )

@@ -33,6 +33,7 @@ def user_model_to_detail_dto(model: UserModel) -> UserGetWithDetailResponseDTO:
         phone=model.phone,
         role_id=model.role_id,
         account_type=AccountType(model.account_type),
+        paid_until=model.paid_until,
         is_active=model.is_active,
         preferred_locale=(
             PreferredLocale(model.preferred_locale) if model.preferred_locale else None

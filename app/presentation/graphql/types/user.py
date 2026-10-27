@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum
 from uuid import UUID
 
@@ -34,6 +34,7 @@ class UserType:
     phone: str | None = None
     role_id: UUID | None = None
     account_type: AccountTypeEnum = AccountTypeEnum.FREE
+    paid_until: date | None = None
     is_active: bool = True
     last_session_at: datetime | None = None
 
@@ -64,6 +65,7 @@ class UserCreateInput:
     country_code: str | None = None
     role_id: UUID | None = None
     account_type: AccountTypeEnum | None = None
+    paid_until: date | None = None
 
 
 @strawberry.input
@@ -77,6 +79,8 @@ class UserUpdateDataInput:
     country_code: str | None = None
     role_id: UUID | None = None
     account_type: AccountTypeEnum | None = None
+    # Left out, the date is untouched; sent as null, the plan becomes open-ended.
+    paid_until: date | None = strawberry.UNSET
 
 
 @strawberry.input
@@ -115,6 +119,7 @@ def user_from_mapping(data: dict) -> UserType:
         phone=data.get("phone"),
         role_id=data.get("role_id"),
         account_type=_account_type_enum(data.get("account_type")),
+        paid_until=data.get("paid_until"),
         is_active=bool(data.get("is_active", True)),
         last_session_at=data.get("last_session_at"),
     )

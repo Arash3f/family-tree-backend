@@ -6,6 +6,7 @@ import redis
 from celery.exceptions import Retry
 
 from app.celery.tasks import backup as backup_module
+from app.celery.tasks import expire_paid_plans as expire_module
 from app.celery.tasks import reconcile_neo4j as reconcile_module
 from app.celery.tasks import sync_person as sync_person_module
 from app.celery.tasks import sync_relationships as sync_rel_module
@@ -197,3 +198,20 @@ def test_reconcile_neo4j_proceeds_if_redis_is_unavailable():
         result = reconcile_module.reconcile_neo4j.run()
         assert result["trees_checked"] == 0
         assert "skipped" not in result
+
+
+def test_expire_paid_plans_reports_how_many_lapsed():
+    with patch.object(
+        expire_module, "_downgrade_lapsed", new=AsyncMock(return_value=3)
+    ) as downgrade:
+        assert expire_module.expire_paid_plans.run() == 3
+
+    downgrade.assert_awaited_once()
+
+
+def test_expire_paid_plans_is_on_the_daily_beat():
+    from app.celery.celery_app import celery_app
+
+    entry = celery_app.conf.beat_schedule["daily-paid-plan-expiry"]
+
+    assert entry["task"] == expire_module.expire_paid_plans.name

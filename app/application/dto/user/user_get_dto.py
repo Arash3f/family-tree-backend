@@ -1,3 +1,4 @@
+from datetime import date
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -14,6 +15,7 @@ class UserGetResponseDTO(BaseModel):
     phone: str | None = None
     role_id: UUID | None
     account_type: AccountType
+    paid_until: date | None = None
     is_active: bool = True
 
 
@@ -28,5 +30,6 @@ class UserGetMapper(BaseModel):
             phone=user.phone,
             role_id=user.role_id,
             account_type=user.account_type,
+            paid_until=user.paid_until,
             is_active=user.is_active,
         )

@@ -38,6 +38,13 @@ celery_app.conf.beat_schedule = {
         "task": "reconcile.neo4j",
         "schedule": crontab(minute=30),
     },
+    # Beat reads crontabs in `timezone` (Asia/Tehran, a fixed UTC+03:30), and
+    # `paid_until` is a UTC day: 03:35 Tehran is 00:05 UTC, just after a plan's
+    # last day ends.
+    "daily-paid-plan-expiry": {
+        "task": "accounts.expire_paid_plans",
+        "schedule": crontab(hour=3, minute=35),
+    },
 }
 
 celery_app.autodiscover_tasks(["app.celery"])

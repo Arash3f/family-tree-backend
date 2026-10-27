@@ -1,3 +1,4 @@
+from datetime import date
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -27,6 +28,7 @@ class UserGetWithDetailResponseDTO(BaseModel):
     phone: str | None = None
     role_id: UUID | None
     account_type: AccountType
+    paid_until: date | None = None
     is_active: bool = True
     preferred_locale: PreferredLocale | None = None
     preferred_theme: PreferredTheme | None = None

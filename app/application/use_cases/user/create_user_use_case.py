@@ -55,6 +55,7 @@ class CreateUserUseCase:
                 role_id=role_id,
                 password_hash=hashed_password,
                 account_type=dto.account_type,
+                paid_until=dto.paid_until,
             )
 
             user = await self.uow.users.create(user)

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import date
 from uuid import UUID
 
 from app.domain.entities.user import User
@@ -55,6 +56,17 @@ class UserRepository(ABC):
 
     @abstractmethod
     async def delete(self, user_id: UUID) -> None: ...
+
+    @abstractmethod
+    async def downgrade_lapsed_paid_plans(self, today: date) -> int:
+        """
+        Store every paid plan whose `paid_until` day is before `today` as free.
+
+        The date itself is kept, so the account still shows when it lapsed.
+
+        Returns:
+            int: How many accounts were downgraded.
+        """
 
     async def get_or_raise(self, user_id: UUID) -> User:
         """

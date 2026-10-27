@@ -12,6 +12,7 @@ from app.domain.exceptions.user_exceptions import (
     UserPasswordIncorectException,
 )
 from app.domain.services.password_hasher import PasswordHasher
+from app.domain.shared.account_type import effective_account_type
 from app.domain.shared.dto.common_dto import ResultDTO
 from app.domain.shared.user_preferences import PreferredLocale, PreferredTheme
 
@@ -44,7 +45,8 @@ class GetMeUseCase:
                     permission_details=[],
                     session_id=session_id,
                     is_impersonating=is_impersonating,
-                    account_type=user.account_type.value,
+                    account_type=user.effective_account_type.value,
+                    paid_until=user.paid_until,
                     preferred_locale=(
                         user.preferred_locale.value if user.preferred_locale else None
                     ),
@@ -84,7 +86,10 @@ class GetMeUseCase:
                 permission_details=permission_details,
                 session_id=session_id,
                 is_impersonating=is_impersonating,
-                account_type=details.account_type.value,
+                account_type=effective_account_type(
+                    details.account_type, details.paid_until
+                ).value,
+                paid_until=details.paid_until,
                 preferred_locale=(
                     details.preferred_locale.value if details.preferred_locale else None
                 ),

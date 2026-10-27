@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 
 from app.domain.exceptions.common_exceptions import UnExpectedIdException
 from app.domain.services.password_hasher import PasswordHasher
-from app.domain.shared.account_type import AccountType
+from app.domain.shared.account_type import AccountType, effective_account_type
 from app.domain.shared.user_preferences import PreferredLocale, PreferredTheme
 
 
@@ -24,6 +24,8 @@ class User:
     id: UUID | None = None
     role_id: UUID | None = None
     account_type: AccountType = AccountType.FREE
+    # Last day (UTC) a paid plan covers; None means it never lapses.
+    paid_until: date | None = None
     is_active: bool = True
     preferred_locale: PreferredLocale | None = None
     preferred_theme: PreferredTheme | None = None
@@ -42,7 +44,18 @@ class User:
 
     @property
     def is_free(self) -> bool:
-        return self.account_type is AccountType.FREE
+        """
+        Whether free-account quotas apply right now.
+
+        A paid account whose `paid_until` day is behind us counts as free at
+        once, before the daily expiry task gets to store it as such.
+        """
+        return self.effective_account_type is AccountType.FREE
+
+    @property
+    def effective_account_type(self) -> AccountType:
+        """The plan in force today: the stored one, unless a paid plan lapsed."""
+        return effective_account_type(self.account_type, self.paid_until)
 
     def verify_password(self, plain_password: str, hasher: PasswordHasher) -> bool:
         """

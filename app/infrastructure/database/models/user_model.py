@@ -1,7 +1,8 @@
+from datetime import date
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import Boolean, ForeignKey, String, true
+from sqlalchemy import Boolean, Date, ForeignKey, String, true
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.domain.shared.account_type import AccountType
@@ -25,6 +26,7 @@ class UserModel(Base):
         default=AccountType.FREE.value,
         server_default=AccountType.FREE.value,
     )
+    paid_until: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
@@ -20,6 +20,7 @@ class UserModel(BaseModel):
     phone: str | None = None
     role_id: UUID | None = None
     account_type: AccountType = AccountType.FREE
+    paid_until: date | None = None
     is_active: bool = True
     last_session_at: datetime | None = None
 
@@ -38,6 +39,10 @@ class _UserUpdateDateRequest(BaseModel):
     country_code: str | None = Field(default=None, max_length=8)
     role_id: UUID | None = None
     account_type: AccountType | None = None
+    paid_until: date | None = Field(
+        default=None,
+        description="Last day the paid plan covers; null makes it open-ended.",
+    )
 
     @field_validator("email", "phone", "country_code", mode="before")
     @classmethod
@@ -64,6 +69,7 @@ class UserUpdateResponse(BaseModel):
     phone: str | None = None
     role_id: UUID | None
     account_type: AccountType
+    paid_until: date | None = None
     is_active: bool = True
 
 
@@ -75,6 +81,7 @@ class UserGetResponse(BaseModel):
     phone: str | None = None
     role_id: UUID | None
     account_type: AccountType
+    paid_until: date | None = None
     is_active: bool = True
 
 
@@ -92,6 +99,7 @@ class UserCreateRequest(BaseModel):
     country_code: str | None = Field(default=None, max_length=8)
     role_id: UUID | None = None
     account_type: AccountType = AccountType.FREE
+    paid_until: date | None = None
 
     @field_validator("email", "phone", "country_code", mode="before")
     @classmethod
@@ -109,6 +117,7 @@ class UserCreateResponse(BaseModel):
     phone: str | None = None
     role_id: UUID | None
     account_type: AccountType
+    paid_until: date | None = None
     is_active: bool = True
 
 

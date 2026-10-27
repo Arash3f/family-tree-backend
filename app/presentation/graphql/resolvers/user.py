@@ -1,5 +1,6 @@
 from uuid import UUID
 
+import strawberry
 from strawberry.types import Info
 
 from app.application.dto.user.user_update_dto import (
@@ -59,6 +60,7 @@ def _user_create_request(data: UserCreateInput) -> UserCreateRequest:
             if data.account_type is not None
             else AccountType.FREE
         ),
+        paid_until=data.paid_until,
     )
 
 
@@ -82,6 +84,8 @@ def _user_update_dto(data: UserUpdateInput) -> UserUpdateDTO:
         raw["role_id"] = data.data.role_id
     if data.data.account_type is not None:
         raw["account_type"] = data.data.account_type.value
+    if data.data.paid_until is not strawberry.UNSET:
+        raw["paid_until"] = data.data.paid_until
     return UserUpdateDTO(
         data=_UserUpdateDataDTO.model_construct(**raw),
         where=_UserUpdateWhereDTO(user_id=data.where.user_id),

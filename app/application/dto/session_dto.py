@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -33,6 +33,7 @@ class MeResponseDTO(BaseModel):
     session_id: UUID | None
     is_impersonating: bool = False
     account_type: str
+    paid_until: date | None = None
     preferred_locale: str | None = None
     preferred_theme: str | None = None
 

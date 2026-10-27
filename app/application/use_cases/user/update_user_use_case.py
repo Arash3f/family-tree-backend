@@ -53,6 +53,7 @@ class UpdateUserUseCase:
             update_data_enum.pop(UserUpdateField.EMAIL, None)
             update_data_enum.pop(UserUpdateField.PHONE, None)
             update_data_enum.pop(UserUpdateField.COUNTRY_CODE, None)
+            update_data_enum.pop(UserUpdateField.PAID_UNTIL, None)
 
             if role_id is not None:
                 await self._authorize_role_change(target=user, new_role_id=role_id)
@@ -89,6 +90,11 @@ class UpdateUserUseCase:
                     if existing is not None and existing.safe_id != user.safe_id:
                         raise PhoneAlreadyExistsException()
                 user.phone = phone
+
+            # Read from the fields sent rather than the dump above, which drops
+            # nulls: null here is meaningful and makes the plan open-ended.
+            if "paid_until" in fields_set:
+                user.paid_until = dto.data.paid_until
 
             for field, value in update_data_enum.items():
                 if field is UserUpdateField.ACCOUNT_TYPE:
