@@ -5,9 +5,11 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from starlette.responses import Response
 
+from app.domain.exceptions.oauth_exceptions import OAuthError
 from app.presentation.rest.errors.error_resolver import resolve_message
 from app.presentation.rest.utils.language import detect_language
 from app.utils.app_exception import AppException
+from app.utils.error_codes import ErrorCode
 
 
 class ErrorResponse(BaseModel):
@@ -50,6 +52,16 @@ async def app_exception_handler(request: Request, exc: Exception) -> Response:
     # Convert the incoming exception to AppException type
     app_exc = cast(AppException, exc)
 
+    # OAuth token/authorize endpoints speak RFC 6749, not the panel error shape.
+    if isinstance(exc, OAuthError):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "error": exc.oauth_error,
+                "error_description": exc.oauth_error_description,
+            },
+        )
+
     # Detect client language from the Accept-Language header
     lang = detect_language(request)
 
@@ -71,7 +83,25 @@ async def app_exception_handler(request: Request, exc: Exception) -> Response:
     if settings.is_development_like:
         error_content["detail"] = app_exc.detail
 
+    headers: dict[str, str] = {}
+    # ChatGPT discovers OAuth from the WWW-Authenticate challenge on /mcp 401s.
+    if (
+        app_exc.status_code == 401
+        and (
+            request.url.path.rstrip("/").endswith("/mcp")
+            or app_exc.code
+            in {ErrorCode.MCP_INVALID_TOKEN, ErrorCode.OAUTH_ERROR}
+        )
+        and settings.MCP_ENABLED
+        and settings.oauth_issuer
+    ):
+        meta = f"{settings.oauth_issuer}/.well-known/oauth-protected-resource"
+        headers["WWW-Authenticate"] = (
+            f'Bearer resource_metadata="{meta}", scope="family-tree:read"'
+        )
+
     return JSONResponse(
         status_code=app_exc.status_code,
         content=error_content,
+        headers=headers or None,
     )

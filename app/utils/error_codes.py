@@ -91,6 +91,8 @@ class ErrorCode(int, Enum):
     MCP_TOKEN_NOT_FOUND = 1801
     MCP_TOKEN_LIMIT = 1802
     MCP_INVALID_TOKEN = 1803
+    OAUTH_ERROR = 1804
+    OAUTH_CONSENT_NOT_FOUND = 1805
 
 
 ERROR_MESSAGES = {
@@ -194,6 +196,8 @@ ERROR_MESSAGES = {
         ErrorCode.MCP_TOKEN_NOT_FOUND: "MCP token not found",
         ErrorCode.MCP_TOKEN_LIMIT: "Too many active MCP tokens",
         ErrorCode.MCP_INVALID_TOKEN: "Invalid or expired MCP token",
+        ErrorCode.OAUTH_ERROR: "OAuth request failed",
+        ErrorCode.OAUTH_CONSENT_NOT_FOUND: "OAuth consent request not found",
     },
     "fa": {
         ErrorCode.UN_EXPECTED_ID: "شناسهٔ ارسال‌شده نامعتبر است.",
@@ -300,5 +304,7 @@ ERROR_MESSAGES = {
         ErrorCode.MCP_TOKEN_NOT_FOUND: "توکن MCP پیدا نشد.",
         ErrorCode.MCP_TOKEN_LIMIT: "تعداد توکن‌های فعال MCP به سقف رسیده است.",
         ErrorCode.MCP_INVALID_TOKEN: "توکن MCP نامعتبر یا منقضی است.",
+        ErrorCode.OAUTH_ERROR: "درخواست OAuth ناموفق بود.",
+        ErrorCode.OAUTH_CONSENT_NOT_FOUND: "درخواست رضایت OAuth پیدا نشد.",
     },
 }

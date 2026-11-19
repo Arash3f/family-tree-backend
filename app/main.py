@@ -26,6 +26,7 @@ from app.presentation.dependencies import get_uow
 from app.presentation.graphql.schema import graphql_router
 from app.presentation.rest.errors.handlers import app_exception_handler
 from app.presentation.mcp.mcp_router import router as mcp_router
+from app.presentation.oauth.oauth_router import router as oauth_router
 from app.presentation.rest.routers.auth_router import router as auth_router
 from app.presentation.rest.routers.family_tree_router import (
     router as family_tree_router,
@@ -269,6 +270,7 @@ app.include_router(role_router)
 app.include_router(ticket_router)
 app.include_router(auth_router)
 app.include_router(mcp_token_router)
+app.include_router(oauth_router)
 app.include_router(mcp_router)
 app.include_router(kinship_router)
 app.include_router(graphql_router)

@@ -21,9 +21,14 @@ async def mcp_get_info() -> JSONResponse:
         {
             "server": SERVER_INFO,
             "transport": "streamable-http-json",
-            "auth": "Bearer ftmcp_… personal access token",
+            "auth": {
+                "oauth": "OAuth 2.1 authorization code + PKCE (ChatGPT)",
+                "personal_token": "Bearer ftmcp_… (Cursor-style clients)",
+            },
             "tools": list_tool_names(),
             "endpoint": settings.mcp_public_url or "/mcp",
+            "resource": settings.mcp_resource_url or None,
+            "authorization_server": settings.oauth_issuer or None,
         }
     )
 

@@ -1,30 +1,50 @@
-# MCP (Model Context Protocol)
+# MCP for ChatGPT (Family Tree)
 
-Medium-weight AI surface for Family Tree: personal access tokens + a JSON-RPC
-`POST /mcp` endpoint. No OAuth server — keep it simpler than Satba, still safe
-enough for production with the flag off by default.
+Remote MCP so ChatGPT (and other agents) can read the caller's family trees.
+
+## What you get
+
+- `POST /mcp` — JSON-RPC tools (Streamable-HTTP compatible JSON responses)
+- OAuth 2.1 authorization code + PKCE (`S256`)
+- Protected-resource + authorization-server discovery
+- DCR (`POST /oauth/register`) and CIMD (`https://…` client_id, chatgpt.com allowlist)
+- Personal `ftmcp_…` tokens still work for Cursor-style clients
 
 ## Enable
 
 ```env
 MCP_ENABLED=true
 MCP_PUBLIC_URL=https://family.arash-alfooneh.ir/backend/mcp
-MCP_TOKEN_DEFAULT_DAYS=90
-MCP_TOKEN_MAX_ACTIVE=5
+MCP_RESOURCE_URL=https://family.arash-alfooneh.ir/backend/mcp
+OAUTH_ISSUER=https://family.arash-alfooneh.ir/backend
+OAUTH_CONSENT_URL=https://family.arash-alfooneh.ir/fa/oauth/consent
 ```
 
-Apply migration `0026_mcp_tokens`.
+Apply migrations `0026_mcp_tokens` and `0027_oauth_mcp`.
 
-## Panel
+## ChatGPT setup
 
-Signed-in users manage tokens under **Profile → AI connection (MCP)**:
-create / list / revoke, plus a Cursor-style JSON snippet.
+1. Deploy with the env above (public HTTPS).
+2. In ChatGPT: add a custom MCP server / plugin with Server URL = `MCP_PUBLIC_URL`.
+3. Choose OAuth. ChatGPT will:
+   - read `/.well-known/oauth-protected-resource`
+   - register or use CIMD
+   - open `/oauth/authorize` → your consent page → token exchange
+4. User signs in on Family Tree, approves, returns to ChatGPT.
 
-## Agent auth
+Discovery URLs (under the issuer / API base):
 
-`Authorization: Bearer ftmcp_…` (secret shown once at creation).
+| Path | Role |
+|------|------|
+| `/.well-known/oauth-protected-resource` | Resource metadata |
+| `/.well-known/oauth-authorization-server` | AS metadata |
+| `/oauth/authorize` | Start login+consent |
+| `/oauth/token` | Code / refresh exchange |
+| `/oauth/register` | Dynamic client registration |
 
-## Tools (read-only)
+Scope: `family-tree:read`.
+
+## Tools
 
 | Tool | Purpose |
 |------|---------|
@@ -35,4 +55,6 @@ create / list / revoke, plus a Cursor-style JSON snippet.
 | `get_person_card` | Parents / spouses / children |
 | `get_relationship` | Closest kinship path |
 
-Tree-scoped tools enforce the same membership `view` check as the REST API.
+## Panel
+
+**Profile → AI connection (MCP)** still mints personal tokens for non-OAuth clients and shows the ChatGPT server URL.

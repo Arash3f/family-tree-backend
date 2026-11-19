@@ -121,20 +121,52 @@ class AppSettings(PydanticBaseSettings):
     GRAPHQL_MAX_ALIASES: int = 15
     GRAPHQL_MAX_TOKENS: int = 2000
 
-    # MCP (Model Context Protocol) — off by default. Personal access tokens
-    # (`ftmcp_…`) authenticate POST /mcp; the panel manages them under profile.
+    # MCP (Model Context Protocol) — off by default. ChatGPT uses OAuth 2.1;
+    # personal access tokens (`ftmcp_…`) still work for Cursor-style clients.
     MCP_ENABLED: bool = False
-    # Public URL shown in the panel connect snippet (e.g. https://host/backend/mcp).
-    # Empty → clients should use the same origin + /backend/mcp (or /mcp on the API).
+    # Public MCP endpoint URL (e.g. https://family…/backend/mcp). Also used as
+    # the OAuth `resource` / token `aud` when MCP_RESOURCE_URL is empty.
     MCP_PUBLIC_URL: str = ""
-    # Default lifetime for new tokens in days; 0 = never expires.
+    MCP_RESOURCE_URL: str = ""
+    # Issuer base for /.well-known/oauth-authorization-server (no trailing /mcp).
+    # Empty → derived by stripping a trailing /mcp from MCP_PUBLIC_URL.
+    OAUTH_ISSUER: str = ""
+    # Frontend consent page, e.g. https://family…/fa/oauth/consent
+    OAUTH_CONSENT_URL: str = ""
+    MCP_DOCS_URL: str = ""
+    # Default lifetime for personal (non-OAuth) tokens in days; 0 = never expires.
     MCP_TOKEN_DEFAULT_DAYS: int = Field(default=90, ge=0)
     MCP_TOKEN_MAX_ACTIVE: int = Field(default=5, ge=1, le=50)
 
     @property
     def mcp_public_url(self) -> str:
         """Trimmed public MCP endpoint URL for clients, or empty."""
-        return self.MCP_PUBLIC_URL.strip()
+        return self.MCP_PUBLIC_URL.strip().rstrip("/")
+
+    @property
+    def mcp_resource_url(self) -> str:
+        """Canonical OAuth resource identifier for this MCP server."""
+        raw = self.MCP_RESOURCE_URL.strip().rstrip("/")
+        return raw or self.mcp_public_url
+
+    @property
+    def oauth_issuer(self) -> str:
+        """OAuth issuer base URL (authorization server identifier)."""
+        raw = self.OAUTH_ISSUER.strip().rstrip("/")
+        if raw:
+            return raw
+        public = self.mcp_public_url
+        if public.endswith("/mcp"):
+            return public[: -len("/mcp")] or public
+        return public
+
+    @property
+    def oauth_consent_url(self) -> str:
+        return self.OAUTH_CONSENT_URL.strip()
+
+    @property
+    def mcp_docs_url(self) -> str:
+        return self.MCP_DOCS_URL.strip()
 
     # MinIO / S3-compatible object storage (API ↔ MinIO only; browser uses /media)
     MINIO_ENDPOINT: str = "localhost:9000"

@@ -2,6 +2,12 @@ from app.infrastructure.database.models.associations import role_permissions
 from app.infrastructure.database.models.family_tree_model import FamilyTreeModel
 from app.infrastructure.database.models.marriage_model import MarriageModel
 from app.infrastructure.database.models.mcp_token_model import McpTokenModel
+from app.infrastructure.database.models.oauth_model import (
+    OAuthAuthorizationCodeModel,
+    OAuthClientModel,
+    OAuthConsentRequestModel,
+    OAuthRefreshTokenModel,
+)
 from app.infrastructure.database.models.parent_link_model import ParentLinkModel
 from app.infrastructure.database.models.permission_model import PermissionModel
 from app.infrastructure.database.models.person_model import PersonModel
@@ -17,6 +23,10 @@ __all__ = [
     "FamilyTreeModel",
     "MarriageModel",
     "McpTokenModel",
+    "OAuthAuthorizationCodeModel",
+    "OAuthClientModel",
+    "OAuthConsentRequestModel",
+    "OAuthRefreshTokenModel",
     "ParentLinkModel",
     "PermissionModel",
     "PersonModel",
