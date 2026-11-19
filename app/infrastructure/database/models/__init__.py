@@ -1,6 +1,7 @@
 from app.infrastructure.database.models.associations import role_permissions
 from app.infrastructure.database.models.family_tree_model import FamilyTreeModel
 from app.infrastructure.database.models.marriage_model import MarriageModel
+from app.infrastructure.database.models.mcp_token_model import McpTokenModel
 from app.infrastructure.database.models.parent_link_model import ParentLinkModel
 from app.infrastructure.database.models.permission_model import PermissionModel
 from app.infrastructure.database.models.person_model import PersonModel
@@ -15,6 +16,7 @@ __all__ = [
     "role_permissions",
     "FamilyTreeModel",
     "MarriageModel",
+    "McpTokenModel",
     "ParentLinkModel",
     "PermissionModel",
     "PersonModel",

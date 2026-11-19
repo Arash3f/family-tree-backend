@@ -121,6 +121,21 @@ class AppSettings(PydanticBaseSettings):
     GRAPHQL_MAX_ALIASES: int = 15
     GRAPHQL_MAX_TOKENS: int = 2000
 
+    # MCP (Model Context Protocol) — off by default. Personal access tokens
+    # (`ftmcp_…`) authenticate POST /mcp; the panel manages them under profile.
+    MCP_ENABLED: bool = False
+    # Public URL shown in the panel connect snippet (e.g. https://host/backend/mcp).
+    # Empty → clients should use the same origin + /backend/mcp (or /mcp on the API).
+    MCP_PUBLIC_URL: str = ""
+    # Default lifetime for new tokens in days; 0 = never expires.
+    MCP_TOKEN_DEFAULT_DAYS: int = Field(default=90, ge=0)
+    MCP_TOKEN_MAX_ACTIVE: int = Field(default=5, ge=1, le=50)
+
+    @property
+    def mcp_public_url(self) -> str:
+        """Trimmed public MCP endpoint URL for clients, or empty."""
+        return self.MCP_PUBLIC_URL.strip()
+
     # MinIO / S3-compatible object storage (API ↔ MinIO only; browser uses /media)
     MINIO_ENDPOINT: str = "localhost:9000"
     MINIO_ACCESS_KEY: str = "minioadmin"

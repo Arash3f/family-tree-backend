@@ -68,6 +68,7 @@ The images are copies of the frontend's `public/showcase/` shots, which
 - [Local development](#local-development)
 - [API reference](#api-reference)
 - [Configuration](#configuration)
+- [MCP (AI agents)](docs/MCP.md)
 - [Testing and quality](#testing-and-quality)
 - [CI](#ci)
 - [Project layout](#project-layout)

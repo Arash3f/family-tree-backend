@@ -84,6 +84,13 @@ class ErrorCode(int, Enum):
     TREE_EXCEL_EMPTY = 1709
     TREE_ACCESS_DENIED = 1710
     FREE_ACCOUNT_LIMIT = 1711
+    # -----------------------
+    # |       Domain MCP      |
+    # -----------------------
+    MCP_DISABLED = 1800
+    MCP_TOKEN_NOT_FOUND = 1801
+    MCP_TOKEN_LIMIT = 1802
+    MCP_INVALID_TOKEN = 1803
 
 
 ERROR_MESSAGES = {
@@ -182,6 +189,11 @@ ERROR_MESSAGES = {
         ErrorCode.TREE_EXCEL_EMPTY: "Excel file has no people or marriages to import",
         ErrorCode.TREE_ACCESS_DENIED: "You do not have this access on the family tree",
         ErrorCode.FREE_ACCOUNT_LIMIT: "You are on a free account",
+        # Domain MCP
+        ErrorCode.MCP_DISABLED: "MCP is disabled on this server",
+        ErrorCode.MCP_TOKEN_NOT_FOUND: "MCP token not found",
+        ErrorCode.MCP_TOKEN_LIMIT: "Too many active MCP tokens",
+        ErrorCode.MCP_INVALID_TOKEN: "Invalid or expired MCP token",
     },
     "fa": {
         ErrorCode.UN_EXPECTED_ID: "شناسهٔ ارسال‌شده نامعتبر است.",
@@ -283,5 +295,10 @@ ERROR_MESSAGES = {
         ErrorCode.FREE_ACCOUNT_LIMIT: (
             "حساب شما رایگان است و این امکان برای آن فعال نیست."
         ),
+        # Domain MCP
+        ErrorCode.MCP_DISABLED: "سرویس MCP روی این سرور خاموش است.",
+        ErrorCode.MCP_TOKEN_NOT_FOUND: "توکن MCP پیدا نشد.",
+        ErrorCode.MCP_TOKEN_LIMIT: "تعداد توکن‌های فعال MCP به سقف رسیده است.",
+        ErrorCode.MCP_INVALID_TOKEN: "توکن MCP نامعتبر یا منقضی است.",
     },
 }

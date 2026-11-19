@@ -102,6 +102,7 @@ def mock_uow():
     uow.family_trees = family_trees_repo
     uow.tree_memberships = tree_memberships_repo
     uow.sessions = sessions_repo
+    uow.mcp_tokens = MagicMock()
     uow.tickets = tickets_repo
     uow.ticket_messages = ticket_messages_repo
 

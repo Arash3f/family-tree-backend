@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Self
 
 from app.domain.repositories.marriage_repository import MarriageRepository
+from app.domain.repositories.mcp_token_repository import McpTokenRepository
 from app.domain.repositories.permission_repository import PermissionRepository
 from app.domain.repositories.person_repository import PersonRepository
 from app.domain.repositories.role_repository import RoleRepository
@@ -22,6 +23,7 @@ class UnitOfWork(ABC):
     users: UserRepository
     roles: RoleRepository
     sessions: UserSessionRepository
+    mcp_tokens: McpTokenRepository
     tickets: TicketRepository
     ticket_messages: TicketMessageRepository
     family_trees: TreeRepository

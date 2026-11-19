@@ -2,6 +2,9 @@ from app.application.interfaces.unit_of_work import UnitOfWork
 from app.infrastructure.repositories.marriage_repository_sql import (
     SQLMarriageRepository,
 )
+from app.infrastructure.repositories.mcp_token_repository_sql import (
+    SQLMcpTokenRepository,
+)
 from app.infrastructure.repositories.permission_repository_sql import (
     SQLPermissionRepository,
 )
@@ -43,6 +46,7 @@ class SQLAlchemyUnitOfWork(UnitOfWork):
             self.permissions = SQLPermissionRepository(self.session)
             self.roles = SQLRoleRepository(self.session)
             self.sessions = SQLUserSessionRepository(self.session)
+            self.mcp_tokens = SQLMcpTokenRepository(self.session)
             self.tickets = SQLTicketRepository(self.session)
             self.ticket_messages = SQLTicketMessageRepository(self.session)
             self.family_trees = SQLTreeRepository(self.session)
